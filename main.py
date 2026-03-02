@@ -115,6 +115,26 @@ def cmd_init(config: dict):
     logger.info("=" * 60)
 
 
+def cmd_classify_only():
+    """
+    Classify all already-scanned videos without re-scanning channels.
+    Useful after --init has completed the scan but classification was interrupted.
+    """
+    logger.info("=" * 60)
+    logger.info("CLASSIFY — Batch classification of scanned videos")
+    logger.info("=" * 60)
+
+    init_db()
+
+    anthropic_key = require_env("ANTHROPIC_API_KEY")
+    classified = classify_unclassified_batch(anthropic_key)
+    logger.info(f"Done: {classified} videos classified.")
+
+    logger.info("=" * 60)
+    logger.info("Next step: run  python main.py --dry-run  to preview your plan.")
+    logger.info("=" * 60)
+
+
 def cmd_run(config: dict, dry_run: bool = False):
     """
     Weekly run (or dry-run):
@@ -201,12 +221,13 @@ examples:
   python main.py --run         # full weekly run (called by GitHub Actions)
         """,
     )
-    parser.add_argument("--init",    action="store_true", help="First-time full scan and classification")
-    parser.add_argument("--run",     action="store_true", help="Weekly sync, plan generation, and playlist refresh")
-    parser.add_argument("--dry-run", action="store_true", help="Generate and print plan without updating playlist")
+    parser.add_argument("--init",          action="store_true", help="First-time full scan and classification")
+    parser.add_argument("--classify-only", action="store_true", help="Classify already-scanned videos (skip channel scan)")
+    parser.add_argument("--run",           action="store_true", help="Weekly sync, plan generation, and playlist refresh")
+    parser.add_argument("--dry-run",       action="store_true", help="Generate and print plan without updating playlist")
     args = parser.parse_args()
 
-    if not any([args.init, args.run, args.dry_run]):
+    if not any([args.init, args.classify_only, args.run, args.dry_run]):
         parser.print_help()
         sys.exit(0)
 
@@ -215,6 +236,8 @@ examples:
 
     if args.init:
         cmd_init(config)
+    elif args.classify_only:
+        cmd_classify_only()
     elif args.run:
         cmd_run(config, dry_run=False)
     elif args.dry_run:

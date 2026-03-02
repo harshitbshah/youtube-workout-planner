@@ -3,9 +3,9 @@ classifier.py — Classify workout videos using Claude API.
 
 For each unclassified video:
   1. Build context: title + description snippet + transcript intro (first ~2 min)
-  2. Send to Claude with a structured classification prompt
-  3. Parse JSON response
-  4. Store result in classifications table
+  2. Submit all videos to Anthropic's Batch API in one request (50% cheaper, faster)
+  3. Poll until the batch completes
+  4. Parse JSON responses and store results in the classifications table
 
 Uses claude-haiku for cost efficiency — classification is a structured,
 well-defined task that doesn't need a larger model.
@@ -37,6 +37,9 @@ MODEL = "claude-haiku-4-5-20251001"
 
 # How many transcript segments to fetch (each ~6 sec → ~25 segments ≈ first 2.5 min)
 TRANSCRIPT_SEGMENTS = 25
+
+# How often to poll the batch API for completion (seconds)
+BATCH_POLL_INTERVAL = 30
 
 SYSTEM_PROMPT = """You are a fitness video classifier. Given a YouTube workout video's metadata, classify it accurately.
 
@@ -130,37 +133,6 @@ def _parse_classification(raw: str) -> dict | None:
         return None
 
 
-# ─── Single video classification ─────────────────────────────────────────────
-
-def classify_video(client: anthropic.Anthropic, video: dict) -> dict | None:
-    """
-    Classify a single video using Claude.
-
-    video: row dict from the videos table
-    Returns classification dict, or None on failure.
-    """
-    transcript_intro = _fetch_transcript_intro(video["id"])
-    user_message = _build_user_message(video, transcript_intro)
-
-    try:
-        response = client.messages.create(
-            model=MODEL,
-            max_tokens=150,
-            system=SYSTEM_PROMPT,
-            messages=[{"role": "user", "content": user_message}],
-        )
-        raw = response.content[0].text
-        return _parse_classification(raw)
-
-    except anthropic.RateLimitError:
-        logger.warning("Claude rate limit hit — waiting 60s")
-        time.sleep(60)
-        return None
-    except anthropic.APIError as e:
-        logger.error(f"Claude API error for video {video['id']}: {e}")
-        return None
-
-
 # ─── Database write ───────────────────────────────────────────────────────────
 
 def _save_classification(video_id: str, classification: dict):
@@ -198,14 +170,17 @@ def _fetch_unclassified_videos() -> list[dict]:
 
 # ─── Batch classification ─────────────────────────────────────────────────────
 
-def classify_unclassified_batch(api_key: str, delay_sec: float = 0.4) -> int:
+def classify_unclassified_batch(api_key: str) -> int:
     """
-    Classify all videos in the DB that haven't been classified yet.
+    Classify all unclassified videos using Anthropic's Batch API.
 
-    Processes newest-first so the freshest videos are ready soonest.
-    Skips videos shorter than 3 minutes (likely shorts / promos).
+    Phases:
+      1. Fetch transcripts and build one request object per video (sequential)
+      2. Submit all requests in a single Batch API call (50% cheaper than standard)
+      3. Poll until the batch completes
+      4. Parse responses and save classifications to DB
 
-    delay_sec: pause between Claude calls to stay within rate limits.
+    Skips videos shorter than 3 minutes (likely Shorts / promos).
     Returns count of successfully classified videos.
     """
     client = anthropic.Anthropic(api_key=api_key)
@@ -219,22 +194,57 @@ def classify_unclassified_batch(api_key: str, delay_sec: float = 0.4) -> int:
         logger.info("No unclassified videos found.")
         return 0
 
-    logger.info(f"Classifying {total} videos...")
-    classified = 0
-
+    # ── Phase 1: Build batch requests (fetch transcripts sequentially) ─────────
+    logger.info(f"Phase 1/3: Fetching transcripts and building {total} requests...")
+    requests = []
     for i, video in enumerate(videos, 1):
-        logger.info(f"  [{i}/{total}] {video['channel_name']} — {video['title'][:60]}")
+        if i % 100 == 0 or i == 1:
+            logger.info(f"  [{i}/{total}] {video['channel_name']} — {video['title'][:60]}")
 
-        result = classify_video(client, video)
+        transcript_intro = _fetch_transcript_intro(video["id"])
+        user_message = _build_user_message(video, transcript_intro)
 
-        if result:
-            _save_classification(video["id"], result)
-            classified += 1
-            logger.debug(f"    → {result['workout_type']} | {result['body_focus']} | {result['difficulty']}")
+        requests.append({
+            "custom_id": video["id"],
+            "params": {
+                "model": MODEL,
+                "max_tokens": 150,
+                "system": SYSTEM_PROMPT,
+                "messages": [{"role": "user", "content": user_message}],
+            },
+        })
+
+    # ── Phase 2: Submit batch ──────────────────────────────────────────────────
+    logger.info(f"Phase 2/3: Submitting batch of {total} requests to Anthropic...")
+    batch = client.messages.batches.create(requests=requests)
+    logger.info(f"Batch submitted — ID: {batch.id}")
+
+    # ── Phase 3: Poll until complete ───────────────────────────────────────────
+    logger.info(f"Phase 3/3: Waiting for batch to complete (polling every {BATCH_POLL_INTERVAL}s)...")
+    while True:
+        batch = client.messages.batches.retrieve(batch.id)
+        counts = batch.request_counts
+        done = counts.succeeded + counts.errored + counts.canceled + counts.expired
+        logger.info(f"  Status: {batch.processing_status} — {done}/{total} done")
+        if batch.processing_status == "ended":
+            break
+        time.sleep(BATCH_POLL_INTERVAL)
+
+    # ── Phase 4: Process results ───────────────────────────────────────────────
+    classified = 0
+    failed = 0
+    for result in client.messages.batches.results(batch.id):
+        if result.result.type == "succeeded":
+            raw = result.result.message.content[0].text
+            classification = _parse_classification(raw)
+            if classification:
+                _save_classification(result.custom_id, classification)
+                classified += 1
+            else:
+                failed += 1
         else:
-            logger.warning(f"    → Classification failed, will retry next run")
+            logger.warning(f"Request failed for video {result.custom_id}: {result.result.type}")
+            failed += 1
 
-        time.sleep(delay_sec)
-
-    logger.info(f"Classification complete: {classified}/{total} videos classified")
+    logger.info(f"Classification complete: {classified}/{total} classified, {failed} failed")
     return classified
