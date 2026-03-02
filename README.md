@@ -16,11 +16,35 @@ The first-time `--init` run scans the entire back-catalogue of each channel.
 
 ---
 
+## How Classification Works
+
+Each video is classified by Claude Haiku into:
+
+| Field | Options |
+|---|---|
+| `workout_type` | HIIT, Strength, Mobility, Cardio, Other |
+| `body_focus` | upper, lower, full, core, any |
+| `difficulty` | beginner, intermediate, advanced |
+| `has_warmup` | true / false |
+| `has_cooldown` | true / false |
+
+**Why transcripts?**
+A video title like "30 Min Full Body Workout" tells you very little. But the first 2–3 minutes of the video — where the trainer introduces the session — typically reveals exactly what you'll be doing:
+
+> *"Grab your dumbbells, we're doing 4 heavy compound sets today — this is an intermediate to advanced session, no jumping, all strength..."*
+
+That's far more useful than the title alone. The classifier fetches the first ~2.5 minutes of auto-generated captions (25 segments × ~6 seconds each) from YouTube and feeds them to Claude alongside the title, description, and tags. If captions aren't available, it falls back to title + description only.
+
+**Batch API for efficiency**
+Rather than calling Claude once per video (slow, full price), all videos are submitted in a single [Anthropic Batch API](https://docs.anthropic.com/en/docs/build-with-claude/batch-processing) request — 50% cheaper and processed in parallel on Anthropic's end. A typical initial run of ~2,000 videos costs around **$1–2 total**.
+
+---
+
 ## Project Structure
 
 ```
 youtube-workout-planner/
-├── main.py                        Entry point (--init / --run / --dry-run)
+├── main.py                        Entry point (--init / --classify-only / --run / --dry-run)
 ├── config.yaml                    Your channels + weekly schedule (edit this)
 ├── requirements.txt
 ├── workout_library.db             SQLite database (auto-committed by CI after each run)
@@ -152,6 +176,12 @@ python main.py --init
 
 This scans the full back-catalogue of all three channels and classifies every video.
 Expect **20–40 minutes** on first run — only ever done once per channel.
+
+> **If classification is interrupted** (e.g. API credits ran out), you don't need to re-scan. Just run:
+> ```bash
+> python main.py --classify-only
+> ```
+> This skips the channel scan and resumes classification from where it left off.
 
 ### 9. Preview Your First Plan
 
@@ -297,4 +327,6 @@ Delete the entry from `config.yaml`. Existing videos from that channel stay in t
 | YouTube API quota exceeded | Free quota (10,000 units/day) resets at midnight Pacific. Retry next day |
 | `No video found for [day]` warning | Your library may lack videos for that type/focus — check classifications or loosen the schedule |
 | Video misclassified | LLM classification has edge cases. Open `workout_library.db` in [DB Browser for SQLite](https://sqlitebrowser.org) and edit the `classifications` table manually |
+| Classification interrupted mid-run | Run `python main.py --classify-only` — it skips already-classified videos and picks up from where it left off |
+| Anthropic API credits exhausted | Top up at [console.anthropic.com](https://console.anthropic.com) → Plans & Billing. Note: API credits are separate from Claude Pro |
 | GitHub Actions can't push the DB | Ensure the workflow has `contents: write` permission — check repo Settings → Actions → General |

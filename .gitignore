@@ -1,5 +1,6 @@
-# Database
+# Database — ignore all except the main library (committed by CI after each run)
 *.db
+!workout_library.db
 
 # Python
 __pycache__/
