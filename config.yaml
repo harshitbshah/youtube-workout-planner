@@ -18,31 +18,44 @@ schedule:
   monday:
     workout_type: Strength
     body_focus: upper
-    duration_max_min: 45
+    duration_min: 20
+    duration_max: 45
+    difficulty: any
   tuesday:
     workout_type: HIIT
     body_focus: full
-    duration_max_min: 45
+    duration_min: 20
+    duration_max: 45
+    difficulty: any
   wednesday:
     workout_type: Strength
     body_focus: lower
-    duration_max_min: 45
+    duration_min: 20
+    duration_max: 45
+    difficulty: any
   thursday:
     workout_type: HIIT
     body_focus: core
-    duration_max_min: 45
+    duration_min: 10
+    duration_max: 45
+    difficulty: any
   friday:
     workout_type: Strength
     body_focus: full
-    duration_max_min: 45
+    duration_min: 20
+    duration_max: 45
+    difficulty: any
   saturday:
     workout_type: Cardio
     body_focus: full
-    duration_max_min: 45
+    duration_min: 20
+    duration_max: 45
+    difficulty: any
   sunday:
     workout_type: Rest
     body_focus: any
-    duration_max_min: 0
+    duration_min: 0
+    duration_max: 0
 
 # Playlist settings
 playlist:

@@ -162,7 +162,9 @@ schedule:
   monday:
     workout_type: Strength   # HIIT | Strength | Mobility | Cardio | Rest
     body_focus: upper        # upper | lower | full | core | any
-    duration_max_min: 45
+    duration_min: 20         # minimum video length in minutes (optional, default 0)
+    duration_max: 45         # maximum video length in minutes (optional, default 60)
+    difficulty: any          # beginner | intermediate | advanced | any (default)
 ```
 
 ### 8. Run the First-Time Scan
@@ -278,11 +280,14 @@ schedule:
   monday:
     workout_type: Strength   # HIIT | Strength | Mobility | Cardio | Rest
     body_focus: upper        # upper | lower | full | core | any
-    duration_max_min: 45
+    duration_min: 20         # minimum video length in minutes (default: 0)
+    duration_max: 45         # maximum video length in minutes (default: 60)
+    difficulty: any          # beginner | intermediate | advanced | any (default)
   sunday:
     workout_type: Rest       # No video assigned on rest days
     body_focus: any
-    duration_max_min: 0
+    duration_min: 0
+    duration_max: 0
 
 playlist:
   id: "PLxxxxxxxxxxxxxxxx"   # YouTube playlist ID to refresh each week

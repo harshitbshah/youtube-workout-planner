@@ -49,7 +49,8 @@ def get_upcoming_monday() -> date:
 # ─── Candidate fetching ───────────────────────────────────────────────────────
 
 def _fetch_candidates(workout_type: str, body_focus: str,
-                      max_duration_sec: int, history_weeks: int) -> list[dict]:
+                      min_duration_sec: int, max_duration_sec: int,
+                      difficulty: str, history_weeks: int) -> list[dict]:
     """
     Query the DB for classified videos that match the slot requirements
     and haven't been used within the history window.
@@ -80,14 +81,16 @@ def _fetch_candidates(workout_type: str, body_focus: str,
                    OR c.body_focus = 'any'      -- video is generic, fits any slot
                    OR ? = 'any'                 -- slot accepts any body focus
                     )
+              AND   (v.duration_sec IS NULL OR v.duration_sec >= ?)
               AND   (v.duration_sec IS NULL OR v.duration_sec <= ?)
+              AND   (? = 'any' OR c.difficulty = ?)
               AND   v.id NOT IN (
                         SELECT video_id
                         FROM   program_history
                         WHERE  week_start >= ?
                     )
             ORDER   BY v.published_at DESC
-        """, (workout_type, body_focus, body_focus, max_duration_sec, cutoff)).fetchall()
+        """, (workout_type, body_focus, body_focus, min_duration_sec, max_duration_sec, difficulty, difficulty, cutoff)).fetchall()
 
     return [dict(r) for r in rows]
 
@@ -121,7 +124,8 @@ def _score_candidate(video: dict, recency_boost_weeks: int,
 # ─── Slot picker ─────────────────────────────────────────────────────────────
 
 def pick_video_for_slot(workout_type: str, body_focus: str,
-                        max_duration_sec: int, recency_boost_weeks: int,
+                        min_duration_sec: int, max_duration_sec: int,
+                        difficulty: str, recency_boost_weeks: int,
                         used_channels: list[str]) -> dict | None:
     """
     Pick the best video for a single workout slot using tiered fallbacks.
@@ -138,7 +142,7 @@ def pick_video_for_slot(workout_type: str, body_focus: str,
 
     for history_weeks, effective_focus in fallback_tiers:
         candidates = _fetch_candidates(
-            workout_type, effective_focus, max_duration_sec, history_weeks
+            workout_type, effective_focus, min_duration_sec, max_duration_sec, difficulty, history_weeks
         )
         if candidates:
             if history_weeks < HISTORY_WINDOW_WEEKS:
@@ -235,14 +239,22 @@ def generate_weekly_plan(config: dict) -> list[dict]:
 
         workout_type     = slot["workout_type"]
         body_focus       = slot["body_focus"]
-        max_duration_sec = slot.get("duration_max_min", 60) * 60
+        min_duration_sec = slot.get("duration_min", 0) * 60
+        max_duration_sec = slot.get("duration_max", 60) * 60
+        difficulty       = slot.get("difficulty", "any")
 
-        logger.info(f"  Picking {day}: {workout_type} / {body_focus} / ≤{max_duration_sec // 60}min")
+        logger.info(
+            f"  Picking {day}: {workout_type} / {body_focus} / "
+            f"{min_duration_sec // 60}–{max_duration_sec // 60}min"
+            + (f" / {difficulty}" if difficulty != "any" else "")
+        )
 
         video = pick_video_for_slot(
             workout_type=workout_type,
             body_focus=body_focus,
+            min_duration_sec=min_duration_sec,
             max_duration_sec=max_duration_sec,
+            difficulty=difficulty,
             recency_boost_weeks=recency_boost_weeks,
             used_channels=used_channels,
         )
