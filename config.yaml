@@ -67,3 +67,7 @@ playlist:
 
 # Newer videos get boosted priority (in weeks — videos newer than this are preferred)
 recency_boost_weeks: 24
+
+# Maximum times the same channel can appear in a single week's plan
+# With 3 channels and 6 training days, 2 means each channel appears at most twice
+max_channel_repeats: 2

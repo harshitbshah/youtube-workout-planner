@@ -3,17 +3,20 @@ planner.py — Generate a holistic weekly workout plan from the video library.
 
 Selection logic (in priority order):
   1. Matches the day's required workout_type and body_focus
-  2. Within the duration limit for that day
-  3. Not used in the last HISTORY_WINDOW_WEEKS weeks
-  4. Newer videos preferred (recency boost)
-  5. Channel spread preferred (avoid all videos from same channel)
-  6. Random jitter ensures the plan feels fresh even with identical scores
+  2. Within the duration range for that day
+  3. Matches difficulty preference (if set)
+  4. Not used in the last HISTORY_WINDOW_WEEKS weeks
+  5. Channel not yet at its weekly repeat limit (max_channel_repeats in config)
+  6. Newer videos preferred (recency boost)
+  7. Channel spread preferred (avoid all videos from same channel)
+  8. Random jitter ensures the plan feels fresh even with identical scores
 
 Fallback tiers (when strict query returns too few candidates):
-  Tier 1 — Full constraints (type + focus + duration + history window)
-  Tier 2 — Relax history window to 4 weeks
-  Tier 3 — Relax body_focus to 'any' + 4 week history
-  Tier 4 — No history restriction (always finds something if the library has it)
+  Tier 1 — Full constraints + channel limit enforced
+  Tier 2 — Relax history window to 4 weeks + channel limit enforced
+  Tier 3 — Relax body_focus to 'any' + channel limit enforced
+  Tier 4 — No history restriction + channel limit enforced
+  Tier 5 — No restrictions at all (last resort, ignores channel limit)
 """
 
 import logging
@@ -50,18 +53,26 @@ def get_upcoming_monday() -> date:
 
 def _fetch_candidates(workout_type: str, body_focus: str,
                       min_duration_sec: int, max_duration_sec: int,
-                      difficulty: str, history_weeks: int) -> list[dict]:
+                      difficulty: str, history_weeks: int,
+                      excluded_channels: list[str] | None = None) -> list[dict]:
     """
     Query the DB for classified videos that match the slot requirements
     and haven't been used within the history window.
 
     body_focus='any' in the slot config matches all videos.
     A video classified as body_focus='any' matches all slot requirements.
+    excluded_channels: channels that have hit their weekly repeat limit.
     """
     cutoff = (datetime.now(timezone.utc) - timedelta(weeks=history_weeks)).isoformat()
+    excluded_channels = excluded_channels or []
+
+    channel_clause = ""
+    if excluded_channels:
+        placeholders = ",".join("?" * len(excluded_channels))
+        channel_clause = f"AND v.channel_name NOT IN ({placeholders})"
 
     with get_connection() as conn:
-        rows = conn.execute("""
+        rows = conn.execute(f"""
             SELECT  v.id,
                     v.channel_name,
                     v.title,
@@ -89,8 +100,10 @@ def _fetch_candidates(workout_type: str, body_focus: str,
                         FROM   program_history
                         WHERE  week_start >= ?
                     )
+              {channel_clause}
             ORDER   BY v.published_at DESC
-        """, (workout_type, body_focus, body_focus, min_duration_sec, max_duration_sec, difficulty, difficulty, cutoff)).fetchall()
+        """, (workout_type, body_focus, body_focus, min_duration_sec, max_duration_sec,
+              difficulty, difficulty, cutoff, *excluded_channels)).fetchall()
 
     return [dict(r) for r in rows]
 
@@ -126,28 +139,38 @@ def _score_candidate(video: dict, recency_boost_weeks: int,
 def pick_video_for_slot(workout_type: str, body_focus: str,
                         min_duration_sec: int, max_duration_sec: int,
                         difficulty: str, recency_boost_weeks: int,
-                        used_channels: list[str]) -> dict | None:
+                        used_channels: list[str],
+                        excluded_channels: list[str] | None = None) -> dict | None:
     """
     Pick the best video for a single workout slot using tiered fallbacks.
 
+    excluded_channels: channels that have hit their weekly repeat limit — excluded
+    from all tiers except the final last-resort tier.
+
     Returns a video dict, or None if the library has nothing suitable at all.
     """
+    excluded_channels = excluded_channels or []
+
     fallback_tiers = [
-        # (history_weeks, body_focus_to_use)  — progressively relaxed
-        (HISTORY_WINDOW_WEEKS, body_focus),   # Tier 1: strict
-        (4,                   body_focus),    # Tier 2: shorter history window
-        (4,                   "any"),         # Tier 3: relax body focus
-        (0,                   "any"),         # Tier 4: no history restriction
+        # (history_weeks, body_focus_to_use, respect_channel_limit)
+        (HISTORY_WINDOW_WEEKS, body_focus, True),    # Tier 1: strict
+        (4,                   body_focus, True),     # Tier 2: shorter history
+        (4,                   "any",      True),     # Tier 3: relax body focus
+        (0,                   "any",      True),     # Tier 4: no history restriction
+        (0,                   "any",      False),    # Tier 5: last resort, ignore channel limit
     ]
 
-    for history_weeks, effective_focus in fallback_tiers:
+    for history_weeks, effective_focus, respect_limit in fallback_tiers:
+        active_exclusions = excluded_channels if respect_limit else []
         candidates = _fetch_candidates(
-            workout_type, effective_focus, min_duration_sec, max_duration_sec, difficulty, history_weeks
+            workout_type, effective_focus, min_duration_sec, max_duration_sec,
+            difficulty, history_weeks, active_exclusions,
         )
         if candidates:
-            if history_weeks < HISTORY_WINDOW_WEEKS:
-                label = f"tier fallback (history={history_weeks}w, focus={effective_focus})"
-                logger.debug(f"    Using {label} — {len(candidates)} candidates")
+            if not respect_limit and excluded_channels:
+                logger.debug(f"    Channel limit relaxed — picking from excluded channels")
+            elif history_weeks < HISTORY_WINDOW_WEEKS:
+                logger.debug(f"    Tier fallback (history={history_weeks}w, focus={effective_focus})")
             break
     else:
         return None
@@ -227,8 +250,11 @@ def generate_weekly_plan(config: dict) -> list[dict]:
     schedule = config["schedule"]
     recency_boost_weeks = config.get("recency_boost_weeks", 24)
 
+    max_channel_repeats = config.get("max_channel_repeats", 2)
+
     plan = []
     used_channels: list[str] = []
+    channel_usage: dict[str, int] = {}
 
     for day in DAYS_OF_WEEK:
         slot = schedule.get(day)
@@ -242,6 +268,7 @@ def generate_weekly_plan(config: dict) -> list[dict]:
         min_duration_sec = slot.get("duration_min", 0) * 60
         max_duration_sec = slot.get("duration_max", 60) * 60
         difficulty       = slot.get("difficulty", "any")
+        exhausted        = [ch for ch, n in channel_usage.items() if n >= max_channel_repeats]
 
         logger.info(
             f"  Picking {day}: {workout_type} / {body_focus} / "
@@ -257,11 +284,14 @@ def generate_weekly_plan(config: dict) -> list[dict]:
             difficulty=difficulty,
             recency_boost_weeks=recency_boost_weeks,
             used_channels=used_channels,
+            excluded_channels=exhausted,
         )
 
         if video:
-            used_channels.append(video["channel_name"])
-            logger.info(f"    ✓ {video['title'][:60]}  ({video['channel_name']})")
+            ch = video["channel_name"]
+            used_channels.append(ch)
+            channel_usage[ch] = channel_usage.get(ch, 0) + 1
+            logger.info(f"    ✓ {video['title'][:60]}  ({ch})")
         else:
             logger.warning(
                 f"    ✗ No video found for {day} ({workout_type}/{body_focus}) — "
