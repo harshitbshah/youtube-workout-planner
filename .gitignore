@@ -10,6 +10,9 @@ venv/
 dist/
 build/
 
+# Environment / secrets (never commit these)
+.env
+
 # Credentials (never commit these)
 credentials.json
 token.json

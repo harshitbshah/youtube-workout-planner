@@ -102,6 +102,8 @@ YOUTUBE_OAUTH_REFRESH_TOKEN   1//xxxxxxxxxxxxxxxxxx
 2. **API Keys** → **Create Key** → name it `workout-planner`
 3. Copy the key (`sk-ant-...`)
 
+> **Note:** Anthropic API credits are separate from a Claude Pro subscription. You need to add credits under **Plans & Billing** at [console.anthropic.com](https://console.anthropic.com). A $5 top-up comfortably covers the full initial classification run (~2,000+ videos) plus months of weekly runs.
+
 ### 6. Create Your YouTube Playlist
 
 1. Open YouTube → **Your channel** → **Playlists** → **New playlist**
@@ -131,10 +133,20 @@ schedule:
 
 ### 8. Run the First-Time Scan
 
-```bash
-export YOUTUBE_API_KEY="your_api_key"
-export ANTHROPIC_API_KEY="your_anthropic_key"
+Create a `.env` file in the project root (gitignored — never committed):
 
+```bash
+YOUTUBE_API_KEY=your_api_key
+ANTHROPIC_API_KEY=your_anthropic_key
+YOUTUBE_CLIENT_ID=your_client_id
+YOUTUBE_CLIENT_SECRET=your_client_secret
+YOUTUBE_OAUTH_REFRESH_TOKEN=your_refresh_token
+```
+
+Then run:
+
+```bash
+set -a && source .env && set +a
 python main.py --init
 ```
 

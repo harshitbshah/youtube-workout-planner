@@ -7,41 +7,41 @@ Check boxes off directly on GitHub (click the checkbox) or edit locally (`[ ]` �
 
 ## Environment
 
-- [ ] Python 3.10+ confirmed (`python3 --version`)
-- [ ] Dependencies installed (`pip install -r requirements.txt`)
+- [x] Python 3.10+ confirmed (`python3 --version`)
+- [x] Dependencies installed (`pip install -r requirements.txt`)
 
 ## Google Cloud — API Key (read access)
 
-- [ ] Google Cloud project created (`workout-planner`)
-- [ ] YouTube Data API v3 enabled
-- [ ] API key created and saved
+- [x] Google Cloud project created (`workout-planner`)
+- [x] YouTube Data API v3 enabled
+- [x] API key created and saved
 
 ## Google Cloud — OAuth (playlist write access)
 
-- [ ] OAuth consent screen configured (External, test user added)
-- [ ] OAuth client ID created (Desktop app)
-- [ ] `scripts/client_secret.json` downloaded and placed
+- [x] OAuth consent screen configured (External, test user added)
+- [x] OAuth client ID created (Desktop app)
+- [x] `scripts/client_secret.json` downloaded and placed
 
 ## OAuth Refresh Token
 
-- [ ] `python scripts/get_oauth_token.py` run successfully
-- [ ] Client ID copied
-- [ ] Client secret copied
-- [ ] Refresh token copied
+- [x] `python scripts/get_oauth_token.py` run successfully
+- [x] Client ID copied
+- [x] Client secret copied
+- [x] Refresh token copied
 
 ## Anthropic
 
-- [ ] Anthropic account created
-- [ ] API key created (`sk-ant-...`)
+- [x] Anthropic account created
+- [x] API key created (`sk-ant-...`)
 
 ## YouTube
 
-- [ ] Playlist `Weekly Workout Plan` created on YouTube
-- [ ] Playlist ID copied and added to `config.yaml`
+- [x] Playlist `Weekly Workout Plan` created on YouTube
+- [x] Playlist ID copied and added to `config.yaml`
 
 ## Local Configuration
 
-- [ ] `config.yaml` schedule adjusted to your training split
+- [x] `config.yaml` schedule adjusted to your training split
 
 ## Local Runs
 
