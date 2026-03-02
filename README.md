@@ -333,6 +333,19 @@ Delete the entry from `config.yaml`. Existing videos from that channel stay in t
 
 ---
 
+## Ambitious Ideas for the Future
+
+### 1. Adaptive Periodization
+Right now your weekly schedule is fixed forever — every Monday is always Strength/Upper. A more powerful version would automatically cycle through structured training blocks: a build phase (higher volume, moderate intensity), a peak phase (lower volume, higher intensity), and a deload week — then repeat. The system would adjust which workout types and difficulty levels it selects each week based on where you are in the cycle, implementing real progressive programming without you ever touching `config.yaml`.
+
+### 2. Preference Learning
+A feedback loop that makes the plan smarter over time. After each week, you rate your sessions — loved it, skipped it, it was fine. Those signals feed back into the scoring algorithm permanently: creators you consistently enjoy get a long-term score boost, video styles you skip get suppressed, and sessions you abandon mid-week get flagged for reconsideration. Over months, the planner stops being a generic curator and starts feeling like it actually knows you.
+
+### 3. Natural Language Rescheduling
+A Telegram or WhatsApp bot that lets you modify your week in plain English. Message it *"I'm too sore for legs today, swap Wednesday for something lighter"* or *"I'm travelling Thursday and Friday, make it a 3-day week"* and it re-generates the plan and updates your YouTube playlist automatically. No config files, no code — just a message from wherever you are.
+
+---
+
 ## Troubleshooting
 
 | Issue | Fix |
