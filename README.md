@@ -1,24 +1,40 @@
 # YouTube Workout Planner
 
-Automatically curates a weekly workout plan from your favourite YouTube channels and refreshes a YouTube playlist every Sunday — so you never have to decide what to train next.
+You have favourite YouTube fitness creators. You know their style, you trust their programming. But every week you're manually hunting for the right video, second-guessing your split, and eventually just picking whatever feels right.
+
+This tool fixes that. Tell it which channels you follow and what your weekly training split looks like — and every Sunday it automatically builds your next week's workout plan from videos those creators actually published. Monday morning you open YouTube and your playlist is already there, in order, day by day.
+
+No spreadsheets. No decision fatigue. Just train.
+
+---
 
 ## How It Works
 
-```
-Every Sunday at 6pm UTC (GitHub Actions):
-  1. Scan channels for videos published in the last 8 days
-  2. Classify any new videos (workout type, body focus, difficulty) via Claude API
-  3. Generate a holistic weekly plan (no repeats, channel variety, newer videos preferred)
-  4. Clear and repopulate your YouTube playlist in Mon → Sun order
-```
+Every Sunday at 6pm UTC, a scheduled GitHub Actions job runs four steps:
 
-The first-time `--init` run scans the entire back-catalogue of each channel.
+**1. Discover** — scans your configured channels for any videos published in the last 8 days, adding them to a local library.
+
+**2. Understand** — any newly discovered videos get classified by Claude AI: what type of workout is it (HIIT, strength, cardio, mobility)? Which part of the body? How hard? This isn't just reading the title — see [How Classification Works](#how-classification-works) below.
+
+**3. Plan** — picks one video per training day based on your schedule, avoiding anything used in the last 8 weeks, spreading selections across channels, and favouring newer uploads.
+
+**4. Publish** — clears your YouTube playlist and repopulates it in Monday → Sunday order, with the playlist description updated to show the full weekly plan.
+
+The first time you run it (`--init`), it scans the entire back-catalogue of each channel to build a rich library to plan from.
 
 ---
 
 ## How Classification Works
 
-Each video is classified by Claude Haiku into:
+Titles lie. "30 Min Full Body Workout" could be anything — a sweaty HIIT session, a slow mobility flow, or a beginner bodyweight circuit. The only way to know is to actually listen to what the trainer says.
+
+So that's what this tool does.
+
+It fetches the first ~2.5 minutes of auto-generated captions from each video — the intro, where trainers almost always explain what you're about to do:
+
+> *"Grab your dumbbells, we're doing 4 heavy compound sets today — this is an intermediate to advanced session, no jumping, all strength..."*
+
+That transcript, combined with the title, description, and tags, gets sent to Claude Haiku which returns a structured classification:
 
 | Field | Options |
 |---|---|
@@ -28,15 +44,9 @@ Each video is classified by Claude Haiku into:
 | `has_warmup` | true / false |
 | `has_cooldown` | true / false |
 
-**Why transcripts?**
-A video title like "30 Min Full Body Workout" tells you very little. But the first 2–3 minutes of the video — where the trainer introduces the session — typically reveals exactly what you'll be doing:
+If a video has no captions, it falls back gracefully to title and description only.
 
-> *"Grab your dumbbells, we're doing 4 heavy compound sets today — this is an intermediate to advanced session, no jumping, all strength..."*
-
-That's far more useful than the title alone. The classifier fetches the first ~2.5 minutes of auto-generated captions (25 segments × ~6 seconds each) from YouTube and feeds them to Claude alongside the title, description, and tags. If captions aren't available, it falls back to title + description only.
-
-**Batch API for efficiency**
-Rather than calling Claude once per video (slow, full price), all videos are submitted in a single [Anthropic Batch API](https://docs.anthropic.com/en/docs/build-with-claude/batch-processing) request — 50% cheaper and processed in parallel on Anthropic's end. A typical initial run of ~2,000 videos costs around **$1–2 total**.
+**Cost-efficient by design:** rather than calling Claude once per video in sequence, all videos are submitted together via the [Anthropic Batch API](https://docs.anthropic.com/en/docs/build-with-claude/batch-processing) — 50% cheaper than standard API pricing and processed in parallel. Classifying an entire channel back-catalogue of ~2,000 videos costs around **$1–2 total**, and weekly incremental runs (10–30 new videos) cost just a few cents.
 
 ---
 
