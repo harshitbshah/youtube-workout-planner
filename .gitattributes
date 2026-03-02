@@ -1,0 +1,2 @@
+# Always keep the remote (Actions-committed) version of the database on conflicts
+workout_library.db merge=keeptheirs
