@@ -45,20 +45,20 @@ Check boxes off directly on GitHub (click the checkbox) or edit locally (`[ ]` �
 
 ## Local Runs
 
-- [ ] `python main.py --init` completed (full channel scan + classification)
-- [ ] `python main.py --dry-run` plan looks correct
+- [x] `python main.py --init` completed (full channel scan + classification)
+- [x] `python main.py --dry-run` plan looks correct
 
 ## GitHub
 
-- [ ] Private repo `youtube-workout-planner` created on GitHub
-- [ ] Code pushed (`git push -u origin main`)
-- [ ] Secret `YOUTUBE_API_KEY` added
-- [ ] Secret `YOUTUBE_CLIENT_ID` added
-- [ ] Secret `YOUTUBE_CLIENT_SECRET` added
-- [ ] Secret `YOUTUBE_OAUTH_REFRESH_TOKEN` added
-- [ ] Secret `ANTHROPIC_API_KEY` added
+- [x] Private repo `youtube-workout-planner` created on GitHub
+- [x] Code pushed (`git push -u origin main`)
+- [x] Secret `YOUTUBE_API_KEY` added
+- [x] Secret `YOUTUBE_CLIENT_ID` added
+- [x] Secret `YOUTUBE_CLIENT_SECRET` added
+- [x] Secret `YOUTUBE_OAUTH_REFRESH_TOKEN` added
+- [x] Secret `ANTHROPIC_API_KEY` added
 
 ## Final Verification
 
-- [ ] GitHub Actions triggered manually → run completed successfully
-- [ ] YouTube playlist refreshed with this week's videos
+- [x] GitHub Actions triggered manually → run completed successfully
+- [x] YouTube playlist refreshed with this week's videos
