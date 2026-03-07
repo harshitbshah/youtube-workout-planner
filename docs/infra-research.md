@@ -127,5 +127,75 @@ Not a blocker for v1. A single shared key comfortably covers the first ~10 users
 | Frontend | HTMX (simple) or Next.js on Vercel (fast) | Decide based on iteration speed preference |
 | Hosting (v1) | Railway | All services in one project, usage-based pricing |
 | Hosting (v2+) | Render | When stable user base justifies fixed billing |
-| Anthropic | Shared platform key | With per-user cap; user-supplied key optional |
+| Anthropic | BYOK for v1, platform-pays later | See § Anthropic API below |
 | YouTube API | Shared key to start | Per-user or quota increase before scaling past ~10 users |
+
+---
+
+## Playlist ownership / revoked access
+
+The playlist lives in the user's YouTube account. The app holds their OAuth refresh token and writes to their playlist on a weekly schedule. If the user revokes the app's access, the next publish attempt gets a 401.
+
+### Recommended approach
+
+- On any OAuth 401 during publish, mark the user's credentials as `invalid` in `user_credentials` — do not retry
+- Skip the publish run for that user; leave their existing YouTube playlist as-is (last good state)
+- Send an email notification: "We couldn't update your playlist — reconnect your YouTube account"
+- Reconnect = standard OAuth flow; plan history and library are preserved in the DB, nothing is lost
+- Show a persistent in-app banner until they reconnect
+
+**Key principle:** never fail silently. A stale playlist with a clear notification is better than an unclear half-updated one.
+
+This requires no special design decisions now — implement as a "don't fail silently" requirement in Phase 5 (playlist publishing).
+
+---
+
+## Free tier / pricing
+
+### Cost context
+
+The main cost driver is Anthropic classification, not hosting:
+
+| Operation | Cost |
+|---|---|
+| Full channel init (~2,000 videos) | ~$1–2 via Batch API |
+| Weekly incremental run (10–30 videos) | A few cents |
+
+Hosting on Railway at low user counts is near-zero (usage-based, mostly idle).
+
+### Options
+
+**Option A — Platform pays (shared key)**
+- Frictionless onboarding — no API key required
+- Platform absorbs classification cost; add a per-user monthly cap to bound exposure
+- Requires revenue or a willingness to subsidise free users
+
+**Option B — BYOK (bring your own Anthropic key)**
+- Zero classification cost to the platform
+- Slightly more friction: user needs an Anthropic account and to paste a key
+- Well-matched to early adopters who are already comfortable with API keys and OAuth flows
+- Validation: test the key immediately on paste; show only last 4 chars once saved; notify + surface in-app banner if credits run out
+
+**Option C — Free to start, introduce pricing later**
+- Absorb cost at v1 to maximise signups and feedback signal
+- Introduce a paywall once there's enough data on where the natural upgrade triggers are
+- Most natural gate: **number of channels** (init cost scales linearly, and "more channels = more variety" is a value users understand)
+
+### Recommendation
+
+Use **BYOK for v1**. The early adopter audience is already technical (they set up GitHub Secrets and OAuth manually). Framing it as a one-time ~$1–2 setup cost rather than an ongoing subscription makes it palatable. The data model already has a field for it (`user_credentials.anthropic_key`).
+
+Revisit when/if targeting a less technical audience — at that point switch to platform-pays with a flat subscription (~$5–8/mo, gated on number of channels).
+
+**Onboarding UX for BYOK:**
+
+> **Connect your AI classifier** *(step 3 of onboarding)*
+> We use Claude AI to understand your workout videos. You'll need a free Anthropic API key — it costs ~$1–2 to set up your library and a few cents per week after that.
+>
+> [Get an Anthropic API key →]  *(opens console.anthropic.com)*
+>
+> [Paste your key here: `sk-ant-...`____________]
+
+- Validate key immediately on paste (cheap test API call)
+- Store encrypted at rest
+- On credit exhaustion: mark invalid, email user, show in-app banner
