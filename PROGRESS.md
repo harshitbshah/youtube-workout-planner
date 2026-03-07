@@ -24,8 +24,8 @@ Full plan in `docs/testing.md`.
 - [x] 51/51 unit tests green (25 API tests + 26 pre-existing)
 - [x] Credential encryption at rest — Fernet AES encryption for `youtube_refresh_token` and `anthropic_key` (`api/crypto.py`)
 - [x] Startup check — server refuses to start without `ENCRYPTION_KEY` set
-- [ ] **Manual E2E** — set up Google Cloud credentials, run OAuth flow in browser, verify encrypted token in Postgres
-- [ ] **Integration tests** (`tests/integration/`) — real PostgreSQL, Alembic migrations, FK constraints, cascade deletes, DATE type behaviour, encryption round-trip against real DB
+- [x] **Manual E2E** — Google OAuth flow verified, user + encrypted refresh token confirmed in Postgres
+- [x] **Integration tests** (`tests/integration/`) — 28/28 passing: schema verification, FK constraints, CASCADE deletes, DATE type behaviour, encryption round-trip, planner history window, user isolation
 
 ## Next Phase — Phase 2: Core API
 - [ ] `GET/POST/DELETE /channels` — manage user's YouTube channels
