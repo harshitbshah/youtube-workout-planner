@@ -154,12 +154,10 @@ def pick_video_for_slot_for_user(
 
 def _save_plan_to_history(session: Session, user_id: str, week_start, plan: list[dict]):
     for day in plan:
-        if day["video"] is None:
-            continue
         session.add(ProgramHistory(
             user_id=user_id,
             week_start=week_start,
-            video_id=day["video"]["id"],
+            video_id=day["video"]["id"] if day["video"] else None,
             assigned_day=day["day"],
         ))
     session.commit()

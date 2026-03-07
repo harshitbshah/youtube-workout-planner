@@ -6,7 +6,7 @@ from __future__ import annotations
 
 from typing import Optional
 
-from pydantic import BaseModel, HttpUrl
+from pydantic import BaseModel, ConfigDict, HttpUrl
 
 
 # ─── Channels ─────────────────────────────────────────────────────────────────
@@ -18,14 +18,13 @@ class ChannelCreate(BaseModel):
 
 
 class ChannelResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     id: str
     name: str
     youtube_url: str
     youtube_channel_id: Optional[str]
     added_at: str
-
-    class Config:
-        from_attributes = True
 
 
 class ChannelSearchResult(BaseModel):

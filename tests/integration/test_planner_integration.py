@@ -134,9 +134,10 @@ def test_generate_plan_writes_correct_user_id(db_session, make_user, make_channe
     history = db_session.query(ProgramHistory).filter(
         ProgramHistory.user_id == user.id
     ).all()
-    assert len(history) == 1
-    assert history[0].assigned_day == "monday"
-    assert str(history[0].user_id) == str(user.id)
+    assert len(history) == 7  # one row per day always
+    monday = next(h for h in history if h.assigned_day == "monday")
+    assert monday.video_id is not None
+    assert str(monday.user_id) == str(user.id)
 
 
 def test_generate_plan_two_users_isolated(db_session, make_user, make_channel):
@@ -172,9 +173,11 @@ def test_generate_plan_two_users_isolated(db_session, make_user, make_channel):
 
     assert all(str(h.user_id) == str(user_a.id) for h in history_a)
     assert all(str(h.user_id) == str(user_b.id) for h in history_b)
-    # User A's history only contains their video
-    assert all(h.video_id == "vid_a" for h in history_a)
-    assert all(h.video_id == "vid_b" for h in history_b)
+    # Each user gets 7 rows; only their scheduled day has a video
+    monday_a = next(h for h in history_a if h.assigned_day == "monday")
+    monday_b = next(h for h in history_b if h.assigned_day == "monday")
+    assert monday_a.video_id == "vid_a"
+    assert monday_b.video_id == "vid_b"
 
 
 # ─── CASCADE: deleting user removes history ───────────────────────────────────

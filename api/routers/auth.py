@@ -129,6 +129,18 @@ async def google_callback(
     return RedirectResponse("/")
 
 
+@router.get("/me")
+def me(request: Request, db: Session = Depends(get_db)):
+    """Return the current user's profile, or 401 if not logged in."""
+    from ..dependencies import get_current_user
+    user = get_current_user(request, db)
+    return {
+        "id": user.id,
+        "email": user.email,
+        "display_name": user.display_name,
+    }
+
+
 @router.post("/logout")
 async def logout(request: Request):
     request.session.clear()

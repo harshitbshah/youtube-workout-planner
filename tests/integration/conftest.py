@@ -119,6 +119,46 @@ def make_user(db_session):
 
 
 @pytest.fixture
+def auth_client(db_session):
+    """
+    TestClient wired to the real PostgreSQL session with a pre-authenticated user.
+    Returns (client, user).
+    """
+    from fastapi.testclient import TestClient
+
+    from api.dependencies import get_current_user, get_db
+    from api.main import app
+    from api.models import User
+
+    user = User(
+        google_id="integration-test-google-id",
+        email="integration@example.com",
+        display_name="Integration User",
+        created_at=datetime.now(timezone.utc),
+    )
+    db_session.add(user)
+    db_session.commit()
+    db_session.refresh(user)
+
+    def _override_get_db():
+        try:
+            yield db_session
+        finally:
+            pass
+
+    def _override_get_current_user():
+        return user
+
+    app.dependency_overrides[get_db] = _override_get_db
+    app.dependency_overrides[get_current_user] = _override_get_current_user
+
+    with TestClient(app, raise_server_exceptions=True) as c:
+        yield c, user
+
+    app.dependency_overrides.clear()
+
+
+@pytest.fixture
 def make_channel(db_session):
     """Factory fixture — creates and returns a persisted Channel."""
     from api.models import Channel

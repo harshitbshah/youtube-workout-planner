@@ -47,3 +47,8 @@ Full plan in `docs/testing.md`.
 
 ## Blocked / Decisions Needed
 - Frontend: HTMX vs Next.js on Vercel — undecided, choose before Phase 4
+
+## Future API Ideas
+- `PATCH /plan/{day}` with null `video_id` to mark a scheduled day as rest for that week only.
+  Currently only supports swapping to another video. Only worth adding if the frontend has an explicit
+  "skip this day" UX — otherwise the schedule already handles structural rest days.

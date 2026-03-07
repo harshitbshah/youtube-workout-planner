@@ -202,8 +202,9 @@ def test_generate_plan_saves_to_history(db_session, user, channel):
     generate_weekly_plan_for_user(db_session, user.id)
 
     history = db_session.query(ProgramHistory).filter(ProgramHistory.user_id == user.id).all()
-    assert len(history) == 1
-    assert history[0].assigned_day == "monday"
+    assert len(history) == 7  # one row per day always
+    monday = next(h for h in history if h.assigned_day == "monday")
+    assert monday.video_id is not None
 
 
 def test_generate_plan_returns_7_days(db_session, user):
