@@ -5,6 +5,13 @@
 2. Run `git log --oneline -10` to see recent commits
 3. Continue from where the last session left off
 
+## Maintaining PROGRESS.md
+Keep it lean — current state only, not history (git log covers that).
+- Check off tasks as they're completed
+- When a phase is fully done, delete it and replace with the next phase's tasks
+- Decisions made → move to the relevant doc (`docs/infra-research.md` etc.), remove from Blocked
+- Never add a session log or completed work list — it bloats fast
+
 ## Project Summary
 Automated weekly YouTube workout playlist builder. Every Sunday a GitHub Actions job:
 1. Scans configured YouTube channels for new videos
