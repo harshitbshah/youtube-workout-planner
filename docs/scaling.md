@@ -4,6 +4,14 @@
 
 ---
 
+## Related Docs
+
+- [market-research.md](./market-research.md) — competitive landscape, PMF analysis, closest competitors
+- [testing.md](./testing.md) — test plan and "done when" criteria per phase
+- [infra-research.md](./infra-research.md) — hosting, scheduler, frontend, API decisions
+
+---
+
 ## Problem Statement
 
 The current tool works well for a single technical user comfortable editing YAML files, running Python scripts locally, and managing GitHub Secrets. The goal is to make the same functionality available to anyone — no terminal, no config files, no developer account required.
