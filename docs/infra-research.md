@@ -203,21 +203,15 @@ Hosting on Railway at low user counts is near-zero (usage-based, mostly idle).
 - Introduce a paywall once there's enough data on where the natural upgrade triggers are
 - Most natural gate: **number of channels** (init cost scales linearly, and "more channels = more variety" is a value users understand)
 
-### Recommendation
+### Decision (2026-03-07): platform-pays for v1
 
-Use **BYOK for v1**. The early adopter audience is already technical (they set up GitHub Secrets and OAuth manually). Framing it as a one-time ~$1–2 setup cost rather than an ongoing subscription makes it palatable. The data model already has a field for it (`user_credentials.anthropic_key`).
+V1 targets a small group of friends. Absorbing the classification cost (~$1–2 per user ever, pennies/week after) removes all onboarding friction and keeps the focus on product feedback rather than setup.
 
-Revisit when/if targeting a less technical audience — at that point switch to platform-pays with a flat subscription (~$5–8/mo, gated on number of channels).
+- Uses server-side `ANTHROPIC_API_KEY` for all classification
+- `user_credentials.anthropic_key` stays in the DB schema for future BYOK support but is unused in v1
+- Revisit pricing model when scaling beyond friends — natural gate is number of channels (init cost scales linearly)
 
-**Onboarding UX for BYOK:**
-
-> **Connect your AI classifier** *(step 3 of onboarding)*
-> We use Claude AI to understand your workout videos. You'll need a free Anthropic API key — it costs ~$1–2 to set up your library and a few cents per week after that.
->
-> [Get an Anthropic API key →]  *(opens console.anthropic.com)*
->
-> [Paste your key here: `sk-ant-...`____________]
-
-- Validate key immediately on paste (cheap test API call)
-- Store encrypted at rest
-- On credit exhaustion: mark invalid, email user, show in-app banner
+**Future pricing options when scaling:**
+- BYOK — zero cost to platform, adds friction, suited to technical users
+- Platform-pays + subscription (~$5–8/mo) — frictionless, suited to non-technical fitness enthusiasts
+- Hybrid — platform-pays up to a cap, BYOK to remove the cap
