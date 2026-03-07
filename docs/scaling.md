@@ -238,7 +238,12 @@ See [infra-research.md](./infra-research.md) for the full research and recommend
 
 ## Prototyping Plan
 
-Suggested order — each phase is independently useful and builds on the previous:
+Suggested order — each phase is independently useful and builds on the previous.
+See [testing.md](./testing.md) for the full test plan and "done when" criteria per phase.
+
+### Pre-Phase 1 — Test suite for existing codebase
+- Write `tests/` covering existing CLI pipeline (db, scanner, classifier, planner)
+- Goal: pytest green before starting web app work
 
 ### Phase 1 — Backend foundation
 - Set up FastAPI project structure
