@@ -11,14 +11,47 @@ Setup complete. System is running weekly in production via GitHub Actions.
 - [x] SQLite library auto-committed by CI after each run
 - [x] Docs written: architecture, scaling vision, infra research
 
-## Next Steps
-Nothing active — system is in maintenance/run mode.
+## Next Steps — Web App Build
 
-Add tasks here when starting new work, e.g.:
-- [ ] Feature: adaptive periodization (cycling build/peak/deload blocks)
-- [ ] Feature: preference learning (feedback loop from workout ratings)
-- [ ] Feature: natural language rescheduling via Telegram/WhatsApp bot
-- [ ] Feature: web app (see `docs/scaling.md` for architecture)
+The planned next phase is building the multi-user web app. Full spec in `docs/scaling.md` and `docs/infra-research.md`.
+
+### Phase 1 — Backend foundation
+- [ ] Set up FastAPI project structure
+- [ ] PostgreSQL schema (users, channels, schedules, videos, classifications, history, user_credentials)
+- [ ] Google OAuth login + session management
+- [ ] Port pipeline logic to read from DB instead of `config.yaml`
+
+### Phase 2 — Core API
+- [ ] Channel endpoints: add, remove, search YouTube by name
+- [ ] Schedule endpoints: get/update weekly schedule
+- [ ] Plan endpoints: generate, retrieve, publish, swap day
+
+### Phase 3 — Background jobs
+- [ ] Celery + Redis setup
+- [ ] Scan and classify as async tasks with progress tracking
+- [ ] Weekly cron per user (Celery Beat, scoped by `user_id`)
+
+### Phase 4 — Frontend
+- [ ] Onboarding flow (connect YouTube, add channels, set schedule, BYOK Anthropic key)
+- [ ] Plan preview + manual day-swap
+- [ ] Library browser
+
+### Phase 5 — Playlist publishing
+- [ ] Server-side YouTube OAuth flow (no more local `get_oauth_token.py`)
+- [ ] Automated weekly publish per user
+- [ ] Handle revoked access: mark invalid, skip run, email + in-app banner
+
+## Stack Decisions (already made)
+| Layer | Decision |
+|---|---|
+| API | FastAPI |
+| Database | PostgreSQL (Railway v1, Render v2+) |
+| Task queue + scheduler | Celery + Redis |
+| Auth | Google OAuth |
+| Frontend | HTMX or Next.js on Vercel (TBD) |
+| Hosting v1 | Railway (usage-based, all services in one project) |
+| Anthropic | BYOK for v1 (user pastes `sk-ant-...` during onboarding) |
+| YouTube API | Shared key to start; per-user or quota increase past ~10 users |
 
 ## Notes
 - YouTube playlist revoked access is a known limitation — documented in `docs/infra-research.md`
