@@ -224,14 +224,15 @@ No terminal, no copy-pasting, no secrets management by the user.
 
 ## Open Questions
 
-These are decisions not yet made — to be resolved as prototyping begins:
+See [infra-research.md](./infra-research.md) for the full research and recommendations on the questions below.
 
-- **Hosting:** Where does this run? A simple VPS, Railway, Render, or something else? Affects database, task queue, and deployment complexity.
-- **Shared vs user-supplied Anthropic key:** Does the platform pay for classification and charge users, or does each user bring their own API key? The current tool uses the user's own key.
-- **Frontend complexity:** Full React SPA, or a simpler server-rendered approach (e.g. HTMX) given the relatively low interactivity needed?
-- **Multi-user scheduler:** How does the weekly cron scale? One job per user, or a single job that fans out? Need to consider YouTube API quota (10,000 units/day per API key — may need per-user API keys at scale).
-- **Playlist ownership:** The playlist lives in the user's YouTube account. The app needs ongoing write access via OAuth. What happens if a user revokes access?
-- **Free tier / pricing:** If this becomes a real product, what's the pricing model given the per-classification AI cost?
+- **Hosting:** Railway for v1 (fast, usage-based, all services in one project); Render for v2+ (stable billing, autoscaling). → [infra-research.md § Hosting](./infra-research.md#hosting)
+- **Shared vs user-supplied Anthropic key:** Shared platform key for v1 with a per-user cap; user-supplied key optional for power users. → [infra-research.md § Anthropic API](./infra-research.md#anthropic-api--shared-vs-user-supplied-key)
+- **Frontend complexity:** HTMX (simplest) or Next.js on Vercel (faster to build with AI tooling). → [infra-research.md § Frontend](./infra-research.md#frontend)
+- **Multi-user scheduler:** Celery Beat — no extra infrastructure needed; scoped per `user_id`. → [infra-research.md § Scheduler](./infra-research.md#scheduler)
+- **YouTube API quota:** Not a blocker for v1; single key covers ~10 users. Per-user keys or quota increase before scaling past that. → [infra-research.md § YouTube API quota](./infra-research.md#youtube-api-quota)
+- **Playlist ownership / revoked access:** Not yet resolved — to be designed during Phase 5 (playlist publishing).
+- **Free tier / pricing:** Not yet resolved — depends on Anthropic cost data from real usage.
 
 ---
 

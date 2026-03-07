@@ -346,6 +346,17 @@ A Telegram or WhatsApp bot that lets you modify your week in plain English. Mess
 
 ---
 
+## Documentation
+
+| Doc | What's in it |
+|---|---|
+| [docs/architecture.md](./docs/architecture.md) | How the current pipeline works — components, data flow, design decisions |
+| [docs/scaling.md](./docs/scaling.md) | Web app vision — target architecture, data model, API surface, open questions |
+| [docs/infra-research.md](./docs/infra-research.md) | Infrastructure research — hosting, scheduler, frontend, Anthropic/YouTube API decisions |
+| [docs/setup-progress.md](./docs/setup-progress.md) | One-time setup checklist (personal — tracks completion of initial configuration steps) |
+
+---
+
 ## Troubleshooting
 
 | Issue | Fix |
