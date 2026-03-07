@@ -31,15 +31,37 @@ Migrate to **Render** when/if there's a stable paying user base that justifies p
 
 ---
 
-## Scheduler
+## Scheduler / Background Jobs
 
-**Decision needed:** what replaces GitHub Actions as the per-user weekly cron?
+**Decision made (2026-03-07):** use **APScheduler** (in-process) for Phase 3, not Celery + Redis.
 
-Vercel cron jobs only trigger HTTP endpoints — they cannot run the Python pipeline directly. GitHub Actions is the right tool for the current single-user setup and should stay as-is.
+### Options evaluated
 
-For multi-user: **Celery Beat** (included with Celery) handles per-user periodic tasks natively. Each user's weekly job is a scheduled Celery task, scoped by `user_id`. Railway and Render both support Celery workers via `Procfile`.
+| Option | Extra infra | Cost | Best for |
+|---|---|---|---|
+| **APScheduler** (in-process) | None | $0 | Early-stage, small user base |
+| **Celery + Redis** | Redis instance + worker process | $0–15/mo | Scale, retries, job visibility |
+| **PostgreSQL-backed queue** | None (reuses existing Postgres) | $0 | Mid-ground, no Redis |
 
-No additional infrastructure needed — the Celery + Redis setup already required for background scan/classify jobs also handles scheduling.
+### Decision rationale
+
+- Celery + Redis adds two new infrastructure dependencies before the app has any users
+- At low user counts, the weekly cron runs sequentially per user in seconds — no need for distributed workers
+- APScheduler runs inside the existing FastAPI process; zero extra services to deploy or monitor
+- Migration path is straightforward: when user counts grow or job duration becomes an issue, swap APScheduler for Celery Beat + Redis workers without changing the underlying task logic
+
+### Cost context (Celery + Redis, for reference)
+
+- Managed Redis (Upstash free tier): $0 for low command volumes; pennies/month otherwise
+- Celery worker: no separate paid service — just a Python process; ~$5–7/mo extra if hosting on a separate dyno
+- Total: $0 (same VM + Upstash free) to ~$15/mo (managed Redis + separate worker dyno)
+
+### Future migration trigger
+
+Switch to Celery when any of these apply:
+- Weekly scan/classify job takes >30 seconds per user (parallelism needed)
+- Need job retries, dead-letter queues, or task monitoring dashboard
+- Horizontal scaling of workers becomes necessary
 
 ---
 
@@ -122,7 +144,7 @@ Not a blocker for v1. A single shared key comfortably covers the first ~10 users
 |---|---|---|
 | API | FastAPI | Already Python; no change |
 | Database | PostgreSQL on Railway | Replaces SQLite |
-| Task queue + scheduler | Celery + Redis on Railway | Replaces GitHub Actions cron |
+| Task queue + scheduler | APScheduler (in-process) for Phase 3; migrate to Celery + Redis if scale demands it | Replaces GitHub Actions cron |
 | Auth | Google OAuth | Same Google account as YouTube |
 | Frontend | HTMX (simple) or Next.js on Vercel (fast) | Decide based on iteration speed preference |
 | Hosting (v1) | Railway | All services in one project, usage-based pricing |
