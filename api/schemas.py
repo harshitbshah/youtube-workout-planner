@@ -1,0 +1,81 @@
+"""
+schemas.py — Pydantic request/response models for the Phase 2 API.
+"""
+
+from __future__ import annotations
+
+from typing import Optional
+
+from pydantic import BaseModel, HttpUrl
+
+
+# ─── Channels ─────────────────────────────────────────────────────────────────
+
+class ChannelCreate(BaseModel):
+    name: str
+    youtube_url: str
+    youtube_channel_id: Optional[str] = None
+
+
+class ChannelResponse(BaseModel):
+    id: str
+    name: str
+    youtube_url: str
+    youtube_channel_id: Optional[str]
+    added_at: str
+
+    class Config:
+        from_attributes = True
+
+
+class ChannelSearchResult(BaseModel):
+    youtube_channel_id: str
+    name: str
+    description: str
+    thumbnail_url: Optional[str]
+
+
+# ─── Schedule ─────────────────────────────────────────────────────────────────
+
+class ScheduleSlot(BaseModel):
+    day: str
+    workout_type: Optional[str] = None   # None = rest day
+    body_focus: Optional[str] = None
+    duration_min: Optional[int] = None
+    duration_max: Optional[int] = None
+    difficulty: str = "any"
+
+
+class ScheduleResponse(BaseModel):
+    schedule: list[ScheduleSlot]
+
+
+class ScheduleUpdate(BaseModel):
+    schedule: list[ScheduleSlot]
+
+
+# ─── Plan ─────────────────────────────────────────────────────────────────────
+
+class VideoSummary(BaseModel):
+    id: str
+    title: str
+    url: str
+    channel_name: str
+    duration_sec: Optional[int]
+    workout_type: Optional[str]
+    body_focus: Optional[str]
+    difficulty: Optional[str]
+
+
+class PlanDay(BaseModel):
+    day: str
+    video: Optional[VideoSummary]
+
+
+class PlanResponse(BaseModel):
+    week_start: str
+    days: list[PlanDay]
+
+
+class PatchDayRequest(BaseModel):
+    video_id: str

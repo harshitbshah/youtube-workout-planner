@@ -27,14 +27,17 @@ Full plan in `docs/testing.md`.
 - [x] **Manual E2E** — Google OAuth flow verified, user + encrypted refresh token confirmed in Postgres
 - [x] **Integration tests** (`tests/integration/`) — 28/28 passing: schema verification, FK constraints, CASCADE deletes, DATE type behaviour, encryption round-trip, planner history window, user isolation
 
-## Next Phase — Phase 2: Core API
-- [ ] `GET/POST/DELETE /channels` — manage user's YouTube channels
-- [ ] `GET /channels/search?q=` — search YouTube by channel name
-- [ ] `GET/PUT /schedule` — get and update weekly training schedule
-- [ ] `GET /plan/upcoming` — get next week's generated plan
-- [ ] `POST /plan/generate` — trigger re-generation
-- [ ] `PATCH /plan/:day` — swap video for a day
-- [ ] Tests for all endpoints
+## Current Phase — Phase 2: Core API
+- [x] `api/schemas.py` — Pydantic request/response models for all Phase 2 endpoints
+- [x] `GET/POST/DELETE /channels` — `api/routers/channels.py`
+- [x] `GET /channels/search?q=` — YouTube Data API v3 search (requires `YOUTUBE_API_KEY`)
+- [x] `GET/PUT /schedule` — `api/routers/schedule.py`
+- [x] `GET /plan/upcoming` — most recent generated plan
+- [x] `POST /plan/generate` — trigger re-generation (clears + rebuilds current week)
+- [x] `PATCH /plan/:day` — swap video for a day (upserts `ProgramHistory`)
+- [x] Routers registered in `api/main.py`
+- [x] Tests written — `tests/api/test_channels.py`, `test_schedule.py`, `test_plan.py`
+- [ ] **Tests need to pass** — pytest environment issue on this machine; run `pytest tests/` locally to verify
 
 ## Upcoming Phases
 - **Phase 2** — Core API (channels, schedule, plan endpoints)

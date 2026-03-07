@@ -21,6 +21,7 @@ from sqlalchemy.pool import StaticPool
 from api.database import Base
 from api.dependencies import get_db
 from api.main import app
+from api.models import User
 
 TEST_DATABASE_URL = "sqlite://"
 
@@ -64,4 +65,30 @@ def client(db_session):
     app.dependency_overrides[get_db] = _override_get_db
     with TestClient(app, raise_server_exceptions=True) as c:
         yield c
+    app.dependency_overrides.clear()
+
+
+@pytest.fixture
+def auth_client(db_session):
+    """TestClient with get_db and get_current_user overridden for an authenticated user."""
+    from api.dependencies import get_current_user
+
+    def _override_get_db():
+        try:
+            yield db_session
+        finally:
+            pass
+
+    user = User(google_id="test-google-id", email="test@example.com", display_name="Test User")
+    db_session.add(user)
+    db_session.commit()
+    db_session.refresh(user)
+
+    def _override_get_current_user():
+        return user
+
+    app.dependency_overrides[get_db] = _override_get_db
+    app.dependency_overrides[get_current_user] = _override_get_current_user
+    with TestClient(app, raise_server_exceptions=True) as c:
+        yield c, user
     app.dependency_overrides.clear()

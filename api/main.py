@@ -13,7 +13,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from starlette.middleware.sessions import SessionMiddleware
 
-from .routers import auth, health
+from .routers import auth, channels, health, plan, schedule
 
 
 @asynccontextmanager
@@ -38,3 +38,6 @@ app.add_middleware(
 
 app.include_router(health.router)
 app.include_router(auth.router)
+app.include_router(channels.router)
+app.include_router(schedule.router)
+app.include_router(plan.router)
