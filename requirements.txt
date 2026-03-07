@@ -4,3 +4,13 @@ google-auth-httplib2==0.2.0
 youtube-transcript-api==0.6.2
 anthropic==0.84.0
 pyyaml==6.0.1
+pytest
+pytest-asyncio
+httpx
+fastapi
+uvicorn[standard]
+sqlalchemy
+psycopg2-binary
+alembic
+python-multipart
+itsdangerous
