@@ -21,9 +21,11 @@ Full plan in `docs/testing.md`.
 - [x] SQLAlchemy models — users, channels, videos, classifications, schedules, history, credentials
 - [x] Google OAuth login + session management (`api/routers/auth.py`)
 - [x] Planner service ported to PostgreSQL/SQLAlchemy (`api/services/planner.py`)
-- [x] 45/45 unit tests green (19 new API tests + 26 pre-existing)
-- [ ] **Manual E2E** — set up Google Cloud credentials, run OAuth flow in browser, verify user + refresh token in Postgres
-- [ ] **Integration tests** (`tests/integration/`) — real PostgreSQL, Alembic migrations, FK constraints, cascade deletes, DATE type behaviour
+- [x] 51/51 unit tests green (25 API tests + 26 pre-existing)
+- [x] Credential encryption at rest — Fernet AES encryption for `youtube_refresh_token` and `anthropic_key` (`api/crypto.py`)
+- [x] Startup check — server refuses to start without `ENCRYPTION_KEY` set
+- [ ] **Manual E2E** — set up Google Cloud credentials, run OAuth flow in browser, verify encrypted token in Postgres
+- [ ] **Integration tests** (`tests/integration/`) — real PostgreSQL, Alembic migrations, FK constraints, cascade deletes, DATE type behaviour, encryption round-trip against real DB
 
 ## Next Phase — Phase 2: Core API
 - [ ] `GET/POST/DELETE /channels` — manage user's YouTube channels

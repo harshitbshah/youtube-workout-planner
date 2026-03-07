@@ -16,6 +16,7 @@ from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import RedirectResponse
 from sqlalchemy.orm import Session
 
+from ..crypto import encrypt
 from ..dependencies import get_db
 from ..models import User, UserCredentials
 
@@ -118,7 +119,7 @@ async def google_callback(
         creds = UserCredentials(user_id=user.id)
         db.add(creds)
     if "refresh_token" in tokens:
-        creds.youtube_refresh_token = tokens["refresh_token"]
+        creds.youtube_refresh_token = encrypt(tokens["refresh_token"])
 
     db.commit()
 

@@ -8,13 +8,28 @@ Run locally:
 """
 
 import os
+from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from starlette.middleware.sessions import SessionMiddleware
 
 from .routers import auth, health
 
-app = FastAPI(title="YouTube Workout Planner API", version="0.1.0")
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Fail loudly on startup if required secrets are missing.
+    # Better to crash immediately than to store unencrypted credentials silently.
+    if not os.getenv("ENCRYPTION_KEY"):
+        raise RuntimeError(
+            "ENCRYPTION_KEY environment variable must be set before starting the server. "
+            "Generate one with: "
+            "python -c \"from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())\""
+        )
+    yield
+
+
+app = FastAPI(title="YouTube Workout Planner API", version="0.1.0", lifespan=lifespan)
 
 app.add_middleware(
     SessionMiddleware,

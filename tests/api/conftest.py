@@ -5,8 +5,15 @@ Uses SQLite in-memory so tests never touch PostgreSQL.
 The get_db dependency is overridden to use the test DB session.
 """
 
+import os
+
 import pytest
+from cryptography.fernet import Fernet
 from fastapi.testclient import TestClient
+
+# Must be set before api.main is imported so the lifespan startup check passes.
+# setdefault preserves any key already set in the environment (e.g. in CI).
+os.environ.setdefault("ENCRYPTION_KEY", Fernet.generate_key().decode())
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool

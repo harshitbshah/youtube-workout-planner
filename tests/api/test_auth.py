@@ -6,6 +6,7 @@ All HTTP calls to Google are mocked — no real network calls are made.
 
 from unittest.mock import AsyncMock, patch
 
+from api.crypto import decrypt
 from api.models import User, UserCredentials
 
 
@@ -58,7 +59,10 @@ def test_callback_creates_user_and_sets_session(client, db_session):
 
     creds = db_session.query(UserCredentials).filter(UserCredentials.user_id == user.id).first()
     assert creds is not None
-    assert creds.youtube_refresh_token == "ref"
+    # DB must never contain the plaintext token
+    assert creds.youtube_refresh_token != "ref"
+    # But it must decrypt back to the original value
+    assert decrypt(creds.youtube_refresh_token) == "ref"
 
 
 def test_callback_updates_existing_user(client, db_session):
