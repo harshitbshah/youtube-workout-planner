@@ -1,7 +1,8 @@
 # Progress
 
 ## Status
-Phases 1–4 complete. 194/194 tests passing. Phase 5 upcoming.
+Phases 1–5 complete. 206/206 tests passing.
+Manual testing for Phase 4 + 5 deferred — ready to do now.
 
 ## What's built
 
@@ -16,18 +17,26 @@ routers, scanner/classifier/planner services, APScheduler weekly cron, scan endp
 - Library browser (`/library`) — filter by workout type/body focus/difficulty/channel,
   assign video to plan day, pagination
 - Settings (`/settings`) — edit display name, manage channels, edit schedule, delete account
-- "Publish to YouTube" button on dashboard (disabled — wired in Phase 5)
 - Shared components: `ChannelManager`, `ScheduleEditor` (reused in onboarding + settings)
 - Backend: `PATCH /auth/me` (display name), `DELETE /auth/me` (account deletion)
 - Bug fix: `GET /library` filters are case-insensitive (`func.lower`) — classifier stores
   mixed-case values ("HIIT", "Strength") but frontend sends lowercase
 
-## Upcoming — Phase 5: Playlist Publishing
-- `POST /plan/publish` backend endpoint
-- Server-side YouTube OAuth using stored refresh token
-- Handle revoked access (401 → mark credentials invalid, notify user, skip run)
-- Enable "Publish to YouTube" button on dashboard
-- In-app banner when YouTube access is revoked
+### Phase 5 (Playlist Publishing) — complete
+- `POST /plan/publish` — publishes current plan to user's YouTube playlist
+- Server-side OAuth: decrypts stored refresh token → exchanges for access token
+- First publish creates a private playlist and stores its ID; subsequent runs reuse it
+- Auto-publish in APScheduler cron (Sundays) if credentials are valid
+- Revoked access: `google.auth.exceptions.RefreshError` or YouTube 401/403 sets
+  `credentials_valid=False` in DB and returns HTTP 403 to client
+- `GET /auth/me` now returns `youtube_connected` + `credentials_valid`
+- Dashboard: Publish button enabled when connected + valid credentials + plan exists
+- Dashboard: amber banner when YouTube access revoked
+- Dashboard: green success banner with playlist link after publish
+- DB migration 002: `credentials_valid` (bool, default true) + `youtube_playlist_id` columns
+
+## Next
+Deploy (Railway + Vercel) or manual E2E testing for Phase 4 + 5.
 
 ## Future API Ideas
 - `PATCH /plan/{day}` with null `video_id` to mark a day as rest for that week only

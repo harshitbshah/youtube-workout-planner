@@ -86,6 +86,21 @@ class PatchMeRequest(BaseModel):
     display_name: str
 
 
+class MeResponse(BaseModel):
+    id: str
+    email: str
+    display_name: Optional[str]
+    youtube_connected: bool
+    credentials_valid: bool
+
+
+# ─── Publish ───────────────────────────────────────────────────────────────────
+
+class PublishResponse(BaseModel):
+    playlist_url: str
+    video_count: int
+
+
 # ─── Library ───────────────────────────────────────────────────────────────────
 
 class LibraryResponse(BaseModel):

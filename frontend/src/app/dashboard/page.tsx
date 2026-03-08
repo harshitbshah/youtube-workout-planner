@@ -7,11 +7,13 @@ import {
   getMe,
   getUpcomingPlan,
   generatePlan,
+  publishPlan,
   logout,
   type User,
   type PlanResponse,
   type PlanDay,
   type VideoSummary,
+  type PublishResponse,
 } from "@/lib/api";
 
 const DAY_LABELS: Record<string, string> = {
@@ -100,6 +102,8 @@ export default function DashboardPage() {
   const [plan, setPlan] = useState<PlanResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState(false);
+  const [publishing, setPublishing] = useState(false);
+  const [publishResult, setPublishResult] = useState<PublishResponse | null>(null);
   const [error, setError] = useState("");
 
   useEffect(() => {
@@ -122,6 +126,27 @@ export default function DashboardPage() {
       setError(e instanceof Error ? e.message : "Failed to generate plan");
     } finally {
       setGenerating(false);
+    }
+  }
+
+  async function handlePublish() {
+    setPublishing(true);
+    setError("");
+    setPublishResult(null);
+    try {
+      const result = await publishPlan();
+      setPublishResult(result);
+      // If we get here, credentials are valid — ensure user state reflects that
+      setUser((u) => u ? { ...u, credentials_valid: true } : u);
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : "Failed to publish plan";
+      setError(msg);
+      // If revoked, mark locally so banner appears without a full reload
+      if (msg.includes("revoked")) {
+        setUser((u) => u ? { ...u, credentials_valid: false } : u);
+      }
+    } finally {
+      setPublishing(false);
     }
   }
 
@@ -180,13 +205,29 @@ export default function DashboardPage() {
             >
               {generating ? "Generating…" : plan ? "Regenerate" : "Generate plan"}
             </button>
-            <button
-              disabled
-              title="Publish to YouTube — coming in the next update"
-              className="rounded-lg border border-zinc-700 px-4 py-2 text-sm text-zinc-600 opacity-50 cursor-not-allowed transition"
-            >
-              Publish to YouTube
-            </button>
+            {user?.youtube_connected && user?.credentials_valid && plan ? (
+              <button
+                onClick={handlePublish}
+                disabled={publishing}
+                className="rounded-lg border border-red-600 bg-red-600/10 px-4 py-2 text-sm font-medium text-red-400 hover:bg-red-600/20 disabled:opacity-40 transition"
+              >
+                {publishing ? "Publishing…" : "Publish to YouTube"}
+              </button>
+            ) : (
+              <button
+                disabled
+                title={
+                  !user?.youtube_connected
+                    ? "Sign in with Google to connect YouTube"
+                    : !user?.credentials_valid
+                    ? "YouTube access revoked — sign in again to reconnect"
+                    : "Generate a plan first"
+                }
+                className="rounded-lg border border-zinc-700 px-4 py-2 text-sm text-zinc-600 opacity-50 cursor-not-allowed transition"
+              >
+                Publish to YouTube
+              </button>
+            )}
             <button
               onClick={handleLogout}
               className="rounded-lg border border-zinc-700 px-4 py-2 text-sm text-zinc-400 hover:bg-zinc-800 transition"
@@ -196,9 +237,33 @@ export default function DashboardPage() {
           </div>
         </div>
 
+        {/* YouTube access revoked banner */}
+        {user?.youtube_connected && !user?.credentials_valid && (
+          <div className="mb-6 rounded-lg border border-amber-700 bg-amber-900/20 px-4 py-3 text-sm text-amber-400">
+            Your YouTube access has been revoked. Sign out and sign in again with Google to reconnect.
+          </div>
+        )}
+
         {error && (
           <div className="mb-6 rounded-lg border border-red-800 bg-red-900/30 px-4 py-3 text-sm text-red-400">
             {error}
+          </div>
+        )}
+
+        {/* Publish success banner */}
+        {publishResult && (
+          <div className="mb-6 rounded-lg border border-green-800 bg-green-900/20 px-4 py-3 text-sm text-green-400 flex items-center justify-between">
+            <span>
+              Plan published — {publishResult.video_count} video{publishResult.video_count !== 1 ? "s" : ""} added to your playlist.
+            </span>
+            <a
+              href={publishResult.playlist_url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="ml-4 underline hover:text-green-300 whitespace-nowrap"
+            >
+              Open playlist →
+            </a>
           </div>
         )}
 

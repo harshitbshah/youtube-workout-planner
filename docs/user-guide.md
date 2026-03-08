@@ -104,10 +104,18 @@ A few things worth knowing about how videos are selected each week:
 
 ---
 
-## Coming soon
+## Publish to YouTube
 
-- **Publish to YouTube** — push your weekly plan directly to a YouTube playlist in
-  your account, ready to play through in order.
+Hit **Publish to YouTube** on the dashboard to push your current weekly plan to a
+private YouTube playlist in your account. The playlist is created automatically on
+your first publish and reused each week after that.
+
+The plan is also published automatically every Sunday when your weekly plan refreshes,
+as long as your Google account is connected.
+
+**If the button is greyed out**, it means either you don't have a plan yet, or your
+YouTube access has been revoked (look for the amber banner — sign out and sign in
+again to reconnect).
 
 ---
 

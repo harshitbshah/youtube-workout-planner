@@ -24,7 +24,7 @@ def test_all_tables_exist(pg_engine):
 def test_alembic_version_is_current(pg_engine):
     with pg_engine.connect() as conn:
         version = conn.execute(text("SELECT version_num FROM alembic_version")).scalar()
-    assert version == "001"
+    assert version == "002"
 
 
 def test_users_columns(pg_engine):
@@ -78,4 +78,7 @@ def test_program_history_has_date_column(pg_engine):
 def test_user_credentials_columns(pg_engine):
     inspector = inspect(pg_engine)
     columns = {c["name"] for c in inspector.get_columns("user_credentials")}
-    assert {"user_id", "youtube_refresh_token", "anthropic_key", "updated_at"}.issubset(columns)
+    assert {
+        "user_id", "youtube_refresh_token", "anthropic_key",
+        "updated_at", "credentials_valid", "youtube_playlist_id",
+    }.issubset(columns)

@@ -60,6 +60,9 @@ export const swapPlanDay = (day: string, videoId: string) =>
     body: JSON.stringify({ video_id: videoId }),
   });
 
+export const publishPlan = () =>
+  apiFetch<PublishResponse>("/plan/publish", { method: "POST" });
+
 // ─── Library ─────────────────────────────────────────────────────────────────
 
 export const getLibrary = (params: {
@@ -87,9 +90,11 @@ export const triggerScan = () => apiFetch<JobResponse>("/jobs/scan", { method: "
 // ─── Types ───────────────────────────────────────────────────────────────────
 
 export interface User {
-  id: number;
+  id: string;
   email: string;
   display_name: string | null;
+  youtube_connected: boolean;
+  credentials_valid: boolean;
 }
 
 export interface ChannelCreate {
@@ -156,4 +161,9 @@ export interface LibraryResponse {
 
 export interface JobResponse {
   message: string;
+}
+
+export interface PublishResponse {
+  playlist_url: string;
+  video_count: number;
 }

@@ -59,6 +59,29 @@ def _weekly_pipeline_for_user(user_id: str):
             logger.info(f"[weekly] user={user_id}: plan generated")
         except Exception as e:
             logger.error(f"[weekly] Plan generation failed for user {user_id}: {e}")
+            return  # can't publish without a plan
+
+        # Step 4: auto-publish if user has valid YouTube credentials
+        from .models import UserCredentials
+        from .services.publisher import (
+            YouTubeAccessRevokedError,
+            YouTubeNotConnectedError,
+            publish_plan_for_user,
+        )
+        from src.planner import get_upcoming_monday
+
+        creds = session.query(UserCredentials).filter(UserCredentials.user_id == user_id).first()
+        if creds and creds.youtube_refresh_token and creds.credentials_valid:
+            week_start = get_upcoming_monday()
+            try:
+                result = publish_plan_for_user(session, user_id, week_start)
+                logger.info(
+                    f"[weekly] user={user_id}: auto-published {result['video_count']} videos"
+                )
+            except (YouTubeNotConnectedError, YouTubeAccessRevokedError) as e:
+                logger.warning(f"[weekly] user={user_id}: YouTube publish skipped — {e}")
+            except Exception as e:
+                logger.error(f"[weekly] user={user_id}: publish failed — {e}")
 
     finally:
         session.close()

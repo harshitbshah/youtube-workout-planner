@@ -15,8 +15,13 @@ from sqlalchemy.orm import Session
 
 from ..dependencies import get_current_user, get_db
 from ..models import Channel, Classification, ProgramHistory, Video, User
-from ..schemas import PatchDayRequest, PlanDay, PlanResponse, VideoSummary
+from ..schemas import PatchDayRequest, PlanDay, PlanResponse, PublishResponse, VideoSummary
 from ..services.planner import generate_weekly_plan_for_user, pick_video_for_slot_for_user
+from ..services.publisher import (
+    YouTubeAccessRevokedError,
+    YouTubeNotConnectedError,
+    publish_plan_for_user,
+)
 from src.planner import HISTORY_WINDOW_WEEKS, get_upcoming_monday
 
 router = APIRouter(prefix="/plan", tags=["plan"])
@@ -135,6 +140,37 @@ def generate_plan(
             days.append(PlanDay(day=day, video=None))
 
     return PlanResponse(week_start=week_start.isoformat(), days=days)
+
+
+# ─── Publish ──────────────────────────────────────────────────────────────────
+
+@router.post("/publish", response_model=PublishResponse)
+def publish_plan(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Publish the current week's plan to the user's YouTube playlist."""
+    latest_week = (
+        db.query(func.max(ProgramHistory.week_start))
+        .filter(ProgramHistory.user_id == current_user.id)
+        .scalar()
+    )
+    if not latest_week:
+        raise HTTPException(status_code=404, detail="No plan generated yet")
+
+    try:
+        result = publish_plan_for_user(db, current_user.id, latest_week)
+    except YouTubeNotConnectedError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except YouTubeAccessRevokedError:
+        raise HTTPException(
+            status_code=403,
+            detail="YouTube access has been revoked. Please sign in again to reconnect.",
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+    return PublishResponse(**result)
 
 
 # ─── Patch day ────────────────────────────────────────────────────────────────

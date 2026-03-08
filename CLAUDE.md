@@ -94,7 +94,7 @@ Frontend: `http://localhost:3000`
 | `api/routers/auth.py` | Google OAuth login/logout + `GET/PATCH/DELETE /auth/me` |
 | `api/routers/channels.py` | `GET/POST /channels`, `DELETE /channels/{id}`, `GET /channels/search` |
 | `api/routers/schedule.py` | `GET/PUT /schedule` |
-| `api/routers/plan.py` | `GET /plan/upcoming`, `POST /plan/generate`, `PATCH /plan/{day}` |
+| `api/routers/plan.py` | `GET /plan/upcoming`, `POST /plan/generate`, `PATCH /plan/{day}`, `POST /plan/publish` |
 | `api/routers/library.py` | `GET /library` — paginated, filtered video browser |
 | `api/routers/jobs.py` | `POST /jobs/scan` — trigger manual channel scan |
 | `api/services/scanner.py` | YouTube channel scanning (uses `src/scanner.py` internals) |
@@ -136,6 +136,7 @@ Frontend: `http://localhost:3000`
 | GET | `/plan/upcoming` | Yes | Latest generated plan |
 | POST | `/plan/generate` | Yes | Generate/regenerate plan |
 | PATCH | `/plan/{day}` | Yes | Swap a day's video |
+| POST | `/plan/publish` | Yes | Publish plan to YouTube playlist |
 | GET | `/library` | Yes | Paginated/filtered video library |
 | POST | `/jobs/scan` | Yes | Trigger manual channel scan |
 

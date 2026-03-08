@@ -110,6 +110,8 @@ class UserCredentials(Base):
     user_id = Column(String(36), ForeignKey("users.id"), primary_key=True)
     youtube_refresh_token = Column(Text)
     anthropic_key = Column(Text)
+    credentials_valid = Column(Boolean, default=True, nullable=False)
+    youtube_playlist_id = Column(String)
     updated_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
 
     user = relationship("User", back_populates="credentials")
