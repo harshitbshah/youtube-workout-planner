@@ -15,3 +15,4 @@ alembic
 python-multipart
 itsdangerous
 cryptography
+apscheduler==3.10.4

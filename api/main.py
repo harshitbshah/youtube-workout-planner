@@ -13,7 +13,8 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from starlette.middleware.sessions import SessionMiddleware
 
-from .routers import auth, channels, health, plan, schedule
+from .routers import auth, channels, health, jobs, plan, schedule
+from .scheduler import start_scheduler, stop_scheduler
 
 
 @asynccontextmanager
@@ -26,7 +27,9 @@ async def lifespan(app: FastAPI):
             "Generate one with: "
             "python -c \"from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())\""
         )
+    start_scheduler()
     yield
+    stop_scheduler()
 
 
 app = FastAPI(title="YouTube Workout Planner API", version="0.1.0", lifespan=lifespan)
@@ -41,3 +44,4 @@ app.include_router(auth.router)
 app.include_router(channels.router)
 app.include_router(schedule.router)
 app.include_router(plan.router)
+app.include_router(jobs.router)

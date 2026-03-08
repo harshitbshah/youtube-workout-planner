@@ -95,12 +95,16 @@ def test_history_at_exact_boundary(db_session, make_user, make_channel):
     A video assigned exactly 8 weeks ago sits on the boundary.
     The cutoff is `now - 8 weeks`; week_start must be >= cutoff to be excluded.
     A video at exactly the cutoff date is included in the exclusion window.
+
+    Uses UTC date to match the planner's cutoff calculation.
     """
+    from datetime import timezone
     user = make_user()
     channel = make_channel(user.id)
     _seed_video(db_session, channel.id, video_id="vid_boundary")
 
-    boundary_week = date.today() - timedelta(weeks=8)
+    utc_today = datetime.now(timezone.utc).date()
+    boundary_week = utc_today - timedelta(weeks=8)
     db_session.add(ProgramHistory(
         user_id=user.id, week_start=boundary_week,
         video_id="vid_boundary", assigned_day="monday",
