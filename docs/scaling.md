@@ -98,6 +98,57 @@ PostgreSQL                    Task Queue (Celery + Redis)
 
 ---
 
+## User Engagement & Cost Control
+
+### The problem
+
+The platform bears the Anthropic classification cost for every user. Running the weekly pipeline for users who have churned wastes money and adds noise. The goal is to only generate plans for users who are actively following them.
+
+### What YouTube API can tell us
+
+**Nothing useful.** The YouTube Data API doesn't expose watch history or play events — this is a privacy restriction, not a quota limitation. You can read/write playlists but cannot know if the user watched any video in it. All engagement signals must come from within the web app itself.
+
+### Available signals
+
+| Signal | How to capture | Quality |
+|---|---|---|
+| User logs into the web app | `last_active_at` on User, updated per request | Weak — doesn't mean they worked out |
+| User swaps a plan day (`PATCH /plan/{day}`) | Already tracked via request | Strong — active engagement |
+| User re-generates the plan | Already tracked via request | Strong |
+| User marks a day complete | `ProgramHistory.completed` field (already in schema) | Strongest — explicit intent |
+| No interaction in N weeks | Derived from `last_active_at` | Weak but practical for pausing |
+
+### Two-layer engagement system (decided 2026-03-07)
+
+**Layer 1 — Soft nudge (2 weeks no app interaction):**
+Generate the plan anyway but send a nudge email: *"Your weekly plan is ready — have you been keeping up?"*
+
+**Layer 2 — Hard pause (4 weeks no day marked complete):**
+Stop generating. Send email: *"We've paused your weekly plan since you haven't been active. Tap here to resume."*
+One click resumes immediately and triggers a new plan.
+
+This is the Duolingo model — gentle nudge first, then pause with frictionless re-entry:
+- Users on holiday or sick don't get permanently lost
+- Users who've genuinely churned stop costing Anthropic credits
+- Resume is one click so reactivation rate stays high
+
+### What needs to be built
+
+1. **`User.last_active_at`** — DB column updated on every authenticated request via middleware. Foundation that everything else depends on. Should be added before launch so data accumulates from day one.
+2. **`POST /plan/{day}/complete`** — lets users mark individual days done from the frontend. Surfaces `ProgramHistory.completed` (already in schema, never set today).
+3. **Scheduler engagement check** — before running the weekly pipeline for a user, check `last_active_at` and recent `completed` counts. Skip and log if thresholds not met.
+4. **`is_paused` flag on `User`** — set when auto-paused, cleared on resume. Controls scheduler and shows in-app banner.
+
+### V1 plan (friends audience)
+
+Don't build the full system before launch. Minimum for v1:
+- Add `last_active_at` to User model now (one migration, starts capturing data immediately)
+- Weekly scheduler skips users with `last_active_at` older than 3 weeks
+- Surface `ProgramHistory.completed` via frontend in Phase 4
+- Build full pause/resume + email notifications after seeing real usage patterns
+
+---
+
 ## Data Model Changes
 
 The core tables from the current schema carry over, extended with a `users` table and foreign keys:
