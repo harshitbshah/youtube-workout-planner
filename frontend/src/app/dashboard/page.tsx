@@ -201,7 +201,7 @@ export default function DashboardPage() {
             <button
               onClick={handleGenerate}
               disabled={generating}
-              className="rounded-lg bg-white px-4 py-2 text-sm font-semibold text-zinc-900 hover:bg-zinc-100 disabled:opacity-40 transition"
+              className="rounded-lg bg-white px-4 py-2 text-sm font-semibold text-zinc-900 hover:bg-zinc-100 disabled:opacity-40 cursor-pointer transition"
             >
               {generating ? "Generating…" : plan ? "Regenerate" : "Generate plan"}
             </button>
@@ -209,7 +209,7 @@ export default function DashboardPage() {
               <button
                 onClick={handlePublish}
                 disabled={publishing}
-                className="rounded-lg border border-red-600 bg-red-600/10 px-4 py-2 text-sm font-medium text-red-400 hover:bg-red-600/20 disabled:opacity-40 transition"
+                className="rounded-lg border border-red-600 bg-red-600/10 px-4 py-2 text-sm font-medium text-red-400 hover:bg-red-600/20 disabled:opacity-40 cursor-pointer transition"
               >
                 {publishing ? "Publishing…" : "Publish to YouTube"}
               </button>
@@ -230,7 +230,7 @@ export default function DashboardPage() {
             )}
             <button
               onClick={handleLogout}
-              className="rounded-lg border border-zinc-700 px-4 py-2 text-sm text-zinc-400 hover:bg-zinc-800 transition"
+              className="rounded-lg border border-zinc-700 px-4 py-2 text-sm text-zinc-400 hover:bg-zinc-800 cursor-pointer transition"
             >
               Sign out
             </button>
@@ -274,7 +274,7 @@ export default function DashboardPage() {
             <button
               onClick={handleGenerate}
               disabled={generating}
-              className="rounded-lg bg-white px-5 py-2.5 text-sm font-semibold text-zinc-900 hover:bg-zinc-100 disabled:opacity-40 transition"
+              className="rounded-lg bg-white px-5 py-2.5 text-sm font-semibold text-zinc-900 hover:bg-zinc-100 disabled:opacity-40 cursor-pointer transition"
             >
               {generating ? "Generating…" : "Generate my plan"}
             </button>

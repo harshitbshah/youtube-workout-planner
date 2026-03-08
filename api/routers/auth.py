@@ -28,6 +28,7 @@ GOOGLE_CLIENT_SECRET = os.getenv("GOOGLE_CLIENT_SECRET", "")
 GOOGLE_REDIRECT_URI = os.getenv(
     "GOOGLE_REDIRECT_URI", "http://localhost:8000/auth/google/callback"
 )
+FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:3000")
 
 # Request YouTube access now so we don't need to re-prompt in Phase 5
 SCOPES = " ".join([
@@ -127,7 +128,7 @@ async def google_callback(
     request.session["user_id"] = str(user.id)
     request.session.pop("oauth_state", None)
 
-    return RedirectResponse("/")
+    return RedirectResponse(FRONTEND_URL)
 
 
 def _me_response(user: User, db: Session) -> MeResponse:

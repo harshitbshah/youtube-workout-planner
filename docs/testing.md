@@ -1,190 +1,177 @@
 # Testing Plan
 
-> Written 2026-03-07. Ready to implement — see PROGRESS.md for current status.
-
 ---
 
 ## Philosophy
 
 - Don't start the next phase until `pytest` is green on the current one
 - Pure functions → unit tests (no mocks, no DB)
-- DB-dependent logic → integration tests against a temp SQLite file (no production DB touched)
-- External APIs (YouTube, Anthropic) → mock only, never real calls in tests
+- DB-dependent logic → integration tests (SQLite unit / real PostgreSQL integration)
+- External APIs (YouTube, Anthropic) → mock only, never real calls in automated tests
 
 ---
 
-## Key Implementation Note — DB Isolation
+## Automated Tests
 
-`db.py` hardcodes `DB_PATH` pointing to `workout_library.db`. Tests must not touch
-the production DB. Fix: patch `DB_PATH` in a pytest fixture using `monkeypatch` —
-**no production code changes needed.**
+Run before every commit:
 
-```python
-# tests/conftest.py
-@pytest.fixture
-def test_db(tmp_path, monkeypatch):
-    import src.db as db_module
-    monkeypatch.setattr(db_module, "DB_PATH", tmp_path / "test.db")
-    db_module.init_db()
+```bash
+# Unit tests (SQLite in-memory, no external deps)
+.venv/bin/pytest tests/api/ tests/test_*.py -v
+
+# Integration tests (real PostgreSQL — requires workout_planner_test DB)
+.venv/bin/pytest tests/integration/ -v
+
+# All tests
+.venv/bin/pytest -q
 ```
 
-Every test that touches the DB receives this fixture. Each test gets a fresh,
-isolated DB in a temp directory that's deleted after the test.
+Current: **206/206 passing**
 
 ---
 
-## Existing Codebase — Test Coverage Plan
+## Manual E2E — Phase 4 + 5
 
-### `tests/test_db.py`
-| Test | What it checks |
-|---|---|
-| `test_init_db_creates_tables` | All three tables exist after `init_db()` |
-| `test_init_db_idempotent` | Calling `init_db()` twice doesn't error |
+Run both servers before starting:
 
-### `tests/test_scanner.py`
-| Test | What it checks |
-|---|---|
-| `test_parse_duration_full` | `PT1H2M3S` → 3723 |
-| `test_parse_duration_minutes_only` | `PT30M` → 1800 |
-| `test_parse_duration_seconds_only` | `PT45S` → 45 |
-| `test_parse_duration_hours_only` | `PT2H` → 7200 |
-| `test_parse_duration_invalid` | empty / garbage string → 0 |
-| `test_save_videos_inserts` | new videos are saved to DB |
-| `test_save_videos_skips_duplicates` | same video ID twice → no error, count=1 |
+```bash
+# Terminal 1 — backend
+cd ~/Projects/youtube-workout-planner
+set -a && source .env && set +a
+.venv/bin/uvicorn api.main:app --reload
 
-`get_channel_info` and `_scan_uploads` require YouTube API client → mock with
-`unittest.mock.MagicMock`. Test that correct API methods are called with correct args.
+# Terminal 2 — frontend
+cd ~/Projects/youtube-workout-planner/frontend
+npm run dev
+```
 
-### `tests/test_classifier.py`
-| Test | What it checks |
-|---|---|
-| `test_parse_classification_valid` | valid JSON → correct dict |
-| `test_parse_classification_markdown_fenced` | ` ```json { } ``` ` → strips fences and parses |
-| `test_parse_classification_invalid_fields` | unknown workout_type → falls back to "Other" |
-| `test_parse_classification_invalid_json` | malformed JSON → returns None |
-| `test_build_user_message_with_transcript` | transcript included in output |
-| `test_build_user_message_without_transcript` | no transcript section when None |
-| `test_build_user_message_no_duration` | duration line omitted when duration_sec is None |
-
-`classify_unclassified_batch` requires Anthropic client → mock the client,
-assert batch is created with correct request structure.
-
-### `tests/test_planner.py`
-| Test | What it checks |
-|---|---|
-| `test_get_upcoming_monday_is_monday` | returned date is always a Monday |
-| `test_get_upcoming_monday_never_today` | if today is Monday, returns next Monday |
-| `test_score_candidate_recency_boost` | recent video scores +100 vs old video |
-| `test_score_candidate_channel_spread` | unused channel scores +40 vs used channel |
-| `test_format_plan_summary_with_rest` | Rest days show "Rest", not video info |
-| `test_format_plan_summary_with_video` | video title, type, duration appear in output |
-| `test_pick_video_for_slot_basic` | returns a video matching type/focus from test DB |
-| `test_pick_video_for_slot_no_candidates` | returns None when library is empty |
-| `test_pick_video_for_slot_fallback_tiers` | relaxes constraints when strict query fails |
-| `test_pick_video_for_slot_avoids_history` | doesn't return recently used videos |
+Open `http://localhost:3000` in a fresh browser (or incognito). Delete checklist items as
+you verify them; delete the whole group when all ticked.
 
 ---
 
-## Web App Phases — "Done When" Criteria
+### Group 1 — Landing page
 
-### Phase 1 — Backend foundation
-- `pytest tests/` passes green
-- `GET /health` returns 200
-- DB migrations run cleanly on a fresh PostgreSQL instance
-- Google OAuth login flow completes (manual test in browser)
-- `generate_weekly_plan()` runs against PostgreSQL test DB with fixture data
-
-### Phase 2 — Core API
-- All endpoints return correct responses against test DB (pytest + httpx)
-- `POST /channels` triggers a background scan task (assert task enqueued, mock worker)
-- `GET /plan/upcoming` returns a valid plan for a seeded user
-
-### Phase 3 — Background jobs
-- Celery worker processes a scan task end-to-end (local Redis + worker running)
-- Weekly cron fires for a test user and produces a plan (manual trigger, short interval)
-- Worker failures don't crash the queue (assert dead-letter handling)
-
-### Phase 4 — Frontend
-
-Full sign-in flow: see `docs/google-oauth-setup.md` for the OAuth warning and fix.
-Delete checklist items as you verify them. Delete the whole section when fully ticked.
-
-**Landing page (`/`)**
-- [ ] Nav: "Workout Planner" logo left, "Sign in" link right
+- [ ] Logo "Workout Planner" left, "Sign in" right
 - [ ] Hero: headline, sub-headline, "Get started free →" CTA, "Free · No credit card" badge
-- [ ] "How it works" section: 3 steps (01/02/03)
+- [ ] "How it works" section: 3 numbered steps
 - [ ] "Why Workout Planner" section: 3 feature cards
-- [ ] Bottom CTA section + footer
-- [ ] Already signed-in user is silently redirected (spinner → dashboard or onboarding)
-- [ ] Both CTA buttons link to Google OAuth
+- [ ] Bottom CTA section + footer visible
+- [ ] Both CTA buttons navigate to Google OAuth (check URL contains `accounts.google.com`)
+- [ ] Already signed-in user visiting `/` gets silently redirected (spinner → dashboard or onboarding)
 
-**Sign-in & onboarding**
-- [ ] New user clicks "Get started free" → Google OAuth → `/onboarding`
-- [ ] Step 1: search channels, add ≥1, Continue enabled only when ≥1 added
-- [ ] Step 2: schedule grid pre-filled with defaults, can toggle rest days, save navigates to Step 3
-- [ ] Step 3: "Generate my first plan now" triggers scan, redirects to `/dashboard`
-- [ ] Returning user (has channels) → `/dashboard` (bypasses onboarding)
-- [ ] Sign out clears session; Back button does not restore dashboard
+---
 
-**Dashboard**
-- [ ] Header: Library | Settings | Regenerate | Publish to YouTube (disabled) | Sign out
-- [ ] "Publish to YouTube" greyed out, cursor `not-allowed`, tooltip on hover
-- [ ] Plan grid shows 7 days with thumbnails, duration badges, workout/body/difficulty badges
-- [ ] "Regenerate" triggers a new plan and updates the grid in place
-- [ ] Library and Settings links navigate correctly
+### Group 2 — Sign-in & onboarding (new user)
 
-**Library page (`/library`)**
+Sign out first (or use incognito) so you hit onboarding as a new user.
+
+- [ ] "Get started free" → Google OAuth consent screen → redirected back to `localhost:3000`
+- [ ] New user lands on `/onboarding` (not dashboard)
+- [ ] **Step 1 — Channels:** search returns results with thumbnails + descriptions
+- [ ] Adding a channel shows it in the list below; "Continue" enabled only after ≥1 added
+- [ ] **Step 2 — Schedule:** grid pre-filled with default split (Mon=Strength/Upper, Sun=Rest, etc.)
+- [ ] Can toggle any day to rest; can change workout type / body focus / difficulty / duration
+- [ ] "Continue" navigates to Step 3
+- [ ] **Step 3 — Generate:** "Generate my first plan now" shows spinner, then redirects to `/dashboard`
+- [ ] Returning user (already has channels) goes directly to `/dashboard` — onboarding skipped
+
+---
+
+### Group 3 — Dashboard
+
+- [ ] Header: user first name shown (e.g. "Harshit's plan"), week-of label beneath
+- [ ] Nav buttons present: Library | Settings | Regenerate | Publish to YouTube | Sign out
+- [ ] All nav buttons show hand cursor on hover
+- [ ] Plan grid: 7 day columns with thumbnails, duration badge (bottom-right of thumbnail)
+- [ ] Each card shows title (2-line clamp), channel name, workout/body/difficulty badges
+- [ ] Clicking a video card opens YouTube in a new tab
+- [ ] Sunday shows "Rest day" placeholder card
+- [ ] "Regenerate" triggers a new plan and updates the grid without a full page reload
+- [ ] Sign out clears session → redirected to `/`; back button does not restore dashboard
+
+**Publish to YouTube (Phase 5)**
+- [ ] "Publish to YouTube" button is active (red border), cursor is pointer
+- [ ] Clicking "Publish to YouTube" shows "Publishing…" while in flight
+- [ ] On success: green banner appears — "{N} videos added to your playlist" + "Open playlist →" link
+- [ ] "Open playlist →" opens the correct YouTube playlist in a new tab
+- [ ] Playlist in YouTube contains the correct videos in Mon→Sat order
+- [ ] Publishing a second time (after regenerating) updates the same playlist — no duplicate playlist created
+- [ ] If YouTube access is revoked: amber banner — "Your YouTube access has been revoked…"
+- [ ] Revoked state: Publish button is greyed out with `cursor-not-allowed`; tooltip explains the issue
+
+---
+
+### Group 4 — Library
+
 - [ ] "← Back" returns to `/dashboard`
-- [ ] Video count shown top-right
-- [ ] Cards: thumbnail, duration badge (bottom-right of image), title (2-line clamp), channel name, badges
+- [ ] Total video count shown (e.g. "243 videos")
+- [ ] Cards: thumbnail, duration badge, title (2-line clamp), channel name, workout/body/difficulty badges
 - [ ] Clicking a card opens YouTube in a new tab
-- [ ] Workout type dropdown: Strength / HIIT / Cardio / Mobility (not "Hiit")
+- [ ] Workout type dropdown shows: Strength / HIIT / Cardio / Mobility (not "Hiit")
 - [ ] Each filter narrows the grid and updates the total count
-- [ ] Combined filters apply as AND
-- [ ] "Clear filters" resets all dropdowns and restores full library
+- [ ] Combined filters apply as AND (e.g. Strength + Upper = only upper-body strength videos)
+- [ ] "Clear filters" resets all dropdowns and restores the full library
 - [ ] Channel dropdown hidden when user has only 1 channel
-- [ ] "Assign to day" select → shows "✓ Assigned to Mon" for 2s, then resets
-- [ ] Assign when no plan exists → "Failed — generate a plan first"
-- [ ] After assigning, dashboard shows the newly assigned video on that day
-- [ ] Pagination: Previous disabled on page 1, Next on last page, no overlapping videos across pages
+- [ ] "Assign to day" dropdown → success shows "✓ Assigned to Mon" inline for ~2s, then resets
+- [ ] Assign when no plan exists → shows "Failed — generate a plan first" error
+- [ ] After assigning, navigate to dashboard — the newly assigned video appears on that day
+- [ ] Pagination: Previous disabled on page 1; Next disabled on last page; no overlapping videos across pages
 - [ ] Applying a filter while on page >1 resets to page 1
 
-**Settings page (`/settings`)**
+---
+
+### Group 5 — Settings
+
 - [ ] "← Dashboard" link returns to `/dashboard`
-- [ ] Profile: display name editable, "Save" disabled when name unchanged, shows "Display name updated" on save
-- [ ] Profile: email shown as read-only
-- [ ] Channels: can search and add new channels, can remove existing ones
-- [ ] Schedule: edit any day's workout type/body focus/difficulty/duration, toggle rest days
-- [ ] Schedule: "Save schedule" shows "Schedule saved." confirmation
-- [ ] Danger zone: "Delete my account" button appears with red border
-- [ ] Danger zone: clicking shows confirmation ("Are you sure?") with Yes/Cancel buttons
-- [ ] Danger zone: confirming deletes everything and redirects to `/` (landing page)
-- [ ] Danger zone: cancelling dismisses the confirmation without any action
+- [ ] **Profile:** display name editable; "Save" disabled when name is unchanged
+- [ ] "Save" shows "Display name updated" confirmation; dashboard header reflects new name on next visit
+- [ ] Email shown as read-only (cannot edit)
+- [ ] **Channels:** can search and add new channels; newly added channel appears in list
+- [ ] Can remove an existing channel (✕ button); removed channel disappears from list
+- [ ] **Schedule:** can change workout type / body focus / difficulty / duration for each day
+- [ ] Can toggle any day to rest (clears type/focus/duration)
+- [ ] "Save schedule" shows "Schedule saved." confirmation
+- [ ] Regenerating plan after schedule change uses the new schedule
+- [ ] **Danger zone:** "Delete my account" button has red border
+- [ ] Clicking shows inline confirmation "Are you sure?" with Yes / Cancel
+- [ ] Cancel dismisses confirmation without action
+- [ ] Confirming deletion → redirected to `/`; signing in again starts onboarding (fresh account)
 
-**API sanity (Swagger at /docs)**
+---
+
+### Group 6 — API sanity (Swagger at `http://localhost:8000/docs`)
+
+Authenticate via browser first (session cookie), then use Swagger:
+
+- [ ] `GET /auth/me` → 200 with `id`, `email`, `display_name`, `youtube_connected`, `credentials_valid`
 - [ ] `PATCH /auth/me` with `{"display_name": "Test"}` → 200 with updated name
-- [ ] `DELETE /auth/me` → 204, subsequent `GET /auth/me` → 401
-- [ ] `GET /library?workout_type=HIIT` and `?workout_type=hiit` → same results (case-insensitive)
+- [ ] `DELETE /auth/me` → 204; subsequent `GET /auth/me` → 401
+- [ ] `GET /library?workout_type=HIIT` and `?workout_type=hiit` → same result count (case-insensitive)
 - [ ] `GET /library?page=0` → 422; `GET /library?limit=101` → 422
-- [ ] Unauthenticated `GET /library` or `PATCH /auth/me` → 401
+- [ ] Unauthenticated `GET /library` → 401
+- [ ] `POST /plan/publish` → 200 with `playlist_url` and `video_count`
 
-**Mobile (resize browser to ~390px wide)**
+---
+
+### Group 7 — Mobile (resize browser to ~390px wide)
+
 - [ ] Landing page: single column, CTA button full-width
 - [ ] Dashboard grid: 2 columns
 - [ ] Library grid: 2 columns, filter bar wraps without overflow
 - [ ] Settings: sections stack vertically, no horizontal overflow
-
-### Phase 5 — Playlist publishing
-- Server-side OAuth flow completes without terminal copy-paste (manual test)
-- On simulated 401, user credentials marked invalid and run skipped gracefully
-- End-to-end: trigger full run → YouTube playlist updated (manual test, real API)
+- [ ] Onboarding: all 3 steps usable at mobile width
 
 ---
 
-## Test Dependencies to Add to `requirements.txt`
+## Old CLI Tool Tests
 
-```
-pytest
-pytest-asyncio      # for async FastAPI routes in Phase 2+
-httpx               # FastAPI test client
-```
+The original `main.py` CLI is feature-complete and not under active development.
+Its test coverage is documented in the table below (all passing).
+
+| File | Tests |
+|---|---|
+| `tests/test_db.py` | `init_db` creates tables, idempotent |
+| `tests/test_scanner.py` | Duration parsing, save/dedup logic |
+| `tests/test_classifier.py` | JSON parsing, field validation, message building |
+| `tests/test_planner.py` | Monday calc, scoring, fallback tiers, history avoidance |
