@@ -36,7 +36,16 @@ routers, scanner/classifier/planner services, APScheduler weekly cron, scan endp
 - DB migration 002: `credentials_valid` (bool, default true) + `youtube_playlist_id` columns
 
 ## Next
-Deploy (Railway + Vercel) or manual E2E testing for Phase 4 + 5.
+- Fix Vercel branch → point to `feat/web-app` (currently defaulted to `main`)
+- Once Vercel is up: set `FRONTEND_ORIGINS` in Railway to the Vercel domain
+- E2E testing against live deployed URLs
+
+## Deployment Status
+- **Railway (backend):** ✅ Live at `https://youtube-workout-planner-production.up.railway.app`
+  - DB migrations ran (001 + 002), APScheduler running, health check passing
+  - All env vars set including `DATABASE_URL` (linked from Railway Postgres plugin)
+- **Vercel (frontend):** ⏳ Project created but pointing to `main` — need to switch to `feat/web-app`
+- **Deployment files added:** `Dockerfile`, `railway.toml`, `vercel.json`, `Procfile` (all on `feat/web-app`)
 
 ## Future API Ideas
 - `PATCH /plan/{day}` with null `video_id` to mark a day as rest for that week only
