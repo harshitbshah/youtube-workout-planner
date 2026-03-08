@@ -5,45 +5,205 @@
 2. Run `git log --oneline -10` to see recent commits
 3. Continue from where the last session left off
 
-## Maintaining PROGRESS.md
-Keep it lean — current state only, not history (git log covers that).
-- Check off tasks as they're completed
-- When a phase is fully done, delete it and replace with the next phase's tasks
-- Decisions made → move to the relevant doc (`docs/infra-research.md` etc.), remove from Blocked
-- Never add a session log or completed work list — it bloats fast
-- **Always update PROGRESS.md before committing** — every commit must leave PROGRESS.md
-  reflecting the current state so the next session can resume without reading the full diff
+## Maintaining Docs
 
-## Project Summary
-Automated weekly YouTube workout playlist builder. Every Sunday a GitHub Actions job:
-1. Scans configured YouTube channels for new videos
-2. Classifies them via Claude Haiku (workout type, body focus, difficulty)
-3. Picks one video per training day based on `config.yaml` schedule
-4. Refreshes the YouTube playlist in day order
+**PROGRESS.md** — update before every commit. Keep it lean (current state only, no history).
+- Check off tasks as completed
+- When a phase is done, replace it with the next phase's tasks
 
-## Key Files
-- `main.py` — entry point (`--init` / `--classify-only` / `--run` / `--dry-run`)
-- `config.yaml` — channels + weekly schedule (edit to change training split)
-- `workout_library.db` — SQLite database, auto-committed by CI after each run
-- `src/scanner.py` — fetches videos from YouTube channels
-- `src/classifier.py` — LLM classification via Anthropic Batch API
-- `src/planner.py` — weekly plan generation logic
-- `src/playlist.py` — YouTube playlist management (OAuth write access)
-- `.github/workflows/weekly_plan.yml` — Sunday 6pm UTC scheduled job
+**docs/architecture.md** — update whenever routes, pages, components, or DB schema change.
+The web app section must stay in sync with the actual codebase.
 
-## Documentation
-- `docs/architecture.md` — pipeline components, data flow, design decisions
-- `docs/scaling.md` — web app vision, target architecture, open questions
-- `docs/infra-research.md` — hosting, scheduler, frontend, API decisions
+**docs/testing.md** — add new pages/features to the Phase manual checklist when built.
+Delete checklist items as verified; delete the section when fully ticked.
 
-## Tech Stack
-- Python 3.10+, SQLite
-- YouTube Data API v3 (read) + OAuth (playlist write)
-- Anthropic API — Claude Haiku via Batch API for classification
-- GitHub Actions for scheduling
+**docs/google-oauth-setup.md** — update if OAuth scopes or the publish flow changes.
 
-## Conventions
-- Secrets live in `.env` locally and GitHub Actions Secrets in CI — never committed
-- `workout_library.db` IS committed (it's the data store)
-- Use `--dry-run` to preview plans without touching the playlist
-- `--init` is safe to re-run — skips already-scanned videos
+**docs/infra-research.md** — mark decisions as "made" when they are; add new decisions as they arise.
+
+**docs/backlog.md** — append new ideas here mid-session whenever something worth
+capturing surfaces. Review before starting a new phase.
+
+**docs/user-guide.md** — update when user-facing features are added or change behaviour.
+Covers current features only (no speculative content), written for a non-technical reader.
+
+**CLAUDE.md itself** — update the API routes table, file map, and user flows whenever
+new routes or pages are added.
+
+---
+
+## Project Overview
+
+Two distinct things live in this repo:
+
+### 1. Original CLI tool (`main.py`, `src/`, `config.yaml`)
+Single-user Python script that runs on GitHub Actions every Sunday:
+scan channels → classify with Claude → generate plan → update YouTube playlist.
+This is **feature-complete and in production**. Do not touch unless explicitly asked.
+
+### 2. Web app — the active focus (`api/`, `frontend/`, `alembic/`, `tests/`)
+Multi-user FastAPI + Next.js web application. This is what we are building.
+See `docs/architecture.md` for full design.
+
+---
+
+## Web App — Running Locally
+
+```bash
+# Backend (from repo root)
+cd ~/Projects/youtube-workout-planner
+source .venv/bin/activate
+set -a && source .env && set +a      # IMPORTANT: set -a exports vars to subprocesses
+.venv/bin/uvicorn api.main:app --reload
+
+# Frontend (separate terminal)
+cd ~/Projects/youtube-workout-planner/frontend
+npm run dev
+```
+
+API: `http://localhost:8000` | Swagger: `http://localhost:8000/docs`
+Frontend: `http://localhost:3000`
+
+## Web App — Tests
+
+```bash
+# Unit tests (SQLite in-memory, no external deps)
+.venv/bin/pytest tests/api/ tests/test_*.py -v
+
+# Integration tests (real PostgreSQL — requires workout_planner_test DB)
+.venv/bin/pytest tests/integration/ -v
+
+# All tests
+.venv/bin/pytest -q
+```
+
+---
+
+## Web App — Key Files
+
+### Backend (`api/`)
+| File | Purpose |
+|---|---|
+| `api/main.py` | FastAPI app, CORS, middleware, router registration |
+| `api/models.py` | SQLAlchemy ORM models (User, Channel, Video, Classification, Schedule, ProgramHistory, UserCredentials) |
+| `api/schemas.py` | Pydantic request/response schemas |
+| `api/dependencies.py` | `get_db`, `get_current_user` FastAPI dependencies |
+| `api/database.py` | SQLAlchemy engine + session factory |
+| `api/crypto.py` | Fernet encryption for credentials at rest |
+| `api/scheduler.py` | APScheduler weekly cron (replaces GitHub Actions for web users) |
+| `api/routers/auth.py` | Google OAuth login/logout + `GET/PATCH/DELETE /auth/me` |
+| `api/routers/channels.py` | `GET/POST /channels`, `DELETE /channels/{id}`, `GET /channels/search` |
+| `api/routers/schedule.py` | `GET/PUT /schedule` |
+| `api/routers/plan.py` | `GET /plan/upcoming`, `POST /plan/generate`, `PATCH /plan/{day}` |
+| `api/routers/library.py` | `GET /library` — paginated, filtered video browser |
+| `api/routers/jobs.py` | `POST /jobs/scan` — trigger manual channel scan |
+| `api/services/scanner.py` | YouTube channel scanning (uses `src/scanner.py` internals) |
+| `api/services/classifier.py` | Video classification via Anthropic Batch API (uses `src/classifier.py`) |
+| `api/services/planner.py` | Weekly plan generation (uses `src/planner.py`) |
+| `alembic/` | Database migrations |
+
+### Frontend (`frontend/src/`)
+| Path | Purpose |
+|---|---|
+| `app/page.tsx` | Landing/marketing page (hero, how it works, features, CTA) |
+| `app/onboarding/page.tsx` | 3-step sign-up wizard: channels → schedule → generate |
+| `app/dashboard/page.tsx` | Weekly plan grid, regenerate, nav to library/settings/publish |
+| `app/library/page.tsx` | Video library browser with filters + assign-to-day |
+| `app/settings/page.tsx` | Profile, channels, schedule, account deletion |
+| `lib/api.ts` | All API calls + TypeScript types |
+| `components/ChannelManager.tsx` | Reusable channel search/add/remove (used in onboarding + settings) |
+| `components/ScheduleEditor.tsx` | Reusable weekly schedule grid (used in onboarding + settings) |
+
+---
+
+## Web App — API Routes Summary
+
+| Method | Path | Auth | Purpose |
+|---|---|---|---|
+| GET | `/health` | No | Health check |
+| GET | `/auth/google` | No | Redirect to Google OAuth |
+| GET | `/auth/google/callback` | No | OAuth callback, set session |
+| GET | `/auth/me` | Yes | Current user profile |
+| PATCH | `/auth/me` | Yes | Update display name |
+| DELETE | `/auth/me` | Yes | Delete account + all data |
+| POST | `/auth/logout` | Yes | Clear session |
+| GET | `/channels` | Yes | List user's channels |
+| POST | `/channels` | Yes | Add channel |
+| DELETE | `/channels/{id}` | Yes | Remove channel |
+| GET | `/channels/search?q=` | Yes | Search YouTube channels |
+| GET | `/schedule` | Yes | Get weekly schedule |
+| PUT | `/schedule` | Yes | Update weekly schedule |
+| GET | `/plan/upcoming` | Yes | Latest generated plan |
+| POST | `/plan/generate` | Yes | Generate/regenerate plan |
+| PATCH | `/plan/{day}` | Yes | Swap a day's video |
+| GET | `/library` | Yes | Paginated/filtered video library |
+| POST | `/jobs/scan` | Yes | Trigger manual channel scan |
+
+---
+
+## Web App — User Flows
+
+```
+/ (landing page)
+  ↓ [click "Get started free"]
+Google OAuth → /auth/google → Google → /auth/google/callback → /
+
+  → New user (no channels): /onboarding
+      Step 1: Add channels (ChannelManager)
+      Step 2: Set schedule (ScheduleEditor)
+      Step 3: Trigger scan → /dashboard
+
+  → Returning user (has channels): /dashboard
+      Header nav: Library | Settings | Regenerate | Publish (disabled) | Sign out
+      ↓ Library → /library
+          Filters: workout type / body focus / difficulty / channel
+          Cards: assign to plan day via PATCH /plan/{day}
+      ↓ Settings → /settings
+          Profile: edit display name, read-only email
+          Channels: ChannelManager (add/remove)
+          Schedule: ScheduleEditor + save
+          Danger zone: delete account (2-step confirm)
+```
+
+---
+
+## Web App — Key Conventions
+
+### Authentication
+- Session cookie via Starlette `SessionMiddleware`
+- `get_current_user` dependency raises 401 if no valid session
+- All user data is strictly isolated by `user_id` (never cross-user leakage)
+
+### Classifier output casing
+The classifier stores `"Strength"`, `"HIIT"`, `"Cardio"`, `"Mobility"`, `"Other"` (mixed case).
+The `GET /library` filter uses `func.lower()` on both sides for case-insensitive matching.
+Frontend filter values are lowercase; display labels are set explicitly in `WORKOUT_TYPE_LABELS`.
+
+### Credentials encryption
+`UserCredentials.youtube_refresh_token` is Fernet-encrypted at rest.
+`ENCRYPTION_KEY` env var must be set before starting the server (Fernet key, base64).
+`ENCRYPTION_KEY` is checked at startup; the server refuses to start without it.
+
+### Running .env
+Always use `set -a && source .env && set +a` — plain `source .env` does not export
+vars to subprocesses, so uvicorn (a subprocess) won't see them.
+
+### Test isolation
+- Unit tests: SQLite in-memory, `StaticPool`, tables recreated per test
+- Integration tests: real PostgreSQL (`workout_planner_test` DB), Alembic migrations,
+  tables truncated between tests (schema preserved)
+
+---
+
+## Documentation Map
+
+| Doc | Contents | Updated when |
+|---|---|---|
+| `PROGRESS.md` | Current phase status and next tasks | Every commit |
+| `docs/architecture.md` | Full system design — CLI pipeline + web app API + data model | Routes, pages, schema change |
+| `docs/testing.md` | Test philosophy + phase manual checklist | New features built or verified |
+| `docs/user-guide.md` | Product readme for non-technical users | User-facing features added/changed |
+| `docs/backlog.md` | Running list of ideas and future features | Mid-session as ideas surface |
+| `docs/google-oauth-setup.md` | OAuth warning, how to publish app, sign-in checklist | OAuth scopes or publish flow changes |
+| `docs/infra-research.md` | Hosting, scheduler, frontend, API key decisions | Decisions made or reconsidered |
+| `docs/scaling.md` | Future scale considerations | Phase milestones or architecture shifts |

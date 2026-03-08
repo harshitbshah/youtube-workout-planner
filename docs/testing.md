@@ -105,8 +105,74 @@ assert batch is created with correct request structure.
 - Worker failures don't crash the queue (assert dead-letter handling)
 
 ### Phase 4 — Frontend
-- Manual browser walkthrough: sign in → add channel → set schedule → view plan
-- No broken layouts on mobile viewport
+
+Full sign-in flow: see `docs/google-oauth-setup.md` for the OAuth warning and fix.
+Delete checklist items as you verify them. Delete the whole section when fully ticked.
+
+**Landing page (`/`)**
+- [ ] Nav: "Workout Planner" logo left, "Sign in" link right
+- [ ] Hero: headline, sub-headline, "Get started free →" CTA, "Free · No credit card" badge
+- [ ] "How it works" section: 3 steps (01/02/03)
+- [ ] "Why Workout Planner" section: 3 feature cards
+- [ ] Bottom CTA section + footer
+- [ ] Already signed-in user is silently redirected (spinner → dashboard or onboarding)
+- [ ] Both CTA buttons link to Google OAuth
+
+**Sign-in & onboarding**
+- [ ] New user clicks "Get started free" → Google OAuth → `/onboarding`
+- [ ] Step 1: search channels, add ≥1, Continue enabled only when ≥1 added
+- [ ] Step 2: schedule grid pre-filled with defaults, can toggle rest days, save navigates to Step 3
+- [ ] Step 3: "Generate my first plan now" triggers scan, redirects to `/dashboard`
+- [ ] Returning user (has channels) → `/dashboard` (bypasses onboarding)
+- [ ] Sign out clears session; Back button does not restore dashboard
+
+**Dashboard**
+- [ ] Header: Library | Settings | Regenerate | Publish to YouTube (disabled) | Sign out
+- [ ] "Publish to YouTube" greyed out, cursor `not-allowed`, tooltip on hover
+- [ ] Plan grid shows 7 days with thumbnails, duration badges, workout/body/difficulty badges
+- [ ] "Regenerate" triggers a new plan and updates the grid in place
+- [ ] Library and Settings links navigate correctly
+
+**Library page (`/library`)**
+- [ ] "← Back" returns to `/dashboard`
+- [ ] Video count shown top-right
+- [ ] Cards: thumbnail, duration badge (bottom-right of image), title (2-line clamp), channel name, badges
+- [ ] Clicking a card opens YouTube in a new tab
+- [ ] Workout type dropdown: Strength / HIIT / Cardio / Mobility (not "Hiit")
+- [ ] Each filter narrows the grid and updates the total count
+- [ ] Combined filters apply as AND
+- [ ] "Clear filters" resets all dropdowns and restores full library
+- [ ] Channel dropdown hidden when user has only 1 channel
+- [ ] "Assign to day" select → shows "✓ Assigned to Mon" for 2s, then resets
+- [ ] Assign when no plan exists → "Failed — generate a plan first"
+- [ ] After assigning, dashboard shows the newly assigned video on that day
+- [ ] Pagination: Previous disabled on page 1, Next on last page, no overlapping videos across pages
+- [ ] Applying a filter while on page >1 resets to page 1
+
+**Settings page (`/settings`)**
+- [ ] "← Dashboard" link returns to `/dashboard`
+- [ ] Profile: display name editable, "Save" disabled when name unchanged, shows "Display name updated" on save
+- [ ] Profile: email shown as read-only
+- [ ] Channels: can search and add new channels, can remove existing ones
+- [ ] Schedule: edit any day's workout type/body focus/difficulty/duration, toggle rest days
+- [ ] Schedule: "Save schedule" shows "Schedule saved." confirmation
+- [ ] Danger zone: "Delete my account" button appears with red border
+- [ ] Danger zone: clicking shows confirmation ("Are you sure?") with Yes/Cancel buttons
+- [ ] Danger zone: confirming deletes everything and redirects to `/` (landing page)
+- [ ] Danger zone: cancelling dismisses the confirmation without any action
+
+**API sanity (Swagger at /docs)**
+- [ ] `PATCH /auth/me` with `{"display_name": "Test"}` → 200 with updated name
+- [ ] `DELETE /auth/me` → 204, subsequent `GET /auth/me` → 401
+- [ ] `GET /library?workout_type=HIIT` and `?workout_type=hiit` → same results (case-insensitive)
+- [ ] `GET /library?page=0` → 422; `GET /library?limit=101` → 422
+- [ ] Unauthenticated `GET /library` or `PATCH /auth/me` → 401
+
+**Mobile (resize browser to ~390px wide)**
+- [ ] Landing page: single column, CTA button full-width
+- [ ] Dashboard grid: 2 columns
+- [ ] Library grid: 2 columns, filter bar wraps without overflow
+- [ ] Settings: sections stack vertically, no horizontal overflow
 
 ### Phase 5 — Playlist publishing
 - Server-side OAuth flow completes without terminal copy-paste (manual test)

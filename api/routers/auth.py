@@ -17,8 +17,9 @@ from fastapi.responses import RedirectResponse
 from sqlalchemy.orm import Session
 
 from ..crypto import encrypt
-from ..dependencies import get_db
+from ..dependencies import get_current_user, get_db
 from ..models import User, UserCredentials
+from ..schemas import PatchMeRequest
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -132,13 +133,32 @@ async def google_callback(
 @router.get("/me")
 def me(request: Request, db: Session = Depends(get_db)):
     """Return the current user's profile, or 401 if not logged in."""
-    from ..dependencies import get_current_user
     user = get_current_user(request, db)
-    return {
-        "id": user.id,
-        "email": user.email,
-        "display_name": user.display_name,
-    }
+    return {"id": user.id, "email": user.email, "display_name": user.display_name}
+
+
+@router.patch("/me")
+def patch_me(
+    body: PatchMeRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Update the current user's display name."""
+    current_user.display_name = body.display_name.strip() or None
+    db.commit()
+    return {"id": current_user.id, "email": current_user.email, "display_name": current_user.display_name}
+
+
+@router.delete("/me", status_code=204)
+def delete_me(
+    request: Request,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Permanently delete the current user and all their data."""
+    db.delete(current_user)
+    db.commit()
+    request.session.clear()
 
 
 @router.post("/logout")

@@ -78,3 +78,18 @@ class PlanResponse(BaseModel):
 
 class PatchDayRequest(BaseModel):
     video_id: str
+
+
+# ─── Auth ──────────────────────────────────────────────────────────────────────
+
+class PatchMeRequest(BaseModel):
+    display_name: str
+
+
+# ─── Library ───────────────────────────────────────────────────────────────────
+
+class LibraryResponse(BaseModel):
+    videos: list[VideoSummary]
+    total: int
+    page: int
+    pages: int

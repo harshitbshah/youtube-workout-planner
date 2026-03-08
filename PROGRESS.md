@@ -1,24 +1,36 @@
 # Progress
 
 ## Status
-Phases 1–3 complete. 160/160 tests passing. Starting Phase 4 — Frontend.
+Phases 1–4 complete. 194/194 tests passing. Phase 5 upcoming.
 
-## Current Phase — Phase 4: Frontend
-- [ ] Choose frontend stack (HTMX vs Next.js on Vercel) — decision needed before starting
-- [ ] Onboarding flow (sign in with Google, add channels, set schedule)
-- [ ] Plan preview page (view next week's plan, swap days)
-- [ ] Library browser (browse/filter classified videos)
-- [ ] "Publish to YouTube" button (manual publish as engagement gate)
+## What's built
 
-## Upcoming Phases
-- **Phase 5** — Playlist publishing (server-side OAuth, `POST /plan/publish`, revoked access handling)
+### Phase 1–3 (Backend)
+FastAPI + PostgreSQL (Alembic), Google OAuth, Fernet encryption, channels/schedule/plan
+routers, scanner/classifier/planner services, APScheduler weekly cron, scan endpoint.
 
-## Blocked / Decisions Needed
-- Frontend stack: HTMX (simpler) vs Next.js on Vercel (faster to build with AI tooling) — decide before Phase 4
+### Phase 4 (Frontend) — complete
+- Landing/marketing page (`/`) — hero, how it works, features, sign-up CTA
+- Onboarding (`/onboarding`) — 3-step: channels → schedule → generate first plan
+- Dashboard (`/dashboard`) — 7-day plan grid, regenerate, nav to library/settings
+- Library browser (`/library`) — filter by workout type/body focus/difficulty/channel,
+  assign video to plan day, pagination
+- Settings (`/settings`) — edit display name, manage channels, edit schedule, delete account
+- "Publish to YouTube" button on dashboard (disabled — wired in Phase 5)
+- Shared components: `ChannelManager`, `ScheduleEditor` (reused in onboarding + settings)
+- Backend: `PATCH /auth/me` (display name), `DELETE /auth/me` (account deletion)
+- Bug fix: `GET /library` filters are case-insensitive (`func.lower`) — classifier stores
+  mixed-case values ("HIIT", "Strength") but frontend sends lowercase
+
+## Upcoming — Phase 5: Playlist Publishing
+- `POST /plan/publish` backend endpoint
+- Server-side YouTube OAuth using stored refresh token
+- Handle revoked access (401 → mark credentials invalid, notify user, skip run)
+- Enable "Publish to YouTube" button on dashboard
+- In-app banner when YouTube access is revoked
 
 ## Future API Ideas
-- `PATCH /plan/{day}` with null `video_id` to mark a scheduled day as rest for that week only.
-  Currently only supports swapping to another video. Only worth adding if the frontend has an explicit
-  "skip this day" UX — otherwise the schedule already handles structural rest days.
-- Cross-user channel dedup: shared `channels` table + `user_channels` join table to avoid scanning
-  the same YouTube channel N times for N users. Documented in `docs/scaling.md`. Pre-scale work.
+- `PATCH /plan/{day}` with null `video_id` to mark a day as rest for that week only
+  (currently only supports swapping to another video — only worth adding with explicit UI)
+- Cross-user channel dedup: shared `channels` table + `user_channels` join to avoid
+  scanning the same YouTube channel N times. Documented in `docs/scaling.md`.

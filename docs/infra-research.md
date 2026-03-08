@@ -67,7 +67,9 @@ Switch to Celery when any of these apply:
 
 ## Frontend
 
-**Decision needed:** how much UI complexity, and where does it run?
+**Decision made (2026-03-08):** Next.js 16 + Tailwind CSS v4, hosted on Vercel.
+
+
 
 The interaction surface is intentionally small:
 - Week grid schedule editor
@@ -82,11 +84,10 @@ Three options:
 | **Next.js on Vercel** | Medium | Fast (with v0/Claude for component generation) | Clean split: frontend on Vercel free tier, backend on Railway |
 | **React SPA** | High | Slower | Maximum flexibility, overkill for this surface area |
 
-### Recommendation
-
-**HTMX** is the leanest path and well-matched to the low interactivity of the UI. If iteration speed matters more than keeping things simple, **Next.js on Vercel** is a good split: Vercel's free tier handles the frontend, Railway handles the backend, and tools like v0 or Claude can generate components quickly.
-
-Full React SPA is over-engineered for this use case.
+Next.js on Vercel — Vercel free tier for the frontend, Railway for the backend API.
+Full React SPA was considered overkill; HTMX was considered but Next.js was chosen
+for its component model (reusable ChannelManager, ScheduleEditor across onboarding + settings)
+and first-class TypeScript support.
 
 ---
 
