@@ -108,44 +108,81 @@ The platform bears the Anthropic classification cost for every user. Running the
 
 **Nothing useful.** The YouTube Data API doesn't expose watch history or play events — this is a privacy restriction, not a quota limitation. You can read/write playlists but cannot know if the user watched any video in it. All engagement signals must come from within the web app itself.
 
-### Available signals
+### Signals considered and why they fall short
 
-| Signal | How to capture | Quality |
-|---|---|---|
-| User logs into the web app | `last_active_at` on User, updated per request | Weak — doesn't mean they worked out |
-| User swaps a plan day (`PATCH /plan/{day}`) | Already tracked via request | Strong — active engagement |
-| User re-generates the plan | Already tracked via request | Strong |
-| User marks a day complete | `ProgramHistory.completed` field (already in schema) | Strongest — explicit intent |
-| No interaction in N weeks | Derived from `last_active_at` | Weak but practical for pausing |
+| Signal | Problem |
+|---|---|
+| `last_active_at` on User | App logins are the wrong proxy — a user could work out daily from the YouTube playlist and never open the app |
+| `ProgramHistory.completed` (user marks days done) | Self-reported, unreliable, requires app interaction |
+| OAuth token still valid | Only means they haven't disconnected — says nothing about whether they're working out |
+| YouTube playlist still exists | Can check via API but doesn't mean they're using it |
+| Weekly check-in email ("did you follow the plan?") | Email ignore rates are high; self-reported data is unreliable |
+| Weekly opt-in email ("generate plan for next week?") | Guarantees intent but adds friction and removes the automation value |
 
-### Two-layer engagement system (decided 2026-03-07)
+### Options considered
 
-**Layer 1 — Soft nudge (2 weeks no app interaction):**
-Generate the plan anyway but send a nudge email: *"Your weekly plan is ready — have you been keeping up?"*
+**Option A — Two-layer inactivity system (Duolingo model)**
+- Layer 1: soft nudge email after 2 weeks no app interaction
+- Layer 2: hard pause after 4 weeks no day marked complete
+- Problem: the workout happens entirely inside YouTube. The most faithful users — those working out every day from the playlist — never open the app and get incorrectly flagged as inactive. Penalises the exact user you want to keep.
 
-**Layer 2 — Hard pause (4 weeks no day marked complete):**
-Stop generating. Send email: *"We've paused your weekly plan since you haven't been active. Tap here to resume."*
-One click resumes immediately and triggers a new plan.
+**Option B — Keep running as long as OAuth token is valid**
+- Simple: if user revoked access, they've churned
+- Problem: OAuth token validity says nothing about whether they're actually using the plan. A user could have the app connected and never look at their playlist.
 
-This is the Duolingo model — gentle nudge first, then pause with frictionless re-entry:
-- Users on holiday or sick don't get permanently lost
-- Users who've genuinely churned stop costing Anthropic credits
-- Resume is one click so reactivation rate stays high
+**Option C — Weekly check-in email / notification**
+- Ask "did you follow last week's plan?" with a one-tap response
+- Problem: email response rates are low and self-reporting is unreliable. Doesn't solve the fundamental measurement problem.
 
-### What needs to be built
+**Option D — Manual publish button (decided 2026-03-07)**
+- No automatic playlist publishing. User must log into the app weekly and click "Publish to YouTube" to update their playlist.
+- The publish action IS the engagement signal. No login = no publish = no new plan generated = no cost.
+- See below for full rationale.
 
-1. **`User.last_active_at`** — DB column updated on every authenticated request via middleware. Foundation that everything else depends on. Should be added before launch so data accumulates from day one.
-2. **`POST /plan/{day}/complete`** — lets users mark individual days done from the frontend. Surfaces `ProgramHistory.completed` (already in schema, never set today).
-3. **Scheduler engagement check** — before running the weekly pipeline for a user, check `last_active_at` and recent `completed` counts. Skip and log if thresholds not met.
-4. **`is_paused` flag on `User`** — set when auto-paused, cleared on resume. Controls scheduler and shows in-app banner.
+### Decision: manual publish as the engagement gate
 
-### V1 plan (friends audience)
+The weekly "Publish to YouTube" button in the web app is the required action to trigger a new plan. This solves the intent measurement problem permanently:
 
-Don't build the full system before launch. Minimum for v1:
-- Add `last_active_at` to User model now (one migration, starts capturing data immediately)
-- Weekly scheduler skips users with `last_active_at` older than 3 weeks
-- Surface `ProgramHistory.completed` via frontend in Phase 4
-- Build full pause/resume + email notifications after seeing real usage patterns
+- **Intent is ironclad** — the user physically logs in and clicks publish. No ambiguity, no inference, no self-reporting.
+- **Cost control is automatic** — no login = pipeline skipped = zero cost. Works at any scale without additional engineering.
+- **Eliminates passive engagement tracking entirely** — no `last_active_at`, no completion flags, no heuristics needed.
+- **Forces the app to have weekly value** — the web app becomes a genuine weekly touchpoint (review plan, swap days, publish) rather than a one-time setup tool.
+- **Optional in-app workout tracking** — users who want to follow the plan inside the app can; users who prefer YouTube can publish and switch to YouTube. Both workflows supported.
+
+### Trade-offs accepted
+
+- **Removes "set and forget" automation** — the CLI tool's core value was zero weekly effort. The web app requires a weekly login. This is an intentional product direction change.
+- **Users must show up weekly** — this is a feature, not a bug. See Product Philosophy below.
+
+### Product philosophy
+
+This app is for people who are serious about their training. The weekly login is the price of admission. Users who find that too much friction self-select out — which is acceptable. Optimising for engaged users over maximising signup numbers leads to:
+
+- Costs that stay proportional to real value delivered
+- No guilt-trip re-engagement emails or dark patterns
+- Word of mouth from genuinely happy users over growth hacking inactive ones
+- A simpler, more honest system at any scale
+
+This applies to the target audience at every stage — friends for v1, broader fitness enthusiasts later. Motivated users are the only target users.
+
+### What this means for the weekly flow
+
+```
+User opens app Sunday/Monday →
+  Reviews next week's generated plan →
+  Swaps days if needed →
+  Clicks "Publish to YouTube" →
+  Playlist updates + pipeline marked as run for this week
+```
+
+If user doesn't log in → playlist stays as last week's → no new plan generated → no Anthropic cost.
+
+### What needs to be built (Phase 5)
+
+- `POST /plan/publish` endpoint — pushes current plan to YouTube playlist, marks week as published
+- Weekly scheduler checks if user published last week before running pipeline again
+- "Publish to YouTube" button in the frontend (Phase 4)
+- In-app plan view as an alternative to YouTube for users who want to track workouts in the app
 
 ---
 
