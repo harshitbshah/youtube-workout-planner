@@ -186,6 +186,68 @@ If user doesn't log in → playlist stays as last week's → no new plan generat
 
 ---
 
+## Returning User Experience
+
+### The scenario
+
+User was active, then went on holiday / got injured / got busy for several weeks. They come back and open the app. What do they find and what should happen?
+
+### Problems to handle on return
+
+| Problem | Impact |
+|---|---|
+| Stale plan | Last published plan is weeks old; YouTube playlist is outdated |
+| Stale video library | Weeks of new uploads from their channels haven't been scanned or classified |
+| History window distortion | Gaps in the 8-week dedup window — planner may re-suggest recently done videos or have fewer candidates than expected |
+| Unknown reason for absence | Injury, travel, busy — the right experience may differ but the app can't know |
+
+### Options considered
+
+**Option A — Silent catch-up**
+On login after a gap, automatically trigger scan → classify → generate plan in the background. User just sees a fresh plan ready to publish.
+- Pro: frictionless
+- Con: user doesn't know what happened, might be disorienting if they return mid-week with their own plan
+
+**Option B — Welcome back screen (decided 2026-03-07)**
+Detect the gap via `last_active_at`, show a banner: *"Welcome back! It's been X weeks. We've caught up your video library — here's a fresh plan for this week."*
+Automatically triggers catch-up in background. User reviews and publishes when ready.
+- Pro: transparent, feels intentional, no extra decision required
+- Con: requires `last_active_at` on the User model
+
+**Option C — Offer a choice on return**
+Show: *"Welcome back! Want us to generate a fresh plan for this week?"* with options to generate or browse library first.
+- Pro: gives control, useful if returning mid-week
+- Con: adds a decision step, more friction
+
+### Decision: Option B — Welcome back screen
+
+```
+User logs in after 2+ week gap →
+  App detects gap via last_active_at →
+  Shows "Welcome back" banner with gap duration →
+  Triggers background scan + classify automatically →
+  When ready: shows fresh plan with "Publish to YouTube" CTA
+```
+
+This makes the catch-up feel like a deliberate feature rather than something that silently happened. The gap threshold for showing the banner is 2 weeks (one missed cycle).
+
+### Why last_active_at is still needed
+
+Even though we dropped activity-based pipeline pausing, `last_active_at` is still required for:
+- Detecting the return scenario and showing the welcome back UX
+- Knowing how long the gap was (to communicate it clearly to the user)
+- Future analytics on usage patterns
+
+Should be added to the User model before launch so data accumulates from day one. Updated on every authenticated request via middleware.
+
+### What needs to be built
+
+- `User.last_active_at` — DB column + Alembic migration + middleware to update on every request
+- Welcome back detection in the frontend (Phase 4) — check gap on login, show banner if > 2 weeks
+- Background catch-up trigger on return — same scan → classify → generate pipeline as manual publish flow
+
+---
+
 ## Data Model Changes
 
 The core tables from the current schema carry over, extended with a `users` table and foreign keys:
