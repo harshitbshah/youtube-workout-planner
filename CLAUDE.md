@@ -11,6 +11,8 @@ Keep it lean — current state only, not history (git log covers that).
 - When a phase is fully done, delete it and replace with the next phase's tasks
 - Decisions made → move to the relevant doc (`docs/infra-research.md` etc.), remove from Blocked
 - Never add a session log or completed work list — it bloats fast
+- **Always update PROGRESS.md before committing** — every commit must leave PROGRESS.md
+  reflecting the current state so the next session can resume without reading the full diff
 
 ## Project Summary
 Automated weekly YouTube workout playlist builder. Every Sunday a GitHub Actions job:
