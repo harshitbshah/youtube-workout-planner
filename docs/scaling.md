@@ -391,6 +391,7 @@ See [infra-research.md](./infra-research.md) for the full research and recommend
 - **YouTube API quota:** Not a blocker for v1; single key covers ~10 users. Per-user keys or quota increase before scaling past that. → [infra-research.md § YouTube API quota](./infra-research.md#youtube-api-quota)
 - **Playlist ownership / revoked access:** On OAuth 401, mark credentials invalid, skip run, leave playlist at last good state, notify user by email + in-app banner. → [infra-research.md § Playlist ownership](./infra-research.md#playlist-ownership--revoked-access)
 - **Free tier / pricing:** BYOK for v1 (user supplies Anthropic key); switch to platform-pays flat subscription when targeting less technical users. → [infra-research.md § Free tier / pricing](./infra-research.md#free-tier--pricing)
+- **Cross-user channel dedup (pre-scale):** Current schema is `users → channels → videos` — each user owns their channel row, so if N users follow the same YouTube channel, it gets scanned N times and videos are stored N times. At v1 scale (friends) this is negligible. Before broader launch, consider a shared `channels` table with a `user_channels` join table so popular channels (e.g. HASfit) are scanned once and their videos stored once, shared across all subscribers. Requires schema migration and scoping changes to the scanner and classifier.
 
 ---
 

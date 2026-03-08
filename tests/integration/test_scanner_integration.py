@@ -6,9 +6,11 @@ What these add over unit tests:
   - _get_since_date reads the correct most-recent published_at from Postgres
   - youtube_channel_id is persisted back to the Channel row after resolution
   - Videos are correctly FK-linked to the channel UUID (not YouTube channel ID)
+  - Shorts filtering (hashtag + duration) verified end-to-end via scan_channel mock
 """
 
 from datetime import datetime, timezone
+from unittest.mock import MagicMock, patch
 
 from api.models import Channel, Video
 from api.services.scanner import _get_since_date, _save_videos
@@ -136,7 +138,6 @@ def test_scan_channel_persists_youtube_channel_id(db_session, make_user, make_ch
     After a scan, the resolved YouTube channel ID must be saved back to the Channel row.
     Mocks the YouTube API to avoid real network calls.
     """
-    from unittest.mock import MagicMock, patch
     from api.services.scanner import scan_channel
 
     user = make_user()
@@ -153,3 +154,134 @@ def test_scan_channel_persists_youtube_channel_id(db_session, make_user, make_ch
 
     db_session.refresh(channel)
     assert channel.youtube_channel_id == "UC_real_channel_id"
+
+
+# ─── Shorts filtering ─────────────────────────────────────────────────────────
+
+def _make_playlist_item(video_id: str, title: str, published_at: str = "2025-06-01T00:00:00Z"):
+    return {
+        "snippet": {
+            "publishedAt": published_at,
+            "title": title,
+            "description": "desc",
+            "resourceId": {"videoId": video_id},
+        }
+    }
+
+
+def _make_mock_youtube(playlist_items: list, details: dict):
+    """Return a mock YouTube client with the given playlist items and video details."""
+    mock = MagicMock()
+    mock.playlistItems().list().execute.return_value = {
+        "items": playlist_items,
+        "nextPageToken": None,
+    }
+    mock.videos().list().execute.return_value = {
+        "items": [
+            {
+                "id": vid_id,
+                "contentDetails": {"duration": f"PT{info['duration_sec']}S"},
+                "snippet": {"tags": info.get("tags", [])},
+            }
+            for vid_id, info in details.items()
+        ]
+    }
+    return mock
+
+
+def test_scan_excludes_shorts_by_hashtag(db_session, make_user, make_channel):
+    """Videos with #shorts in the title must never reach the DB."""
+    from api.services.scanner import scan_channel
+
+    user = make_user()
+    channel = make_channel(user.id)
+
+    items = [
+        _make_playlist_item("full-vid", "Full Workout — Push Day"),
+        _make_playlist_item("short-vid", "Quick tip #shorts"),
+        _make_playlist_item("short-vid2", "60s Stretch #Shorts"),
+    ]
+    details = {
+        "full-vid": {"duration_sec": 1800},
+        # Shorts would be filtered before fetching details, but include them
+        # in the mock so the test doesn't fail on missing detail keys.
+        "short-vid": {"duration_sec": 45},
+        "short-vid2": {"duration_sec": 58},
+    }
+    mock_youtube = _make_mock_youtube(items, details)
+
+    with patch("api.services.scanner.build_youtube_client", return_value=mock_youtube), \
+         patch("api.services.scanner.get_channel_info",
+               return_value=("UC_test", "UU_test")), \
+         patch("api.services.scanner._fetch_video_details",
+               return_value={k: v for k, v in details.items()}):
+        count = scan_channel(db_session, channel, api_key="fake-key")
+
+    assert count == 1
+    saved_ids = {v.id for v in db_session.query(Video).filter(Video.channel_id == channel.id).all()}
+    assert "full-vid" in saved_ids
+    assert "short-vid" not in saved_ids
+    assert "short-vid2" not in saved_ids
+
+
+def test_scan_excludes_shorts_by_duration(db_session, make_user, make_channel):
+    """Videos under 3 minutes without the #shorts hashtag must also be excluded."""
+    from api.services.scanner import scan_channel
+
+    user = make_user()
+    channel = make_channel(user.id)
+
+    items = [
+        _make_playlist_item("full-vid", "30 Minute Full Body Workout"),
+        _make_playlist_item("borderline-vid", "2 Minute Stretch"),   # no hashtag, but < 180s
+        _make_playlist_item("exactly-3min", "3 Minute Core Blast"),  # exactly 180s — included
+    ]
+    details = {
+        "full-vid": {"duration_sec": 1800},
+        "borderline-vid": {"duration_sec": 119},
+        "exactly-3min": {"duration_sec": 180},
+    }
+    mock_youtube = _make_mock_youtube(items, details)
+
+    with patch("api.services.scanner.build_youtube_client", return_value=mock_youtube), \
+         patch("api.services.scanner.get_channel_info",
+               return_value=("UC_test", "UU_test")), \
+         patch("api.services.scanner._fetch_video_details",
+               return_value=details):
+        count = scan_channel(db_session, channel, api_key="fake-key")
+
+    assert count == 2
+    saved_ids = {v.id for v in db_session.query(Video).filter(Video.channel_id == channel.id).all()}
+    assert "full-vid" in saved_ids
+    assert "exactly-3min" in saved_ids
+    assert "borderline-vid" not in saved_ids
+
+
+def test_scan_excludes_null_duration(db_session, make_user, make_channel):
+    """Videos where duration could not be resolved are excluded (can't verify not a Short)."""
+    from api.services.scanner import scan_channel
+
+    user = make_user()
+    channel = make_channel(user.id)
+
+    items = [
+        _make_playlist_item("good-vid", "Good Workout"),
+        _make_playlist_item("no-dur-vid", "Unknown Duration Video"),
+    ]
+    details = {
+        "good-vid": {"duration_sec": 2400},
+        "no-dur-vid": {"duration_sec": None},
+    }
+    mock_youtube = _make_mock_youtube(items, details)
+
+    with patch("api.services.scanner.build_youtube_client", return_value=mock_youtube), \
+         patch("api.services.scanner.get_channel_info",
+               return_value=("UC_test", "UU_test")), \
+         patch("api.services.scanner._fetch_video_details",
+               return_value=details):
+        count = scan_channel(db_session, channel, api_key="fake-key")
+
+    assert count == 1
+    saved_ids = {v.id for v in db_session.query(Video).filter(Video.channel_id == channel.id).all()}
+    assert "good-vid" in saved_ids
+    assert "no-dur-vid" not in saved_ids

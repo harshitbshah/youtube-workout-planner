@@ -70,9 +70,11 @@ def _scan_uploads(
     channel: Channel,
     uploads_playlist_id: str,
     since_date: datetime | None = None,
+    max_videos: int | None = None,
 ) -> int:
     """Paginate through uploads playlist and save new videos. Returns new video count."""
     total_new = 0
+    total_fetched = 0
     page_token = None
 
     while True:
@@ -95,6 +97,10 @@ def _scan_uploads(
         stop_pagination = False
 
         for item in items:
+            if max_videos and total_fetched >= max_videos:
+                stop_pagination = True
+                break
+
             snippet = item["snippet"]
             published_at = snippet.get("publishedAt", "")
             video_id = snippet["resourceId"]["videoId"]
@@ -109,6 +115,10 @@ def _scan_uploads(
             if title in ("[Deleted video]", "[Private video]"):
                 continue
 
+            # Layer 1: skip obvious Shorts by hashtag before fetching details
+            if "#shorts" in title.lower():
+                continue
+
             batch.append({
                 "id": video_id,
                 "title": title,
@@ -118,6 +128,7 @@ def _scan_uploads(
                 "duration_sec": None,
                 "tags": None,
             })
+            total_fetched += 1
 
         if batch:
             details = _fetch_video_details(youtube, [v["id"] for v in batch])
@@ -125,6 +136,11 @@ def _scan_uploads(
                 d = details.get(v["id"], {})
                 v["duration_sec"] = d.get("duration_sec")
                 v["tags"] = d.get("tags")
+
+            # Layer 2: skip Shorts by duration (< 3 min) after fetching details.
+            # This catches Shorts that don't use the #shorts hashtag.
+            # Unknown duration (None) is also excluded — can't verify they're not Shorts.
+            batch = [v for v in batch if v.get("duration_sec") and v["duration_sec"] >= 180]
 
             new_count = _save_videos(session, channel, batch)
             total_new += new_count
@@ -141,10 +157,19 @@ def _scan_uploads(
 
 # ─── Public API ───────────────────────────────────────────────────────────────
 
-def scan_channel(session: Session, channel: Channel, api_key: str = "") -> int:
+def scan_channel(
+    session: Session,
+    channel: Channel,
+    api_key: str = "",
+    max_videos: int | None = None,
+) -> int:
     """
     Scan a channel for new videos and save to PostgreSQL.
     Auto-detects full vs incremental based on existing videos.
+
+    max_videos: cap the number of videos fetched (useful for testing or initial previews).
+                None = no limit (full scan).
+
     Returns count of new videos saved.
     """
     key = api_key or YOUTUBE_API_KEY
@@ -162,11 +187,12 @@ def scan_channel(session: Session, channel: Channel, api_key: str = "") -> int:
         session.commit()
 
     mode = "incremental" if since_date else "full"
+    limit_note = f", max {max_videos}" if max_videos else ""
     logger.info(
         f"Starting {mode} scan: {channel.name} "
-        f"(since {since_date.date() if since_date else 'beginning'})"
+        f"(since {since_date.date() if since_date else 'beginning'}{limit_note})"
     )
 
-    total = _scan_uploads(youtube, session, channel, uploads_playlist_id, since_date)
+    total = _scan_uploads(youtube, session, channel, uploads_playlist_id, since_date, max_videos)
     logger.info(f"Scan complete: {total} new videos for {channel.name}")
     return total

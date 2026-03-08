@@ -9,6 +9,7 @@ import logging
 import random
 from datetime import datetime, timedelta, timezone
 
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from src.planner import (
@@ -61,7 +62,7 @@ def _fetch_candidates_for_user(
         .join(Channel, Channel.id == Video.channel_id)
         .filter(
             Channel.user_id == user_id,
-            Classification.workout_type == workout_type,
+            func.lower(Classification.workout_type) == workout_type.lower(),
             or_(
                 Classification.body_focus == body_focus,
                 Classification.body_focus == "any",
