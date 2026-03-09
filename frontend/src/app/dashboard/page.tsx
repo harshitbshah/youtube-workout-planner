@@ -102,6 +102,7 @@ export default function DashboardPage() {
   const [user, setUser] = useState<User | null>(null);
   const [plan, setPlan] = useState<PlanResponse | null>(null);
   const [hasChannels, setHasChannels] = useState(true);
+  const [scanning, setScanning] = useState(false);
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState(false);
   const [publishing, setPublishing] = useState(false);
@@ -113,11 +114,28 @@ export default function DashboardPage() {
       .then(([u, p, channels]) => {
         setUser(u);
         setPlan(p);
-        setHasChannels(channels.length > 0);
+        const channelsExist = channels.length > 0;
+        setHasChannels(channelsExist);
+        // If channels exist but no plan, a scan is likely in progress
+        if (channelsExist && !p) setScanning(true);
       })
       .catch(() => router.replace("/"))
       .finally(() => setLoading(false));
   }, [router]);
+
+  // Poll for the plan every 15s while scanning
+  useEffect(() => {
+    if (!scanning || plan) return;
+    const interval = setInterval(() => {
+      getUpcomingPlan()
+        .then((p) => {
+          setPlan(p);
+          setScanning(false);
+        })
+        .catch(() => {}); // still scanning, keep polling
+    }, 15_000);
+    return () => clearInterval(interval);
+  }, [scanning, plan]);
 
   async function handleGenerate() {
     setGenerating(true);
@@ -240,6 +258,20 @@ export default function DashboardPage() {
           </div>
         </div>
 
+        {/* Scan in progress banner */}
+        {scanning && (
+          <div className="mb-6 flex items-center gap-3 rounded-lg border border-zinc-700 bg-zinc-800/60 px-4 py-3 text-sm text-zinc-300">
+            <svg className="h-4 w-4 animate-spin shrink-0 text-zinc-400" viewBox="0 0 24 24" fill="none">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"/>
+            </svg>
+            <span>
+              Scanning your channels and classifying videos — this usually takes 2–5 minutes.
+              Your plan will appear automatically when ready.
+            </span>
+          </div>
+        )}
+
         {/* YouTube access revoked banner */}
         {user?.youtube_connected && !user?.credentials_valid && (
           <div className="mb-6 rounded-lg border border-amber-700 bg-amber-900/20 px-4 py-3 text-sm text-amber-400">
@@ -285,6 +317,8 @@ export default function DashboardPage() {
                   Set up my plan →
                 </Link>
               </>
+            ) : scanning ? (
+              <p className="text-zinc-500 text-sm">Hang tight — building your plan in the background…</p>
             ) : (
               <>
                 <p className="text-zinc-400 text-sm mb-4">No plan generated yet.</p>

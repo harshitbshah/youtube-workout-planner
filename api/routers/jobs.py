@@ -50,6 +50,46 @@ def _run_scan_and_classify(channel_id: str, user_id: str, max_videos: int | None
         session.close()
 
 
+def _run_full_pipeline(user_id: str):
+    """
+    Scan all channels + classify + generate plan for a user.
+    Runs in a background thread; creates its own DB session.
+    """
+    from ..database import SessionLocal
+    from ..services.classifier import classify_for_user
+    from ..services.scanner import scan_channel
+    from ..services.planner import generate_weekly_plan_for_user
+
+    session = SessionLocal()
+    try:
+        channels = session.query(Channel).filter(Channel.user_id == user_id).all()
+
+        total_new = 0
+        for channel in channels:
+            try:
+                new_videos = scan_channel(session, channel)
+                total_new += new_videos
+                logger.info(f"[scan] {channel.name}: {new_videos} new videos")
+            except Exception as e:
+                logger.error(f"[scan] Failed for {channel.name}: {e}", exc_info=True)
+
+        if total_new > 0:
+            try:
+                classified = classify_for_user(session, user_id)
+                logger.info(f"[classify] {classified} videos classified for user {user_id}")
+            except Exception as e:
+                logger.error(f"[classify] Failed for user {user_id}: {e}", exc_info=True)
+
+        try:
+            generate_weekly_plan_for_user(session, user_id)
+            logger.info(f"[plan] Generated plan for user {user_id}")
+        except Exception as e:
+            logger.error(f"[plan] Failed for user {user_id}: {e}", exc_info=True)
+
+    finally:
+        session.close()
+
+
 @router.post("/scan", status_code=202)
 def trigger_scan(
     background_tasks: BackgroundTasks,
@@ -57,9 +97,8 @@ def trigger_scan(
     db: Session = Depends(get_db),
 ):
     """
-    Trigger scan + classify for ALL of the current user's channels.
-    Returns 202 immediately; the pipeline runs in the background.
-    Used by onboarding to kick off the first scan.
+    Trigger full pipeline (scan → classify → generate plan) for all user channels.
+    Returns 202 immediately; runs in the background.
     """
     if not YOUTUBE_API_KEY:
         raise HTTPException(status_code=503, detail="YouTube API key not configured")
@@ -68,10 +107,8 @@ def trigger_scan(
     if not channels:
         raise HTTPException(status_code=400, detail="No channels added yet")
 
-    for channel in channels:
-        background_tasks.add_task(_run_scan_and_classify, str(channel.id), str(current_user.id))
-
-    return {"message": f"Scan started for {len(channels)} channel(s)"}
+    background_tasks.add_task(_run_full_pipeline, str(current_user.id))
+    return {"message": f"Pipeline started for {len(channels)} channel(s)"}
 
 
 @router.post("/classify", status_code=202)
