@@ -9,17 +9,17 @@ let _token: string | null = null;
 
 export function setToken(token: string) {
   _token = token;
-  sessionStorage.setItem("auth_token", token);
+  localStorage.setItem("auth_token", token);
 }
 
 export function loadToken(): string | null {
-  if (!_token) _token = sessionStorage.getItem("auth_token");
+  if (!_token) _token = localStorage.getItem("auth_token");
   return _token;
 }
 
 export function clearToken() {
   _token = null;
-  sessionStorage.removeItem("auth_token");
+  localStorage.removeItem("auth_token");
 }
 
 // ─── Fetch wrapper ────────────────────────────────────────────────────────────

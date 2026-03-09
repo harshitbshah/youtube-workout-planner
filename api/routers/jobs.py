@@ -50,6 +50,30 @@ def _run_scan_and_classify(channel_id: str, user_id: str, max_videos: int | None
         session.close()
 
 
+@router.post("/scan", status_code=202)
+def trigger_scan(
+    background_tasks: BackgroundTasks,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """
+    Trigger scan + classify for ALL of the current user's channels.
+    Returns 202 immediately; the pipeline runs in the background.
+    Used by onboarding to kick off the first scan.
+    """
+    if not YOUTUBE_API_KEY:
+        raise HTTPException(status_code=503, detail="YouTube API key not configured")
+
+    channels = db.query(Channel).filter(Channel.user_id == current_user.id).all()
+    if not channels:
+        raise HTTPException(status_code=400, detail="No channels added yet")
+
+    for channel in channels:
+        background_tasks.add_task(_run_scan_and_classify, str(channel.id), str(current_user.id))
+
+    return {"message": f"Scan started for {len(channels)} channel(s)"}
+
+
 @router.post("/classify", status_code=202)
 def trigger_classify(
     background_tasks: BackgroundTasks,

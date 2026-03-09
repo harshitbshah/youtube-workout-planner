@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
   getMe,
+  getChannels,
   getUpcomingPlan,
   generatePlan,
   publishPlan,
@@ -100,6 +101,7 @@ export default function DashboardPage() {
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
   const [plan, setPlan] = useState<PlanResponse | null>(null);
+  const [hasChannels, setHasChannels] = useState(true);
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState(false);
   const [publishing, setPublishing] = useState(false);
@@ -107,10 +109,11 @@ export default function DashboardPage() {
   const [error, setError] = useState("");
 
   useEffect(() => {
-    Promise.all([getMe(), getUpcomingPlan().catch(() => null)])
-      .then(([u, p]) => {
+    Promise.all([getMe(), getUpcomingPlan().catch(() => null), getChannels().catch(() => [])])
+      .then(([u, p, channels]) => {
         setUser(u);
         setPlan(p);
+        setHasChannels(channels.length > 0);
       })
       .catch(() => router.replace("/"))
       .finally(() => setLoading(false));
@@ -270,14 +273,30 @@ export default function DashboardPage() {
         {/* No plan yet */}
         {!plan && (
           <div className="rounded-lg border border-zinc-800 bg-zinc-900 p-12 text-center">
-            <p className="text-zinc-400 text-sm mb-4">No plan generated yet.</p>
-            <button
-              onClick={handleGenerate}
-              disabled={generating}
-              className="rounded-lg bg-white px-5 py-2.5 text-sm font-semibold text-zinc-900 hover:bg-zinc-100 disabled:opacity-40 cursor-pointer transition"
-            >
-              {generating ? "Generating…" : "Generate my plan"}
-            </button>
+            {!hasChannels ? (
+              <>
+                <p className="text-zinc-400 text-sm mb-4">
+                  Add your favourite YouTube fitness channels to get started.
+                </p>
+                <Link
+                  href="/onboarding"
+                  className="inline-block rounded-lg bg-white px-5 py-2.5 text-sm font-semibold text-zinc-900 hover:bg-zinc-100 transition"
+                >
+                  Set up my plan →
+                </Link>
+              </>
+            ) : (
+              <>
+                <p className="text-zinc-400 text-sm mb-4">No plan generated yet.</p>
+                <button
+                  onClick={handleGenerate}
+                  disabled={generating}
+                  className="rounded-lg bg-white px-5 py-2.5 text-sm font-semibold text-zinc-900 hover:bg-zinc-100 disabled:opacity-40 cursor-pointer transition"
+                >
+                  {generating ? "Generating…" : "Generate my plan"}
+                </button>
+              </>
+            )}
           </div>
         )}
 

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { getMe, getChannels, loginUrl, setToken } from "@/lib/api";
+import { getMe, loginUrl, setToken } from "@/lib/api";
 
 const HOW_IT_WORKS = [
   {
@@ -51,10 +51,7 @@ export default function LandingPage() {
     }
 
     getMe()
-      .then(() => getChannels())
-      .then((channels) => {
-        router.replace(channels.length > 0 ? "/dashboard" : "/onboarding");
-      })
+      .then(() => router.replace("/dashboard"))
       .catch(() => setChecking(false));
   }, [router]);
 
