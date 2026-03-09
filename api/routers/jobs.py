@@ -2,7 +2,9 @@
 jobs.py — Background job endpoints.
 
 Routes:
-  POST /channels/{channel_id}/scan — scan a channel for new videos then classify them
+  POST /jobs/scan                        — full pipeline: scan all channels → classify → generate plan
+  POST /jobs/classify                    — classify unclassified videos only
+  POST /jobs/channels/{channel_id}/scan  — scan a single channel for new videos then classify them
 """
 
 import logging
@@ -16,7 +18,7 @@ from ..models import Channel, User
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter(tags=["jobs"])
+router = APIRouter(prefix="/jobs", tags=["jobs"])
 
 YOUTUBE_API_KEY = os.getenv("YOUTUBE_API_KEY", "")
 

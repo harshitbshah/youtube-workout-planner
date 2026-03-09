@@ -149,7 +149,7 @@ def test_scan_endpoint_returns_202(auth_client, db_session):
 
     with patch("api.routers.jobs.YOUTUBE_API_KEY", "fake-key"), \
          patch("api.routers.jobs._run_scan_and_classify"):
-        resp = client.post(f"/channels/{ch.id}/scan")
+        resp = client.post(f"/jobs/channels/{ch.id}/scan")
 
     assert resp.status_code == 202
     assert resp.json()["channel_id"] == ch.id
@@ -172,6 +172,6 @@ def test_scan_endpoint_rejects_other_users_channel(auth_client, db_session):
     db_session.refresh(ch)
 
     with patch("api.routers.jobs.YOUTUBE_API_KEY", "fake-key"):
-        resp = client.post(f"/channels/{ch.id}/scan")
+        resp = client.post(f"/jobs/channels/{ch.id}/scan")
 
     assert resp.status_code == 404

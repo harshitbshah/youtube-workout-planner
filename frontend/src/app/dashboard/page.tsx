@@ -239,13 +239,23 @@ export default function DashboardPage() {
             >
               Settings
             </Link>
-            <button
-              onClick={handleGenerate}
-              disabled={generating}
-              className="rounded-lg bg-white px-4 py-2 text-sm font-semibold text-zinc-900 hover:bg-zinc-100 disabled:opacity-40 cursor-pointer transition"
-            >
-              {generating ? "Generating…" : plan ? "Regenerate" : "Generate plan"}
-            </button>
+            {plan ? (
+              <button
+                onClick={handleGenerate}
+                disabled={generating}
+                className="rounded-lg bg-white px-4 py-2 text-sm font-semibold text-zinc-900 hover:bg-zinc-100 disabled:opacity-40 cursor-pointer transition"
+              >
+                {generating ? "Generating…" : "Regenerate"}
+              </button>
+            ) : (
+              <button
+                onClick={handleScan}
+                disabled={generating || scanning}
+                className="rounded-lg bg-white px-4 py-2 text-sm font-semibold text-zinc-900 hover:bg-zinc-100 disabled:opacity-40 cursor-pointer transition"
+              >
+                {generating ? "Starting…" : "Generate plan"}
+              </button>
+            )}
             {user?.youtube_connected && user?.credentials_valid && plan ? (
               <button
                 onClick={handlePublish}

@@ -1,5 +1,7 @@
 """
-Tests for POST /channels/{id}/scan endpoint.
+Tests for jobs endpoints:
+  POST /jobs/scan                 — full pipeline (scan all channels → classify → generate plan)
+  POST /jobs/channels/{id}/scan   — per-channel scan
 
 YouTube API calls and the scan/classify pipeline are mocked — no real network calls.
 """
@@ -21,7 +23,61 @@ def _add_channel(db_session, user):
     return ch
 
 
-# ─── Trigger scan ─────────────────────────────────────────────────────────────
+# ─── POST /jobs/scan — full pipeline ──────────────────────────────────────────
+
+def test_full_pipeline_scan_returns_202(auth_client, db_session):
+    """Returns 202 and enqueues background task when user has channels."""
+    client, user = auth_client
+    _add_channel(db_session, user)
+
+    with patch("api.routers.jobs.YOUTUBE_API_KEY", "fake-key"), \
+         patch("api.routers.jobs._run_full_pipeline") as mock_pipeline:
+        resp = client.post("/jobs/scan")
+
+    assert resp.status_code == 202
+    assert "Pipeline started" in resp.json()["message"]
+    mock_pipeline.assert_called_once_with(str(user.id))
+
+
+def test_full_pipeline_scan_no_channels_returns_400(auth_client):
+    """Returns 400 when the user has no channels — nothing to scan."""
+    client, user = auth_client
+    with patch("api.routers.jobs.YOUTUBE_API_KEY", "fake-key"):
+        resp = client.post("/jobs/scan")
+    assert resp.status_code == 400
+    assert "No channels" in resp.json()["detail"]
+
+
+def test_full_pipeline_scan_no_api_key_returns_503(auth_client, db_session):
+    """Returns 503 when YOUTUBE_API_KEY is not configured."""
+    client, user = auth_client
+    _add_channel(db_session, user)
+    with patch("api.routers.jobs.YOUTUBE_API_KEY", ""):
+        resp = client.post("/jobs/scan")
+    assert resp.status_code == 503
+
+
+def test_full_pipeline_scan_unauthenticated(client):
+    """Returns 401 when not authenticated."""
+    resp = client.post("/jobs/scan")
+    assert resp.status_code == 401
+
+
+def test_full_pipeline_scan_message_includes_channel_count(auth_client, db_session):
+    """Response message includes how many channels were queued."""
+    client, user = auth_client
+    _add_channel(db_session, user)
+    _add_channel(db_session, user)  # second channel
+
+    with patch("api.routers.jobs.YOUTUBE_API_KEY", "fake-key"), \
+         patch("api.routers.jobs._run_full_pipeline"):
+        resp = client.post("/jobs/scan")
+
+    assert resp.status_code == 202
+    assert "2" in resp.json()["message"]
+
+
+# ─── POST /channels/{id}/scan — per-channel ───────────────────────────────────
 
 def test_trigger_scan_returns_202(auth_client, db_session):
     client, user = auth_client
@@ -29,7 +85,7 @@ def test_trigger_scan_returns_202(auth_client, db_session):
 
     with patch("api.routers.jobs.YOUTUBE_API_KEY", "fake-key"), \
          patch("api.routers.jobs._run_scan_and_classify"):
-        resp = client.post(f"/channels/{ch.id}/scan")
+        resp = client.post(f"/jobs/channels/{ch.id}/scan")
 
     assert resp.status_code == 202
     data = resp.json()
@@ -40,7 +96,7 @@ def test_trigger_scan_returns_202(auth_client, db_session):
 def test_trigger_scan_channel_not_found(auth_client):
     client, user = auth_client
     with patch("api.routers.jobs.YOUTUBE_API_KEY", "fake-key"):
-        resp = client.post("/channels/nonexistent-id/scan")
+        resp = client.post("/jobs/channels/nonexistent-id/scan")
     assert resp.status_code == 404
 
 
@@ -57,7 +113,7 @@ def test_trigger_scan_other_users_channel(auth_client, db_session):
     db_session.refresh(ch)
 
     with patch("api.routers.jobs.YOUTUBE_API_KEY", "fake-key"):
-        resp = client.post(f"/channels/{ch.id}/scan")
+        resp = client.post(f"/jobs/channels/{ch.id}/scan")
     assert resp.status_code == 404
 
 
@@ -66,12 +122,12 @@ def test_trigger_scan_no_api_key(auth_client, db_session):
     ch = _add_channel(db_session, user)
 
     with patch("api.routers.jobs.YOUTUBE_API_KEY", ""):
-        resp = client.post(f"/channels/{ch.id}/scan")
+        resp = client.post(f"/jobs/channels/{ch.id}/scan")
     assert resp.status_code == 503
 
 
 def test_trigger_scan_unauthenticated(client, db_session):
-    resp = client.post("/channels/any-id/scan")
+    resp = client.post("/jobs/channels/any-id/scan")
     assert resp.status_code == 401
 
 

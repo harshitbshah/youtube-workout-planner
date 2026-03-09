@@ -5,6 +5,23 @@
 2. Run `git log --oneline -10` to see recent commits
 3. Continue from where the last session left off
 
+## Testing — MANDATORY
+
+Every code change that adds or modifies backend behaviour **must** include:
+
+1. **Unit test** in `tests/api/` — fast, uses SQLite in-memory, mocks external calls.
+   - Test happy path, auth failure (401), and key error cases (400/404/503).
+2. **Integration test** in `tests/integration/` — runs against real PostgreSQL.
+   - Verify the DB-level behaviour (FK constraints, correct rows written, user isolation).
+
+Run both suites before committing:
+```bash
+.venv/bin/pytest tests/api/ -q          # unit
+.venv/bin/pytest tests/integration/ -q  # integration
+```
+
+All tests must pass (0 failures) before any commit. Never skip or defer tests to "add later".
+
 ## Maintaining Docs
 
 **PROGRESS.md** — update before every commit. Keep it lean (current state only, no history).
