@@ -11,6 +11,8 @@ import os
 import secrets
 from urllib.parse import urlencode
 
+from itsdangerous import URLSafeTimedSerializer
+
 import httpx
 from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import RedirectResponse
@@ -128,7 +130,11 @@ async def google_callback(
     request.session["user_id"] = str(user.id)
     request.session.pop("oauth_state", None)
 
-    return RedirectResponse(FRONTEND_URL)
+    # Pass a signed token in the redirect URL so the frontend can authenticate
+    # across domains without relying on cross-domain cookies.
+    secret = os.getenv("SESSION_SECRET_KEY", "dev-secret-change-in-production")
+    token = URLSafeTimedSerializer(secret).dumps(str(user.id))
+    return RedirectResponse(f"{FRONTEND_URL}?token={token}")
 
 
 def _me_response(user: User, db: Session) -> MeResponse:

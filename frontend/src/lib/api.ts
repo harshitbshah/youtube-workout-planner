@@ -1,10 +1,41 @@
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 
+// ─── Token storage ────────────────────────────────────────────────────────────
+// After OAuth, the backend redirects to /?token=<signed_token>. The frontend
+// stores it here and attaches it as Authorization: Bearer on every request,
+// avoiding cross-domain cookie issues entirely.
+
+let _token: string | null = null;
+
+export function setToken(token: string) {
+  _token = token;
+  sessionStorage.setItem("auth_token", token);
+}
+
+export function loadToken(): string | null {
+  if (!_token) _token = sessionStorage.getItem("auth_token");
+  return _token;
+}
+
+export function clearToken() {
+  _token = null;
+  sessionStorage.removeItem("auth_token");
+}
+
+// ─── Fetch wrapper ────────────────────────────────────────────────────────────
+
 async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
+  const token = loadToken();
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+    ...(init?.headers as Record<string, string>),
+  };
+  if (token) headers["Authorization"] = `Bearer ${token}`;
+
   const res = await fetch(`${API_BASE}${path}`, {
     credentials: "include",
-    headers: { "Content-Type": "application/json", ...init?.headers },
     ...init,
+    headers,
   });
 
   if (!res.ok) {
@@ -19,7 +50,10 @@ async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
 // ─── Auth ────────────────────────────────────────────────────────────────────
 
 export const getMe = () => apiFetch<User>("/auth/me");
-export const logout = () => apiFetch<void>("/auth/logout", { method: "POST" });
+export const logout = () => {
+  clearToken();
+  return apiFetch<void>("/auth/logout", { method: "POST" });
+};
 export const loginUrl = () => `${API_BASE}/auth/google`;
 export const patchMe = (display_name: string) =>
   apiFetch<User>("/auth/me", { method: "PATCH", body: JSON.stringify({ display_name }) });

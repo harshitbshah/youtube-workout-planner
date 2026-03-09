@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { getMe, getChannels, loginUrl } from "@/lib/api";
+import { getMe, getChannels, loginUrl, setToken } from "@/lib/api";
 
 const HOW_IT_WORKS = [
   {
@@ -42,6 +42,14 @@ export default function LandingPage() {
   const [checking, setChecking] = useState(true);
 
   useEffect(() => {
+    // Extract token from URL after OAuth redirect (e.g. /?token=xxx)
+    const params = new URLSearchParams(window.location.search);
+    const token = params.get("token");
+    if (token) {
+      setToken(token);
+      window.history.replaceState({}, "", window.location.pathname);
+    }
+
     getMe()
       .then(() => getChannels())
       .then((channels) => {
