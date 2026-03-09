@@ -39,8 +39,9 @@ The schedule comes pre-filled with a balanced split you can keep or adjust:
 | Sunday | Rest |
 
 **Step 3 — Generate your first plan.** Hit the button and the app scans your channels,
-classifies every video with AI, and picks the best match for each day. This takes a
-minute or two the first time. After that, new plans generate in seconds.
+classifies every video with AI, and picks the best match for each day. You'll be
+taken to your dashboard where a progress banner shows while the scan runs — this
+takes 2–5 minutes the first time. The plan appears automatically when it's ready.
 
 ---
 
@@ -52,7 +53,8 @@ thumbnail, duration, channel name, and workout tags.
 Click any card to open the video directly on YouTube.
 
 **Regenerate** — want a fresh set of picks? Hit Regenerate in the top right. The plan
-is rebuilt from scratch using your current channels and schedule.
+is rebuilt instantly from your existing video library — you'll see a brief "Generating…"
+indicator while it runs, then the grid updates.
 
 New plans are also generated automatically every Sunday so your week is always ready
 by Monday morning.

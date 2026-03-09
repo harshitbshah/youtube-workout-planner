@@ -26,7 +26,11 @@ Run before every commit:
 .venv/bin/pytest -q
 ```
 
-Current: **206/206 passing**
+Current: **216/216 passing**
+
+New test files added:
+- `tests/api/test_jobs.py` — 5 new cases for `POST /jobs/scan` (202, 400 no channels, 503 no key, 401 unauth, channel count)
+- `tests/integration/test_jobs_api.py` — 5 integration cases for `POST /jobs/scan` against real Postgres (user isolation, FK constraints, channel count)
 
 ---
 
@@ -78,7 +82,8 @@ Sign out first (or use incognito) so you hit onboarding as a new user.
 - [ ] **Step 2 — Schedule:** grid pre-filled with default split (Mon=Strength/Upper, Sun=Rest, etc.)
 - [ ] Can toggle any day to rest; can change workout type / body focus / difficulty / duration
 - [ ] "Continue" navigates to Step 3
-- [ ] **Step 3 — Generate:** "Generate my first plan now" shows spinner, then redirects to `/dashboard`
+- [ ] **Step 3 — Generate:** "Generate my first plan now" shows spinner, redirects to `/dashboard?scanning=1`
+- [ ] Dashboard shows "Scanning your channels…" banner; plan grid appears automatically when scan finishes (polls every 15s)
 - [ ] Returning user (already has channels) goes directly to `/dashboard` — onboarding skipped
 
 ---
@@ -92,7 +97,9 @@ Sign out first (or use incognito) so you hit onboarding as a new user.
 - [ ] Each card shows title (2-line clamp), channel name, workout/body/difficulty badges
 - [ ] Clicking a video card opens YouTube in a new tab
 - [ ] Sunday shows "Rest day" placeholder card
-- [ ] "Regenerate" triggers a new plan and updates the grid without a full page reload
+- [ ] "Regenerate" (when plan exists) triggers a new plan synchronously — "Generating…" banner shows briefly, grid updates
+- [ ] "Generate plan" (when no plan) starts full scan+classify+generate pipeline — scanning banner shows, plan appears when done
+- [ ] No plan + no channels: empty state shows "Set up my plan →" link to onboarding (not the scan button)
 - [ ] Sign out clears session → redirected to `/`; back button does not restore dashboard
 
 **Publish to YouTube (Phase 5)**

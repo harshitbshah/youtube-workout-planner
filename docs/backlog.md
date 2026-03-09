@@ -67,7 +67,13 @@ Review before starting a new phase to see if anything belongs in scope.
 - Per-user YouTube API key support — required before scaling past ~14 concurrent weekly
   users (10,000 quota units / ~670 per user per week). See `docs/infra-research.md`.
 
-- Deploy to Railway (API + DB) + Vercel (frontend) — not started. Do after Phase 5.
+- Structured error logging / alerting — currently all errors go to Railway stdout. Add
+  Sentry (or similar) so runtime exceptions in background jobs (scan/classify/plan) surface
+  without needing to manually inspect logs.
+
+- Graceful scanner failure reporting — if scan/classify fails for a user, they currently
+  see nothing. Consider storing a `last_scan_status` + `last_scan_error` on the user
+  record so the dashboard can show a meaningful error banner.
 
 ---
 

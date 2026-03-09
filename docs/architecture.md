@@ -242,8 +242,8 @@ The web app is a multi-user version of the CLI pipeline, built as a FastAPI back
 | Encryption | Fernet (credentials at rest) |
 | Scheduler | APScheduler (in-process weekly cron) |
 | Frontend | Next.js 16 + Tailwind CSS v4 |
-| Frontend hosting | Vercel (planned) |
-| API hosting | Railway (planned) |
+| Frontend hosting | Vercel |
+| API hosting | Railway |
 
 ---
 
@@ -294,18 +294,33 @@ GET /auth/google/callback?code=&state=
   → exchange code for tokens
   → upsert user in DB
   → store youtube_refresh_token encrypted in user_credentials
-  → set session cookie (user_id)
-  → redirect to /
+  → generate signed token: URLSafeTimedSerializer(SECRET).dumps(user_id)
+  → redirect to {FRONTEND_URL}?token=<signed_token>
+
+Frontend (page.tsx on mount):
+  → extract ?token= from URL, store in localStorage, strip from URL
+  → all subsequent API calls send: Authorization: Bearer <token>
 
 GET /auth/me          → current user profile
 PATCH /auth/me        → update display_name
 DELETE /auth/me       → delete user + all data (cascade), clear session
-POST /auth/logout     → clear session
+POST /auth/logout     → clear localStorage token
 ```
 
+**Why no session cookies across domains:**
+`SameSite=lax` blocks cross-origin fetch (Vercel → Railway). `SameSite=none` requires
+third-party cookies which Chrome deprecated in 2024. URL token handoff + Bearer header
+works regardless of browser cookie policy.
+
+**Token details:**
+- Signed with `SESSION_SECRET_KEY` via `itsdangerous.URLSafeTimedSerializer`
+- Stored in `localStorage` (survives tab close / browser restart)
+- Expires after 30 days (`max_age=30*24*3600` in `get_current_user`)
+- `api/dependencies.py` checks `Authorization: Bearer` first, falls back to session cookie
+
 ### Data access pattern
-All user-facing endpoints depend on `get_current_user` which reads `user_id` from
-the session cookie and returns the `User` ORM object, or raises 401.
+All user-facing endpoints depend on `get_current_user` which checks the Bearer token
+(or session cookie fallback) and returns the `User` ORM object, or raises 401.
 All queries filter by `user_id` — no cross-user data leakage is possible.
 
 ### Library endpoint
@@ -352,7 +367,13 @@ still handles the single original user independently.
               Step 3: Trigger first scan → /dashboard
 
 /dashboard ── Weekly plan grid (7 days, thumbnails, badges)
-              Nav: Library | Settings | Regenerate | Publish to YouTube (disabled) | Sign out
+              Nav: Library | Settings | Generate plan / Regenerate | Publish to YouTube | Sign out
+              - "Generate plan" (no plan): triggers POST /jobs/scan, shows scanning banner,
+                polls GET /plan/upcoming every 15s until plan appears
+              - "Regenerate" (plan exists): calls POST /plan/generate synchronously,
+                shows "Generating…" banner in-flight, updates grid on response
+              - Scanning banner: spinner + "Scanning your channels…" message while pipeline runs
+              - Generating banner: spinner + "Generating your plan…" while fast generate runs
 
 /library ──── Video library browser
               Filters: workout type, body focus, difficulty, channel
