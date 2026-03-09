@@ -8,6 +8,18 @@ Review before starting a new phase to see if anything belongs in scope.
 
 ---
 
+## Legal / Compliance
+
+- V0 launch: generate Privacy Policy + ToS via Termly/GetTerms, host at `/privacy` and `/terms`
+- Add onboarding consent checkboxes: (1) ToS + Privacy Policy at account creation, (2) health disclaimer before first plan (one-time)
+- Footer: YouTube API attribution links + "Not affiliated with YouTube, Google, or featured channels"
+- Verify `DELETE /auth/me` fully purges YouTube OAuth tokens (Google API ToS requirement)
+- Add "Curated by AI" badge on plan dashboard (FTC AI disclosure)
+- Long-term: lawyer-reviewed docs before paid tier; GDPR cookie banner when analytics added; CCPA compliance at scale
+- See `docs/legal.md` for full details
+
+---
+
 ## Frontend / UX
 
 - Light theme as default with a one-click toggle to dark mode. Currently the app
