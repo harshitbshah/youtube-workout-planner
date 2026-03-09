@@ -50,9 +50,14 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+_is_production = os.getenv("RAILWAY_ENVIRONMENT") is not None
+
 app.add_middleware(
     SessionMiddleware,
     secret_key=os.getenv("SESSION_SECRET_KEY", "dev-secret-change-in-production"),
+    # SameSite=none + Secure required for cross-domain cookies (Vercel → Railway)
+    same_site="none" if _is_production else "lax",
+    https_only=_is_production,
 )
 
 app.include_router(health.router)
