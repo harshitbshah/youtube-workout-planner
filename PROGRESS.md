@@ -36,16 +36,21 @@ routers, scanner/classifier/planner services, APScheduler weekly cron, scan endp
 - DB migration 002: `credentials_valid` (bool, default true) + `youtube_playlist_id` columns
 
 ## Next
-- Fix Vercel branch → point to `feat/web-app` (currently defaulted to `main`)
-- Once Vercel is up: set `FRONTEND_ORIGINS` in Railway to the Vercel domain
-- E2E testing against live deployed URLs
+- Debug Railway 502 on `/auth/google` and `/auth/me` — backend crashes after handling OAuth requests
+  - Health check passes after deploy but service goes down mid-session
+  - Need to find runtime logs (not build logs) in Railway to see traceback
+- E2E testing once Railway is stable
 
 ## Deployment Status
-- **Railway (backend):** ✅ Live at `https://youtube-workout-planner-production.up.railway.app`
-  - DB migrations ran (001 + 002), APScheduler running, health check passing
-  - All env vars set including `DATABASE_URL` (linked from Railway Postgres plugin)
-- **Vercel (frontend):** ⏳ Project created but pointing to `main` — need to switch to `feat/web-app`
-- **Deployment files added:** `Dockerfile`, `railway.toml`, `vercel.json`, `Procfile` (all on `feat/web-app`)
+- **Railway (backend):** ⚠️ Unstable — starts healthy but 502s on OAuth endpoints
+  - DB migrations ran (001 + 002), APScheduler running, health check passes on deploy
+  - All env vars set: `ENCRYPTION_KEY`, `DATABASE_URL`, `SESSION_SECRET_KEY`, `GOOGLE_CLIENT_ID`,
+    `GOOGLE_CLIENT_SECRET`, `GOOGLE_REDIRECT_URI`, `YOUTUBE_API_KEY`, `ANTHROPIC_API_KEY`,
+    `FRONTEND_URL`, `FRONTEND_ORIGINS`
+- **Vercel (frontend):** ✅ Live at `https://youtube-workout-planner-flame.vercel.app`
+  - Branch set to `feat/web-app`, root directory set to `frontend`
+  - `NEXT_PUBLIC_API_URL` set to Railway backend URL
+  - Fixed `vercel.json` — removed invalid `rootDirectory` property (moved to dashboard setting)
 
 ## Future API Ideas
 - `PATCH /plan/{day}` with null `video_id` to mark a day as rest for that week only
