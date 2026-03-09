@@ -32,8 +32,9 @@ Current: **206/206 passing**
 
 ## Manual E2E — Phase 4 + 5
 
-Run both servers before starting:
+Can be run against either local servers or the live deployment.
 
+**Local:**
 ```bash
 # Terminal 1 — backend
 cd ~/Projects/youtube-workout-planner
@@ -44,9 +45,13 @@ set -a && source .env && set +a
 cd ~/Projects/youtube-workout-planner/frontend
 npm run dev
 ```
+Open `http://localhost:3000` in a fresh browser (or incognito).
 
-Open `http://localhost:3000` in a fresh browser (or incognito). Delete checklist items as
-you verify them; delete the whole group when all ticked.
+**Production (live):**
+Open `https://youtube-workout-planner-flame.vercel.app` in a fresh incognito window.
+API Swagger: `https://youtube-workout-planner-production.up.railway.app/docs`.
+
+Delete checklist items as you verify them; delete the whole group when all ticked.
 
 ---
 

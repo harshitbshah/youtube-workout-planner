@@ -5,6 +5,56 @@
 
 ---
 
+## Railway — Lessons Learned (2026-03-09)
+
+Captured from debugging the first live deployment.
+
+### Proxy port must match `$PORT`
+Railway injects `PORT` (typically `8080`) into the container at runtime. Its reverse proxy
+routes external traffic to whatever port is configured in the Networking settings (Railway
+dashboard → service → Settings → Networking). These two values must match.
+
+The Dockerfile CMD default `${PORT:-8000}` means the app starts on 8080 (Railway's PORT)
+while the proxy was still configured for 8000. **Fix:** change the proxy port to 8080 in the
+Railway dashboard, or set PORT explicitly as a Railway variable.
+
+### `postgres://` → `postgresql://` rewrite required
+Railway's PostgreSQL service emits `DATABASE_URL` with a `postgres://` scheme. SQLAlchemy 2.x
+removed support for this alias — `create_engine` raises `NoSuchModuleError` at import time.
+Add a one-line rewrite before `create_engine` and before passing the URL to Alembic:
+```python
+if DATABASE_URL.startswith("postgres://"):
+    DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
+```
+
+### Cross-domain session cookies require `SameSite=none; Secure`
+When frontend (Vercel) and backend (Railway) are on different domains, Starlette's default
+`SameSite=lax` blocks the session cookie on cross-origin `fetch` requests. Set
+`same_site="none"` and `https_only=True` on `SessionMiddleware` in production. Browsers
+require the `Secure` flag whenever `SameSite=none` is used.
+
+### Internal health probes bypass the public proxy
+Railway's health check probes (`100.64.x.x`) connect directly to the container, bypassing
+the public reverse proxy. A misconfigured proxy port causes `/health` to return 200
+internally while all external traffic gets 502. Do not rely on health check success alone
+to confirm public accessibility — always test from outside Railway's network.
+
+### Useful Railway CLI commands
+```bash
+npm install -g @railway/cli
+railway login --browserless          # use when browser auto-open fails
+railway list                         # list projects
+railway link --project <name>        # link local dir to project
+railway service status --all         # show all services + deployment status
+railway logs --service <name>        # tail runtime logs
+railway variables --service <name>   # show all env vars
+railway redeploy --service <name> --yes   # redeploy latest cached image
+railway up --service <name> --detach      # rebuild + deploy from local source
+railway ssh --service <name> -- <cmd>     # exec into running container
+```
+
+---
+
 ## Hosting
 
 **Decision needed:** where does the FastAPI app, Celery workers, PostgreSQL, and Redis run?

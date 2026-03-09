@@ -2,7 +2,7 @@
 
 ## Status
 Phases 1–5 complete. 206/206 tests passing.
-Manual testing for Phase 4 + 5 deferred — ready to do now.
+Both Railway (backend) and Vercel (frontend) live. E2E testing in progress.
 
 ## What's built
 
@@ -35,22 +35,59 @@ routers, scanner/classifier/planner services, APScheduler weekly cron, scan endp
 - Dashboard: green success banner with playlist link after publish
 - DB migration 002: `credentials_valid` (bool, default true) + `youtube_playlist_id` columns
 
+### Deployment fixes (2026-03-09) — complete
+See "Deployment Bug Log" below for full diagnosis + root causes.
+- `api/database.py` + `alembic/env.py`: rewrite `postgres://` → `postgresql://` at runtime
+- `requirements.txt`: pinned all unpinned deps (`sqlalchemy>=2.0`, `fastapi>=0.110`, etc.)
+- `Dockerfile`: added `exec` before `uvicorn` so it runs as PID 1
+- `api/main.py`: `SameSite=none; Secure` on session cookie in production — required for
+  cross-domain cookies between Vercel frontend and Railway backend
+- Railway dashboard: proxy port corrected from 8000 → 8080
+
 ## Next
-- Debug Railway 502 on `/auth/google` and `/auth/me` — backend crashes after handling OAuth requests
-  - Health check passes after deploy but service goes down mid-session
-  - Need to find runtime logs (not build logs) in Railway to see traceback
-- E2E testing once Railway is stable
+- Complete E2E testing (Groups 1–7 in `docs/testing.md`)
+- Verify full OAuth → onboarding → scan → plan → publish flow end-to-end
+- Once E2E passes: share with first users
 
 ## Deployment Status
-- **Railway (backend):** ⚠️ Unstable — starts healthy but 502s on OAuth endpoints
-  - DB migrations ran (001 + 002), APScheduler running, health check passes on deploy
-  - All env vars set: `ENCRYPTION_KEY`, `DATABASE_URL`, `SESSION_SECRET_KEY`, `GOOGLE_CLIENT_ID`,
-    `GOOGLE_CLIENT_SECRET`, `GOOGLE_REDIRECT_URI`, `YOUTUBE_API_KEY`, `ANTHROPIC_API_KEY`,
-    `FRONTEND_URL`, `FRONTEND_ORIGINS`
+- **Railway (backend):** ✅ Live at `https://youtube-workout-planner-production.up.railway.app`
+  - Health check: `{"status":"ok"}`
+  - OAuth redirect working (`/auth/google` → Google consent screen)
+  - All env vars set and verified via `railway variables`
+  - Railway CLI installed (`npm install -g @railway/cli`) and linked to project `endearing-abundance`
 - **Vercel (frontend):** ✅ Live at `https://youtube-workout-planner-flame.vercel.app`
-  - Branch set to `feat/web-app`, root directory set to `frontend`
+  - Branch: `feat/web-app`, root directory: `frontend`
   - `NEXT_PUBLIC_API_URL` set to Railway backend URL
-  - Fixed `vercel.json` — removed invalid `rootDirectory` property (moved to dashboard setting)
+
+## Deployment Bug Log
+
+### Bug 1 — Railway 502 on all endpoints (root cause: wrong proxy port)
+**Symptom:** `/health` returned 502 from external internet; `railway logs` showed internal health
+check returning 200 OK; app was clearly running inside the container.
+**Root cause:** Railway's reverse proxy was configured to route external traffic to port 8000
+(the `${PORT:-8000}` default in the Dockerfile CMD), while Railway injects `PORT=8080` at
+runtime, so uvicorn actually bound to 8080. The proxy → container path hit a closed port.
+Internal Railway health probes (`100.64.x.x`) bypass the public proxy and connect directly to
+the container, so they succeeded while all external traffic failed.
+**Fix:** Railway dashboard → service Settings → Networking → changed proxy port from 8000 → 8080.
+No redeploy needed; routing updated immediately.
+**Also fixed proactively:**
+- Added `postgres://` → `postgresql://` rewrite in `api/database.py` and `alembic/env.py`
+  (Railway's Postgres service emits `postgres://` URLs; SQLAlchemy 2.x rejects this scheme)
+- Pinned all previously unpinned deps in `requirements.txt` to prevent silent breakage on rebuild
+- Added `exec` to Dockerfile CMD so uvicorn runs as PID 1 and receives SIGTERM cleanly
+
+### Bug 2 — Post-OAuth redirect lands on homepage instead of dashboard/onboarding
+**Symptom:** After Google sign-in, user redirected to homepage. Homepage calls `GET /auth/me`
+which returns 401, so the landing page renders instead of redirecting to `/onboarding`.
+**Root cause:** `SessionMiddleware` defaults to `SameSite=lax`. With `SameSite=lax`, the session
+cookie set on the Railway domain is not forwarded on cross-origin `fetch` requests from Vercel.
+The browser only sends it on top-level navigations, not programmatic API calls. So the session
+cookie was set correctly after OAuth but never reached `GET /auth/me`.
+**Fix:** `api/main.py` — set `same_site="none"` and `https_only=True` in production (detected via
+`RAILWAY_ENVIRONMENT` env var). `SameSite=none` allows cross-origin cookie forwarding; `Secure`
+flag is required by browsers whenever `SameSite=none` is used. Falls back to `SameSite=lax`
+(no HTTPS required) for local dev.
 
 ## Future API Ideas
 - `PATCH /plan/{day}` with null `video_id` to mark a day as rest for that week only
