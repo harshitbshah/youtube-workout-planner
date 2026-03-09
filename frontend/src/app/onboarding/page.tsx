@@ -81,7 +81,7 @@ export default function OnboardingPage() {
     setError("");
     try {
       await triggerScan();
-      router.push("/dashboard");
+      router.push("/dashboard?scanning=1");
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : "Failed to start scan");
       setGenerating(false);

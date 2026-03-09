@@ -9,6 +9,7 @@ import {
   getUpcomingPlan,
   generatePlan,
   publishPlan,
+  triggerScan,
   logout,
   type User,
   type PlanResponse,
@@ -110,14 +111,20 @@ export default function DashboardPage() {
   const [error, setError] = useState("");
 
   useEffect(() => {
+    // Check if we just came from onboarding with a scan in progress
+    const params = new URLSearchParams(window.location.search);
+    const scanJustTriggered = params.get("scanning") === "1";
+    if (scanJustTriggered) {
+      setScanning(true);
+      window.history.replaceState({}, "", window.location.pathname);
+    }
+
     Promise.all([getMe(), getUpcomingPlan().catch(() => null), getChannels().catch(() => [])])
       .then(([u, p, channels]) => {
         setUser(u);
         setPlan(p);
-        const channelsExist = channels.length > 0;
-        setHasChannels(channelsExist);
-        // If channels exist but no plan, a scan is likely in progress
-        if (channelsExist && !p) setScanning(true);
+        setHasChannels(channels.length > 0);
+        if (p) setScanning(false); // plan already exists, no need to poll
       })
       .catch(() => router.replace("/"))
       .finally(() => setLoading(false));
@@ -136,6 +143,19 @@ export default function DashboardPage() {
     }, 15_000);
     return () => clearInterval(interval);
   }, [scanning, plan]);
+
+  async function handleScan() {
+    setGenerating(true);
+    setError("");
+    try {
+      await triggerScan();
+      setScanning(true);
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : "Failed to start scan");
+    } finally {
+      setGenerating(false);
+    }
+  }
 
   async function handleGenerate() {
     setGenerating(true);
@@ -323,11 +343,11 @@ export default function DashboardPage() {
               <>
                 <p className="text-zinc-400 text-sm mb-4">No plan generated yet.</p>
                 <button
-                  onClick={handleGenerate}
+                  onClick={handleScan}
                   disabled={generating}
                   className="rounded-lg bg-white px-5 py-2.5 text-sm font-semibold text-zinc-900 hover:bg-zinc-100 disabled:opacity-40 cursor-pointer transition"
                 >
-                  {generating ? "Generating…" : "Generate my plan"}
+                  {generating ? "Starting scan…" : "Scan channels & generate plan"}
                 </button>
               </>
             )}
