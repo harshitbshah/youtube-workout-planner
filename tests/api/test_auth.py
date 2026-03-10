@@ -95,6 +95,54 @@ def test_callback_rejects_invalid_state(client):
     assert resp.status_code == 400
 
 
+def test_delete_me_revokes_token_and_deletes_user(client, db_session):
+    # Log in to create a user with credentials
+    login_resp = client.get("/auth/google", follow_redirects=False)
+    state = login_resp.headers["location"].split("state=")[1].split("&")[0]
+    mock_token, mock_userinfo = _mock_google(refresh_token="refresh_tok")
+    with patch("api.routers.auth._exchange_code_for_tokens", new=AsyncMock(return_value=mock_token.json())), \
+         patch("api.routers.auth._get_google_userinfo", new=AsyncMock(return_value=mock_userinfo.json())):
+        client.get(f"/auth/google/callback?code=c&state={state}", follow_redirects=False)
+
+    user = db_session.query(User).filter(User.google_id == "g123").first()
+    assert user is not None
+
+    revoke_mock = AsyncMock()
+    with patch("api.routers.auth.httpx.AsyncClient") as mock_client_cls:
+        mock_client_cls.return_value.__aenter__ = AsyncMock(return_value=AsyncMock(post=revoke_mock))
+        mock_client_cls.return_value.__aexit__ = AsyncMock(return_value=False)
+        resp = client.delete("/auth/me")
+
+    assert resp.status_code == 204
+    # Token revoked with Google
+    revoke_mock.assert_called_once()
+    call_kwargs = revoke_mock.call_args
+    assert "revoke" in call_kwargs[0][0]
+    assert call_kwargs[1]["params"]["token"] == "refresh_tok"
+    # User gone from DB
+    db_session.expire_all()
+    assert db_session.query(User).filter(User.google_id == "g123").first() is None
+
+
+def test_delete_me_proceeds_if_revoke_fails(client, db_session):
+    # Deletion must complete even if Google's revoke endpoint errors
+    login_resp = client.get("/auth/google", follow_redirects=False)
+    state = login_resp.headers["location"].split("state=")[1].split("&")[0]
+    mock_token, mock_userinfo = _mock_google(refresh_token="refresh_tok")
+    with patch("api.routers.auth._exchange_code_for_tokens", new=AsyncMock(return_value=mock_token.json())), \
+         patch("api.routers.auth._get_google_userinfo", new=AsyncMock(return_value=mock_userinfo.json())):
+        client.get(f"/auth/google/callback?code=c&state={state}", follow_redirects=False)
+
+    with patch("api.routers.auth.httpx.AsyncClient") as mock_client_cls:
+        mock_client_cls.return_value.__aenter__ = AsyncMock(side_effect=Exception("network error"))
+        mock_client_cls.return_value.__aexit__ = AsyncMock(return_value=False)
+        resp = client.delete("/auth/me")
+
+    assert resp.status_code == 204
+    db_session.expire_all()
+    assert db_session.query(User).filter(User.google_id == "g123").first() is None
+
+
 def test_logout_clears_session(client, db_session):
     # Log in first
     login_resp = client.get("/auth/google", follow_redirects=False)

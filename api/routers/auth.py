@@ -18,7 +18,7 @@ from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import RedirectResponse
 from sqlalchemy.orm import Session
 
-from ..crypto import encrypt
+from ..crypto import encrypt, decrypt
 from ..dependencies import get_current_user, get_db
 from ..models import User, UserCredentials
 from ..schemas import MeResponse, PatchMeRequest
@@ -170,12 +170,28 @@ def patch_me(
 
 
 @router.delete("/me", status_code=204)
-def delete_me(
+async def delete_me(
     request: Request,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
     """Permanently delete the current user and all their data."""
+    # Revoke YouTube OAuth token with Google before deleting from DB.
+    # Best-effort: never block account deletion if Google's endpoint fails.
+    creds = current_user.credentials
+    if creds and creds.youtube_refresh_token:
+        try:
+            token = decrypt(creds.youtube_refresh_token)
+            async with httpx.AsyncClient() as client:
+                await client.post(
+                    "https://oauth2.googleapis.com/revoke",
+                    params={"token": token},
+                    headers={"Content-Type": "application/x-www-form-urlencoded"},
+                    timeout=5,
+                )
+        except Exception:
+            pass  # Deletion proceeds regardless
+
     db.delete(current_user)
     db.commit()
     request.session.clear()
