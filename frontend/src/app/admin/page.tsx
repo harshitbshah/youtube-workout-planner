@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { getMe } from "@/lib/api";
+import { Tooltip } from "@/components/Tooltip";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 
@@ -63,10 +64,17 @@ type Announcement = { id: number; message: string; is_active: boolean; created_a
 
 // ─── Sub-components ─────────────────────────────────────────────────────────
 
-function StatCard({ label, value, sub }: { label: string; value: string | number; sub?: string }) {
+function StatCard({ label, value, sub, tooltip }: { label: string; value: string | number; sub?: string; tooltip?: string }) {
   return (
     <div className="rounded-xl border border-zinc-800 bg-zinc-900 p-5">
-      <p className="text-xs font-semibold text-zinc-500 uppercase tracking-widest mb-2">{label}</p>
+      <div className="flex items-center gap-1.5 mb-2">
+        <p className="text-xs font-semibold text-zinc-500 uppercase tracking-widest">{label}</p>
+        {tooltip && (
+          <Tooltip text={tooltip} position="top">
+            <span className="text-zinc-600 hover:text-zinc-400 cursor-default text-xs leading-none">ⓘ</span>
+          </Tooltip>
+        )}
+      </div>
       <p className="text-3xl font-bold text-white">{value}</p>
       {sub && <p className="text-xs text-zinc-500 mt-1">{sub}</p>}
     </div>
@@ -106,21 +114,30 @@ function formatRelative(iso: string | null) {
   return `${days}d ago`;
 }
 
+function MetricRow({ label, value, tooltip }: { label: string; value: React.ReactNode; tooltip: string }) {
+  return (
+    <>
+      <span className="text-zinc-500 flex items-center gap-1">
+        {label}
+        <Tooltip text={tooltip}>
+          <span className="text-zinc-600 hover:text-zinc-400 cursor-default text-xs">ⓘ</span>
+        </Tooltip>
+      </span>
+      <span className="text-white font-medium">{value}</span>
+    </>
+  );
+}
+
 function UsageBlock({ label, data }: { label: string; data: UsagePeriod }) {
   return (
     <div className="rounded-lg border border-zinc-800 bg-zinc-900 p-4 space-y-2">
       <p className="text-xs font-semibold text-zinc-500 uppercase tracking-widest">{label}</p>
       <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-sm">
-        <span className="text-zinc-500">Batches</span>
-        <span className="text-white font-medium">{data.batches}</span>
-        <span className="text-zinc-500">Videos classified</span>
-        <span className="text-white font-medium">{data.videos_classified.toLocaleString()}</span>
-        <span className="text-zinc-500">Input tokens</span>
-        <span className="text-white font-medium">{data.input_tokens.toLocaleString()}</span>
-        <span className="text-zinc-500">Output tokens</span>
-        <span className="text-white font-medium">{data.output_tokens.toLocaleString()}</span>
-        <span className="text-zinc-500">Est. cost</span>
-        <span className="text-white font-medium">${data.est_cost_usd.toFixed(4)}</span>
+        <MetricRow label="Batches" value={data.batches} tooltip="Number of Anthropic Batch API calls made in this period" />
+        <MetricRow label="Videos classified" value={data.videos_classified.toLocaleString()} tooltip="Total videos successfully tagged with workout type, body focus, and difficulty" />
+        <MetricRow label="Input tokens" value={data.input_tokens.toLocaleString()} tooltip="Tokens sent to Claude — includes video title, description, tags, and transcript" />
+        <MetricRow label="Output tokens" value={data.output_tokens.toLocaleString()} tooltip="Tokens returned by Claude — short JSON classification responses" />
+        <MetricRow label="Est. cost" value={`$${data.est_cost_usd.toFixed(4)}`} tooltip="Estimated cost using Batch API pricing: $0.40/MTok input, $2.00/MTok output (50% off standard rates)" />
       </div>
     </div>
   );
@@ -264,10 +281,10 @@ export default function AdminPage() {
         <section>
           <h2 className="text-xs font-semibold text-zinc-500 uppercase tracking-widest mb-3">Users</h2>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-            <StatCard label="Total users" value={stats.users.total} />
-            <StatCard label="New (7 days)" value={stats.users.new_7d} sub={`${stats.users.new_30d} in last 30 days`} />
-            <StatCard label="YouTube connected" value={stats.users.youtube_connected} sub={`of ${stats.users.total} users`} />
-            <StatCard label="Plans this week" value={stats.plans.users_with_plan_this_week} sub={`of ${stats.users.total} users`} />
+            <StatCard label="Total users" value={stats.users.total} tooltip="All registered accounts" />
+            <StatCard label="New (7 days)" value={stats.users.new_7d} sub={`${stats.users.new_30d} in last 30 days`} tooltip="Accounts created in the last 7 days" />
+            <StatCard label="YouTube connected" value={stats.users.youtube_connected} sub={`of ${stats.users.total} users`} tooltip="Users with a valid YouTube OAuth token — they can publish plans to a YouTube playlist" />
+            <StatCard label="Plans this week" value={stats.plans.users_with_plan_this_week} sub={`of ${stats.users.total} users`} tooltip="Distinct users who have a plan generated for the current week (Mon–Sun)" />
           </div>
         </section>
 
@@ -275,10 +292,10 @@ export default function AdminPage() {
         <section>
           <h2 className="text-xs font-semibold text-zinc-500 uppercase tracking-widest mb-3">Library</h2>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-            <StatCard label="Total videos" value={stats.library.total_videos.toLocaleString()} />
-            <StatCard label="Classified" value={`${stats.library.classification_pct}%`} sub={`${stats.library.classified.toLocaleString()} videos`} />
-            <StatCard label="Unclassified" value={stats.library.unclassified.toLocaleString()} />
-            <StatCard label="Channels" value={stats.channels.total} sub={`avg ${stats.channels.avg_per_user} per user`} />
+            <StatCard label="Total videos" value={stats.library.total_videos.toLocaleString()} tooltip="All videos scanned across every user's channels" />
+            <StatCard label="Classified" value={`${stats.library.classification_pct}%`} sub={`${stats.library.classified.toLocaleString()} videos`} tooltip="Videos analysed by AI and tagged with workout type, body focus, and difficulty" />
+            <StatCard label="Unclassified" value={stats.library.unclassified.toLocaleString()} tooltip="Videos scanned but not yet classified — will be processed on the next pipeline run" />
+            <StatCard label="Channels" value={stats.channels.total} sub={`avg ${stats.channels.avg_per_user} per user`} tooltip="Total YouTube channels added across all users" />
           </div>
         </section>
 
@@ -324,12 +341,14 @@ export default function AdminPage() {
               placeholder="New announcement message…"
               className="flex-1 rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-zinc-500"
             />
-            <button
-              type="submit"
-              className="rounded-lg bg-white px-4 py-2 text-sm font-semibold text-zinc-900 hover:bg-zinc-100 transition"
-            >
-              Post
-            </button>
+            <Tooltip text="Post this announcement — it will appear as a banner on all users' dashboards immediately">
+              <button
+                type="submit"
+                className="rounded-lg bg-white px-4 py-2 text-sm font-semibold text-zinc-900 hover:bg-zinc-100 transition"
+              >
+                Post
+              </button>
+            </Tooltip>
           </form>
           {announcements.length === 0 ? (
             <div className="rounded-lg border border-zinc-800 bg-zinc-900 px-4 py-3 text-sm text-zinc-600">
@@ -346,21 +365,27 @@ export default function AdminPage() {
                   <div className="flex items-center gap-2 shrink-0">
                     {a.is_active && (
                       <>
-                        <span className="rounded-full border border-green-800 bg-green-900/30 px-2 py-0.5 text-xs text-green-400">Active</span>
-                        <button
-                          onClick={() => handleDeactivateAnnouncement(a.id)}
-                          className="text-xs text-zinc-500 hover:text-zinc-300 transition"
-                        >
-                          Deactivate
-                        </button>
+                        <Tooltip text="This announcement is currently visible to all users on their dashboard">
+                          <span className="rounded-full border border-green-800 bg-green-900/30 px-2 py-0.5 text-xs text-green-400 cursor-default">Active</span>
+                        </Tooltip>
+                        <Tooltip text="Hide this announcement from users without deleting it">
+                          <button
+                            onClick={() => handleDeactivateAnnouncement(a.id)}
+                            className="text-xs text-zinc-500 hover:text-zinc-300 transition"
+                          >
+                            Deactivate
+                          </button>
+                        </Tooltip>
                       </>
                     )}
-                    <button
-                      onClick={() => handleDeleteAnnouncement(a.id)}
-                      className="text-xs text-red-600 hover:text-red-400 transition"
-                    >
-                      Delete
-                    </button>
+                    <Tooltip text="Permanently remove this announcement">
+                      <button
+                        onClick={() => handleDeleteAnnouncement(a.id)}
+                        className="text-xs text-red-600 hover:text-red-400 transition"
+                      >
+                        Delete
+                      </button>
+                    </Tooltip>
                   </div>
                 </div>
               ))}
@@ -379,12 +404,36 @@ export default function AdminPage() {
                 <tr className="border-b border-zinc-800 text-left">
                   <th className="px-4 py-3 text-xs font-semibold text-zinc-500 uppercase tracking-wide">User</th>
                   <th className="px-4 py-3 text-xs font-semibold text-zinc-500 uppercase tracking-wide">Joined</th>
-                  <th className="px-4 py-3 text-xs font-semibold text-zinc-500 uppercase tracking-wide">Last active</th>
-                  <th className="px-4 py-3 text-xs font-semibold text-zinc-500 uppercase tracking-wide text-right">Ch.</th>
-                  <th className="px-4 py-3 text-xs font-semibold text-zinc-500 uppercase tracking-wide text-right">Videos</th>
-                  <th className="px-4 py-3 text-xs font-semibold text-zinc-500 uppercase tracking-wide">YouTube</th>
-                  <th className="px-4 py-3 text-xs font-semibold text-zinc-500 uppercase tracking-wide">Last plan</th>
-                  <th className="px-4 py-3 text-xs font-semibold text-zinc-500 uppercase tracking-wide">Pipeline</th>
+                  <th className="px-4 py-3 text-xs font-semibold text-zinc-500 uppercase tracking-wide">
+                    <Tooltip text="Last time this user made an API request — updated at most once every 5 minutes" position="bottom">
+                      <span className="cursor-default">Last active</span>
+                    </Tooltip>
+                  </th>
+                  <th className="px-4 py-3 text-xs font-semibold text-zinc-500 uppercase tracking-wide text-right">
+                    <Tooltip text="Number of YouTube channels this user has added" position="bottom">
+                      <span className="cursor-default">Ch.</span>
+                    </Tooltip>
+                  </th>
+                  <th className="px-4 py-3 text-xs font-semibold text-zinc-500 uppercase tracking-wide text-right">
+                    <Tooltip text="Total videos scanned from this user's channels" position="bottom">
+                      <span className="cursor-default">Videos</span>
+                    </Tooltip>
+                  </th>
+                  <th className="px-4 py-3 text-xs font-semibold text-zinc-500 uppercase tracking-wide">
+                    <Tooltip text="Whether this user has a valid YouTube OAuth token for publishing playlists" position="bottom">
+                      <span className="cursor-default">YouTube</span>
+                    </Tooltip>
+                  </th>
+                  <th className="px-4 py-3 text-xs font-semibold text-zinc-500 uppercase tracking-wide">
+                    <Tooltip text="Week start date of the most recent plan generated for this user" position="bottom">
+                      <span className="cursor-default">Last plan</span>
+                    </Tooltip>
+                  </th>
+                  <th className="px-4 py-3 text-xs font-semibold text-zinc-500 uppercase tracking-wide">
+                    <Tooltip text="Current pipeline stage if a scan is running for this user" position="bottom">
+                      <span className="cursor-default">Pipeline</span>
+                    </Tooltip>
+                  </th>
                   <th className="px-4 py-3 text-xs font-semibold text-zinc-500 uppercase tracking-wide">Actions</th>
                 </tr>
               </thead>
@@ -408,21 +457,24 @@ export default function AdminPage() {
                     <td className="px-4 py-3"><StagePill stage={u.pipeline_stage} /></td>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2">
-                        <button
-                          onClick={() => handleRetryScan(u.id, u.email)}
-                          disabled={retryingUser === u.id || !!u.pipeline_stage}
-                          title="Trigger a fresh scan + plan for this user"
-                          className="text-xs text-zinc-500 hover:text-zinc-200 disabled:opacity-30 transition"
-                        >
-                          {retryingUser === u.id ? "Starting…" : "↺ Scan"}
-                        </button>
-                        <button
-                          onClick={() => handleDeleteUser(u.id, u.email)}
-                          disabled={deletingUser === u.id}
-                          className="text-xs text-red-700 hover:text-red-400 disabled:opacity-30 transition"
-                        >
-                          {deletingUser === u.id ? "Deleting…" : "Delete"}
-                        </button>
+                        <Tooltip text="Trigger a fresh channel scan, AI classification, and plan generation for this user">
+                          <button
+                            onClick={() => handleRetryScan(u.id, u.email)}
+                            disabled={retryingUser === u.id || !!u.pipeline_stage}
+                            className="text-xs text-zinc-500 hover:text-zinc-200 disabled:opacity-30 transition"
+                          >
+                            {retryingUser === u.id ? "Starting…" : "↺ Scan"}
+                          </button>
+                        </Tooltip>
+                        <Tooltip text="Permanently delete this user and all their data — channels, videos, plan history, and credentials">
+                          <button
+                            onClick={() => handleDeleteUser(u.id, u.email)}
+                            disabled={deletingUser === u.id}
+                            className="text-xs text-red-700 hover:text-red-400 disabled:opacity-30 transition"
+                          >
+                            {deletingUser === u.id ? "Deleting…" : "Delete"}
+                          </button>
+                        </Tooltip>
                       </div>
                     </td>
                   </tr>
