@@ -201,6 +201,155 @@ def test_save_videos_skips_duplicates(db_session):
     assert db_session.query(Video).filter(Video.id == "dup-vid").count() == 1
 
 
+# ─── GET /jobs/status ─────────────────────────────────────────────────────────
+
+def test_jobs_status_no_pipeline(auth_client):
+    """Returns null stage when no pipeline has run for this user."""
+    client, user = auth_client
+    resp = client.get("/jobs/status")
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["stage"] is None
+    assert data["total"] is None
+    assert data["done"] is None
+
+
+def test_jobs_status_unauthenticated(client):
+    """Returns 401 when not authenticated."""
+    resp = client.get("/jobs/status")
+    assert resp.status_code == 401
+
+
+def test_jobs_status_reflects_pipeline_state(auth_client):
+    """Status reflects what _pipeline_status holds for this user."""
+    from api.routers.jobs import _pipeline_status
+    client, user = auth_client
+
+    _pipeline_status[str(user.id)] = {"stage": "classifying", "total": 100, "done": 42}
+    try:
+        resp = client.get("/jobs/status")
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["stage"] == "classifying"
+        assert data["total"] == 100
+        assert data["done"] == 42
+    finally:
+        _pipeline_status.pop(str(user.id), None)
+
+
+# ─── Duration filter unit tests ───────────────────────────────────────────────
+
+def test_upper_duration_cap():
+    """Videos over 2 hours must be excluded."""
+    from api.services.scanner import _MAX_DURATION_SEC
+    assert _MAX_DURATION_SEC == 2 * 60 * 60
+
+    # Simulate the filter logic used in _scan_uploads
+    videos = [
+        {"id": "ok", "duration_sec": 3600},       # 1 hour — keep
+        {"id": "too-long", "duration_sec": 7201},  # > 2 hours — drop
+        {"id": "too-short", "duration_sec": 60},   # < 3 min — drop
+        {"id": "none-dur", "duration_sec": None},  # unknown — drop
+    ]
+    kept = [v for v in videos if v.get("duration_sec") and 180 <= v["duration_sec"] <= _MAX_DURATION_SEC]
+    assert [v["id"] for v in kept] == ["ok"]
+
+
+# ─── Classifier cap unit tests ─────────────────────────────────────────────────
+
+def test_classify_cap_limits_batch(db_session):
+    """classify_for_user should only process up to MAX_CLASSIFY_PER_RUN videos."""
+    from unittest.mock import MagicMock, patch
+    from api.models import Channel, User, Video
+    from api.services.classifier import classify_for_user, MAX_CLASSIFY_PER_RUN
+
+    user = User(google_id="cap-test-g", email="cap@test.com")
+    db_session.add(user)
+    db_session.commit()
+
+    ch = Channel(user_id=user.id, name="BigCh", youtube_url="https://youtube.com/@bigch")
+    db_session.add(ch)
+    db_session.commit()
+
+    # Add MAX_CLASSIFY_PER_RUN + 10 videos — only the first batch should be classified
+    for i in range(MAX_CLASSIFY_PER_RUN + 10):
+        db_session.add(Video(
+            id=f"cap-vid-{i}", channel_id=ch.id, title=f"Video {i}",
+            url=f"https://youtube.com/watch?v=cap-vid-{i}", duration_sec=1800,
+        ))
+    db_session.commit()
+
+    submitted_count = []
+
+    def fake_create(requests):
+        submitted_count.append(len(requests))
+        batch = MagicMock()
+        batch.id = "batch-123"
+        batch.processing_status = "ended"
+        batch.request_counts.succeeded = 0
+        batch.request_counts.errored = 0
+        batch.request_counts.canceled = 0
+        batch.request_counts.expired = 0
+        return batch
+
+    mock_client = MagicMock()
+    mock_client.messages.batches.create.side_effect = fake_create
+    mock_client.messages.batches.retrieve.return_value = MagicMock(
+        processing_status="ended",
+        request_counts=MagicMock(succeeded=0, errored=0, canceled=0, expired=0),
+    )
+    mock_client.messages.batches.results.return_value = []
+
+    with patch("api.services.classifier._fetch_transcript_intro", return_value=""), \
+         patch("api.services.classifier._build_user_message", return_value="msg"), \
+         patch("anthropic.Anthropic", return_value=mock_client):
+        classify_for_user(db_session, user.id, api_key="fake-key")
+
+    assert submitted_count == [MAX_CLASSIFY_PER_RUN]
+
+
+def test_classify_on_progress_called_during_polling(db_session):
+    """on_progress callback is called during batch polling with total and done counts."""
+    from unittest.mock import MagicMock, patch
+    from api.models import Channel, User, Video
+    from api.services.classifier import classify_for_user
+
+    user = User(google_id="prog-test-g", email="prog@test.com")
+    db_session.add(user)
+    db_session.commit()
+
+    ch = Channel(user_id=user.id, name="ProgCh", youtube_url="https://youtube.com/@progch")
+    db_session.add(ch)
+    db_session.commit()
+    db_session.add(Video(id="prog-vid", channel_id=ch.id, title="Workout",
+                         url="https://youtube.com/watch?v=prog-vid", duration_sec=1800))
+    db_session.commit()
+
+    progress_calls = []
+
+    mock_batch = MagicMock()
+    mock_batch.id = "batch-prog"
+    mock_batch.processing_status = "ended"
+    mock_batch.request_counts.succeeded = 1
+    mock_batch.request_counts.errored = 0
+    mock_batch.request_counts.canceled = 0
+    mock_batch.request_counts.expired = 0
+
+    mock_client = MagicMock()
+    mock_client.messages.batches.create.return_value = mock_batch
+    mock_client.messages.batches.retrieve.return_value = mock_batch
+    mock_client.messages.batches.results.return_value = []
+
+    with patch("api.services.classifier._fetch_transcript_intro", return_value=""), \
+         patch("api.services.classifier._build_user_message", return_value="msg"), \
+         patch("anthropic.Anthropic", return_value=mock_client):
+        classify_for_user(db_session, user.id, api_key="fake-key",
+                          on_progress=lambda t, d: progress_calls.append((t, d)))
+
+    assert len(progress_calls) >= 1
+    assert all(t == 1 for t, d in progress_calls)
+
+
 # ─── Title blocklist unit tests ───────────────────────────────────────────────
 
 def test_is_blocked_title_rejects_non_workout():
