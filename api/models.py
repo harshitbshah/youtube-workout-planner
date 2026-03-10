@@ -26,6 +26,7 @@ class User(Base):
     display_name = Column(String)
     created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
     last_active_at = Column(DateTime(timezone=True), nullable=True)
+    last_scan_error = Column(Text, nullable=True)  # set on pipeline failure, cleared on success
 
     channels = relationship("Channel", back_populates="user", cascade="all, delete-orphan")
     schedules = relationship("Schedule", back_populates="user", cascade="all, delete-orphan")
@@ -42,6 +43,8 @@ class Channel(Base):
     youtube_url = Column(String, nullable=False)
     youtube_channel_id = Column(String)
     added_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+    first_scan_done = Column(Boolean, default=False, nullable=False, server_default="false")
+    last_video_published_at = Column(DateTime(timezone=True), nullable=True)
 
     user = relationship("User", back_populates="channels")
     videos = relationship("Video", back_populates="channel", cascade="all, delete-orphan")

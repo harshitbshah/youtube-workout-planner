@@ -12,9 +12,12 @@ Auto-detects full vs incremental:
 import logging
 import os
 import time
-from datetime import datetime
+from datetime import datetime, timezone
+
+from datetime import timedelta
 
 from googleapiclient.errors import HttpError
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from src.scanner import _fetch_video_details, build_youtube_client, get_channel_info
@@ -24,6 +27,14 @@ from ..models import Channel, Video
 logger = logging.getLogger(__name__)
 
 YOUTUBE_API_KEY = os.getenv("YOUTUBE_API_KEY", "")
+
+# Max videos to fetch on a channel's first scan. Keeps the initial classification
+# batch small. Subsequent incremental scans have no cap (only new videos are fetched).
+FIRST_SCAN_LIMIT = int(os.getenv("FIRST_SCAN_LIMIT", "75"))
+
+# Channels with no new videos for this many days are skipped during automated cron runs.
+# Always scanned when the user triggers manually.
+_INACTIVE_CHANNEL_DAYS = 60
 
 # ─── Pre-classification filters ───────────────────────────────────────────────
 
@@ -199,24 +210,62 @@ def _scan_uploads(
 
 # ─── Public API ───────────────────────────────────────────────────────────────
 
+def _update_last_video_published_at(session: Session, channel: Channel) -> None:
+    """Update channel.last_video_published_at to the most recent video's published_at."""
+    latest_str = (
+        session.query(func.max(Video.published_at))
+        .filter(Video.channel_id == channel.id)
+        .scalar()
+    )
+    if latest_str:
+        try:
+            channel.last_video_published_at = datetime.fromisoformat(
+                latest_str.replace("Z", "+00:00")
+            )
+            session.commit()
+        except (ValueError, AttributeError):
+            pass
+
+
 def scan_channel(
     session: Session,
     channel: Channel,
     api_key: str = "",
     max_videos: int | None = None,
+    skip_if_inactive: bool = False,
 ) -> int:
     """
     Scan a channel for new videos and save to PostgreSQL.
     Auto-detects full vs incremental based on existing videos.
 
-    max_videos: cap the number of videos fetched (useful for testing or initial previews).
-                None = no limit (full scan).
+    max_videos: override the fetch cap (useful for testing). None uses automatic logic:
+                - first scan (first_scan_done=False): capped at FIRST_SCAN_LIMIT
+                - subsequent scans: no cap (only new videos fetched)
+    skip_if_inactive: if True, skip channels with no new videos in _INACTIVE_CHANNEL_DAYS
+                      days (used by cron). Always False for user-triggered scans.
 
     Returns count of new videos saved.
     """
     key = api_key or YOUTUBE_API_KEY
     if not key:
         raise RuntimeError("YOUTUBE_API_KEY not configured")
+
+    # F4: skip inactive channels during cron runs
+    if skip_if_inactive and channel.last_video_published_at is not None:
+        cutoff = datetime.now(timezone.utc) - timedelta(days=_INACTIVE_CHANNEL_DAYS)
+        # Normalise to UTC-aware — SQLite returns naive datetimes; PostgreSQL returns aware
+        last_pub = channel.last_video_published_at
+        if last_pub.tzinfo is None:
+            last_pub = last_pub.replace(tzinfo=timezone.utc)
+        added_at = channel.added_at
+        if added_at is None:
+            added_at = datetime.now(timezone.utc)
+        elif added_at.tzinfo is None:
+            added_at = added_at.replace(tzinfo=timezone.utc)
+        channel_age = datetime.now(timezone.utc) - added_at
+        if last_pub < cutoff and channel_age.days >= 30:
+            logger.info(f"Skipping inactive channel {channel.name} (no videos in {_INACTIVE_CHANNEL_DAYS}d)")
+            return 0
 
     youtube = build_youtube_client(key)
     since_date = _get_since_date(session, channel)
@@ -228,13 +277,28 @@ def scan_channel(
         channel.youtube_channel_id = channel_yt_id
         session.commit()
 
+    # F3: cap first scan to avoid large classification batches on new channels
+    if max_videos is None and not channel.first_scan_done:
+        effective_max = FIRST_SCAN_LIMIT
+    else:
+        effective_max = max_videos  # None = unlimited for incremental scans
+
     mode = "incremental" if since_date else "full"
-    limit_note = f", max {max_videos}" if max_videos else ""
+    limit_note = f", max {effective_max}" if effective_max else ""
     logger.info(
         f"Starting {mode} scan: {channel.name} "
         f"(since {since_date.date() if since_date else 'beginning'}{limit_note})"
     )
 
-    total = _scan_uploads(youtube, session, channel, uploads_playlist_id, since_date, max_videos)
+    total = _scan_uploads(youtube, session, channel, uploads_playlist_id, since_date, effective_max)
+
+    # Mark first scan done so subsequent scans run uncapped
+    if not channel.first_scan_done:
+        channel.first_scan_done = True
+        session.commit()
+
+    # F4: update last_video_published_at for inactive-channel tracking
+    _update_last_video_published_at(session, channel)
+
     logger.info(f"Scan complete: {total} new videos for {channel.name}")
     return total

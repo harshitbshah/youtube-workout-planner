@@ -10,7 +10,7 @@ Platform-pays model for v1: uses server-side ANTHROPIC_API_KEY.
 import logging
 import os
 import time
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 from sqlalchemy.orm import Session
 
@@ -23,6 +23,8 @@ from src.classifier import (
     _parse_classification,
 )
 
+from sqlalchemy import or_
+
 from ..models import Channel, Classification, Video
 
 logger = logging.getLogger(__name__)
@@ -33,7 +35,11 @@ ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY", "")
 # ─── DB helpers ───────────────────────────────────────────────────────────────
 
 def _fetch_unclassified_for_user(session: Session, user_id: str) -> list[dict]:
-    """Return unclassified videos (≥3 min) belonging to this user's channels."""
+    """Return unclassified videos (≥3 min, within cutoff age) belonging to this user's channels."""
+    max_age_months = int(os.getenv("CLASSIFY_MAX_AGE_MONTHS", "18"))
+    cutoff = datetime.now(timezone.utc) - timedelta(days=max_age_months * 30)
+    cutoff_str = cutoff.strftime("%Y-%m-%dT%H:%M:%SZ")
+
     rows = (
         session.query(Video)
         .join(Channel, Channel.id == Video.channel_id)
@@ -42,6 +48,8 @@ def _fetch_unclassified_for_user(session: Session, user_id: str) -> list[dict]:
             Channel.user_id == user_id,
             Classification.video_id.is_(None),
             Video.duration_sec >= 180,
+            # Include videos with NULL published_at (unknown age — better to classify than skip)
+            or_(Video.published_at.is_(None), Video.published_at >= cutoff_str),
         )
         .order_by(Video.published_at.desc())
         .all()
@@ -197,7 +205,7 @@ def classify_for_user(session: Session, user_id: str, api_key: str = "", on_prog
                 "custom_id": video["id"],
                 "params": {
                     "model": MODEL,
-                    "max_tokens": 150,
+                    "max_tokens": 80,  # JSON response is ~50-70 tokens; 80 gives headroom without waste
                     "system": SYSTEM_PROMPT,
                     "messages": [{"role": "user", "content": user_message}],
                 },

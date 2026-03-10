@@ -24,7 +24,7 @@ def test_all_tables_exist(pg_engine):
 def test_alembic_version_is_current(pg_engine):
     with pg_engine.connect() as conn:
         version = conn.execute(text("SELECT version_num FROM alembic_version")).scalar()
-    assert version == "003"
+    assert version == "008"
 
 
 def test_users_columns(pg_engine):

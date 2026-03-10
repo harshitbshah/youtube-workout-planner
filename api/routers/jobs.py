@@ -92,7 +92,8 @@ def _run_full_pipeline(user_id: str):
         total_new = 0
         for channel in channels:
             try:
-                new_videos = scan_channel(session, channel)
+                # User-triggered scan: never skip inactive channels
+                new_videos = scan_channel(session, channel, skip_if_inactive=False)
                 total_new += new_videos
                 logger.info(f"[scan] {channel.name}: {new_videos} new videos")
             except Exception as e:
@@ -120,6 +121,12 @@ def _run_full_pipeline(user_id: str):
 
         _pipeline_status[user_id] = {"stage": "done", "total": None, "done": None}
 
+        # Clear any previous scan error on success
+        user = session.get(User, user_id)
+        if user:
+            user.last_scan_error = None
+            session.commit()
+
         # Mark scan as done
         if scan_log_id:
             log = session.get(ScanLog, scan_log_id)
@@ -130,9 +137,15 @@ def _run_full_pipeline(user_id: str):
                 session.commit()
 
     except Exception as e:
+        error_msg = str(e)
         logger.error(f"[pipeline] Unexpected failure for user {user_id}: {e}", exc_info=True)
-        _pipeline_status[user_id] = {"stage": "failed", "total": None, "done": None}
+        _pipeline_status[user_id] = {"stage": "failed", "total": None, "done": None, "error": error_msg}
         try:
+            # Persist error so dashboard can show it even after server restart
+            user = session.get(User, user_id)
+            if user:
+                user.last_scan_error = error_msg
+                session.commit()
             if scan_log_id:
                 log = session.get(ScanLog, scan_log_id)
                 if log:
@@ -148,12 +161,19 @@ def _run_full_pipeline(user_id: str):
 @router.get("/status")
 def get_pipeline_status(
     current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
 ):
-    """Return the current pipeline stage + progress for the authenticated user."""
+    """Return the current pipeline stage + progress for the authenticated user.
+
+    Also includes any persistent scan error from the DB so the dashboard can
+    show an error banner even after a server restart clears in-memory state.
+    """
     status = _pipeline_status.get(str(current_user.id))
-    if not status:
-        return {"stage": None, "total": None, "done": None}
-    return status
+    if status:
+        return status
+    # Fall back to DB for persistent error state
+    error = current_user.last_scan_error
+    return {"stage": None, "total": None, "done": None, "error": error}
 
 
 @router.post("/scan", status_code=202)

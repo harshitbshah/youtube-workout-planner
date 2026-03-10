@@ -34,11 +34,11 @@ def _weekly_pipeline_for_user(user_id: str):
             logger.info(f"[weekly] user={user_id} has no channels, skipping")
             return
 
-        # Step 1: incremental scan all channels
+        # Step 1: incremental scan all channels (skip inactive to save YouTube API quota)
         total_new = 0
         for channel in channels:
             try:
-                new = scan_channel(session, channel)
+                new = scan_channel(session, channel, skip_if_inactive=True)
                 total_new += new
             except Exception as e:
                 logger.error(f"[weekly] Scan failed for channel {channel.name}: {e}")
