@@ -274,6 +274,14 @@ export default function DashboardPage() {
             >
               Settings
             </Link>
+            {user?.is_admin && (
+              <Link
+                href="/admin"
+                className="rounded-lg border border-zinc-700 px-3 py-2 text-sm text-zinc-400 hover:bg-zinc-800 transition"
+              >
+                Admin
+              </Link>
+            )}
             {plan && !allDaysEmpty ? (
               <button
                 onClick={handleGenerate}

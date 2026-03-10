@@ -135,6 +135,7 @@ export interface User {
   display_name: string | null;
   youtube_connected: boolean;
   credentials_valid: boolean;
+  is_admin: boolean;
 }
 
 export interface ChannelCreate {

@@ -92,6 +92,7 @@ class MeResponse(BaseModel):
     display_name: Optional[str]
     youtube_connected: bool
     credentials_valid: bool
+    is_admin: bool = False
 
 
 # ─── Publish ───────────────────────────────────────────────────────────────────

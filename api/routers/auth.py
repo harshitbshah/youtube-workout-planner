@@ -140,12 +140,14 @@ async def google_callback(
 def _me_response(user: User, db: Session) -> MeResponse:
     """Build a MeResponse for the given user."""
     creds = db.query(UserCredentials).filter(UserCredentials.user_id == user.id).first()
+    admin_email = os.getenv("ADMIN_EMAIL", "")
     return MeResponse(
         id=user.id,
         email=user.email,
         display_name=user.display_name,
         youtube_connected=bool(creds and creds.youtube_refresh_token),
         credentials_valid=creds.credentials_valid if creds else True,
+        is_admin=bool(admin_email and user.email == admin_email),
     )
 
 
