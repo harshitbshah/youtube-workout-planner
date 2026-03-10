@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { getMe, loginUrl, setToken } from "@/lib/api";
 
 const HOW_IT_WORKS = [
@@ -69,12 +70,20 @@ export default function LandingPage() {
       {/* Nav */}
       <nav className="flex items-center justify-between px-6 py-5 max-w-5xl mx-auto">
         <span className="font-semibold text-white tracking-tight">Workout Planner</span>
-        <a
-          href={loginUrl()}
-          className="rounded-lg border border-zinc-700 px-4 py-2 text-sm text-zinc-300 hover:bg-zinc-800 transition"
-        >
-          Sign in
-        </a>
+        <div className="flex items-center gap-3">
+          <Link
+            href="/guide"
+            className="text-sm text-zinc-400 hover:text-zinc-200 transition"
+          >
+            Guide
+          </Link>
+          <a
+            href={loginUrl()}
+            className="rounded-lg border border-zinc-700 px-4 py-2 text-sm text-zinc-300 hover:bg-zinc-800 transition"
+          >
+            Sign in
+          </a>
+        </div>
       </nav>
 
       {/* Hero */}
@@ -149,7 +158,10 @@ export default function LandingPage() {
       </section>
 
       {/* Footer */}
-      <footer className="border-t border-zinc-800 px-6 py-6 text-center">
+      <footer className="border-t border-zinc-800 px-6 py-6 text-center space-y-2">
+        <div className="flex items-center justify-center gap-4 text-xs text-zinc-600">
+          <Link href="/guide" className="hover:text-zinc-400 transition">User Guide</Link>
+        </div>
         <p className="text-xs text-zinc-600">© 2026 Workout Planner. Built with YouTube + AI.</p>
       </footer>
 
