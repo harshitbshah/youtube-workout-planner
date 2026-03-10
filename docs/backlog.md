@@ -29,8 +29,8 @@ the repo as historical reference or cleaned up separately — they don't affect 
 
 ## Legal / Compliance
 
-- V0 launch: generate Privacy Policy + ToS via Termly/GetTerms, host at `/privacy` and `/terms`
-- Add onboarding consent checkboxes: (1) ToS + Privacy Policy at account creation, (2) health disclaimer before first plan (one-time)
+- V0 launch: Privacy Policy + ToS written manually, live at `/privacy` and `/terms` ✅
+- Health disclaimer onboarding checkbox — defer to pre-paid-tier (covered in ToS for now)
 - Footer: YouTube API attribution links + "Not affiliated with YouTube, Google, or featured channels"
 - Verify `DELETE /auth/me` fully purges YouTube OAuth tokens (Google API ToS requirement)
 - Add "Curated by AI" badge on plan dashboard (FTC AI disclosure)

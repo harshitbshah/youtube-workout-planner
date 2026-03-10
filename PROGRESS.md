@@ -3,9 +3,21 @@
 ## Status
 Phases 1–5 complete + admin console + charts + guide page + mobile UX complete.
 **248/248 tests passing.**
-Both Railway (backend) and Vercel (frontend) live and functional.
-**Pending before sharing with first users:** merge `feat/web-app` → `main`, Privacy Policy + ToS pages, submit Google OAuth verification (4–6 week review).
-**Done:** Railway migration 005 ✅, `ADMIN_EMAIL` set ✅, Google OAuth published to Production ✅.
+Both Railway (backend) and Vercel (frontend) live and functional on `main`.
+**Ready for first users** — Google OAuth sensitive scope review in progress (4–6 week wait). Users see "unverified app" warning until review completes.
+
+**Done this session (2026-03-10):**
+- `feat/web-app` merged → `main`, Railway + Vercel switched to `main`, branch deleted ✅
+- Admin page mobile horizontal scroll fixed ✅
+- Privacy Policy + Terms of Service pages live at `/privacy` + `/terms` ✅
+- Shared Footer with YouTube API attribution added to all pages ✅
+- YouTube OAuth token revocation on account deletion (`DELETE /auth/me`) ✅
+- App renamed "Plan My Workout" everywhere ✅
+- Google Search Console domain verified ✅
+- Google OAuth branding verified + published ✅
+- Google sensitive scope (`youtube`) submitted for review ✅ (4–6 week wait)
+
+**Next:** Homepage redesign → invite first users while awaiting OAuth review.
 
 ## What's built
 
