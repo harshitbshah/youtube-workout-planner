@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Footer } from "@/components/Footer";
 
 const SECTIONS = [
   { id: "getting-started", label: "Getting started" },
@@ -319,10 +320,7 @@ export default function GuidePage() {
         </main>
       </div>
 
-      {/* Footer */}
-      <footer className="border-t border-zinc-800 px-6 py-6 text-center mt-12">
-        <p className="text-xs text-zinc-600">© 2026 Workout Planner. Built with YouTube + AI.</p>
-      </footer>
+      <Footer />
 
     </div>
   );

@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { Footer } from "@/components/Footer";
 import {
   getMe,
   getChannels,
@@ -347,6 +348,7 @@ export default function LibraryPage() {
         )}
 
       </div>
+      <Footer />
     </main>
   );
 }

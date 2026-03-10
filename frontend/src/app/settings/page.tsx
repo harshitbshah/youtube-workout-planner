@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { Footer } from "@/components/Footer";
 import {
   getMe,
   getChannels,
@@ -231,6 +232,7 @@ export default function SettingsPage() {
 
         </div>
       </div>
+      <Footer />
     </main>
   );
 }

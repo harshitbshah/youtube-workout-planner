@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { getMe, loginUrl, setToken } from "@/lib/api";
+import { Footer } from "@/components/Footer";
 
 const HOW_IT_WORKS = [
   {
@@ -157,13 +158,7 @@ export default function LandingPage() {
         </a>
       </section>
 
-      {/* Footer */}
-      <footer className="border-t border-zinc-800 px-6 py-6 text-center space-y-2">
-        <div className="flex items-center justify-center gap-4 text-xs text-zinc-600">
-          <Link href="/guide" className="hover:text-zinc-400 transition">User Guide</Link>
-        </div>
-        <p className="text-xs text-zinc-600">© 2026 Workout Planner. Built with YouTube + AI.</p>
-      </footer>
+      <Footer />
 
     </main>
   );

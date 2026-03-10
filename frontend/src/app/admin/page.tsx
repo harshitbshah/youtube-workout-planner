@@ -14,6 +14,7 @@ import {
 } from "recharts";
 import { getMe, getAdminCharts, type ChartsResponse } from "@/lib/api";
 import { Tooltip } from "@/components/Tooltip";
+import { Footer } from "@/components/Footer";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 
@@ -587,6 +588,7 @@ export default function AdminPage() {
         </section>
 
       </div>
+      <Footer />
     </main>
   );
 }
