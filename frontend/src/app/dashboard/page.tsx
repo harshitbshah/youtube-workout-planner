@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Tooltip } from "@/components/Tooltip";
 import {
   getMe,
   getChannels,
@@ -37,28 +36,12 @@ function formatDuration(sec: number | null): string {
   return `${m} min`;
 }
 
-const BADGE_TOOLTIPS: Record<string, string> = {
-  strength: "Resistance or weight training",
-  hiit: "High-intensity interval training",
-  cardio: "Cardio and endurance training",
-  mobility: "Stretching, yoga, or flexibility work",
-  upper: "Upper body focus",
-  lower: "Lower body focus",
-  core: "Core and abs focus",
-  "full body": "Full body workout",
-  beginner: "Beginner difficulty",
-  intermediate: "Intermediate difficulty",
-  advanced: "Advanced difficulty",
-};
-
 function Badge({ label }: { label: string }) {
-  const tip = BADGE_TOOLTIPS[label.toLowerCase()];
-  const badge = (
+  return (
     <span className="rounded-full bg-zinc-800 border border-zinc-700 px-2 py-0.5 text-xs text-zinc-400 capitalize">
       {label}
     </span>
   );
-  return tip ? <Tooltip text={tip}>{badge}</Tooltip> : badge;
 }
 
 function VideoCard({ video }: { video: VideoSummary }) {
@@ -279,87 +262,72 @@ export default function DashboardPage() {
             )}
           </div>
           <div className="flex flex-wrap items-center gap-2">
-            <Tooltip text="Browse all your scanned videos and manually assign them to specific days">
-              <Link
-                href="/library"
-                className="rounded-lg border border-zinc-700 px-3 py-2 text-sm text-zinc-400 hover:bg-zinc-800 transition"
-              >
-                Library
-              </Link>
-            </Tooltip>
-            <Tooltip text="Manage your channels, training schedule, and account">
-              <Link
-                href="/settings"
-                className="rounded-lg border border-zinc-700 px-3 py-2 text-sm text-zinc-400 hover:bg-zinc-800 transition"
-              >
-                Settings
-              </Link>
-            </Tooltip>
+            <Link
+              href="/library"
+              className="rounded-lg border border-zinc-700 px-3 py-2 text-sm text-zinc-400 hover:bg-zinc-800 transition"
+            >
+              Library
+            </Link>
+            <Link
+              href="/settings"
+              className="rounded-lg border border-zinc-700 px-3 py-2 text-sm text-zinc-400 hover:bg-zinc-800 transition"
+            >
+              Settings
+            </Link>
             {user?.is_admin && (
-              <Tooltip text="Admin dashboard — usage stats, user management, announcements">
-                <Link
-                  href="/admin"
-                  className="rounded-lg border border-zinc-700 px-3 py-2 text-sm text-zinc-400 hover:bg-zinc-800 transition"
-                >
-                  Admin
-                </Link>
-              </Tooltip>
+              <Link
+                href="/admin"
+                className="rounded-lg border border-zinc-700 px-3 py-2 text-sm text-zinc-400 hover:bg-zinc-800 transition"
+              >
+                Admin
+              </Link>
             )}
             {plan && !allDaysEmpty ? (
-              <Tooltip text="Instantly rebuild your plan from your existing video library — no new scan needed">
-                <button
-                  onClick={handleGenerate}
-                  disabled={generating}
-                  className="rounded-lg bg-white px-3 py-2 text-sm font-semibold text-zinc-900 hover:bg-zinc-100 disabled:opacity-40 cursor-pointer transition"
-                >
-                  {generating ? "Generating…" : "Regenerate"}
-                </button>
-              </Tooltip>
+              <button
+                onClick={handleGenerate}
+                disabled={generating}
+                className="rounded-lg bg-white px-3 py-2 text-sm font-semibold text-zinc-900 hover:bg-zinc-100 disabled:opacity-40 cursor-pointer transition"
+              >
+                {generating ? "Generating…" : "Regenerate"}
+              </button>
             ) : (
-              <Tooltip text="Scan your YouTube channels, classify videos with AI, then generate your weekly plan (takes 5–10 min the first time)">
-                <button
-                  onClick={handleScan}
-                  disabled={generating || scanning}
-                  className="rounded-lg bg-white px-3 py-2 text-sm font-semibold text-zinc-900 hover:bg-zinc-100 disabled:opacity-40 cursor-pointer transition"
-                >
-                  {generating ? "Starting…" : allDaysEmpty ? "Rescan channels" : "Generate plan"}
-                </button>
-              </Tooltip>
+              <button
+                onClick={handleScan}
+                disabled={generating || scanning}
+                className="rounded-lg bg-white px-3 py-2 text-sm font-semibold text-zinc-900 hover:bg-zinc-100 disabled:opacity-40 cursor-pointer transition"
+              >
+                {generating ? "Starting…" : allDaysEmpty ? "Rescan channels" : "Generate plan"}
+              </button>
             )}
             {user?.youtube_connected && user?.credentials_valid && plan ? (
-              <Tooltip text="Push this week's plan to a private YouTube playlist in your account">
-                <button
-                  onClick={handlePublish}
-                  disabled={publishing}
-                  className="rounded-lg border border-red-600 bg-red-600/10 px-3 py-2 text-sm font-medium text-red-400 hover:bg-red-600/20 disabled:opacity-40 cursor-pointer transition"
-                >
-                  {publishing ? "Publishing…" : "Publish to YouTube"}
-                </button>
-              </Tooltip>
-            ) : (
-              <Tooltip text={
-                !user?.youtube_connected
-                  ? "Connect YouTube by signing in with Google"
-                  : !user?.credentials_valid
-                  ? "YouTube access revoked — sign out and sign in again to reconnect"
-                  : "Generate a plan first"
-              }>
-                <button
-                  disabled
-                  className="rounded-lg border border-zinc-700 px-3 py-2 text-sm text-zinc-600 opacity-50 cursor-not-allowed transition"
-                >
-                  Publish to YouTube
-                </button>
-              </Tooltip>
-            )}
-            <Tooltip text="Sign out of your account">
               <button
-                onClick={handleLogout}
-                className="rounded-lg border border-zinc-700 px-3 py-2 text-sm text-zinc-400 hover:bg-zinc-800 cursor-pointer transition"
+                onClick={handlePublish}
+                disabled={publishing}
+                className="rounded-lg border border-red-600 bg-red-600/10 px-3 py-2 text-sm font-medium text-red-400 hover:bg-red-600/20 disabled:opacity-40 cursor-pointer transition"
               >
-                Sign out
+                {publishing ? "Publishing…" : "Publish to YouTube"}
               </button>
-            </Tooltip>
+            ) : (
+              <button
+                disabled
+                title={
+                  !user?.youtube_connected
+                    ? "Sign in with Google to connect YouTube"
+                    : !user?.credentials_valid
+                    ? "YouTube access revoked — sign out and sign in again to reconnect"
+                    : "Generate a plan first"
+                }
+                className="rounded-lg border border-zinc-700 px-3 py-2 text-sm text-zinc-600 opacity-50 cursor-not-allowed transition"
+              >
+                Publish to YouTube
+              </button>
+            )}
+            <button
+              onClick={handleLogout}
+              className="rounded-lg border border-zinc-700 px-3 py-2 text-sm text-zinc-400 hover:bg-zinc-800 cursor-pointer transition"
+            >
+              Sign out
+            </button>
           </div>
         </div>
 
