@@ -82,9 +82,17 @@ def _save_classification(session: Session, video_id: str, classification: dict):
 
 # ─── Public API ───────────────────────────────────────────────────────────────
 
+# Max videos to classify in a single pipeline run. Keeps the batch small enough
+# to complete in a reasonable time. Unclassified videos beyond this cap will be
+# picked up on the next scan (incremental runs classify newly added videos only).
+MAX_CLASSIFY_PER_RUN = 300
+
+
 def classify_for_user(session: Session, user_id: str, api_key: str = "", on_progress=None) -> int:
     """
-    Classify all unclassified videos for a user's channels using Anthropic Batch API.
+    Classify unclassified videos for a user's channels using Anthropic Batch API.
+    Processes up to MAX_CLASSIFY_PER_RUN videos per call — remaining videos are
+    picked up on subsequent runs.
     Returns count of successfully classified videos.
     """
     import anthropic
@@ -93,18 +101,23 @@ def classify_for_user(session: Session, user_id: str, api_key: str = "", on_prog
     if not key:
         raise RuntimeError("ANTHROPIC_API_KEY not configured")
 
-    videos = _fetch_unclassified_for_user(session, user_id)
-    total = len(videos)
-    if total == 0:
+    all_videos = _fetch_unclassified_for_user(session, user_id)
+    if not all_videos:
         logger.info(f"[user={user_id}] No unclassified videos.")
         return 0
 
+    videos = all_videos[:MAX_CLASSIFY_PER_RUN]
+    total = len(videos)
+    skipped = len(all_videos) - total
+    if skipped:
+        logger.info(f"[user={user_id}] {len(all_videos)} unclassified — processing first {total}, {skipped} deferred to next run")
+
     client = anthropic.Anthropic(api_key=key)
 
-    # Phase 1: build batch requests
+    # Phase 1: build batch requests (fetches transcript intro per video)
     logger.info(f"[user={user_id}] Building {total} classification requests...")
     requests = []
-    for video in videos:
+    for i, video in enumerate(videos):
         transcript_intro = _fetch_transcript_intro(video["id"])
         user_message = _build_user_message(video, transcript_intro)
         requests.append({
@@ -116,6 +129,8 @@ def classify_for_user(session: Session, user_id: str, api_key: str = "", on_prog
                 "messages": [{"role": "user", "content": user_message}],
             },
         })
+        if on_progress and (i + 1) % 10 == 0:
+            on_progress(total, -(i + 1))  # negative done = still building
 
     # Phase 2: submit batch
     logger.info(f"[user={user_id}] Submitting batch of {total} to Anthropic...")

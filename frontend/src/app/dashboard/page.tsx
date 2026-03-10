@@ -153,7 +153,7 @@ export default function DashboardPage() {
       getJobStatus()
         .then(({ stage, total, done }) => {
           setPipelineStage(stage);
-          if (stage === "classifying" && total && done !== null) {
+          if (stage === "classifying" && total !== null && done !== null) {
             setClassifyProgress({ total, done });
           } else {
             setClassifyProgress(null);
@@ -341,7 +341,9 @@ export default function DashboardPage() {
                 {pipelineStage === "scanning" && "Scanning your channels for new videos…"}
                 {pipelineStage === "classifying" && (
                   classifyProgress
-                    ? `Classifying videos with AI — ${classifyProgress.done.toLocaleString()} / ${classifyProgress.total.toLocaleString()} done`
+                    ? classifyProgress.done < 0
+                      ? `Preparing batch — fetching transcripts (${Math.abs(classifyProgress.done).toLocaleString()} / ${classifyProgress.total.toLocaleString()})`
+                      : `Classifying videos with AI — ${classifyProgress.done.toLocaleString()} / ${classifyProgress.total.toLocaleString()} done`
                     : "Classifying videos with AI — preparing batch…"
                 )}
                 {pipelineStage === "generating" && "Almost done — generating your weekly plan…"}
@@ -353,7 +355,7 @@ export default function DashboardPage() {
               <div className="w-full bg-zinc-700 rounded-full h-1.5">
                 <div
                   className="bg-white h-1.5 rounded-full transition-all duration-500"
-                  style={{ width: `${Math.round((classifyProgress.done / classifyProgress.total) * 100)}%` }}
+                  style={{ width: `${Math.round((Math.abs(classifyProgress.done) / classifyProgress.total) * 100)}%` }}
                 />
               </div>
             )}
