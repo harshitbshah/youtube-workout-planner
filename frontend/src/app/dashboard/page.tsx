@@ -146,31 +146,32 @@ export default function DashboardPage() {
       .finally(() => setLoading(false));
   }, [router]);
 
-  // Poll for status + plan every 5s while scanning
+  // Poll for status every 5s while scanning; stop when pipeline reports done/failed/null
   useEffect(() => {
-    if (!scanning || plan) return;
-    const interval = setInterval(() => {
-      getJobStatus()
-        .then(({ stage, total, done }) => {
-          setPipelineStage(stage);
-          if (stage === "classifying" && total !== null && done !== null) {
-            setClassifyProgress({ total, done });
-          } else {
-            setClassifyProgress(null);
-          }
-        })
-        .catch(() => {});
-      getUpcomingPlan()
-        .then((p) => {
-          setPlan(p);
+    if (!scanning) return;
+    const interval = setInterval(async () => {
+      try {
+        const { stage, total, done } = await getJobStatus();
+        setPipelineStage(stage);
+        if (stage === "classifying" && total !== null && done !== null) {
+          setClassifyProgress({ total, done });
+        } else {
+          setClassifyProgress(null);
+        }
+        // Pipeline finished — fetch fresh plan and stop polling
+        if (!stage || stage === "done" || stage === "failed") {
           setScanning(false);
           setPipelineStage(null);
           setClassifyProgress(null);
-        })
-        .catch(() => {}); // still scanning, keep polling
+          const p = await getUpcomingPlan().catch(() => null);
+          if (p) setPlan(p);
+        }
+      } catch {
+        // network blip — keep polling
+      }
     }, 5_000);
     return () => clearInterval(interval);
-  }, [scanning, plan]);
+  }, [scanning]);
 
   async function handleScan() {
     setGenerating(true);
