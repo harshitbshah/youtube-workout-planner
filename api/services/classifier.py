@@ -88,68 +88,25 @@ def _save_classification(session: Session, video_id: str, classification: dict):
 MAX_CLASSIFY_PER_RUN = 300
 
 
-def classify_for_user(session: Session, user_id: str, api_key: str = "", on_progress=None) -> int:
-    """
-    Classify unclassified videos for a user's channels using Anthropic Batch API.
-    Processes up to MAX_CLASSIFY_PER_RUN videos per call — remaining videos are
-    picked up on subsequent runs.
-    Returns count of successfully classified videos.
-    """
-    import anthropic
+def _get_or_create_credentials(session: Session, user_id: str):
+    """Return UserCredentials for user, creating a blank row if none exists."""
+    from ..models import UserCredentials
+    creds = session.get(UserCredentials, user_id)
+    if not creds:
+        creds = UserCredentials(user_id=user_id)
+        session.add(creds)
+        session.commit()
+    return creds
 
-    key = api_key or ANTHROPIC_API_KEY
-    if not key:
-        raise RuntimeError("ANTHROPIC_API_KEY not configured")
 
-    all_videos = _fetch_unclassified_for_user(session, user_id)
-    if not all_videos:
-        logger.info(f"[user={user_id}] No unclassified videos.")
-        return 0
+def _save_batch_id(session: Session, user_id: str, batch_id: str | None):
+    creds = _get_or_create_credentials(session, user_id)
+    creds.classifier_batch_id = batch_id
+    session.commit()
 
-    videos = all_videos[:MAX_CLASSIFY_PER_RUN]
-    total = len(videos)
-    skipped = len(all_videos) - total
-    if skipped:
-        logger.info(f"[user={user_id}] {len(all_videos)} unclassified — processing first {total}, {skipped} deferred to next run")
 
-    client = anthropic.Anthropic(api_key=key)
-
-    # Phase 1: build batch requests (fetches transcript intro per video)
-    logger.info(f"[user={user_id}] Building {total} classification requests...")
-    requests = []
-    for i, video in enumerate(videos):
-        transcript_intro = _fetch_transcript_intro(video["id"])
-        user_message = _build_user_message(video, transcript_intro)
-        requests.append({
-            "custom_id": video["id"],
-            "params": {
-                "model": MODEL,
-                "max_tokens": 150,
-                "system": SYSTEM_PROMPT,
-                "messages": [{"role": "user", "content": user_message}],
-            },
-        })
-        if on_progress and (i + 1) % 10 == 0:
-            on_progress(total, -(i + 1))  # negative done = still building
-
-    # Phase 2: submit batch
-    logger.info(f"[user={user_id}] Submitting batch of {total} to Anthropic...")
-    batch = client.messages.batches.create(requests=requests)
-    logger.info(f"[user={user_id}] Batch submitted — ID: {batch.id}")
-
-    # Phase 3: poll until complete
-    while True:
-        batch = client.messages.batches.retrieve(batch.id)
-        counts = batch.request_counts
-        done = counts.succeeded + counts.errored + counts.canceled + counts.expired
-        logger.info(f"[user={user_id}] {batch.id}: {done}/{total} done")
-        if on_progress:
-            on_progress(total, done)
-        if batch.processing_status == "ended":
-            break
-        time.sleep(BATCH_POLL_INTERVAL)
-
-    # Phase 4: save results
+def _save_results(session: Session, user_id: str, client, batch) -> tuple[int, int]:
+    """Iterate batch results and save classifications. Returns (classified, failed)."""
     classified = 0
     failed = 0
     for result in client.messages.batches.results(batch.id):
@@ -164,6 +121,105 @@ def classify_for_user(session: Session, user_id: str, api_key: str = "", on_prog
         else:
             logger.warning(f"[user={user_id}] Failed: {result.custom_id} — {result.result.type}")
             failed += 1
+    return classified, failed
+
+
+def classify_for_user(session: Session, user_id: str, api_key: str = "", on_progress=None) -> int:
+    """
+    Classify unclassified videos for a user's channels using Anthropic Batch API.
+
+    Resumable: if a batch was previously submitted (batch ID persisted in DB),
+    resumes polling or retrieves results directly — no resubmission or double billing.
+    Processes up to MAX_CLASSIFY_PER_RUN videos per call; remainder deferred to next run.
+
+    Returns count of successfully classified videos.
+    """
+    import anthropic
+
+    key = api_key or ANTHROPIC_API_KEY
+    if not key:
+        raise RuntimeError("ANTHROPIC_API_KEY not configured")
+
+    client = anthropic.Anthropic(api_key=key)
+
+    # ── Resume: check for an existing batch from a previous interrupted run ──
+    creds = _get_or_create_credentials(session, user_id)
+    if creds.classifier_batch_id:
+        batch_id = creds.classifier_batch_id
+        logger.info(f"[user={user_id}] Found existing batch {batch_id} — checking status...")
+        try:
+            batch = client.messages.batches.retrieve(batch_id)
+            counts = batch.request_counts
+            total = counts.succeeded + counts.errored + counts.canceled + counts.expired + counts.processing
+            if batch.processing_status != "ended":
+                logger.info(f"[user={user_id}] Batch still processing — resuming poll")
+            else:
+                logger.info(f"[user={user_id}] Batch already ended — retrieving results directly")
+            # Fall through to Phase 3 (poll/retrieve results)
+        except Exception as e:
+            logger.warning(f"[user={user_id}] Could not retrieve batch {batch_id}: {e} — submitting new batch")
+            _save_batch_id(session, user_id, None)
+            batch = None
+            total = 0
+    else:
+        batch = None
+        total = 0
+
+    if batch is None:
+        # ── Phase 1: build batch requests ────────────────────────────────────
+        all_videos = _fetch_unclassified_for_user(session, user_id)
+        if not all_videos:
+            logger.info(f"[user={user_id}] No unclassified videos.")
+            return 0
+
+        videos = all_videos[:MAX_CLASSIFY_PER_RUN]
+        total = len(videos)
+        skipped = len(all_videos) - total
+        if skipped:
+            logger.info(f"[user={user_id}] {len(all_videos)} unclassified — processing first {total}, {skipped} deferred")
+
+        logger.info(f"[user={user_id}] Building {total} classification requests...")
+        requests = []
+        for i, video in enumerate(videos):
+            transcript_intro = _fetch_transcript_intro(video["id"])
+            user_message = _build_user_message(video, transcript_intro)
+            requests.append({
+                "custom_id": video["id"],
+                "params": {
+                    "model": MODEL,
+                    "max_tokens": 150,
+                    "system": SYSTEM_PROMPT,
+                    "messages": [{"role": "user", "content": user_message}],
+                },
+            })
+            if on_progress and (i + 1) % 10 == 0:
+                on_progress(total, -(i + 1))  # negative = still building
+
+        # ── Phase 2: submit batch + persist ID immediately ────────────────────
+        logger.info(f"[user={user_id}] Submitting batch of {total} to Anthropic...")
+        batch = client.messages.batches.create(requests=requests)
+        _save_batch_id(session, user_id, batch.id)
+        logger.info(f"[user={user_id}] Batch submitted — ID: {batch.id}")
+
+    # ── Phase 3: poll until complete ──────────────────────────────────────────
+    while batch.processing_status != "ended":
+        time.sleep(BATCH_POLL_INTERVAL)
+        batch = client.messages.batches.retrieve(batch.id)
+        counts = batch.request_counts
+        done = counts.succeeded + counts.errored + counts.canceled + counts.expired
+        logger.info(f"[user={user_id}] {batch.id}: {done}/{total} done")
+        if on_progress:
+            on_progress(total, done)
+
+    # Emit final progress (covers the case where batch was already ended on first check)
+    if on_progress:
+        counts = batch.request_counts
+        done = counts.succeeded + counts.errored + counts.canceled + counts.expired
+        on_progress(total, done)
+
+    # ── Phase 4: save results + clear batch ID ────────────────────────────────
+    classified, failed = _save_results(session, user_id, client, batch)
+    _save_batch_id(session, user_id, None)
 
     logger.info(f"[user={user_id}] Done: {classified}/{total} classified, {failed} failed")
     return classified

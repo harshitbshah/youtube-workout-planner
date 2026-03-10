@@ -112,6 +112,7 @@ class UserCredentials(Base):
     anthropic_key = Column(Text)
     credentials_valid = Column(Boolean, default=True, nullable=False)
     youtube_playlist_id = Column(String)
+    classifier_batch_id = Column(String)   # active Anthropic batch ID — cleared when done
     updated_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
 
     user = relationship("User", back_populates="credentials")

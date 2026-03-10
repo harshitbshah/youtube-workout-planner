@@ -257,6 +257,85 @@ def test_upper_duration_cap():
 
 # ─── Classifier cap unit tests ─────────────────────────────────────────────────
 
+def test_classify_resumes_existing_batch(db_session):
+    """If a batch ID is persisted in DB, classify_for_user resumes it instead of resubmitting."""
+    from unittest.mock import MagicMock, patch
+    from api.models import Channel, User, UserCredentials
+    from api.services.classifier import classify_for_user
+
+    user = User(google_id="resume-g", email="resume@test.com")
+    db_session.add(user)
+    db_session.commit()
+
+    # Pre-persist a batch ID as if a previous run was interrupted
+    creds = UserCredentials(user_id=user.id, classifier_batch_id="existing-batch-123")
+    db_session.add(creds)
+    db_session.commit()
+
+    mock_batch = MagicMock()
+    mock_batch.id = "existing-batch-123"
+    mock_batch.processing_status = "ended"
+    mock_batch.request_counts.succeeded = 0
+    mock_batch.request_counts.errored = 0
+    mock_batch.request_counts.canceled = 0
+    mock_batch.request_counts.expired = 0
+    mock_batch.request_counts.processing = 0
+
+    mock_client = MagicMock()
+    mock_client.messages.batches.retrieve.return_value = mock_batch
+    mock_client.messages.batches.results.return_value = []
+
+    with patch("anthropic.Anthropic", return_value=mock_client):
+        classify_for_user(db_session, user.id, api_key="fake-key")
+
+    # Should NOT have submitted a new batch
+    mock_client.messages.batches.create.assert_not_called()
+    # Should have retrieved the existing batch
+    mock_client.messages.batches.retrieve.assert_called_with("existing-batch-123")
+    # Batch ID should be cleared after completion
+    db_session.refresh(creds)
+    assert creds.classifier_batch_id is None
+
+
+def test_classify_clears_batch_id_on_completion(db_session):
+    """Batch ID is cleared from DB after successful classification."""
+    from unittest.mock import MagicMock, patch
+    from api.models import Channel, User, UserCredentials, Video
+    from api.services.classifier import classify_for_user
+
+    user = User(google_id="clear-g", email="clear@test.com")
+    db_session.add(user)
+    db_session.commit()
+
+    ch = Channel(user_id=user.id, name="Ch", youtube_url="https://youtube.com/@ch")
+    db_session.add(ch)
+    db_session.commit()
+    db_session.add(Video(id="clear-vid", channel_id=ch.id, title="Workout",
+                         url="https://youtube.com/watch?v=clear-vid", duration_sec=1800))
+    db_session.commit()
+
+    mock_batch = MagicMock()
+    mock_batch.id = "new-batch-456"
+    mock_batch.processing_status = "ended"
+    mock_batch.request_counts.succeeded = 0
+    mock_batch.request_counts.errored = 0
+    mock_batch.request_counts.canceled = 0
+    mock_batch.request_counts.expired = 0
+
+    mock_client = MagicMock()
+    mock_client.messages.batches.create.return_value = mock_batch
+    mock_client.messages.batches.retrieve.return_value = mock_batch
+    mock_client.messages.batches.results.return_value = []
+
+    with patch("api.services.classifier._fetch_transcript_intro", return_value=""), \
+         patch("api.services.classifier._build_user_message", return_value="msg"), \
+         patch("anthropic.Anthropic", return_value=mock_client):
+        classify_for_user(db_session, user.id, api_key="fake-key")
+
+    creds = db_session.get(UserCredentials, user.id)
+    assert creds.classifier_batch_id is None
+
+
 def test_classify_cap_limits_batch(db_session):
     """classify_for_user should only process up to MAX_CLASSIFY_PER_RUN videos."""
     from unittest.mock import MagicMock, patch
