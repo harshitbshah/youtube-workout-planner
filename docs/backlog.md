@@ -88,6 +88,24 @@ Review before starting a new phase to see if anything belongs in scope.
 - Custom domain (~$10–20/yr via Cloudflare Registrar) — defer until name decided and
   going public.
 
+## Admin / Ops
+
+- **Admin runbook panel** — add a collapsed `<details>` section at the bottom of `/admin`
+  with quick answers to the most likely operational questions. Content to cover:
+
+  | Symptom | Cause | Fix |
+  |---|---|---|
+  | User's pipeline is stuck on "classifying" forever | Anthropic batch timed out or server restarted mid-batch; stale `classifier_batch_id` in DB | Use Railway shell: `UPDATE user_credentials SET classifier_batch_id = NULL WHERE user_id = '<id>';` then hit ↺ Scan |
+  | User has 0 videos after a scan | All videos filtered by pre-classification blocklist (non-workout titles), or YouTube API quota exhausted | Check Railway logs for that user's scan; if quota, wait 24h |
+  | User's plan is all Rest days | Planner found no matching videos (library too small or schedule too restrictive) | Try ↺ Scan to get more videos; check user's schedule settings |
+  | "Unclassified" count keeps growing | New videos scanned faster than Anthropic batches can process them, or batch cap (300/run) hit | Normal — will clear on next scheduled Sunday scan; or trigger ↺ Scan manually |
+  | YouTube "credentials invalid" for a user | User's Google OAuth refresh token was revoked (changed Google password, or revoked app access at myaccount.google.com) | User must re-authenticate: sign out → sign in again to re-grant YouTube access |
+  | Admin stats show 0 AI usage despite classifications | Migration 005 not yet applied (UserActivityLog / ScanLog tables missing) | Trigger a Railway redeploy — Dockerfile runs `alembic upgrade head` automatically |
+
+  Implementation: inline `<details><summary>Runbook</summary>…</details>` at the bottom
+  of the admin page. No separate route needed — keeps it contextual and zero maintenance.
+  Build when first users are onboarded and real incidents arise to validate the content.
+
 ## Infrastructure / Ops
 
 - Email notification when YouTube access is revoked — part of Phase 5 revoked access
