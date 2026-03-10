@@ -248,7 +248,7 @@ export default function DashboardPage() {
       <div className="max-w-5xl mx-auto">
 
         {/* Header */}
-        <div className="flex items-center justify-between mb-8">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-8 gap-4">
           <div>
             <h1 className="text-2xl font-bold text-white">
               {user?.display_name ? `${user.display_name.split(" ")[0]}'s plan` : "Your plan"}
@@ -257,16 +257,16 @@ export default function DashboardPage() {
               <p className="text-zinc-500 text-sm mt-0.5">Week of {weekLabel}</p>
             )}
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-2">
             <Link
               href="/library"
-              className="rounded-lg border border-zinc-700 px-4 py-2 text-sm text-zinc-400 hover:bg-zinc-800 transition"
+              className="rounded-lg border border-zinc-700 px-3 py-2 text-sm text-zinc-400 hover:bg-zinc-800 transition"
             >
               Library
             </Link>
             <Link
               href="/settings"
-              className="rounded-lg border border-zinc-700 px-4 py-2 text-sm text-zinc-400 hover:bg-zinc-800 transition"
+              className="rounded-lg border border-zinc-700 px-3 py-2 text-sm text-zinc-400 hover:bg-zinc-800 transition"
             >
               Settings
             </Link>
@@ -274,7 +274,7 @@ export default function DashboardPage() {
               <button
                 onClick={handleGenerate}
                 disabled={generating}
-                className="rounded-lg bg-white px-4 py-2 text-sm font-semibold text-zinc-900 hover:bg-zinc-100 disabled:opacity-40 cursor-pointer transition"
+                className="rounded-lg bg-white px-3 py-2 text-sm font-semibold text-zinc-900 hover:bg-zinc-100 disabled:opacity-40 cursor-pointer transition"
               >
                 {generating ? "Generating…" : "Regenerate"}
               </button>
@@ -282,7 +282,7 @@ export default function DashboardPage() {
               <button
                 onClick={handleScan}
                 disabled={generating || scanning}
-                className="rounded-lg bg-white px-4 py-2 text-sm font-semibold text-zinc-900 hover:bg-zinc-100 disabled:opacity-40 cursor-pointer transition"
+                className="rounded-lg bg-white px-3 py-2 text-sm font-semibold text-zinc-900 hover:bg-zinc-100 disabled:opacity-40 cursor-pointer transition"
               >
                 {generating ? "Starting…" : allDaysEmpty ? "Rescan channels" : "Generate plan"}
               </button>
@@ -291,7 +291,7 @@ export default function DashboardPage() {
               <button
                 onClick={handlePublish}
                 disabled={publishing}
-                className="rounded-lg border border-red-600 bg-red-600/10 px-4 py-2 text-sm font-medium text-red-400 hover:bg-red-600/20 disabled:opacity-40 cursor-pointer transition"
+                className="rounded-lg border border-red-600 bg-red-600/10 px-3 py-2 text-sm font-medium text-red-400 hover:bg-red-600/20 disabled:opacity-40 cursor-pointer transition"
               >
                 {publishing ? "Publishing…" : "Publish to YouTube"}
               </button>
@@ -305,14 +305,14 @@ export default function DashboardPage() {
                     ? "YouTube access revoked — sign in again to reconnect"
                     : "Generate a plan first"
                 }
-                className="rounded-lg border border-zinc-700 px-4 py-2 text-sm text-zinc-600 opacity-50 cursor-not-allowed transition"
+                className="rounded-lg border border-zinc-700 px-3 py-2 text-sm text-zinc-600 opacity-50 cursor-not-allowed transition"
               >
                 Publish to YouTube
               </button>
             )}
             <button
               onClick={handleLogout}
-              className="rounded-lg border border-zinc-700 px-4 py-2 text-sm text-zinc-400 hover:bg-zinc-800 cursor-pointer transition"
+              className="rounded-lg border border-zinc-700 px-3 py-2 text-sm text-zinc-400 hover:bg-zinc-800 cursor-pointer transition"
             >
               Sign out
             </button>
@@ -427,7 +427,7 @@ export default function DashboardPage() {
 
         {/* Plan grid */}
         {plan && (
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {plan.days.map((day: PlanDay) => (
               <div key={day.day}>
                 <p className="text-xs font-semibold text-zinc-500 uppercase tracking-wide mb-2">

@@ -299,7 +299,7 @@ export default function LibraryPage() {
           </div>
         ) : data && data.videos.length > 0 ? (
           <>
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               {data.videos.map((video) => (
                 <VideoCard key={video.id} video={video} />
               ))}
