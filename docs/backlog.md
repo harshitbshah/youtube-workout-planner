@@ -8,25 +8,6 @@ Review before starting a new phase to see if anything belongs in scope.
 
 ---
 
-## Branch Merge — Next Steps (ready to execute)
-
-The `feat/web-app` branch fully supersedes `main`. The APScheduler cron in the web app
-replaces the original GitHub Actions CLI pipeline. Steps to merge:
-
-1. **Merge `feat/web-app` → `main`** — no conflicts expected (web app is purely additive)
-2. **Delete GitHub Actions workflow** — remove `.github/workflows/weekly_plan.yml`
-   (APScheduler cron handles all users; the CLI tool is fully retired)
-3. **Push `main`**
-4. **Update Vercel** — change deployment branch from `feat/web-app` → `main`
-   (Project Settings → Git → Production Branch)
-5. **Update Railway** — change deployment branch to `main` if currently tracking `feat/web-app`
-6. **Delete `feat/web-app` branch** — no longer needed after merge
-
-The CLI files (`main.py`, `src/`, `config.yaml`, `workout_library.db`) can be left in
-the repo as historical reference or cleaned up separately — they don't affect anything.
-
----
-
 ## Legal / Compliance
 
 - V0 launch: Privacy Policy + ToS written manually, live at `/privacy` and `/terms` ✅
@@ -34,6 +15,7 @@ the repo as historical reference or cleaned up separately — they don't affect 
 - Footer: YouTube API attribution links + "Not affiliated with YouTube, Google, or featured channels"
 - Verify `DELETE /auth/me` fully purges YouTube OAuth tokens (Google API ToS requirement)
 - Add "Curated by AI" badge on plan dashboard (FTC AI disclosure)
+  → **Fits into Phase B** (onboarding redesign touches dashboard). Small addition.
 - Long-term: lawyer-reviewed docs before paid tier; GDPR cookie banner when analytics added; CCPA compliance at scale
 - See `docs/legal.md` for full details
 
@@ -71,9 +53,11 @@ the repo as historical reference or cleaned up separately — they don't affect 
 - Cross-user channel dedup — shared `channels` table + `user_channels` join table so
   the same YouTube channel isn't scanned N times for N users. Pre-scale work.
   Documented in `docs/scaling.md`.
+  → **Covered by** `docs/specs/ai-cost-reduction.md` Feature 8 (global cache + UserChannelVideo join table).
 
 - Per-user classification cost cap — bound Anthropic spend per user per month.
   Not urgent while user count is small; revisit before opening to public.
+  → **Covered by** `docs/specs/ai-cost-reduction.md` Feature 7.
 
 - BYOK (bring your own Anthropic key) — `user_credentials.anthropic_key` field already
   exists in the schema. Add a settings UI field + validation + fallback to platform key.
@@ -129,6 +113,8 @@ the repo as historical reference or cleaned up separately — they don't affect 
 
 - Email notification when YouTube access is revoked — part of Phase 5 revoked access
   handling. User should get an email + in-app banner, not just a silent skip.
+  → **Fits into Phase C** (Resend already wired up for weekly plan email). Add as a
+  second `send_*` function in `api/services/email.py`.
 
 - Per-user YouTube API key support — required before scaling past ~14 concurrent weekly
   users (10,000 quota units / ~670 per user per week). See `docs/infra-research.md`.
@@ -140,6 +126,7 @@ the repo as historical reference or cleaned up separately — they don't affect 
 - Graceful scanner failure reporting — if scan/classify fails for a user, they currently
   see nothing. Consider storing a `last_scan_status` + `last_scan_error` on the user
   record so the dashboard can show a meaningful error banner.
+  → **Fits into Phase A** (scan pipeline work). Small addition alongside F3/F4.
 
 ---
 

@@ -12,6 +12,7 @@ Ordered by priority. Each item links to its spec.
 - [ ] **F2** — 18-month video cutoff (`CLASSIFY_MAX_AGE_MONTHS` env var)
 - [ ] **F3** — First-scan channel cap (migration 006, `first_scan_done` column, 75-video limit)
 - [ ] **F4** — Skip inactive channels (migration 007, `last_video_published_at` column)
+- [ ] **Graceful scanner failure** — add `last_scan_error` to user record; show error banner on dashboard if pipeline fails
 
 ---
 
@@ -33,6 +34,7 @@ Ordered by priority. Each item links to its spec.
 - [ ] Manual test: senior profile defaults to beginner/short schedule
 - [ ] Manual test: athlete profile defaults to advanced/long schedule
 - [ ] Manual test: step 7 auto-navigates after all stages complete
+- [ ] **"Curated by AI" badge** — add small disclosure badge to plan dashboard (FTC AI disclosure)
 
 ---
 
@@ -52,6 +54,7 @@ Ordered by priority. Each item links to its spec.
 - [ ] Unit test: mock `resend.Emails.send`, assert subject + HTML content
 - [ ] Manual test: trigger pipeline → verify email received in Gmail
 - [ ] Manual test: toggle off in settings → re-trigger → no email sent
+- [ ] **Revoked YouTube access email** — add `send_revoked_access_email()` to `api/services/email.py`; trigger when OAuth refresh fails
 
 ---
 
