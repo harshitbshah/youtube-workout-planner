@@ -273,11 +273,11 @@ export default function GuidePage() {
                 },
                 {
                   q: "Can I use channels that aren't fitness channels?",
-                  a: "The search is open — you can add any YouTube channel. The classifier will label non-workout videos as "Other" and they'll be excluded from your plan automatically.",
+                  a: "The search is open — you can add any YouTube channel. The classifier will label non-workout videos as 'Other' and they'll be excluded from your plan automatically.",
                 },
                 {
                   q: "What if a video I want isn't in my plan?",
-                  a: "Go to the Library, find it, and use "Assign to day" to put it on a specific day.",
+                  a: "Go to the Library, find it, and use 'Assign to day' to put it on a specific day.",
                 },
                 {
                   q: "Can I change my schedule mid-week?",
