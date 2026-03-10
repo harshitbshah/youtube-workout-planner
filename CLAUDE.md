@@ -127,9 +127,9 @@ Frontend: `http://localhost:3000`
 | File | Purpose |
 |---|---|
 | `api/main.py` | FastAPI app, CORS, middleware, router registration |
-| `api/models.py` | SQLAlchemy ORM models (User, Channel, Video, Classification, Schedule, ProgramHistory, UserCredentials) |
+| `api/models.py` | SQLAlchemy ORM models (User, Channel, Video, Classification, Schedule, ProgramHistory, UserCredentials, BatchUsageLog, Announcement) |
 | `api/schemas.py` | Pydantic request/response schemas |
-| `api/dependencies.py` | `get_db`, `get_current_user` FastAPI dependencies |
+| `api/dependencies.py` | `get_db`, `get_current_user` (+ last_active_at throttled update) FastAPI dependencies |
 | `api/database.py` | SQLAlchemy engine + session factory |
 | `api/crypto.py` | Fernet encryption for credentials at rest |
 | `api/scheduler.py` | APScheduler weekly cron (replaces GitHub Actions for web users) |
@@ -138,23 +138,27 @@ Frontend: `http://localhost:3000`
 | `api/routers/schedule.py` | `GET/PUT /schedule` |
 | `api/routers/plan.py` | `GET /plan/upcoming`, `POST /plan/generate`, `PATCH /plan/{day}`, `POST /plan/publish` |
 | `api/routers/library.py` | `GET /library` — paginated, filtered video browser |
-| `api/routers/jobs.py` | `POST /jobs/scan` — trigger manual channel scan |
+| `api/routers/jobs.py` | `POST /jobs/scan`, `GET /jobs/status`, `get_all_pipeline_statuses()` |
+| `api/routers/admin.py` | Admin stats, user management, announcements (ADMIN_EMAIL gated) |
 | `api/services/scanner.py` | YouTube channel scanning (uses `src/scanner.py` internals) |
-| `api/services/classifier.py` | Video classification via Anthropic Batch API (uses `src/classifier.py`) |
+| `api/services/classifier.py` | Video classification via Anthropic Batch API; records BatchUsageLog |
 | `api/services/planner.py` | Weekly plan generation (uses `src/planner.py`) |
-| `alembic/` | Database migrations |
+| `alembic/` | Database migrations (currently at 004) |
 
 ### Frontend (`frontend/src/`)
 | Path | Purpose |
 |---|---|
-| `app/page.tsx` | Landing/marketing page (hero, how it works, features, CTA) |
+| `app/page.tsx` | Landing/marketing page (hero, how it works, features, CTA, Guide nav link) |
 | `app/onboarding/page.tsx` | 3-step sign-up wizard: channels → schedule → generate |
-| `app/dashboard/page.tsx` | Weekly plan grid, regenerate, nav to library/settings/publish |
+| `app/dashboard/page.tsx` | Weekly plan grid, responsive header, announcement banner, admin nav link |
 | `app/library/page.tsx` | Video library browser with filters + assign-to-day |
 | `app/settings/page.tsx` | Profile, channels, schedule, account deletion |
+| `app/guide/page.tsx` | User guide with sticky sidebar nav (7 sections) |
+| `app/admin/page.tsx` | Admin console: stats, user table, announcements (admin only) |
 | `lib/api.ts` | All API calls + TypeScript types |
 | `components/ChannelManager.tsx` | Reusable channel search/add/remove (used in onboarding + settings) |
 | `components/ScheduleEditor.tsx` | Reusable weekly schedule grid (used in onboarding + settings) |
+| `components/Tooltip.tsx` | CSS-only tooltip component (`group/tip` pattern, `delay-300`) |
 
 ---
 
@@ -182,6 +186,14 @@ Frontend: `http://localhost:3000`
 | GET | `/library` | Yes | Paginated/filtered video library |
 | POST | `/jobs/scan` | Yes | Trigger manual channel scan |
 | GET | `/jobs/status` | Yes | Pipeline stage + classify progress `{stage, total, done}` |
+| GET | `/announcements/active` | Yes | Active announcement or null (any auth'd user) |
+| GET | `/admin/stats` | Admin | Aggregate stats + per-user rows |
+| DELETE | `/admin/users/{id}` | Admin | Delete any user (blocks self-deletion) |
+| POST | `/admin/users/{id}/scan` | Admin | Trigger pipeline for any user |
+| GET | `/admin/announcements` | Admin | List all announcements |
+| POST | `/admin/announcements` | Admin | Create announcement |
+| DELETE | `/admin/announcements/{id}` | Admin | Delete announcement |
+| PATCH | `/admin/announcements/{id}/deactivate` | Admin | Deactivate announcement |
 
 ---
 
@@ -198,7 +210,8 @@ Google OAuth → /auth/google → Google → /auth/google/callback → /
       Step 3: Trigger scan → /dashboard
 
   → Returning user (has channels): /dashboard
-      Header nav: Library | Settings | Regenerate | Publish (disabled) | Sign out
+      Header nav: Library | Settings | Regenerate | Publish | Admin (admin only) | Sign out
+      Announcement banner (dismissible) shown if active announcement exists
       ↓ Library → /library
           Filters: workout type / body focus / difficulty / channel
           Cards: assign to plan day via PATCH /plan/{day}
@@ -207,6 +220,14 @@ Google OAuth → /auth/google → Google → /auth/google/callback → /
           Channels: ChannelManager (add/remove)
           Schedule: ScheduleEditor + save
           Danger zone: delete account (2-step confirm)
+      ↓ Admin (admin only) → /admin
+          Stats: users, library size, AI token usage + cost
+          Active pipelines monitor
+          Per-user management: scan, delete
+          Announcements: create/deactivate/delete
+
+/ → nav "Guide" link → /guide
+    User guide, 7 sections, sticky desktop sidebar
 ```
 
 ---
@@ -231,6 +252,11 @@ Frontend filter values are lowercase; display labels are set explicitly in `WORK
 ### Running .env
 Always use `set -a && source .env && set +a` — plain `source .env` does not export
 vars to subprocesses, so uvicorn (a subprocess) won't see them.
+
+### Admin gating
+`ADMIN_EMAIL` env var on Railway identifies the single admin user.
+Read at request time inside `_require_admin()` (not at module import time) to allow
+test isolation via `monkeypatch.setenv`. On Railway: set `ADMIN_EMAIL=harshitspeaks@gmail.com`.
 
 ### Test isolation
 - Unit tests: SQLite in-memory, `StaticPool`, tables recreated per test

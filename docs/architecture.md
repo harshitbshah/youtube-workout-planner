@@ -281,6 +281,21 @@ user_credentials
   user_id (PK FK), youtube_refresh_token (Fernet-encrypted), anthropic_key, updated_at,
   credentials_valid (bool, default true), youtube_playlist_id (nullable),
   classifier_batch_id (nullable — persisted Anthropic batch ID for resumable classification)
+
+batch_usage_log
+  id (int PK), user_id (FK), batch_id (text), videos_submitted, classified, failed,
+  input_tokens, output_tokens, created_at
+  — written after each Anthropic batch completes; used by admin stats for cost tracking
+
+announcements
+  id (int PK), message (text), is_active (bool, default true), created_at
+  — admin-created site-wide banners; only one should be active at a time
+
+Migration history:
+  001 — initial schema
+  002 — credentials_valid + youtube_playlist_id
+  003 — classifier_batch_id
+  004 — users.last_active_at + batch_usage_log + announcements
 ```
 
 ---
@@ -324,6 +339,26 @@ works regardless of browser cookie policy.
 All user-facing endpoints depend on `get_current_user` which checks the Bearer token
 (or session cookie fallback) and returns the `User` ORM object, or raises 401.
 All queries filter by `user_id` — no cross-user data leakage is possible.
+
+`get_current_user` also updates `user.last_active_at` at most once per 5 minutes
+(throttled to avoid a DB write on every request).
+
+### Admin routes
+Admin routes live in `api/routers/admin.py`. A separate `_require_admin` dependency
+reads `ADMIN_EMAIL` env var at request time and raises 403 if the current user's email
+doesn't match. Env var is read at request time (not import time) for test isolation.
+
+```
+GET  /admin/stats                         → aggregate stats + per-user rows
+DELETE /admin/users/{user_id}             → delete any user (blocks self-deletion)
+POST /admin/users/{user_id}/scan          → trigger full pipeline for any user
+GET  /admin/announcements                 → list all announcements
+POST /admin/announcements                 → create announcement
+DELETE /admin/announcements/{id}          → delete announcement
+PATCH /admin/announcements/{id}/deactivate → deactivate announcement
+
+GET /announcements/active                 → active announcement or null (any auth'd user)
+```
 
 ### Library endpoint
 `GET /library` joins Video → Channel → Classification, filters by `Channel.user_id`,
@@ -389,8 +424,21 @@ still handles the single original user independently.
               Step 2: Set schedule (ScheduleEditor component)
               Step 3: Trigger first scan → /dashboard
 
+/guide ────── User guide (7 sections with sticky desktop sidebar)
+              Linked from homepage nav and footer
+
+/admin ─────── Admin console (admin users only, gated by is_admin flag)
+              Stat cards: total users, library size, AI usage (7d + all-time, cost estimate)
+              Active pipelines monitor (stage + progress per user)
+              Per-user table: last_active_at, channels, videos, YouTube status, last plan,
+                             pipeline stage, ↺ Scan and Delete action buttons
+              Announcements panel: create / deactivate / delete site-wide banners
+              Auto-refreshes every 30s; admin nav link shown in dashboard header for admins
+
 /dashboard ── Weekly plan grid (7 days, thumbnails, badges)
-              Nav: Library | Settings | Generate plan / Regenerate | Publish to YouTube | Sign out
+              Nav: Library | Settings | Generate plan / Regenerate | Publish to YouTube
+                   | Admin (admin users only) | Sign out
+              Announcement banner (dismissible) shown when active announcement exists
               - "Generate plan" (no plan): triggers POST /jobs/scan, shows scanning banner,
                 polls GET /jobs/status every 5s; polls GET /plan/upcoming until plan appears
               - "Regenerate" (plan exists): calls POST /plan/generate synchronously,
@@ -418,6 +466,10 @@ still handles the single original user independently.
 `ChannelManager` and `ScheduleEditor` are extracted to `src/components/` and reused
 in both `/onboarding` and `/settings`. The onboarding page wraps them with step
 navigation; settings wraps them with save buttons.
+
+`Tooltip` (`src/components/Tooltip.tsx`) — CSS-only tooltip using Tailwind `group/tip`
+pattern. Props: `text`, `children`, `position?: "top" | "bottom"`. Used throughout
+the admin console. Hover delay is 300ms (`delay-300`) to reduce accidental triggers.
 
 ### API client (`src/lib/api.ts`)
 Single file with all `fetch` calls and TypeScript types. Uses `credentials: "include"`

@@ -1,8 +1,8 @@
 # Progress
 
 ## Status
-Phases 1–5 complete + deployment live + post-deploy fixes + pipeline reliability + E2E bug fixes complete.
-**227/227 tests passing.**
+Phases 1–5 complete + deployment live + all fixes + admin console + guide page + mobile UX complete.
+**248/248 tests passing.**
 Both Railway (backend) and Vercel (frontend) live and functional.
 First plan loading successfully end-to-end. Ready for E2E checklist testing.
 
@@ -110,6 +110,57 @@ on_progress callback, batch resume logic, batch ID cleared on completion.
 - Complete E2E testing (Groups 1–7 in `docs/testing.md`)
 - Publish Google OAuth app (removes "unverified" warning for basic scopes)
 - Once E2E passes: share with first users
+
+### Admin console + guide page + mobile UX (2026-03-10) — complete
+
+**Mobile responsive:**
+- Dashboard header now `flex-col sm:flex-row` with `flex-wrap gap-2` on button group
+- Dashboard plan grid: `grid-cols-1 sm:grid-cols-2 lg:grid-cols-4`
+- Library grid: `grid-cols-1 sm:grid-cols-2 lg:grid-cols-4`
+
+**Railway domain rename:**
+- Backend renamed to `planmyworkout-api.up.railway.app` (was `youtube-workout-planner-production`)
+- Updated `NEXT_PUBLIC_API_URL` on Vercel and all docs
+- **Important:** `GOOGLE_REDIRECT_URI` env var on Railway must also be updated on any domain rename
+  (was `https://planmyworkout-api.up.railway.app/auth/google/callback`)
+
+**User guide page:**
+- New `/guide` frontend page with 7 sections: Getting started, Weekly plan, Library,
+  Settings, How the plan is built, Publish to YouTube, FAQ
+- Sticky sidebar nav on desktop; mobile-friendly single column
+- Linked from homepage nav ("Guide") and footer ("User Guide")
+
+**Admin console:**
+- New `GET /admin/stats` — aggregate stats (users, library, AI usage) + per-user table
+  (last_active_at, channels, videos, YouTube status, last plan, pipeline stage)
+- New `DELETE /admin/users/{user_id}` — delete any user; blocks self-deletion
+- New `POST /admin/users/{user_id}/scan` — trigger scan for any user
+- New `GET/POST/DELETE /admin/announcements`, `PATCH /admin/announcements/{id}/deactivate`
+- New `GET /announcements/active` (public, any auth'd user) — active announcement or null
+- Admin gating: `ADMIN_EMAIL` env var checked at request time (not import time)
+- Dashboard shows admin nav link when `user.is_admin` is true
+- Dashboard shows announcement banner (dismissible) when active announcement exists
+
+**DB migrations (004):**
+- `users.last_active_at` (datetime, nullable) — updated on every authenticated request (5-min throttle)
+- `batch_usage_log` table — records token usage per Anthropic batch (input, output, per-user)
+- `announcements` table — admin-created site-wide messages (id, message, is_active, created_at)
+
+**Token usage tracking:**
+- `api/services/classifier.py` now extracts input/output tokens from Anthropic batch results
+- Records `BatchUsageLog` rows after each classify run
+- Admin `/admin/stats` aggregates 7d + all-time token usage with cost estimate ($0.40/$2.00 per 1M)
+
+**Tooltip component:**
+- New `frontend/src/components/Tooltip.tsx` — CSS-only tooltip using Tailwind `group/tip`
+- Subtle styling: `text-[11px]`, `max-w-[220px]`, `delay-300`, `bg-zinc-900 border-zinc-700/60`
+- Used on admin console stat cards, column headers, action buttons
+- Removed from dashboard (self-explanatory controls; native `title` on disabled Publish button)
+
+**Tests:** 248/248 (+21 new admin tests in `tests/api/test_admin.py`)
+- Stats shape, user counts, AI usage aggregation, 403 for non-admin, delete user,
+  cannot delete self, retry scan (no channels → 400, with channels → 202),
+  CRUD for announcements, active announcement visibility, timezone-aware 7d filter
 
 ### Vercel rename + URL cleanup (2026-03-09) — complete
 - Renamed Vercel project to `planmyworkout` → live at `https://planmyworkout.vercel.app`

@@ -22,6 +22,11 @@ Review before starting a new phase to see if anything belongs in scope.
 
 ## Frontend / UX
 
+- **Homepage redesign** — make the landing page more attractive/catchy for new visitors.
+  Current homepage is functional but minimal. Ideas: better hero copywriting, social proof
+  (screenshots or video demo), testimonials section once first users exist, animated
+  "how it works" steps. Captured as pending task, not yet started.
+
 - Light theme as default with a one-click toggle to dark mode. Currently the app
   is dark-only (hardcoded `zinc-950` backgrounds). Would need a theme context/provider,
   CSS variable-based colour tokens, and a toggle button (e.g. sun/moon icon in the

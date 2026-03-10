@@ -26,12 +26,13 @@ Run before every commit:
 .venv/bin/pytest -q
 ```
 
-Current: **227/227 passing**
+Current: **248/248 passing**
 
 New test files added:
 - `tests/api/test_jobs.py` — `POST /jobs/scan` (202, 400 no channels, 503 no key, 401 unauth, channel count); `GET /jobs/status` (no pipeline, unauthenticated, reflects live state); scanner filters (upper duration cap, title blocklist); classifier (batch cap limits to 300, `on_progress` callback during polling, resume existing batch, batch ID cleared on completion)
+- `tests/api/test_admin.py` — 21 tests: stats shape, user/library counts, last_active_at, AI usage aggregation (7d + all-time), 403 for non-admin, 403 with no ADMIN_EMAIL set, delete user, cannot delete self, 404 nonexistent, retry scan (no channels → 400, with channels → 202), create/list/delete/deactivate announcements, active announcement for regular user, null when none active, inactive not returned
 - `tests/integration/test_jobs_api.py` — 5 integration cases for `POST /jobs/scan` against real Postgres (user isolation, FK constraints, channel count)
-- `tests/integration/test_schema.py` — updated to expect Alembic version "003"
+- `tests/integration/test_schema.py` — updated to expect Alembic version "003" (update to "004" after next migration run)
 
 ---
 
@@ -170,10 +171,37 @@ Authenticate via browser first (session cookie), then use Swagger:
 ### Group 7 — Mobile (resize browser to ~390px wide)
 
 - [ ] Landing page: single column, CTA button full-width
-- [ ] Dashboard grid: 2 columns
-- [ ] Library grid: 2 columns, filter bar wraps without overflow
+- [ ] Dashboard grid: 1 column (mobile) → 2 columns (sm) → 4 columns (lg)
+- [ ] Dashboard header buttons wrap cleanly (no overflow)
+- [ ] Library grid: 1 column (mobile) → 2 columns (sm) → 4 columns (lg)
 - [ ] Settings: sections stack vertically, no horizontal overflow
 - [ ] Onboarding: all 3 steps usable at mobile width
+
+---
+
+### Group 8 — Guide page (`/guide`)
+
+- [ ] Page loads at `https://planmyworkout.vercel.app/guide`
+- [ ] Sticky sidebar nav visible on desktop (≥ lg breakpoint)
+- [ ] All 7 sections present: Getting started, Weekly plan, Library, Settings,
+      How the plan is built, Publish to YouTube, FAQ
+- [ ] "Guide" link in homepage nav navigates to `/guide`
+- [ ] "User Guide" link in homepage footer navigates to `/guide`
+- [ ] Page readable and not overflowing on mobile
+
+---
+
+### Group 9 — Admin console (`/admin`)
+
+- [ ] Non-admin user hitting `/admin` sees "Access denied" (or redirect)
+- [ ] Admin user sees stat cards: Total users, Library size, AI usage (7d), AI usage (all-time)
+- [ ] Per-user table shows: email, last active, channels, videos, YouTube connected, last plan, pipeline stage
+- [ ] "↺ Scan" button triggers scan for that user → shows "Scan triggered" feedback
+- [ ] "Delete" button shows confirmation, then deletes user on confirm
+- [ ] Announcements panel: can create new announcement, list existing, deactivate, delete
+- [ ] Active announcement appears as dismissible banner on dashboard for all users
+- [ ] Dashboard header shows "Admin" nav link when logged in as admin user
+- [ ] Admin link not visible for regular users
 
 ---
 
