@@ -54,7 +54,7 @@ Open `http://localhost:3000` in a fresh browser (or incognito).
 
 **Production (live):**
 Open `https://planmyworkout.vercel.app` in a fresh incognito window.
-API Swagger: `https://youtube-workout-planner-production.up.railway.app/docs`.
+API Swagger: `https://planmyworkout-api.up.railway.app/docs`.
 
 Delete checklist items as you verify them; delete the whole group when all ticked.
 

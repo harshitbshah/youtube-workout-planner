@@ -144,14 +144,14 @@ on_progress callback, batch resume logic, batch ID cleared on completion.
   `backlog.md` (5s polling), `user-guide.md` (scan stages, non-workout filters).
 
 ## Deployment Status
-- **Railway (backend):** ✅ Live at `https://youtube-workout-planner-production.up.railway.app`
+- **Railway (backend):** ✅ Live at `https://planmyworkout-api.up.railway.app`
   - Health check: `{"status":"ok"}`
   - OAuth redirect working (`/auth/google` → Google consent screen)
   - All env vars set and verified via `railway variables`
   - Railway CLI installed (`npm install -g @railway/cli`) and linked to project `endearing-abundance`
 - **Vercel (frontend):** ✅ Live at `https://planmyworkout.vercel.app`
   - Branch: `feat/web-app`, root directory: `frontend`
-  - `NEXT_PUBLIC_API_URL` set to Railway backend URL
+  - `NEXT_PUBLIC_API_URL` set to `https://planmyworkout-api.up.railway.app`
 
 ## Deployment Bug Log
 
