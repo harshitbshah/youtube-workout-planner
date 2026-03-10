@@ -10,6 +10,7 @@ import {
   generatePlan,
   publishPlan,
   triggerScan,
+  getJobStatus,
   logout,
   type User,
   type PlanResponse,
@@ -104,6 +105,8 @@ export default function DashboardPage() {
   const [plan, setPlan] = useState<PlanResponse | null>(null);
   const [hasChannels, setHasChannels] = useState(true);
   const [scanning, setScanning] = useState(false);
+  const [pipelineStage, setPipelineStage] = useState<string | null>(null);
+  const [classifyProgress, setClassifyProgress] = useState<{ total: number; done: number } | null>(null);
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState(false);
   const [publishing, setPublishing] = useState(false);
@@ -119,28 +122,53 @@ export default function DashboardPage() {
       window.history.replaceState({}, "", window.location.pathname);
     }
 
-    Promise.all([getMe(), getUpcomingPlan().catch(() => null), getChannels().catch(() => [])])
-      .then(([u, p, channels]) => {
+    Promise.all([
+      getMe(),
+      getUpcomingPlan().catch(() => null),
+      getChannels().catch(() => []),
+      getJobStatus().catch(() => ({ stage: null, total: null, done: null })),
+    ])
+      .then(([u, p, channels, status]) => {
         setUser(u);
         setPlan(p);
         setHasChannels(channels.length > 0);
-        if (p) setScanning(false); // plan already exists, no need to poll
+        const activeStages = ["scanning", "classifying", "generating"];
+        if (status.stage && activeStages.includes(status.stage)) {
+          // Pipeline is actively running — show scanning state regardless of
+          // whether a stale plan already exists in the DB
+          setScanning(true);
+          setPipelineStage(status.stage);
+        } else if (p) {
+          setScanning(false);
+        }
       })
       .catch(() => router.replace("/"))
       .finally(() => setLoading(false));
   }, [router]);
 
-  // Poll for the plan every 15s while scanning
+  // Poll for status + plan every 5s while scanning
   useEffect(() => {
     if (!scanning || plan) return;
     const interval = setInterval(() => {
+      getJobStatus()
+        .then(({ stage, total, done }) => {
+          setPipelineStage(stage);
+          if (stage === "classifying" && total && done !== null) {
+            setClassifyProgress({ total, done });
+          } else {
+            setClassifyProgress(null);
+          }
+        })
+        .catch(() => {});
       getUpcomingPlan()
         .then((p) => {
           setPlan(p);
           setScanning(false);
+          setPipelineStage(null);
+          setClassifyProgress(null);
         })
         .catch(() => {}); // still scanning, keep polling
-    }, 15_000);
+    }, 5_000);
     return () => clearInterval(interval);
   }, [scanning, plan]);
 
@@ -204,6 +232,8 @@ export default function DashboardPage() {
     );
   }
 
+  const allDaysEmpty = plan && plan.days.every((d: PlanDay) => !d.video);
+
   const weekLabel = plan
     ? new Date(plan.week_start + "T00:00:00").toLocaleDateString("en-GB", {
         day: "numeric",
@@ -239,7 +269,7 @@ export default function DashboardPage() {
             >
               Settings
             </Link>
-            {plan ? (
+            {plan && !allDaysEmpty ? (
               <button
                 onClick={handleGenerate}
                 disabled={generating}
@@ -253,7 +283,7 @@ export default function DashboardPage() {
                 disabled={generating || scanning}
                 className="rounded-lg bg-white px-4 py-2 text-sm font-semibold text-zinc-900 hover:bg-zinc-100 disabled:opacity-40 cursor-pointer transition"
               >
-                {generating ? "Starting…" : "Generate plan"}
+                {generating ? "Starting…" : allDaysEmpty ? "Rescan channels" : "Generate plan"}
               </button>
             )}
             {user?.youtube_connected && user?.credentials_valid && plan ? (
@@ -301,15 +331,32 @@ export default function DashboardPage() {
 
         {/* Scan in progress banner */}
         {scanning && (
-          <div className="mb-6 flex items-center gap-3 rounded-lg border border-zinc-700 bg-zinc-800/60 px-4 py-3 text-sm text-zinc-300">
-            <svg className="h-4 w-4 animate-spin shrink-0 text-zinc-400" viewBox="0 0 24 24" fill="none">
-              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
-              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"/>
-            </svg>
-            <span>
-              Scanning your channels and classifying videos — this usually takes 2–5 minutes.
-              Your plan will appear automatically when ready.
-            </span>
+          <div className="mb-6 rounded-lg border border-zinc-700 bg-zinc-800/60 px-4 py-3 text-sm text-zinc-300 space-y-2">
+            <div className="flex items-center gap-3">
+              <svg className="h-4 w-4 animate-spin shrink-0 text-zinc-400" viewBox="0 0 24 24" fill="none">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"/>
+              </svg>
+              <span>
+                {pipelineStage === "scanning" && "Scanning your channels for new videos…"}
+                {pipelineStage === "classifying" && (
+                  classifyProgress
+                    ? `Classifying videos with AI — ${classifyProgress.done.toLocaleString()} / ${classifyProgress.total.toLocaleString()} done`
+                    : "Classifying videos with AI — preparing batch…"
+                )}
+                {pipelineStage === "generating" && "Almost done — generating your weekly plan…"}
+                {pipelineStage === "failed" && "Something went wrong. Try rescanning from the button above."}
+                {(!pipelineStage || pipelineStage === "done") && "Starting pipeline — your plan will appear automatically when ready."}
+              </span>
+            </div>
+            {pipelineStage === "classifying" && classifyProgress && (
+              <div className="w-full bg-zinc-700 rounded-full h-1.5">
+                <div
+                  className="bg-white h-1.5 rounded-full transition-all duration-500"
+                  style={{ width: `${Math.round((classifyProgress.done / classifyProgress.total) * 100)}%` }}
+                />
+              </div>
+            )}
           </div>
         )}
 

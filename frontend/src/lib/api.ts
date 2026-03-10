@@ -120,6 +120,7 @@ export const getLibrary = (params: {
 // ─── Jobs ────────────────────────────────────────────────────────────────────
 
 export const triggerScan = () => apiFetch<JobResponse>("/jobs/scan", { method: "POST" });
+export const getJobStatus = () => apiFetch<{ stage: string | null; total: number | null; done: number | null }>("/jobs/status");
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 

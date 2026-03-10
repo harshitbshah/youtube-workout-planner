@@ -82,7 +82,7 @@ def _save_classification(session: Session, video_id: str, classification: dict):
 
 # ─── Public API ───────────────────────────────────────────────────────────────
 
-def classify_for_user(session: Session, user_id: str, api_key: str = "") -> int:
+def classify_for_user(session: Session, user_id: str, api_key: str = "", on_progress=None) -> int:
     """
     Classify all unclassified videos for a user's channels using Anthropic Batch API.
     Returns count of successfully classified videos.
@@ -128,6 +128,8 @@ def classify_for_user(session: Session, user_id: str, api_key: str = "") -> int:
         counts = batch.request_counts
         done = counts.succeeded + counts.errored + counts.canceled + counts.expired
         logger.info(f"[user={user_id}] {batch.id}: {done}/{total} done")
+        if on_progress:
+            on_progress(total, done)
         if batch.processing_status == "ended":
             break
         time.sleep(BATCH_POLL_INTERVAL)

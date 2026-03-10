@@ -22,6 +22,12 @@ router = APIRouter(prefix="/jobs", tags=["jobs"])
 
 YOUTUBE_API_KEY = os.getenv("YOUTUBE_API_KEY", "")
 
+# In-memory pipeline status per user. Lost on restart (acceptable — if the server
+# restarts mid-scan the background task is killed anyway).
+# Shape: {"stage": str, "total": int | None, "done": int | None}
+# stage values: "scanning" | "classifying" | "generating" | "done" | "failed"
+_pipeline_status: dict[str, dict] = {}
+
 
 def _run_scan_and_classify(channel_id: str, user_id: str, max_videos: int | None = None):
     """
@@ -64,6 +70,7 @@ def _run_full_pipeline(user_id: str):
 
     session = SessionLocal()
     try:
+        _pipeline_status[user_id] = {"stage": "scanning", "total": None, "done": None}
         channels = session.query(Channel).filter(Channel.user_id == user_id).all()
 
         total_new = 0
@@ -75,21 +82,44 @@ def _run_full_pipeline(user_id: str):
             except Exception as e:
                 logger.error(f"[scan] Failed for {channel.name}: {e}", exc_info=True)
 
-        if total_new > 0:
-            try:
-                classified = classify_for_user(session, user_id)
-                logger.info(f"[classify] {classified} videos classified for user {user_id}")
-            except Exception as e:
-                logger.error(f"[classify] Failed for user {user_id}: {e}", exc_info=True)
+        # Always classify — there may be previously unclassified videos from a
+        # failed earlier run, even if this scan found no new videos (incremental).
+        _pipeline_status[user_id] = {"stage": "classifying", "total": None, "done": None}
 
+        def _on_classify_progress(total: int, done: int):
+            _pipeline_status[user_id] = {"stage": "classifying", "total": total, "done": done}
+
+        try:
+            classified = classify_for_user(session, user_id, on_progress=_on_classify_progress)
+            logger.info(f"[classify] {classified} videos classified for user {user_id}")
+        except Exception as e:
+            logger.error(f"[classify] Failed for user {user_id}: {e}", exc_info=True)
+
+        _pipeline_status[user_id] = {"stage": "generating", "total": None, "done": None}
         try:
             generate_weekly_plan_for_user(session, user_id)
             logger.info(f"[plan] Generated plan for user {user_id}")
         except Exception as e:
             logger.error(f"[plan] Failed for user {user_id}: {e}", exc_info=True)
 
+        _pipeline_status[user_id] = {"stage": "done", "total": None, "done": None}
+
+    except Exception as e:
+        logger.error(f"[pipeline] Unexpected failure for user {user_id}: {e}", exc_info=True)
+        _pipeline_status[user_id] = {"stage": "failed", "total": None, "done": None}
     finally:
         session.close()
+
+
+@router.get("/status")
+def get_pipeline_status(
+    current_user: User = Depends(get_current_user),
+):
+    """Return the current pipeline stage + progress for the authenticated user."""
+    status = _pipeline_status.get(str(current_user.id))
+    if not status:
+        return {"stage": None, "total": None, "done": None}
+    return status
 
 
 @router.post("/scan", status_code=202)
