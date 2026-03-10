@@ -1,10 +1,10 @@
 # Progress
 
 ## Status
-Phases 1–5 complete + deployment live + post-deploy fixes + pipeline reliability improvements complete.
+Phases 1–5 complete + deployment live + post-deploy fixes + pipeline reliability + E2E bug fixes complete.
 **227/227 tests passing.**
 Both Railway (backend) and Vercel (frontend) live and functional.
-E2E testing blocked until first plan loads successfully (pipeline running).
+First plan loading successfully end-to-end. Ready for E2E checklist testing.
 
 ## What's built
 
@@ -107,9 +107,35 @@ See "Deployment Bug Log" below for full diagnosis.
 on_progress callback, batch resume logic, batch ID cleared on completion.
 
 ## Next
-- Confirm first plan loads successfully end-to-end (pipeline currently running)
 - Complete E2E testing (Groups 1–7 in `docs/testing.md`)
+- Rename Vercel project to shorter URL (e.g. `myworkoutplan.vercel.app`)
+- Publish Google OAuth app (removes "unverified" warning for basic scopes)
 - Once E2E passes: share with first users
+
+### E2E bug fixes (2026-03-09) — complete
+
+**Bug fixes:**
+- Dashboard polling stopped when stale plan existed (`if (!scanning || plan) return` short-circuit).
+  Fix: poll based on pipeline stage only — stop when stage is `done`/`failed`/`null`.
+- Planner returned all Rest days — `NOT IN` subquery included NULL `video_id` rows from Rest days,
+  making condition always false in SQL. Fix: added `video_id.is_not(None)` filter.
+- Publisher crashed with 404 on newly created playlist — YouTube API has propagation delay.
+  Fix: skip `clear_playlist` for new playlists (they're empty anyway).
+- Classifier crashed saving results for videos deleted after batch submission.
+  Fix: check video exists in DB before inserting classification.
+- Page title still showed "Create Next App" — layout.tsx change was never committed.
+  Fix: committed and pushed.
+
+**Cleanup:**
+- `scripts/cleanup_false_positives.py` — one-off script to remove pre-filter false positives from DB.
+  Deleted 93 HASfit videos (recipes, vlogs, reviews, giveaways) from production. 1,076 remain.
+- Cleared stale `program_history` entries (14 all-null rows from broken planner runs).
+- Cleared stale `youtube_playlist_id` from user_credentials (pointing to deleted playlist).
+
+**Docs:**
+- Updated all docs: `testing.md` (227 tests), `architecture.md` (schema, scanner filters,
+  batch cap, resumable batches, dashboard UX), `CLAUDE.md` (GET /jobs/status route),
+  `backlog.md` (5s polling), `user-guide.md` (scan stages, non-workout filters).
 
 ## Deployment Status
 - **Railway (backend):** ✅ Live at `https://youtube-workout-planner-production.up.railway.app`

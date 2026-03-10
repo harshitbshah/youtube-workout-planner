@@ -71,6 +71,18 @@ Review before starting a new phase to see if anything belongs in scope.
 
 ---
 
+## Launch Prep
+
+- Rename Vercel project to shorter URL (e.g. `myworkoutplan.vercel.app`) — update
+  `FRONTEND_URL` on Railway after rename.
+- Publish Google OAuth app (Google Cloud Console → OAuth consent screen → Publish App)
+  — removes "unverified" warning for basic scopes, no review needed.
+- Full Google verification for `youtube.force-ssl` scope — required before opening
+  to public. Needs: Privacy Policy, ToS, homepage, Search Console verification, demo video.
+  Submit early (4–6 week review). See `docs/google-oauth-setup.md`.
+- Custom domain (~$10–20/yr via Cloudflare Registrar) — defer until name decided and
+  going public.
+
 ## Infrastructure / Ops
 
 - Email notification when YouTube access is revoked — part of Phase 5 revoked access
