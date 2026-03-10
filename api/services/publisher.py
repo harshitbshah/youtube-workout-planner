@@ -123,7 +123,8 @@ def publish_plan_for_user(db: Session, user_id: str, week_start) -> dict:
 
     # Publish
     try:
-        if not creds.youtube_playlist_id:
+        is_new_playlist = not creds.youtube_playlist_id
+        if is_new_playlist:
             playlist_id = _create_playlist(
                 youtube,
                 title="Weekly Workout Plan",
@@ -134,7 +135,10 @@ def publish_plan_for_user(db: Session, user_id: str, week_start) -> dict:
         else:
             playlist_id = creds.youtube_playlist_id
 
-        clear_playlist(youtube, playlist_id)
+        # Only clear existing playlists — a newly created one is empty and
+        # YouTube's API may 404 on playlistItems.list immediately after creation.
+        if not is_new_playlist:
+            clear_playlist(youtube, playlist_id)
         populate_playlist(youtube, playlist_id, video_ids)
         update_playlist_description(
             youtube,
