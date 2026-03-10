@@ -108,9 +108,14 @@ on_progress callback, batch resume logic, batch ID cleared on completion.
 
 ## Next
 - Complete E2E testing (Groups 1–7 in `docs/testing.md`)
-- Rename Vercel project to `planmyworkout` → `planmyworkout.vercel.app`
 - Publish Google OAuth app (removes "unverified" warning for basic scopes)
 - Once E2E passes: share with first users
+
+### Vercel rename + URL cleanup (2026-03-09) — complete
+- Renamed Vercel project to `planmyworkout` → live at `https://planmyworkout.vercel.app`
+- Updated `FRONTEND_URL` on Railway to match
+- Updated all docs and memory with new URL
+- Kept UI title as "Workout Planner" (doesn't need to match URL)
 
 ### E2E bug fixes (2026-03-09) — complete
 
