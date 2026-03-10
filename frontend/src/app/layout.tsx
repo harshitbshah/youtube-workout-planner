@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Workout Planner",
+  title: "Plan My Workout",
   description: "Automatically generate weekly workout plans from your favourite YouTube fitness channels.",
 };
 

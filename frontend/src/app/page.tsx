@@ -70,7 +70,7 @@ export default function LandingPage() {
 
       {/* Nav */}
       <nav className="flex items-center justify-between px-6 py-5 max-w-5xl mx-auto">
-        <span className="font-semibold text-white tracking-tight">Workout Planner</span>
+        <span className="font-semibold text-white tracking-tight">Plan My Workout</span>
         <div className="flex items-center gap-3">
           <Link
             href="/guide"
@@ -131,7 +131,7 @@ export default function LandingPage() {
       <section className="px-6 py-20 border-t border-zinc-800">
         <div className="max-w-5xl mx-auto">
           <h2 className="text-xs font-semibold text-zinc-500 uppercase tracking-widest text-center mb-12">
-            Why Workout Planner
+            Why Plan My Workout
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-8">
             {FEATURES.map(({ title, body }) => (

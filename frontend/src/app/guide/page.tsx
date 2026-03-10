@@ -52,7 +52,7 @@ export default function GuidePage() {
       {/* Nav */}
       <nav className="flex items-center justify-between px-6 py-5 max-w-5xl mx-auto border-b border-zinc-800">
         <Link href="/" className="font-semibold text-white tracking-tight hover:text-zinc-300 transition">
-          Workout Planner
+          Plan My Workout
         </Link>
         <Link
           href="/"
@@ -88,12 +88,12 @@ export default function GuidePage() {
           {/* Page header */}
           <div className="mb-10">
             <h1 className="text-3xl font-bold text-white mb-2">User Guide</h1>
-            <p className="text-zinc-400">Everything you need to know to get the most out of Workout Planner.</p>
+            <p className="text-zinc-400">Everything you need to know to get the most out of Plan My Workout.</p>
           </div>
 
           <Section id="getting-started" title="Getting started">
             <p>
-              Workout Planner builds your weekly workout schedule automatically from YouTube fitness
+              Plan My Workout builds your weekly workout schedule automatically from YouTube fitness
               channels you already follow. Every Sunday it scans your channels, picks the best video
               for each training day, and has your plan ready when Monday rolls around.
             </p>
