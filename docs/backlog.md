@@ -59,6 +59,18 @@ Review before starting a new phase to see if anything belongs in scope.
 
 ---
 
+## Real-time / Performance
+
+- Replace 5s polling for scan job status with WebSockets — FastAPI supports WebSockets
+  natively. Currently the dashboard polls `GET /jobs/status` every 5s; a WebSocket
+  connection would push status updates instantly. Low priority while user count is small
+  and polling works fine; revisit if users complain about scan UX latency.
+  Decision: defer until after E2E testing + first users, since polling is not broken
+  and WebSockets add meaningful complexity (backend endpoint, connection manager,
+  frontend reconnect logic, new test surface).
+
+---
+
 ## Infrastructure / Ops
 
 - Email notification when YouTube access is revoked — part of Phase 5 revoked access

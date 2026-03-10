@@ -111,6 +111,10 @@ def _save_results(session: Session, user_id: str, client, batch) -> tuple[int, i
     failed = 0
     for result in client.messages.batches.results(batch.id):
         if result.result.type == "succeeded":
+            # Skip if the video was deleted after the batch was submitted
+            if not session.get(Video, result.custom_id):
+                logger.info(f"[user={user_id}] Skipping {result.custom_id} — video no longer in DB")
+                continue
             raw = result.result.message.content[0].text
             clf = _parse_classification(raw)
             if clf:

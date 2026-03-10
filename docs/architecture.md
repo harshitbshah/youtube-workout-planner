@@ -278,7 +278,9 @@ program_history
   assigned_day, completed
 
 user_credentials
-  user_id (PK FK), youtube_refresh_token (Fernet-encrypted), anthropic_key, updated_at
+  user_id (PK FK), youtube_refresh_token (Fernet-encrypted), anthropic_key, updated_at,
+  credentials_valid (bool, default true), youtube_playlist_id (nullable),
+  classifier_batch_id (nullable — persisted Anthropic batch ID for resumable classification)
 ```
 
 ---
@@ -341,6 +343,27 @@ api/services/classifier.py uses src/classifier.py   → Anthropic Batch API clas
 api/services/planner.py    uses src/planner.py      → weekly plan generation
 ```
 
+### Scanner pre-classification filters (reduce Anthropic API cost)
+
+Applied before fetching video details or sending to classifier:
+
+1. **Title keyword blocklist** — skips videos with meal/recipe/vlog/Q&A/podcast/unboxing/
+   giveaway/transformation etc. in the title (no extra API calls needed).
+2. **Livestream/premiere filter** — skips `liveBroadcastContent=live/upcoming` (free field
+   returned by the playlist API).
+3. **Duration cap** — skips videos > 2 hours (livestreams/long-form podcasts that slipped through).
+4. **Shorts filter** (existing) — skips videos < 3 min or with `#shorts` hashtag.
+
+### Classifier — batch cap + resumable batches
+
+- **`MAX_CLASSIFY_PER_RUN = 300`** — caps each pipeline run to 300 videos. Keeps first-run
+  transcript fetch time to ~5 min instead of 30+ min for large channels. Remainder deferred
+  to the next scan.
+- **Resumable batches** — `classifier_batch_id` is persisted to `user_credentials` immediately
+  after the Anthropic batch is submitted. On restart (e.g. Railway deploy mid-pipeline), the
+  next scan call resumes polling the existing batch instead of resubmitting — no double billing.
+  The batch ID is cleared when results are saved.
+
 ---
 
 ## Scheduler (`api/scheduler.py`)
@@ -369,11 +392,16 @@ still handles the single original user independently.
 /dashboard ── Weekly plan grid (7 days, thumbnails, badges)
               Nav: Library | Settings | Generate plan / Regenerate | Publish to YouTube | Sign out
               - "Generate plan" (no plan): triggers POST /jobs/scan, shows scanning banner,
-                polls GET /plan/upcoming every 15s until plan appears
+                polls GET /jobs/status every 5s; polls GET /plan/upcoming until plan appears
               - "Regenerate" (plan exists): calls POST /plan/generate synchronously,
                 shows "Generating…" banner in-flight, updates grid on response
-              - Scanning banner: spinner + "Scanning your channels…" message while pipeline runs
+              - "Rescan channels" button shown instead of Regenerate when plan has all null days
+              - Scanning banner: stage-specific messages (scanning/classifying/generating/failed)
+                + progress bar + "X / N done" count during classification phase
+              - Building phase: "Preparing batch — fetching transcripts (X / N)" with progress bar
               - Generating banner: spinner + "Generating your plan…" while fast generate runs
+              - On mount: calls GET /jobs/status to auto-detect a running pipeline (handles
+                externally triggered scans or page refreshes mid-scan)
 
 /library ──── Video library browser
               Filters: workout type, body focus, difficulty, channel

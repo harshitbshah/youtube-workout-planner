@@ -26,11 +26,12 @@ Run before every commit:
 .venv/bin/pytest -q
 ```
 
-Current: **216/216 passing**
+Current: **227/227 passing**
 
 New test files added:
-- `tests/api/test_jobs.py` — 5 new cases for `POST /jobs/scan` (202, 400 no channels, 503 no key, 401 unauth, channel count)
+- `tests/api/test_jobs.py` — `POST /jobs/scan` (202, 400 no channels, 503 no key, 401 unauth, channel count); `GET /jobs/status` (no pipeline, unauthenticated, reflects live state); scanner filters (upper duration cap, title blocklist); classifier (batch cap limits to 300, `on_progress` callback during polling, resume existing batch, batch ID cleared on completion)
 - `tests/integration/test_jobs_api.py` — 5 integration cases for `POST /jobs/scan` against real Postgres (user isolation, FK constraints, channel count)
+- `tests/integration/test_schema.py` — updated to expect Alembic version "003"
 
 ---
 

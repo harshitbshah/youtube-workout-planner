@@ -40,8 +40,14 @@ The schedule comes pre-filled with a balanced split you can keep or adjust:
 
 **Step 3 — Generate your first plan.** Hit the button and the app scans your channels,
 classifies every video with AI, and picks the best match for each day. You'll be
-taken to your dashboard where a progress banner shows while the scan runs — this
-takes 2–5 minutes the first time. The plan appears automatically when it's ready.
+taken to your dashboard where a live progress banner tracks each stage as it runs:
+
+- **Scanning** — fetching your channels' recent videos from YouTube
+- **Classifying** — analysing videos with AI (shows a progress count: "X / N done")
+- **Generating** — picking the best video for each day of your schedule
+
+The first scan typically takes 5–10 minutes because it processes up to 300 videos. The
+plan appears automatically when it's ready — no need to refresh.
 
 ---
 
@@ -102,7 +108,8 @@ A few things worth knowing about how videos are selected each week:
   plan feeling fresh.
 - **Smart fallback** — if your library is light on a given workout type, constraints
   are relaxed gradually until a match is found. You'll always get a full plan.
-- **Shorts filtered out** — videos under 3 minutes are excluded automatically.
+- **Shorts filtered out** — videos under 3 minutes (and anything tagged `#shorts`) are excluded automatically.
+- **Non-workout content skipped** — recipe videos, vlogs, podcasts, Q&As, and livestreams are detected and excluded before classification, keeping the library focused on actual workouts.
 
 ---
 
