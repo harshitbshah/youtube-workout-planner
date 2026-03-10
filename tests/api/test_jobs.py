@@ -201,6 +201,31 @@ def test_save_videos_skips_duplicates(db_session):
     assert db_session.query(Video).filter(Video.id == "dup-vid").count() == 1
 
 
+# ─── Title blocklist unit tests ───────────────────────────────────────────────
+
+def test_is_blocked_title_rejects_non_workout():
+    from api.services.scanner import _is_blocked_title
+    assert _is_blocked_title("My Meal Prep for the Week") is True
+    assert _is_blocked_title("Weekly Grocery Haul") is True
+    assert _is_blocked_title("Q&A — Your Questions Answered") is True
+    assert _is_blocked_title("Vlog: Day In My Life") is True
+    assert _is_blocked_title("Unboxing: New Home Gym Gear") is True
+
+
+def test_is_blocked_title_allows_workout():
+    from api.services.scanner import _is_blocked_title
+    assert _is_blocked_title("30 Min Full Body Workout") is False
+    assert _is_blocked_title("HIIT Cardio Beginner Training") is False
+    assert _is_blocked_title("Upper Body Strength — No Equipment") is False
+    assert _is_blocked_title("10 Min Core Workout for Beginners") is False
+
+
+def test_is_blocked_title_case_insensitive():
+    from api.services.scanner import _is_blocked_title
+    assert _is_blocked_title("MEAL PREP SUNDAY") is True
+    assert _is_blocked_title("Recipe for Pre-Workout Shake") is True
+
+
 # ─── Classifier service unit tests ────────────────────────────────────────────
 
 def test_fetch_unclassified_for_user_scoped(db_session):

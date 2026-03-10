@@ -25,6 +25,34 @@ logger = logging.getLogger(__name__)
 
 YOUTUBE_API_KEY = os.getenv("YOUTUBE_API_KEY", "")
 
+# ─── Pre-classification filters ───────────────────────────────────────────────
+
+# Titles containing any of these words are almost certainly not workout videos.
+# Checked before fetching video details — no extra API calls needed.
+_TITLE_BLOCKLIST = {
+    # nutrition / food content
+    "meal", "recipe", "nutrition", "grocery", "what i eat", "diet", "food",
+    # lifestyle / non-workout
+    "vlog", "day in my life", "life update", "story time", "haul",
+    # talk / informational
+    "q&a", "interview", "podcast", "questions and answers",
+    # product / promotional
+    "review", "unboxing", "giveaway",
+    # results / meta
+    "transformation", "before and after", "tour", "home gym",
+    "behind the scenes",
+}
+
+# Videos longer than this are almost certainly livestreams, podcasts, or
+# full-day challenges rather than standard workout sessions.
+_MAX_DURATION_SEC = 2 * 60 * 60  # 2 hours
+
+
+def _is_blocked_title(title: str) -> bool:
+    """Return True if the title matches any non-workout keyword."""
+    lower = title.lower()
+    return any(kw in lower for kw in _TITLE_BLOCKLIST)
+
 
 # ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -119,6 +147,15 @@ def _scan_uploads(
             if "#shorts" in title.lower():
                 continue
 
+            # Layer 2: skip livestreams and premieres (no extra API call needed)
+            if snippet.get("liveBroadcastContent") in ("live", "upcoming"):
+                continue
+
+            # Layer 3: skip obvious non-workout titles before fetching details
+            if _is_blocked_title(title):
+                logger.debug(f"Skipping non-workout title: {title!r}")
+                continue
+
             batch.append({
                 "id": video_id,
                 "title": title,
@@ -137,10 +174,15 @@ def _scan_uploads(
                 v["duration_sec"] = d.get("duration_sec")
                 v["tags"] = d.get("tags")
 
-            # Layer 2: skip Shorts by duration (< 3 min) after fetching details.
-            # This catches Shorts that don't use the #shorts hashtag.
-            # Unknown duration (None) is also excluded — can't verify they're not Shorts.
-            batch = [v for v in batch if v.get("duration_sec") and v["duration_sec"] >= 180]
+            # Layer 4: skip by duration after fetching details.
+            # - < 3 min: Shorts (including those without the #shorts hashtag)
+            # - > 2 hrs: likely a livestream, podcast, or multi-hour challenge
+            # - None: unknown duration, can't verify — exclude to be safe
+            batch = [
+                v for v in batch
+                if v.get("duration_sec")
+                and 180 <= v["duration_sec"] <= _MAX_DURATION_SEC
+            ]
 
             new_count = _save_videos(session, channel, batch)
             total_new += new_count
