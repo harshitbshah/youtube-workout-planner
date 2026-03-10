@@ -1,10 +1,10 @@
 # Progress
 
 ## Status
-Phases 1–5 complete + deployment live + critical post-deploy bugs fixed.
-**216/216 tests passing.**
+Phases 1–5 complete + deployment live + post-deploy fixes + pipeline reliability improvements complete.
+**227/227 tests passing.**
 Both Railway (backend) and Vercel (frontend) live and functional.
-E2E testing in progress.
+E2E testing blocked until first plan loads successfully (pipeline running).
 
 ## What's built
 
@@ -70,9 +70,45 @@ See "Deployment Bug Log" below for full diagnosis.
 - Updated all tests using old per-channel route (`/channels/{id}/scan` → `/jobs/channels/{id}/scan`)
 - `CLAUDE.md`: mandatory unit + integration test rule added; must pass before every commit
 
+### Pipeline reliability + UX (2026-03-09) — complete
+
+**Bug fixes:**
+- `_run_full_pipeline` skipped classification when `total_new == 0` (incremental scan) —
+  previously failed classifications never retried. Fix: always run `classify_for_user`
+  (it's a no-op if nothing to classify)
+- Plan with all null days caused UX loop: "Regenerate" button called `POST /plan/generate`
+  (no scan) → still empty. Fix: detect all-null plan → show "Rescan channels" button instead
+
+**Pipeline improvements:**
+- `GET /jobs/status` endpoint — returns current stage + classify progress (total/done)
+- In-memory `_pipeline_status` dict updated at each stage (scanning/classifying/generating/done/failed)
+- `classify_for_user` accepts `on_progress` callback — called during transcript fetch phase
+  (every 10 videos, negative done = still building) and during Anthropic batch polling
+- Batch size capped at 300 videos per run — defers remainder to next scan, keeps first-run
+  time manageable (~5 min transcript fetch vs 20+ min for 1000+ videos)
+- Resumable batches: `classifier_batch_id` persisted in `user_credentials` (migration 003).
+  On restart, resumes polling or retrieves results directly — no resubmission, no double billing
+
+**Scanner pre-classification filters** (reduce Anthropic API cost):
+- Title keyword blocklist: skips meal/recipe/vlog/q&a/podcast/unboxing/giveaway/transformation
+  etc before fetching video details (no extra API calls)
+- Livestream/premiere filter: skips `liveBroadcastContent=live/upcoming` (free, in playlist API)
+- Upper duration cap: skips videos > 2 hours (livestreams/podcasts)
+- Existing: < 3 min (Shorts) + `#shorts` hashtag filters preserved
+
+**Dashboard UX:**
+- Live scanning banner with stage-specific messages (scanning/classifying/generating/failed)
+- Progress bar + `X / N done` count during classification batch polling
+- Building phase shows `Preparing batch — fetching transcripts (X / N)` with progress bar
+- Dashboard auto-detects running pipeline on mount (handles externally triggered scans)
+- Polling interval reduced from 15s → 5s during scanning
+
+**Tests:** 227/227 (was 216). New tests for: GET /jobs/status, duration cap, classify cap,
+on_progress callback, batch resume logic, batch ID cleared on completion.
+
 ## Next
+- Confirm first plan loads successfully end-to-end (pipeline currently running)
 - Complete E2E testing (Groups 1–7 in `docs/testing.md`)
-- Verify full OAuth → onboarding → scan → plan → publish flow end-to-end
 - Once E2E passes: share with first users
 
 ## Deployment Status
