@@ -114,6 +114,7 @@ on_progress callback, batch resume logic, batch ID cleared on completion.
 ### Vercel rename + URL cleanup (2026-03-09) — complete
 - Renamed Vercel project to `planmyworkout` → live at `https://planmyworkout.vercel.app`
 - Updated `FRONTEND_URL` on Railway to match
+- Updated `FRONTEND_ORIGINS` on Railway to `https://planmyworkout.vercel.app` (CORS fix — old domain was blocking all API calls post-rename)
 - Updated all docs and memory with new URL
 - Kept UI title as "Workout Planner" (doesn't need to match URL)
 
