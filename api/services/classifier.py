@@ -105,10 +105,13 @@ def _save_batch_id(session: Session, user_id: str, batch_id: str | None):
     session.commit()
 
 
-def _save_results(session: Session, user_id: str, client, batch) -> tuple[int, int]:
-    """Iterate batch results and save classifications. Returns (classified, failed)."""
+def _save_results(session: Session, user_id: str, client, batch) -> tuple[int, int, int, int]:
+    """Iterate batch results and save classifications.
+    Returns (classified, failed, input_tokens, output_tokens)."""
     classified = 0
     failed = 0
+    input_tokens = 0
+    output_tokens = 0
     for result in client.messages.batches.results(batch.id):
         if result.result.type == "succeeded":
             # Skip if the video was deleted after the batch was submitted
@@ -120,12 +123,15 @@ def _save_results(session: Session, user_id: str, client, batch) -> tuple[int, i
             if clf:
                 _save_classification(session, result.custom_id, clf)
                 classified += 1
+                usage = result.result.message.usage
+                input_tokens += getattr(usage, "input_tokens", 0) or 0
+                output_tokens += getattr(usage, "output_tokens", 0) or 0
             else:
                 failed += 1
         else:
             logger.warning(f"[user={user_id}] Failed: {result.custom_id} — {result.result.type}")
             failed += 1
-    return classified, failed
+    return classified, failed, input_tokens, output_tokens
 
 
 def classify_for_user(session: Session, user_id: str, api_key: str = "", on_progress=None) -> int:
@@ -221,9 +227,24 @@ def classify_for_user(session: Session, user_id: str, api_key: str = "", on_prog
         done = counts.succeeded + counts.errored + counts.canceled + counts.expired
         on_progress(total, done)
 
-    # ── Phase 4: save results + clear batch ID ────────────────────────────────
-    classified, failed = _save_results(session, user_id, client, batch)
+    # ── Phase 4: save results + clear batch ID + record usage ─────────────────
+    classified, failed, input_tokens, output_tokens = _save_results(session, user_id, client, batch)
     _save_batch_id(session, user_id, None)
+
+    try:
+        from ..models import BatchUsageLog
+        session.add(BatchUsageLog(
+            user_id=user_id,
+            batch_id=batch.id,
+            videos_submitted=total,
+            classified=classified,
+            failed=failed,
+            input_tokens=input_tokens,
+            output_tokens=output_tokens,
+        ))
+        session.commit()
+    except Exception as e:
+        logger.warning(f"[user={user_id}] Failed to record batch usage: {e}")
 
     logger.info(f"[user={user_id}] Done: {classified}/{total} classified, {failed} failed")
     return classified

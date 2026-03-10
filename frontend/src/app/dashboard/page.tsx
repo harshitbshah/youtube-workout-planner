@@ -11,6 +11,7 @@ import {
   publishPlan,
   triggerScan,
   getJobStatus,
+  getActiveAnnouncement,
   logout,
   type User,
   type PlanResponse,
@@ -111,6 +112,7 @@ export default function DashboardPage() {
   const [generating, setGenerating] = useState(false);
   const [publishing, setPublishing] = useState(false);
   const [publishResult, setPublishResult] = useState<PublishResponse | null>(null);
+  const [announcement, setAnnouncement] = useState<{ id: number; message: string } | null>(null);
   const [error, setError] = useState("");
 
   useEffect(() => {
@@ -127,11 +129,13 @@ export default function DashboardPage() {
       getUpcomingPlan().catch(() => null),
       getChannels().catch(() => []),
       getJobStatus().catch(() => ({ stage: null, total: null, done: null })),
+      getActiveAnnouncement().catch(() => null),
     ])
-      .then(([u, p, channels, status]) => {
+      .then(([u, p, channels, status, ann]) => {
         setUser(u);
         setPlan(p);
         setHasChannels(channels.length > 0);
+        setAnnouncement(ann);
         const activeStages = ["scanning", "classifying", "generating"];
         if (status.stage && activeStages.includes(status.stage)) {
           // Pipeline is actively running — show scanning state regardless of
@@ -318,6 +322,14 @@ export default function DashboardPage() {
             </button>
           </div>
         </div>
+
+        {/* Announcement banner */}
+        {announcement && (
+          <div className="mb-6 flex items-start justify-between gap-3 rounded-lg border border-blue-800 bg-blue-900/20 px-4 py-3 text-sm text-blue-300">
+            <span>{announcement.message}</span>
+            <button onClick={() => setAnnouncement(null)} className="shrink-0 text-blue-500 hover:text-blue-300 transition">✕</button>
+          </div>
+        )}
 
         {/* Generate in progress banner */}
         {generating && !scanning && (

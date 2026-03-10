@@ -25,6 +25,7 @@ class User(Base):
     email = Column(String, nullable=False)
     display_name = Column(String)
     created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+    last_active_at = Column(DateTime(timezone=True), nullable=True)
 
     channels = relationship("Channel", back_populates="user", cascade="all, delete-orphan")
     schedules = relationship("Schedule", back_populates="user", cascade="all, delete-orphan")
@@ -116,3 +117,26 @@ class UserCredentials(Base):
     updated_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
 
     user = relationship("User", back_populates="credentials")
+
+
+class BatchUsageLog(Base):
+    __tablename__ = "batch_usage_log"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    user_id = Column(String(36), ForeignKey("users.id"), nullable=False)
+    batch_id = Column(String, nullable=False)
+    videos_submitted = Column(Integer, nullable=False)
+    classified = Column(Integer, nullable=False)
+    failed = Column(Integer, nullable=False)
+    input_tokens = Column(Integer, nullable=True)
+    output_tokens = Column(Integer, nullable=True)
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False)
+
+
+class Announcement(Base):
+    __tablename__ = "announcements"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    message = Column(Text, nullable=False)
+    is_active = Column(Boolean, default=True, nullable=False)
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False)

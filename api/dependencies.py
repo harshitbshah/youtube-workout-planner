@@ -3,6 +3,7 @@ dependencies.py — FastAPI dependency functions shared across routers.
 """
 
 import os
+from datetime import datetime, timedelta, timezone
 
 from fastapi import Depends, HTTPException, Request
 from itsdangerous import BadSignature, SignatureExpired, URLSafeTimedSerializer
@@ -10,6 +11,8 @@ from sqlalchemy.orm import Session
 
 from .database import SessionLocal
 from .models import User
+
+_ACTIVE_THROTTLE = timedelta(minutes=5)
 
 _TOKEN_MAX_AGE = 30 * 24 * 3600  # 30 days
 
@@ -48,4 +51,11 @@ def get_current_user(request: Request, db: Session = Depends(get_db)) -> User:
     user = db.query(User).filter(User.id == user_id).first()
     if not user:
         raise HTTPException(status_code=401, detail="User not found")
+
+    # Update last_active_at at most once every 5 minutes to avoid excessive writes
+    now = datetime.now(timezone.utc)
+    if not user.last_active_at or (now - user.last_active_at) > _ACTIVE_THROTTLE:
+        user.last_active_at = now
+        db.commit()
+
     return user

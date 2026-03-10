@@ -181,6 +181,7 @@ Frontend: `http://localhost:3000`
 | POST | `/plan/publish` | Yes | Publish plan to YouTube playlist |
 | GET | `/library` | Yes | Paginated/filtered video library |
 | POST | `/jobs/scan` | Yes | Trigger manual channel scan |
+| GET | `/jobs/status` | Yes | Pipeline stage + classify progress `{stage, total, done}` |
 
 ---
 

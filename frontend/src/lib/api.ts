@@ -122,6 +122,11 @@ export const getLibrary = (params: {
 export const triggerScan = () => apiFetch<JobResponse>("/jobs/scan", { method: "POST" });
 export const getJobStatus = () => apiFetch<{ stage: string | null; total: number | null; done: number | null }>("/jobs/status");
 
+// ─── Announcements ───────────────────────────────────────────────────────────
+
+export const getActiveAnnouncement = () =>
+  apiFetch<{ id: number; message: string } | null>("/announcements/active");
+
 // ─── Types ───────────────────────────────────────────────────────────────────
 
 export interface User {
