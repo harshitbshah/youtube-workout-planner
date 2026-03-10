@@ -5,6 +5,31 @@
 2. Run `git log --oneline -10` to see recent commits
 3. Continue from where the last session left off
 
+## Checkpoint — MANDATORY when user says "checkpoint"
+
+When the user says "let's checkpoint" or "take a checkpoint", update ALL of the following
+in order before committing:
+
+1. **`PROGRESS.md`** — update status line, test count, and add a dated section summarising
+   everything built/fixed this session. Keep it factual and scannable (bullet points).
+
+2. **`docs/architecture.md`** — update if any routes, pages, components, or DB schema changed.
+
+3. **`docs/backlog.md`** — append any new ideas or deferred work that surfaced this session.
+
+4. **`docs/testing.md`** — add new features/pages to the manual checklist if applicable.
+
+5. **`CLAUDE.md` itself** — update the API routes table and file map if new routes or files
+   were added.
+
+6. **Claude's memory** (`~/.claude/projects/.../memory/MEMORY.md`) — update status line,
+   test count, and any key architectural facts that changed.
+
+7. **Commit all doc changes** with message: `docs: checkpoint — <one-line summary> (<date>)`
+
+The goal: any future session (or a knowledge agent) can read these docs and fully understand
+the current state without needing conversation history.
+
 ## Testing — MANDATORY
 
 Every code change that adds or modifies backend behaviour **must** include:
