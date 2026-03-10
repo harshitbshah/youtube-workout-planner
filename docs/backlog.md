@@ -73,8 +73,8 @@ Review before starting a new phase to see if anything belongs in scope.
 
 ## Launch Prep
 
-- Rename Vercel project to shorter URL (e.g. `myworkoutplan.vercel.app`) — update
-  `FRONTEND_URL` on Railway after rename.
+- ~~Rename Vercel project~~ — renamed to `planmyworkout` → `planmyworkout.vercel.app`.
+  Update `FRONTEND_URL` on Railway to `https://planmyworkout.vercel.app`.
 - Publish Google OAuth app (Google Cloud Console → OAuth consent screen → Publish App)
   — removes "unverified" warning for basic scopes, no review needed.
 - Full Google verification for `youtube.force-ssl` scope — required before opening

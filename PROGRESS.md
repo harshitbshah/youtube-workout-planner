@@ -108,7 +108,7 @@ on_progress callback, batch resume logic, batch ID cleared on completion.
 
 ## Next
 - Complete E2E testing (Groups 1–7 in `docs/testing.md`)
-- Rename Vercel project to shorter URL (e.g. `myworkoutplan.vercel.app`)
+- Rename Vercel project to `planmyworkout` → `planmyworkout.vercel.app`
 - Publish Google OAuth app (removes "unverified" warning for basic scopes)
 - Once E2E passes: share with first users
 
@@ -143,7 +143,7 @@ on_progress callback, batch resume logic, batch ID cleared on completion.
   - OAuth redirect working (`/auth/google` → Google consent screen)
   - All env vars set and verified via `railway variables`
   - Railway CLI installed (`npm install -g @railway/cli`) and linked to project `endearing-abundance`
-- **Vercel (frontend):** ✅ Live at `https://youtube-workout-planner-flame.vercel.app`
+- **Vercel (frontend):** ✅ Live at `https://planmyworkout.vercel.app`
   - Branch: `feat/web-app`, root directory: `frontend`
   - `NEXT_PUBLIC_API_URL` set to Railway backend URL
 
