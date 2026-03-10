@@ -29,6 +29,11 @@ YOUTUBE_API_KEY = os.getenv("YOUTUBE_API_KEY", "")
 _pipeline_status: dict[str, dict] = {}
 
 
+def get_all_pipeline_statuses() -> dict[str, dict]:
+    """Return a snapshot of all active pipeline statuses. Used by the admin router."""
+    return dict(_pipeline_status)
+
+
 def _run_scan_and_classify(channel_id: str, user_id: str, max_videos: int | None = None):
     """
     Full scan + classify pipeline for one channel.
