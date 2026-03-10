@@ -4,8 +4,8 @@
 Phases 1–5 complete + admin console + charts + guide page + mobile UX complete.
 **248/248 tests passing.**
 Both Railway (backend) and Vercel (frontend) live and functional.
-**Pending before sharing with first users:** merge `feat/web-app` → `main`, Railway migration 005,
-set `ADMIN_EMAIL` env var on Railway.
+**Pending before sharing with first users:** merge `feat/web-app` → `main`, Privacy Policy + ToS pages, submit Google OAuth verification (4–6 week review).
+**Done:** Railway migration 005 ✅, `ADMIN_EMAIL` set ✅, Google OAuth published to Production ✅.
 
 ## What's built
 
