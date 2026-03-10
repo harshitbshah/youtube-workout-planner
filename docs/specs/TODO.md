@@ -8,31 +8,31 @@ Ordered by priority. Each item links to its spec.
 > Spec: [ai-cost-reduction.md](ai-cost-reduction.md)
 > Do before first users arrive. All trivial–small effort.
 
-- [ ] **F1** — Reduce `max_tokens` 150 → 80 in `classifier.py`
-  - [ ] Unit: assert `max_tokens` in built batch payload equals 80
+- [x] **F1** — Reduce `max_tokens` 150 → 80 in `classifier.py`
+  - [x] Unit: assert `max_tokens` in built batch payload equals 80
 
-- [ ] **F2** — 18-month video cutoff (`CLASSIFY_MAX_AGE_MONTHS` env var)
-  - [ ] Unit: insert a 6-month-old video and a 24-month-old video — assert only the recent one is fetched
-  - [ ] Unit: set `CLASSIFY_MAX_AGE_MONTHS=1` — assert only videos within 1 month are fetched
+- [x] **F2** — 18-month video cutoff (`CLASSIFY_MAX_AGE_MONTHS` env var)
+  - [x] Unit: insert a 6-month-old video and a 24-month-old video — assert only the recent one is fetched
+  - [x] Unit: set `CLASSIFY_MAX_AGE_MONTHS=1` — assert only videos within 1 month are fetched
 
-- [ ] **F3** — First-scan channel cap (migration 006, `first_scan_done` column, 75-video limit)
-  - [ ] Unit: mock YouTube returning 200 videos, `first_scan_done=False` — assert only 75 rows saved
-  - [ ] Unit: assert `channel.first_scan_done=True` after first scan completes
-  - [ ] Unit: mock YouTube returning 200 videos, `first_scan_done=True` — assert all 200 fetched (no cap)
-  - [ ] Integration: create channel, run scan, assert `first_scan_done=True` in DB
+- [x] **F3** — First-scan channel cap (migration 006, `first_scan_done` column, 75-video limit)
+  - [x] Unit: mock YouTube returning 200 videos, `first_scan_done=False` — assert only 75 rows saved
+  - [x] Unit: assert `channel.first_scan_done=True` after first scan completes
+  - [x] Unit: mock YouTube returning 200 videos, `first_scan_done=True` — assert all 200 fetched (no cap)
+  - [x] Integration: create channel, run scan, assert `first_scan_done=True` in DB
 
-- [ ] **F4** — Skip inactive channels (migration 007, `last_video_published_at` column)
-  - [ ] Unit: `last_video_published_at=90d ago`, `added_at=60d ago`, `skip_if_inactive=True` → returns 0, no YouTube API call
-  - [ ] Unit: same channel but `skip_if_inactive=False` → YouTube API is called
-  - [ ] Unit: `last_video_published_at=30d ago` → NOT skipped (still active)
-  - [ ] Unit: `last_video_published_at=None` → NOT skipped (newly added, unknown history)
-  - [ ] Unit: after scan saves videos, assert `last_video_published_at` updated to most recent video date
+- [x] **F4** — Skip inactive channels (migration 007, `last_video_published_at` column)
+  - [x] Unit: `last_video_published_at=90d ago`, `added_at=60d ago`, `skip_if_inactive=True` → returns 0, no YouTube API call
+  - [x] Unit: same channel but `skip_if_inactive=False` → YouTube API is called
+  - [x] Unit: `last_video_published_at=30d ago` → NOT skipped (still active)
+  - [x] Unit: `last_video_published_at=None` → NOT skipped (newly added, unknown history)
+  - [x] Unit: after scan saves videos, assert `last_video_published_at` updated to most recent video date
 
-- [ ] **Graceful scanner failure** — add `last_scan_error` to user record; show error banner on dashboard if pipeline fails
-  - [ ] Unit: pipeline exception sets `last_scan_error` on user record
-  - [ ] Unit: `GET /jobs/status` includes error message when `last_scan_error` is set
-  - [ ] Unit: successful pipeline run clears `last_scan_error` to `None`
-  - [ ] Integration: trigger pipeline that raises, assert `last_scan_error` persisted in DB
+- [x] **Graceful scanner failure** — add `last_scan_error` to user record; show error banner on dashboard if pipeline fails
+  - [x] Unit: pipeline exception sets `last_scan_error` on user record
+  - [x] Unit: `GET /jobs/status` includes error message when `last_scan_error` is set
+  - [x] Unit: successful pipeline run clears `last_scan_error` to `None`
+  - [x] Integration: trigger pipeline that raises, assert `last_scan_error` persisted in DB
 
 ---
 
