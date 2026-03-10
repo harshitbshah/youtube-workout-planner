@@ -140,3 +140,22 @@ class Announcement(Base):
     message = Column(Text, nullable=False)
     is_active = Column(Boolean, default=True, nullable=False)
     created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False)
+
+
+class ScanLog(Base):
+    __tablename__ = "scan_log"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    user_id = Column(String(36), ForeignKey("users.id"), nullable=False)
+    started_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False)
+    completed_at = Column(DateTime(timezone=True), nullable=True)
+    status = Column(String, nullable=False, default="running")  # running | done | failed
+    videos_scanned = Column(Integer, nullable=True)             # total new videos found
+
+
+class UserActivityLog(Base):
+    __tablename__ = "user_activity_log"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    user_id = Column(String(36), ForeignKey("users.id"), nullable=False)
+    active_at = Column(DateTime(timezone=True), nullable=False)  # one row per 5-min active window

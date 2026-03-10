@@ -10,7 +10,8 @@ Haiku 4.5 Batch API pricing used for cost estimates:
 """
 
 import os
-from datetime import datetime, timedelta, timezone
+from collections import defaultdict
+from datetime import date, datetime, timedelta, timezone
 
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
 from pydantic import BaseModel
@@ -24,7 +25,9 @@ from ..models import (
     Channel,
     Classification,
     ProgramHistory,
+    ScanLog,
     User,
+    UserActivityLog,
     UserCredentials,
     Video,
 )
@@ -213,6 +216,96 @@ def get_admin_stats(
             "all_time": _usage_stats(all_batches),
         },
         "user_rows": user_rows,
+    }
+
+
+# ─── Admin: charts ─────────────────────────────────────────────────────────────
+
+def _to_date_key(dt) -> str:
+    """Return 'YYYY-MM-DD' for a datetime that may be naive or tz-aware."""
+    if dt is None:
+        return ""
+    if hasattr(dt, "date"):
+        return dt.date().isoformat()
+    return str(dt)[:10]
+
+
+def _date_series(days: int) -> list[str]:
+    """Return a list of 'YYYY-MM-DD' strings for the last `days` days (inclusive today)."""
+    today = datetime.now(timezone.utc).date()
+    return [(today - timedelta(days=i)).isoformat() for i in range(days - 1, -1, -1)]
+
+
+@router.get("/admin/charts")
+def get_admin_charts(
+    days: int = 30,
+    db: Session = Depends(get_db),
+    _: User = Depends(_require_admin),
+):
+    """
+    Return daily time-series data for admin charts.
+    All series cover the last `days` days (default 30), with a data point for every day.
+    """
+    if days < 1 or days > 365:
+        days = 30
+
+    cutoff = datetime.now(timezone.utc) - timedelta(days=days)
+    series = _date_series(days)
+
+    # ── User signups ──────────────────────────────────────────────────────────
+    signups_raw = db.query(User).filter(User.created_at >= cutoff).all()
+    signups_by_day: dict[str, int] = defaultdict(int)
+    for u in signups_raw:
+        signups_by_day[_to_date_key(u.created_at)] += 1
+
+    # ── Active users (distinct per day from UserActivityLog) ──────────────────
+    activity_raw = db.query(UserActivityLog).filter(UserActivityLog.active_at >= cutoff).all()
+    # count distinct user_ids per day
+    active_by_day: dict[str, set] = defaultdict(set)
+    for row in activity_raw:
+        active_by_day[_to_date_key(row.active_at)].add(row.user_id)
+
+    # ── AI usage (tokens + cost per day from BatchUsageLog) ───────────────────
+    batches_raw = db.query(BatchUsageLog).filter(BatchUsageLog.created_at >= cutoff).all()
+    ai_by_day: dict[str, dict] = defaultdict(lambda: {"input_tokens": 0, "output_tokens": 0})
+    for b in batches_raw:
+        key = _to_date_key(b.created_at)
+        ai_by_day[key]["input_tokens"] += b.input_tokens or 0
+        ai_by_day[key]["output_tokens"] += b.output_tokens or 0
+
+    # ── Scans (count per day from ScanLog) ────────────────────────────────────
+    scans_raw = db.query(ScanLog).filter(ScanLog.started_at >= cutoff).all()
+    scans_by_day: dict[str, int] = defaultdict(int)
+    for s in scans_raw:
+        scans_by_day[_to_date_key(s.started_at)] += 1
+
+    # ── Build uniform series (every day in window, zero-filled) ──────────────
+    def _signups_point(d: str):
+        return {"date": d, "count": signups_by_day.get(d, 0)}
+
+    def _active_point(d: str):
+        return {"date": d, "count": len(active_by_day.get(d, set()))}
+
+    def _ai_point(d: str):
+        inp = ai_by_day.get(d, {}).get("input_tokens", 0)
+        out = ai_by_day.get(d, {}).get("output_tokens", 0)
+        return {
+            "date": d,
+            "input_tokens": inp,
+            "output_tokens": out,
+            "est_cost_usd": round(
+                inp * _INPUT_COST_PER_TOKEN + out * _OUTPUT_COST_PER_TOKEN, 4
+            ),
+        }
+
+    def _scans_point(d: str):
+        return {"date": d, "count": scans_by_day.get(d, 0)}
+
+    return {
+        "signups": [_signups_point(d) for d in series],
+        "active_users": [_active_point(d) for d in series],
+        "ai_usage": [_ai_point(d) for d in series],
+        "scans": [_scans_point(d) for d in series],
     }
 
 

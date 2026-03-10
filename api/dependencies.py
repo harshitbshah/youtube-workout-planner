@@ -10,7 +10,7 @@ from itsdangerous import BadSignature, SignatureExpired, URLSafeTimedSerializer
 from sqlalchemy.orm import Session
 
 from .database import SessionLocal
-from .models import User
+from .models import User, UserActivityLog
 
 _ACTIVE_THROTTLE = timedelta(minutes=5)
 
@@ -52,10 +52,12 @@ def get_current_user(request: Request, db: Session = Depends(get_db)) -> User:
     if not user:
         raise HTTPException(status_code=401, detail="User not found")
 
-    # Update last_active_at at most once every 5 minutes to avoid excessive writes
+    # Update last_active_at at most once every 5 minutes to avoid excessive writes.
+    # Also append a UserActivityLog row for time-series active-user charts.
     now = datetime.now(timezone.utc)
     if not user.last_active_at or (now - user.last_active_at) > _ACTIVE_THROTTLE:
         user.last_active_at = now
+        db.add(UserActivityLog(user_id=user.id, active_at=now))
         db.commit()
 
     return user

@@ -208,3 +208,20 @@ export interface PublishResponse {
   playlist_url: string;
   video_count: number;
 }
+
+// ─── Admin charts ─────────────────────────────────────────────────────────────
+
+export type ChartPoint = {
+  date: string;
+  [key: string]: number | string;
+};
+
+export interface ChartsResponse {
+  signups: ChartPoint[];
+  active_users: ChartPoint[];
+  ai_usage: ChartPoint[];
+  scans: ChartPoint[];
+}
+
+export const getAdminCharts = (days = 30) =>
+  apiFetch<ChartsResponse>(`/admin/charts?days=${days}`);

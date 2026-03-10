@@ -68,13 +68,24 @@ def _run_full_pipeline(user_id: str):
     Scan all channels + classify + generate plan for a user.
     Runs in a background thread; creates its own DB session.
     """
+    from datetime import datetime, timezone
+
     from ..database import SessionLocal
+    from ..models import ScanLog
     from ..services.classifier import classify_for_user
-    from ..services.scanner import scan_channel
     from ..services.planner import generate_weekly_plan_for_user
+    from ..services.scanner import scan_channel
 
     session = SessionLocal()
+    scan_log_id: int | None = None
     try:
+        # Record scan start
+        scan_log = ScanLog(user_id=user_id, status="running")
+        session.add(scan_log)
+        session.commit()
+        session.refresh(scan_log)
+        scan_log_id = scan_log.id
+
         _pipeline_status[user_id] = {"stage": "scanning", "total": None, "done": None}
         channels = session.query(Channel).filter(Channel.user_id == user_id).all()
 
@@ -109,9 +120,27 @@ def _run_full_pipeline(user_id: str):
 
         _pipeline_status[user_id] = {"stage": "done", "total": None, "done": None}
 
+        # Mark scan as done
+        if scan_log_id:
+            log = session.get(ScanLog, scan_log_id)
+            if log:
+                log.status = "done"
+                log.completed_at = datetime.now(timezone.utc)
+                log.videos_scanned = total_new
+                session.commit()
+
     except Exception as e:
         logger.error(f"[pipeline] Unexpected failure for user {user_id}: {e}", exc_info=True)
         _pipeline_status[user_id] = {"stage": "failed", "total": None, "done": None}
+        try:
+            if scan_log_id:
+                log = session.get(ScanLog, scan_log_id)
+                if log:
+                    log.status = "failed"
+                    log.completed_at = datetime.now(timezone.utc)
+                    session.commit()
+        except Exception:
+            pass
     finally:
         session.close()
 

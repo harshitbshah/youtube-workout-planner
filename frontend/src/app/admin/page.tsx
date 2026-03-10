@@ -3,7 +3,16 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { getMe } from "@/lib/api";
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  Tooltip as ReTooltip,
+  ResponsiveContainer,
+  CartesianGrid,
+} from "recharts";
+import { getMe, getAdminCharts, type ChartsResponse } from "@/lib/api";
 import { Tooltip } from "@/components/Tooltip";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
@@ -114,6 +123,57 @@ function formatRelative(iso: string | null) {
   return `${days}d ago`;
 }
 
+function fmtAxisDate(iso: string) {
+  const d = new Date(iso + "T12:00:00Z");
+  return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+}
+
+type MiniChartProps = {
+  data: Record<string, number | string>[];
+  dataKey: string;
+  color: string;
+  label: string;
+  valueFormatter?: (v: number) => string;
+};
+
+function MiniChart({ data, dataKey, color, label, valueFormatter }: MiniChartProps) {
+  const fmt = valueFormatter ?? ((v: number) => String(v));
+  // Show a tick every ~7 days to keep x-axis readable
+  const tickInterval = Math.max(1, Math.floor(data.length / 5));
+  return (
+    <div className="rounded-xl border border-zinc-800 bg-zinc-900 p-4">
+      <p className="text-xs font-semibold text-zinc-500 uppercase tracking-widest mb-4">{label}</p>
+      <ResponsiveContainer width="100%" height={160}>
+        <BarChart data={data} barCategoryGap="30%">
+          <CartesianGrid vertical={false} stroke="#27272a" />
+          <XAxis
+            dataKey="date"
+            tickFormatter={fmtAxisDate}
+            interval={tickInterval}
+            tick={{ fill: "#71717a", fontSize: 10 }}
+            axisLine={false}
+            tickLine={false}
+          />
+          <YAxis
+            tick={{ fill: "#71717a", fontSize: 10 }}
+            axisLine={false}
+            tickLine={false}
+            width={36}
+            tickFormatter={fmt}
+          />
+          <ReTooltip
+            formatter={(v) => [fmt(Number(v)), label]}
+            labelFormatter={(l) => fmtAxisDate(String(l))}
+            contentStyle={{ background: "#18181b", border: "1px solid #3f3f46", borderRadius: 8, fontSize: 12, color: "#e4e4e7" }}
+            cursor={{ fill: "#ffffff08" }}
+          />
+          <Bar dataKey={dataKey} fill={color} radius={[3, 3, 0, 0]} />
+        </BarChart>
+      </ResponsiveContainer>
+    </div>
+  );
+}
+
 function MetricRow({ label, value, tooltip }: { label: string; value: React.ReactNode; tooltip: string }) {
   return (
     <>
@@ -148,6 +208,7 @@ function UsageBlock({ label, data }: { label: string; data: UsagePeriod }) {
 export default function AdminPage() {
   const router = useRouter();
   const [stats, setStats] = useState<AdminStats | null>(null);
+  const [charts, setCharts] = useState<ChartsResponse | null>(null);
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [newMsg, setNewMsg] = useState("");
   const [error, setError] = useState("");
@@ -162,6 +223,11 @@ export default function AdminPage() {
     setLastRefresh(new Date());
   }
 
+  async function fetchCharts() {
+    const data = await getAdminCharts(30);
+    setCharts(data);
+  }
+
   async function fetchAnnouncements() {
     const data = await adminFetch<Announcement[]>("/admin/announcements");
     setAnnouncements(data);
@@ -170,7 +236,7 @@ export default function AdminPage() {
   useEffect(() => {
     getMe()
       .catch(() => { router.replace("/"); return Promise.reject(); })
-      .then(() => Promise.all([fetchStats(), fetchAnnouncements()]))
+      .then(() => Promise.all([fetchStats(), fetchAnnouncements(), fetchCharts()]))
       .catch((e: unknown) => {
         if ((e as { status?: number })?.status === 403) { router.replace("/dashboard"); return; }
         if (e) setError("Could not load admin stats.");
@@ -180,7 +246,7 @@ export default function AdminPage() {
 
   // Auto-refresh every 30s
   useEffect(() => {
-    const id = setInterval(() => { fetchStats().catch(() => {}); }, 30_000);
+    const id = setInterval(() => { fetchStats().catch(() => {}); fetchCharts().catch(() => {}); }, 30_000);
     return () => clearInterval(id);
   }, []);
 
@@ -308,6 +374,42 @@ export default function AdminPage() {
           </div>
           <p className="text-xs text-zinc-600 mt-2">Cost estimate uses Batch API pricing: $0.40/MTok input · $2.00/MTok output</p>
         </section>
+
+        {/* Charts */}
+        {charts && (
+          <section>
+            <h2 className="text-xs font-semibold text-zinc-500 uppercase tracking-widest mb-3">
+              Trends — last 30 days
+            </h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <MiniChart
+                data={charts.signups}
+                dataKey="count"
+                color="#6366f1"
+                label="New signups"
+              />
+              <MiniChart
+                data={charts.active_users}
+                dataKey="count"
+                color="#22d3ee"
+                label="Active users / day"
+              />
+              <MiniChart
+                data={charts.ai_usage}
+                dataKey="est_cost_usd"
+                color="#a78bfa"
+                label="AI cost (USD)"
+                valueFormatter={(v) => `$${v.toFixed(3)}`}
+              />
+              <MiniChart
+                data={charts.scans}
+                dataKey="count"
+                color="#34d399"
+                label="Pipeline scans"
+              />
+            </div>
+          </section>
+        )}
 
         {/* Active pipelines */}
         <section>

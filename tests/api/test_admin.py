@@ -9,7 +9,9 @@ from fastapi.testclient import TestClient
 
 from api.dependencies import get_current_user
 from api.main import app
-from api.models import Announcement, BatchUsageLog, Channel, Classification, ProgramHistory, User, UserCredentials, Video
+from datetime import datetime, timezone
+
+from api.models import Announcement, BatchUsageLog, Channel, Classification, ProgramHistory, ScanLog, User, UserActivityLog, UserCredentials, Video
 
 
 # --- Fixtures ---
@@ -265,3 +267,86 @@ def test_inactive_announcement_not_returned(non_admin_client, db_session):
     db_session.commit()
     res = client.get("/announcements/active")
     assert res.json() is None
+
+
+# --- Charts ---
+
+
+def test_charts_returns_200(admin_client):
+    client, _, _ = admin_client
+    assert client.get("/admin/charts").status_code == 200
+
+
+def test_charts_shape(admin_client):
+    client, _, _ = admin_client
+    data = client.get("/admin/charts").json()
+    for key in ("signups", "active_users", "ai_usage", "scans"):
+        assert key in data, f"missing key: {key}"
+    assert len(data["signups"]) == 30
+
+
+def test_charts_custom_days(admin_client):
+    client, _, _ = admin_client
+    data = client.get("/admin/charts?days=7").json()
+    assert len(data["signups"]) == 7
+
+
+def test_charts_signups_counted(admin_client):
+    """User created today should appear in signups chart."""
+    client, admin, _ = admin_client
+    data = client.get("/admin/charts?days=7").json()
+    today = datetime.now(timezone.utc).date().isoformat()
+    today_point = next((p for p in data["signups"] if p["date"] == today), None)
+    assert today_point is not None
+    assert today_point["count"] >= 1  # the admin user was created today
+
+
+def test_charts_active_users_counted(admin_client):
+    """A UserActivityLog row today should show up in active_users."""
+    client, admin, db = admin_client
+    db.add(UserActivityLog(user_id=admin.id, active_at=datetime.now(timezone.utc)))
+    db.commit()
+    data = client.get("/admin/charts?days=7").json()
+    today = datetime.now(timezone.utc).date().isoformat()
+    today_point = next((p for p in data["active_users"] if p["date"] == today), None)
+    assert today_point is not None
+    assert today_point["count"] == 1
+
+
+def test_charts_ai_usage_counted(admin_client):
+    """A BatchUsageLog row today should show up in ai_usage with correct tokens."""
+    client, admin, db = admin_client
+    db.add(BatchUsageLog(
+        user_id=admin.id,
+        batch_id="b1",
+        videos_submitted=5,
+        classified=5,
+        failed=0,
+        input_tokens=2000,
+        output_tokens=200,
+    ))
+    db.commit()
+    data = client.get("/admin/charts?days=7").json()
+    today = datetime.now(timezone.utc).date().isoformat()
+    today_point = next((p for p in data["ai_usage"] if p["date"] == today), None)
+    assert today_point is not None
+    assert today_point["input_tokens"] == 2000
+    assert today_point["output_tokens"] == 200
+    assert today_point["est_cost_usd"] > 0
+
+
+def test_charts_scans_counted(admin_client):
+    """A ScanLog row today should show up in scans."""
+    client, admin, db = admin_client
+    db.add(ScanLog(user_id=admin.id, status="done"))
+    db.commit()
+    data = client.get("/admin/charts?days=7").json()
+    today = datetime.now(timezone.utc).date().isoformat()
+    today_point = next((p for p in data["scans"] if p["date"] == today), None)
+    assert today_point is not None
+    assert today_point["count"] == 1
+
+
+def test_charts_non_admin_403(non_admin_client):
+    client, _ = non_admin_client
+    assert client.get("/admin/charts").status_code == 403
