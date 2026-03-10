@@ -48,10 +48,16 @@ def _fetch_candidates_for_user(
 
     cutoff = (datetime.now(timezone.utc) - timedelta(weeks=history_weeks)).date()
 
-    # Subquery: video IDs used within the history window for this user
+    # Subquery: video IDs used within the history window for this user.
+    # Must exclude NULL rows (Rest days) — NOT IN with a NULL in the list
+    # makes the condition always false in SQL, excluding every video.
     recent_video_ids = (
         session.query(ProgramHistory.video_id)
-        .filter(ProgramHistory.user_id == user_id, ProgramHistory.week_start >= cutoff)
+        .filter(
+            ProgramHistory.user_id == user_id,
+            ProgramHistory.week_start >= cutoff,
+            ProgramHistory.video_id.is_not(None),
+        )
         .subquery()
         .select()
     )
