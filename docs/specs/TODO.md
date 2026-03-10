@@ -34,6 +34,16 @@ Ordered by priority. Each item links to its spec.
   - [x] Unit: successful pipeline run clears `last_scan_error` to `None`
   - [x] Integration: trigger pipeline that raises, assert `last_scan_error` persisted in DB
 
+### Phase A — Manual E2E
+- [ ] **F1** — Trigger a scan on Railway, then check `batch_usage_log` in DB: `output_tokens` should average ≤80 per video
+- [ ] **F2** — In Railway psql, verify no `classifications` rows exist for videos with `published_at` older than 18 months after a fresh scan
+- [ ] **F3** — Add a brand-new channel, trigger scan, confirm in DB that `first_scan_done=True` and `videos` count ≤75 for that channel
+- [ ] **F3** — Trigger a second scan on the same channel, confirm video count grows beyond 75 (incremental, no cap)
+- [ ] **F4** — In DB, manually set `last_video_published_at = now() - interval '90 days'` on a channel, wait for Sunday cron (or trigger `run_weekly_pipeline` via Railway shell), confirm that channel's scan is skipped in logs
+- [ ] **F4** — Confirm a user-triggered scan (`POST /jobs/scan`) still scans the same "inactive" channel
+- [ ] **F4** — Confirm `last_video_published_at` is populated after a normal scan (check in DB)
+- [ ] **Graceful failure** — `GET /jobs/status` returns `error: null` for a healthy user with no prior failures
+
 ---
 
 ## Phase B — Onboarding Redesign
