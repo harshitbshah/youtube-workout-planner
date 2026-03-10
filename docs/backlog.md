@@ -8,6 +8,25 @@ Review before starting a new phase to see if anything belongs in scope.
 
 ---
 
+## Branch Merge — Next Steps (ready to execute)
+
+The `feat/web-app` branch fully supersedes `main`. The APScheduler cron in the web app
+replaces the original GitHub Actions CLI pipeline. Steps to merge:
+
+1. **Merge `feat/web-app` → `main`** — no conflicts expected (web app is purely additive)
+2. **Delete GitHub Actions workflow** — remove `.github/workflows/weekly_plan.yml`
+   (APScheduler cron handles all users; the CLI tool is fully retired)
+3. **Push `main`**
+4. **Update Vercel** — change deployment branch from `feat/web-app` → `main`
+   (Project Settings → Git → Production Branch)
+5. **Update Railway** — change deployment branch to `main` if currently tracking `feat/web-app`
+6. **Delete `feat/web-app` branch** — no longer needed after merge
+
+The CLI files (`main.py`, `src/`, `config.yaml`, `workout_library.db`) can be left in
+the repo as historical reference or cleaned up separately — they don't affect anything.
+
+---
+
 ## Legal / Compliance
 
 - V0 launch: generate Privacy Policy + ToS via Termly/GetTerms, host at `/privacy` and `/terms`

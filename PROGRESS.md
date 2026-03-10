@@ -1,10 +1,11 @@
 # Progress
 
 ## Status
-Phases 1–5 complete + deployment live + all fixes + admin console + guide page + mobile UX complete.
+Phases 1–5 complete + admin console + charts + guide page + mobile UX complete.
 **248/248 tests passing.**
 Both Railway (backend) and Vercel (frontend) live and functional.
-First plan loading successfully end-to-end. Ready for E2E checklist testing.
+**Pending before sharing with first users:** merge `feat/web-app` → `main`, Railway migration 005,
+set `ADMIN_EMAIL` env var on Railway.
 
 ## What's built
 
@@ -110,6 +111,31 @@ on_progress callback, batch resume logic, batch ID cleared on completion.
 - Complete E2E testing (Groups 1–7 in `docs/testing.md`)
 - Publish Google OAuth app (removes "unverified" warning for basic scopes)
 - Once E2E passes: share with first users
+
+### Admin charts + scan/activity tracking (2026-03-10) — complete
+
+**New DB tables (migration 005):**
+- `scan_log` — one row per pipeline run: `started_at`, `completed_at`, `status` (running/done/failed), `videos_scanned`
+- `user_activity_log` — one row per 5-min active window per user (powers "active users/day" chart)
+
+**Backend:**
+- `_run_full_pipeline` creates a `ScanLog` on start and marks it done/failed on finish
+- `get_current_user` now also inserts a `UserActivityLog` row when updating `last_active_at`
+- `GET /admin/charts?days=30` — 4 daily time series, zero-filled: signups, active users, AI cost (USD), scans
+
+**Frontend:**
+- Recharts installed; `MiniChart` component (responsive BarChart, dark theme, auto tick spacing)
+- Admin console: "Trends — last 30 days" 2×2 grid (signups/indigo, active users/cyan, AI cost/purple, scans/green)
+
+**Tests:** 248/248 (+8 chart tests: shape, custom days, per-series data, non-admin 403)
+
+**Docs:**
+- `backlog.md`: admin runbook panel idea captured with full symptom/cause/fix table
+- `backlog.md`: branch merge next steps documented (6-step checklist)
+
+**Pending ops:**
+- Trigger Railway redeploy → migration 005 runs automatically
+- Set `ADMIN_EMAIL=harshitspeaks@gmail.com` on Railway
 
 ### Admin console + guide page + mobile UX (2026-03-10) — complete
 

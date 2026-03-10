@@ -127,7 +127,7 @@ Frontend: `http://localhost:3000`
 | File | Purpose |
 |---|---|
 | `api/main.py` | FastAPI app, CORS, middleware, router registration |
-| `api/models.py` | SQLAlchemy ORM models (User, Channel, Video, Classification, Schedule, ProgramHistory, UserCredentials, BatchUsageLog, Announcement) |
+| `api/models.py` | SQLAlchemy ORM models (User, Channel, Video, Classification, Schedule, ProgramHistory, UserCredentials, BatchUsageLog, Announcement, ScanLog, UserActivityLog) |
 | `api/schemas.py` | Pydantic request/response schemas |
 | `api/dependencies.py` | `get_db`, `get_current_user` (+ last_active_at throttled update) FastAPI dependencies |
 | `api/database.py` | SQLAlchemy engine + session factory |
@@ -194,6 +194,7 @@ Frontend: `http://localhost:3000`
 | POST | `/admin/announcements` | Admin | Create announcement |
 | DELETE | `/admin/announcements/{id}` | Admin | Delete announcement |
 | PATCH | `/admin/announcements/{id}/deactivate` | Admin | Deactivate announcement |
+| GET | `/admin/charts?days=N` | Admin | Daily time-series: signups, active users, AI cost, scans |
 
 ---
 

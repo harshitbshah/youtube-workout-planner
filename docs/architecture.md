@@ -291,11 +291,21 @@ announcements
   id (int PK), message (text), is_active (bool, default true), created_at
   — admin-created site-wide banners; only one should be active at a time
 
+scan_log
+  id (int PK), user_id (FK), started_at, completed_at (nullable),
+  status ("running" | "done" | "failed"), videos_scanned (nullable)
+  — one row per _run_full_pipeline invocation; powers "scans/day" chart
+
+user_activity_log
+  id (int PK), user_id (FK), active_at
+  — one row per 5-min active window per user; powers "active users/day" chart
+
 Migration history:
   001 — initial schema
   002 — credentials_valid + youtube_playlist_id
   003 — classifier_batch_id
   004 — users.last_active_at + batch_usage_log + announcements
+  005 — scan_log + user_activity_log
 ```
 
 ---
