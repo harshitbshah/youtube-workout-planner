@@ -6,6 +6,11 @@ Phases 1–5 complete + admin console + charts + guide page + mobile UX complete
 Both Railway (backend) and Vercel (frontend) live and functional on `main`.
 **Ready for first users** — Google OAuth sensitive scope review in progress (4–6 week wait). Users see "unverified app" warning until review completes.
 
+**Done this session (2026-03-11, continued):**
+- Phase D F5 (adaptive payload trimming) — descriptive titles skip transcript fetch + use 300-char description; ambiguous titles keep full 800-char + transcript ✅
+- Phase D F6 (rule-based title pre-classifier) — `title_classify()` classifies HIIT/Strength/Cardio/Mobility titles with body focus + difficulty without AI call; estimated 30–40% fewer Anthropic batch submissions ✅
+- 32 new unit tests in `tests/api/test_phase_d.py` — 316/316 backend tests passing ✅
+
 **Done this session (2026-03-11):**
 - Phase B (onboarding redesign) complete — 7-step wizard: life stage → goal → training days → session length → schedule preview → channels → live scan progress ✅
 - `frontend/src/lib/scheduleTemplates.ts` — `buildSchedule()` generates ScheduleSlot[] from profile/goal/days/duration ✅
@@ -35,7 +40,7 @@ Both Railway (backend) and Vercel (frontend) live and functional on `main`.
 - Footer updated with `isAdmin` prop — shows "Admin Guide" link beside "User Guide" on admin pages only ✅
 - Admin page Guide link: styled as button, repositioned to bottom footer ✅
 
-**Next:** Phase C (weekly email).
+**Next:** Phase D F7+F8 (per-user budget cap + global classification cache) — deferred until real users.
 
 ## What's built
 
