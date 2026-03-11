@@ -1,8 +1,8 @@
 # Progress
 
 ## Status
-Phases 1–5 complete + admin console + charts + guide page + mobile UX complete.
-**248/248 tests passing.**
+Phases 1–5 complete + admin console + charts + guide page + mobile UX complete. Phase A (AI cost reduction) complete.
+**284/284 tests passing.**
 Both Railway (backend) and Vercel (frontend) live and functional on `main`.
 **Ready for first users** — Google OAuth sensitive scope review in progress (4–6 week wait). Users see "unverified app" warning until review completes.
 
@@ -17,7 +17,7 @@ Both Railway (backend) and Vercel (frontend) live and functional on `main`.
 - Google OAuth branding verified + published ✅
 - Google sensitive scope (`youtube`) submitted for review ✅ (4–6 week wait)
 
-**Next:** Homepage redesign → invite first users while awaiting OAuth review.
+**Next:** Phase B (onboarding redesign).
 
 ## What's built
 
@@ -123,6 +123,32 @@ on_progress callback, batch resume logic, batch ID cleared on completion.
 - Complete E2E testing (Groups 1–7 in `docs/testing.md`)
 - Publish Google OAuth app (removes "unverified" warning for basic scopes)
 - Once E2E passes: share with first users
+
+### Phase A — AI cost reduction (2026-03-10) — complete
+
+**F1 — Reduce max_tokens:**
+- `classifier.py` `max_tokens` reduced 150 → 80 (JSON response is ~50–70 tokens; 80 gives headroom without waste)
+
+**F2 — 18-month video cutoff:**
+- `CLASSIFY_MAX_AGE_MONTHS` env var (default 18); classifier skips videos older than this threshold before building the Anthropic batch
+
+**F3 — First-scan channel cap (migration 006):**
+- `channels.first_scan_done` boolean column added
+- Scanner limits new channels to 75 videos on first scan; subsequent scans are uncapped (incremental)
+- `first_scan_done` set to `True` after first scan completes
+
+**F4 — Skip inactive channels (migration 007):**
+- `channels.last_video_published_at` datetime column added
+- Weekly cron skips channels where `last_video_published_at` > 60 days after `added_at` and last publish > 60 days ago
+- User-triggered scans (`POST /jobs/scan`) always scan all channels regardless
+- `last_video_published_at` updated to the most recent video date after each scan
+
+**Graceful scanner failure (migration 008):**
+- `users.last_scan_error` text column added
+- Pipeline exception sets `last_scan_error` on the user record; successful run clears it to `None`
+- `GET /jobs/status` includes `error` field; dashboard shows error banner when set
+
+**Tests:** 284/284 (+36 new tests covering all F1–F4 cases + graceful failure paths)
 
 ### Admin charts + scan/activity tracking (2026-03-10) — complete
 

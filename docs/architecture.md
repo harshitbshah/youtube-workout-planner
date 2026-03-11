@@ -251,10 +251,12 @@ The web app is a multi-user version of the CLI pipeline, built as a FastAPI back
 
 ```
 users
-  id (uuid PK), google_id, email, display_name, created_at
+  id (uuid PK), google_id, email, display_name, created_at,
+  last_scan_error (text, nullable) — set on pipeline failure, cleared on success
 
 channels
-  id (uuid PK), user_id (FK), name, youtube_url, youtube_channel_id, added_at
+  id (uuid PK), user_id (FK), name, youtube_url, youtube_channel_id, added_at,
+  first_scan_done (bool, default false), last_video_published_at (datetime, nullable)
 
 videos
   id (youtube video ID PK), channel_id (FK), title, description,
@@ -306,6 +308,9 @@ Migration history:
   003 — classifier_batch_id
   004 — users.last_active_at + batch_usage_log + announcements
   005 — scan_log + user_activity_log
+  006 — channels.first_scan_done
+  007 — channels.last_video_published_at
+  008 — users.last_scan_error
 ```
 
 ---
@@ -399,7 +404,7 @@ Applied before fetching video details or sending to classifier:
 3. **Duration cap** — skips videos > 2 hours (livestreams/long-form podcasts that slipped through).
 4. **Shorts filter** (existing) — skips videos < 3 min or with `#shorts` hashtag.
 
-### Classifier — batch cap + resumable batches
+### Classifier — batch cap + resumable batches + Phase A cost controls
 
 - **`MAX_CLASSIFY_PER_RUN = 300`** — caps each pipeline run to 300 videos. Keeps first-run
   transcript fetch time to ~5 min instead of 30+ min for large channels. Remainder deferred
@@ -408,6 +413,10 @@ Applied before fetching video details or sending to classifier:
   after the Anthropic batch is submitted. On restart (e.g. Railway deploy mid-pipeline), the
   next scan call resumes polling the existing batch instead of resubmitting — no double billing.
   The batch ID is cleared when results are saved.
+- **`max_tokens = 80`** (F1) — reduced from 150. JSON response is ~50–70 tokens; 80 gives headroom without waste.
+- **`CLASSIFY_MAX_AGE_MONTHS` env var** (F2, default 18) — videos older than this are skipped before building the Anthropic batch.
+- **First-scan channel cap** (F3) — new channels are capped at 75 videos on first scan (`first_scan_done=False`); subsequent scans are uncapped incremental.
+- **Skip inactive channels** (F4) — weekly cron skips channels where last published video is >60 days old and channel was added >60 days ago. User-triggered scans always run all channels. `last_video_published_at` updated after each scan.
 
 ---
 

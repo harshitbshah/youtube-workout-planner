@@ -155,6 +155,7 @@ Frontend: `http://localhost:3000`
 | `app/settings/page.tsx` | Profile, channels, schedule, account deletion |
 | `app/guide/page.tsx` | User guide with sticky sidebar nav (7 sections) |
 | `app/admin/page.tsx` | Admin console: stats, user table, announcements (admin only) |
+| `app/admin/guide/page.tsx` | Admin operational guide: architecture, Phase A, troubleshooting, Railway ops, DB reference, env vars |
 | `lib/api.ts` | All API calls + TypeScript types |
 | `components/ChannelManager.tsx` | Reusable channel search/add/remove (used in onboarding + settings) |
 | `components/ScheduleEditor.tsx` | Reusable weekly schedule grid (used in onboarding + settings) |
