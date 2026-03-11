@@ -130,6 +130,20 @@ Review before starting a new phase to see if anything belongs in scope.
 
 ---
 
+## Testing
+
+- **Playwright E2E tests for full onboarding flow** — deferred. The 7-step wizard involves
+  multi-step interactions, schedule preview, and live polling that would benefit from a
+  browser-level test. Vitest unit tests are sufficient for now; add Playwright when the
+  onboarding flow stabilises and E2E coverage becomes a priority.
+
+- **Dashboard polling change-detection** — `setPipelineStage` in the dashboard page could
+  use the same functional update pattern introduced in onboarding step 7
+  (`prev === next ? prev : next`) to avoid unnecessary re-renders when the poll returns the
+  same stage. Minor improvement; same pattern, low priority.
+
+---
+
 ## Ideas / Someday
 
 - Adaptive periodization — auto-manage build / peak / deload blocks based on recent

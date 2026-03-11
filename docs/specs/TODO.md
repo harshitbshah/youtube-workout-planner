@@ -50,17 +50,17 @@ Ordered by priority. Each item links to its spec.
 > Spec: [onboarding-redesign.md](onboarding-redesign.md)
 > Frontend-only rewrite — no backend changes, no unit/integration tests needed.
 
-- [ ] Create `frontend/src/lib/scheduleTemplates.ts` — `buildSchedule()` function + templates
-- [ ] Add `suggestions` prop to `ChannelManager.tsx`
-- [ ] Rewrite `frontend/src/app/onboarding/page.tsx` — 7-step wizard
-  - [ ] Step 1 — Life stage cards
-  - [ ] Step 2 — Goal cards (varies by life stage)
-  - [ ] Step 3 — Training days toggle
-  - [ ] Step 4 — Session length cards
-  - [ ] Step 5 — Schedule preview + inline customise
-  - [ ] Step 6 — Add channels with curated suggestions
-  - [ ] Step 7 — Live scan progress (polls `/jobs/status`, auto-navigate)
-- [ ] Update `StepIndicator` labels → `Profile · Channels · Your Plan`
+- [x] Create `frontend/src/lib/scheduleTemplates.ts` — `buildSchedule()` function + templates
+- [x] Add `suggestions` prop to `ChannelManager.tsx`
+- [x] Rewrite `frontend/src/app/onboarding/page.tsx` — 7-step wizard
+  - [x] Step 1 — Life stage cards
+  - [x] Step 2 — Goal cards (varies by life stage)
+  - [x] Step 3 — Training days toggle
+  - [x] Step 4 — Session length cards
+  - [x] Step 5 — Schedule preview + inline customise
+  - [x] Step 6 — Add channels with curated suggestions
+  - [x] Step 7 — Live scan progress (polls `/jobs/status`, auto-navigate)
+- [x] Update `StepIndicator` labels → `Profile · Channels · Your Plan`
 - [ ] Manual: senior profile → schedule defaults to beginner difficulty + short duration
 - [ ] Manual: athlete profile → schedule defaults to advanced difficulty + long duration
 - [ ] Manual: "Customise" on step 5 expands `ScheduleEditor` inline, changes persist

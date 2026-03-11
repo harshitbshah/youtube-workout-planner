@@ -13,16 +13,10 @@ import {
   type LibraryResponse,
   type ChannelResponse,
 } from "@/lib/api";
+import { DAY_LABELS, formatDuration } from "@/lib/utils";
+import Badge from "@/components/Badge";
 
 const DAYS = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday"];
-const DAY_LABELS: Record<string, string> = {
-  monday: "Mon",
-  tuesday: "Tue",
-  wednesday: "Wed",
-  thursday: "Thu",
-  friday: "Fri",
-  saturday: "Sat",
-};
 
 // Values match what the classifier stores (case-insensitive comparison on backend)
 const WORKOUT_TYPES = ["strength", "hiit", "cardio", "mobility"];
@@ -34,19 +28,6 @@ const WORKOUT_TYPE_LABELS: Record<string, string> = {
 };
 const BODY_FOCUSES = ["full", "upper", "lower", "core", "arms", "legs", "back"];
 const DIFFICULTIES = ["beginner", "intermediate", "advanced"];
-
-function formatDuration(sec: number | null): string {
-  if (!sec) return "";
-  return `${Math.round(sec / 60)} min`;
-}
-
-function Badge({ label }: { label: string }) {
-  return (
-    <span className="rounded-full bg-zinc-800 border border-zinc-700 px-2 py-0.5 text-xs text-zinc-400 capitalize">
-      {label}
-    </span>
-  );
-}
 
 function AssignButton({ videoId }: { videoId: string }) {
   const [selected, setSelected] = useState("");
@@ -113,7 +94,7 @@ function VideoCard({ video }: { video: VideoSummary }) {
           />
           {video.duration_sec && (
             <span className="absolute bottom-1.5 right-1.5 rounded bg-black/80 px-1.5 py-0.5 text-xs text-white">
-              {formatDuration(video.duration_sec)}
+              {formatDuration(Math.round(video.duration_sec / 60), Math.round(video.duration_sec / 60))}
             </span>
           )}
         </div>

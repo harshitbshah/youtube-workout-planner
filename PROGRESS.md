@@ -1,10 +1,20 @@
 # Progress
 
 ## Status
-Phases 1–5 complete + admin console + charts + guide page + mobile UX complete. Phase A (AI cost reduction) complete.
-**284/284 tests passing.**
+Phases 1–5 complete + admin console + charts + guide page + mobile UX complete. Phase A (AI cost reduction) complete. Phase B (onboarding redesign) complete.
+**346/346 tests passing** (284 backend + 62 frontend).
 Both Railway (backend) and Vercel (frontend) live and functional on `main`.
 **Ready for first users** — Google OAuth sensitive scope review in progress (4–6 week wait). Users see "unverified app" warning until review completes.
+
+**Done this session (2026-03-11):**
+- Phase B (onboarding redesign) complete — 7-step wizard: life stage → goal → training days → session length → schedule preview → channels → live scan progress ✅
+- `frontend/src/lib/scheduleTemplates.ts` — `buildSchedule()` generates ScheduleSlot[] from profile/goal/days/duration ✅
+- `ChannelManager.tsx` updated with optional `suggestions` prop — curated channel suggestions shown per life stage/goal ✅
+- Onboarding page fully rewritten as a 7-step wizard with auto-advance on selection, ScheduleEditor inline customise, and live scan progress polling ✅
+- Frontend test suite added: Vitest + React Testing Library — 62 tests covering scheduleTemplates logic, ChannelManager, and onboarding page steps ✅
+- Code cleanup: `DAY_LABELS` + `formatDuration()` extracted to `src/lib/utils.ts`, shared `Badge.tsx` component, polling change-detection fix, interval ref cleanup, `performSearch()` and `executeScan()` helpers extracted ✅
+- Admin guide: "Optimizations" section added documenting all Phase A backend + Phase B frontend optimizations ✅
+- Checkpoint docs updated (PROGRESS.md, architecture.md, testing.md, backlog.md, CLAUDE.md, TODO.md) ✅
 
 **Done this session (2026-03-10):**
 - `feat/web-app` merged → `main`, Railway + Vercel switched to `main`, branch deleted ✅
@@ -22,7 +32,7 @@ Both Railway (backend) and Vercel (frontend) live and functional on `main`.
 - Footer updated with `isAdmin` prop — shows "Admin Guide" link beside "User Guide" on admin pages only ✅
 - Admin page Guide link: styled as button, repositioned to bottom footer ✅
 
-**Next:** Phase B (onboarding redesign).
+**Next:** Phase C (weekly email).
 
 ## What's built
 
@@ -32,7 +42,7 @@ routers, scanner/classifier/planner services, APScheduler weekly cron, scan endp
 
 ### Phase 4 (Frontend) — complete
 - Landing/marketing page (`/`) — hero, how it works, features, sign-up CTA
-- Onboarding (`/onboarding`) — 3-step: channels → schedule → generate first plan
+- Onboarding (`/onboarding`) — 7-step wizard: life stage → goal → training days → session length → schedule preview → channels → live scan progress
 - Dashboard (`/dashboard`) — 7-day plan grid, regenerate, nav to library/settings
 - Library browser (`/library`) — filter by workout type/body focus/difficulty/channel,
   assign video to plan day, pagination
@@ -154,6 +164,39 @@ on_progress callback, batch resume logic, batch ID cleared on completion.
 - `GET /jobs/status` includes `error` field; dashboard shows error banner when set
 
 **Tests:** 284/284 (+36 new tests covering all F1–F4 cases + graceful failure paths)
+
+### Phase B — Onboarding redesign (2026-03-11) — complete
+
+**7-step onboarding wizard:**
+- Step 1 — Life stage cards (4 options: student, working adult, senior, athlete); auto-advance on click
+- Step 2 — Goal cards (varies by life stage, 3–4 options); auto-advance on click
+- Step 3 — Training days toggle (2–6 days); auto-advance on selection
+- Step 4 — Session length cards (4 options); auto-advance on click
+- Step 5 — Schedule preview: `buildSchedule()` generates a ScheduleSlot[] from profile/goal/days/duration; inline "Customise" expands ScheduleEditor without leaving the step; changes persist
+- Step 6 — Add channels: ChannelManager with curated channel suggestions filtered by life stage/goal; minimum-1-channel gate on Continue
+- Step 7 — Live scan progress: polls `GET /jobs/status` every 2s, progress bar advances through scanning/classifying/generating stages, auto-navigates to `/dashboard` on `done`
+
+**New files:**
+- `frontend/src/lib/scheduleTemplates.ts` — `buildSchedule()` + per-profile/goal templates
+- `frontend/src/test/setup.ts` — Vitest + jest-dom test setup
+
+**Updated files:**
+- `frontend/src/app/onboarding/page.tsx` — fully rewritten
+- `frontend/src/components/ChannelManager.tsx` — optional `suggestions` prop added
+- `frontend/src/lib/utils.ts` — `DAY_LABELS` + `formatDuration()` extracted (was duplicated)
+- `frontend/src/components/Badge.tsx` — shared badge pill extracted (was duplicated)
+
+**Frontend test suite (Vitest + React Testing Library):**
+- 62 tests covering `scheduleTemplates.ts` logic, `ChannelManager` component, and onboarding page steps
+- Run: `cd frontend && npm run test:run`
+
+**Code quality cleanup:**
+- `DAY_LABELS` and `formatDuration()` extracted to `src/lib/utils.ts`; removed duplication from dashboard, library, onboarding
+- Shared `Badge.tsx` component; removed duplication from dashboard and library
+- Onboarding polling uses functional state updates to avoid re-renders on identical stage
+- Interval ref cleanup: polling cleared immediately on pipeline finish
+- `performSearch()` helper deduplicates search logic in ChannelManager
+- `executeScan()` helper deduplicates triggerScan error handling in onboarding
 
 ### Admin charts + scan/activity tracking (2026-03-10) — complete
 

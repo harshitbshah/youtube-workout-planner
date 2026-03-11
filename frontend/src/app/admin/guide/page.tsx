@@ -17,6 +17,7 @@ const SECTIONS = [
   { id: "db-reference",    label: "DB reference" },
   { id: "env-vars",        label: "Env vars" },
   { id: "known-issues",    label: "Known issues" },
+  { id: "optimizations",   label: "Optimizations" },
 ];
 
 function Section({ id, title, children }: { id: string; title: string; children: React.ReactNode }) {
@@ -548,6 +549,87 @@ WHERE last_scan_error IS NOT NULL;`}</Code>
                 ],
               ]}
             />
+          </Section>
+
+          {/* ── Optimizations ────────────────────────────────────────── */}
+          <Section id="optimizations" title="Optimizations">
+            <p>
+              Cost and performance optimizations applied across the codebase, organised by layer.
+            </p>
+
+            <H3>Backend optimizations (Phase A — AI cost reduction)</H3>
+            <Table
+              headers={["Optimization", "Where", "Detail"]}
+              rows={[
+                [
+                  "max_tokens reduced 150 → 80",
+                  "api/services/classifier.py",
+                  "Each Anthropic Batch API request caps output at 80 tokens. The JSON classification response is ~50–70 tokens; 80 gives headroom without waste. Cuts per-video AI cost ~47%.",
+                ],
+                [
+                  "18-month video cutoff",
+                  "CLASSIFY_MAX_AGE_MONTHS env var",
+                  "Videos older than 18 months are excluded from classification before the Anthropic batch is built. Configurable — set a lower value to reduce cost further.",
+                ],
+                [
+                  "First-scan channel cap (75 videos)",
+                  "channels.first_scan_done (migration 006)",
+                  "The first scan of a new channel is capped at 75 of its most recent videos to keep the initial pipeline fast. Subsequent scans are uncapped and incremental. first_scan_done is set True after the first scan completes.",
+                ],
+                [
+                  "Skip inactive channels",
+                  "channels.last_video_published_at (migration 007)",
+                  "Channels with no video published in 60+ days AND added 60+ days ago are skipped in the automated Sunday pipeline to save YouTube API quota. User-triggered scans (POST /jobs/scan) always scan all channels regardless.",
+                ],
+                [
+                  "Graceful pipeline failures",
+                  "users.last_scan_error (migration 008)",
+                  "Pipeline exceptions are caught, stored on the user record, and returned by GET /jobs/status. The dashboard shows an error banner when set. The weekly pipeline continues for other users even when one fails. Cleared automatically on the next successful run.",
+                ],
+              ]}
+            />
+
+            <H3>Frontend optimizations (Phase B + cleanup)</H3>
+            <Table
+              headers={["Optimization", "Where", "Detail"]}
+              rows={[
+                [
+                  "Shared constants",
+                  "src/lib/utils.ts",
+                  "DAY_LABELS and formatDuration() were previously duplicated across the dashboard, library, and onboarding pages. Extracted to a single shared module.",
+                ],
+                [
+                  "Shared Badge component",
+                  "src/components/Badge.tsx",
+                  "Styled badge pill previously duplicated in dashboard and library pages. Extracted to a shared component used in both.",
+                ],
+                [
+                  "Polling change detection",
+                  "app/onboarding/page.tsx (step 7)",
+                  "The scan progress tracker uses functional state updates (prev === next ? prev : next) to avoid unnecessary re-renders when the poll returns the same pipeline stage.",
+                ],
+                [
+                  "Interval ref cleanup",
+                  "app/onboarding/page.tsx (step 7)",
+                  "A useRef tracks the polling interval, allowing it to be cleared immediately when the pipeline finishes — not waiting for the next effect cleanup cycle.",
+                ],
+                [
+                  "Extracted search helper",
+                  "components/ChannelManager.tsx",
+                  "performSearch() deduplicates search logic shared between manual search-box submission and suggestion-chip clicks, removing a copy-paste branch.",
+                ],
+                [
+                  "Extracted scan helper",
+                  "app/onboarding/page.tsx",
+                  "executeScan() deduplicates the triggerScan error-handling logic shared between the initial scan trigger and the retry path.",
+                ],
+              ]}
+            />
+
+            <Note>
+              Phase A optimizations are in production on Railway. The frontend optimizations were
+              introduced during Phase B and apply to the Next.js app served via Vercel.
+            </Note>
           </Section>
 
         </main>

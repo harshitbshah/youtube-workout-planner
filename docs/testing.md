@@ -22,17 +22,46 @@ Run before every commit:
 # Integration tests (real PostgreSQL — requires workout_planner_test DB)
 .venv/bin/pytest tests/integration/ -v
 
-# All tests
+# All backend tests
 .venv/bin/pytest -q
+
+# Frontend tests (Vitest + React Testing Library)
+cd frontend && npm run test:run
 ```
 
-Current: **284/284 passing**
+Current: **346/346 passing** (284 backend + 62 frontend)
 
 New test files added:
 - `tests/api/test_jobs.py` — `POST /jobs/scan` (202, 400 no channels, 503 no key, 401 unauth, channel count); `GET /jobs/status` (no pipeline, unauthenticated, reflects live state); scanner filters (upper duration cap, title blocklist); classifier (batch cap limits to 300, `on_progress` callback during polling, resume existing batch, batch ID cleared on completion)
 - `tests/api/test_admin.py` — 21 tests: stats shape, user/library counts, last_active_at, AI usage aggregation (7d + all-time), 403 for non-admin, 403 with no ADMIN_EMAIL set, delete user, cannot delete self, 404 nonexistent, retry scan (no channels → 400, with channels → 202), create/list/delete/deactivate announcements, active announcement for regular user, null when none active, inactive not returned
 - `tests/integration/test_jobs_api.py` — 5 integration cases for `POST /jobs/scan` against real Postgres (user isolation, FK constraints, channel count)
 - `tests/integration/test_schema.py` — updated to expect Alembic version "003" (update to "004" after next migration run)
+
+---
+
+## Frontend Tests (Phase B)
+
+```bash
+cd frontend && npm run test:run
+```
+
+62 tests covering:
+- `scheduleTemplates.ts` — `buildSchedule()` logic for all life-stage/goal/days/duration combinations
+- `ChannelManager.tsx` — search, add, remove, suggestions chips, minimum-1-channel gate
+- Onboarding page steps — step rendering, auto-advance, schedule preview, scan progress
+
+---
+
+## Manual E2E — Phase B (onboarding redesign)
+
+Can be run against local dev servers or the live deployment.
+
+- [ ] Complete onboarding as **senior profile** → verify schedule defaults to beginner difficulty + short duration
+- [ ] Complete onboarding as **athlete profile** → verify schedule defaults to advanced difficulty + long duration
+- [ ] Verify "Customise" on step 5 shows `ScheduleEditor` inline and changes persist when continuing
+- [ ] Verify step 7 progress bar advances through all 4 stages (scanning → classifying → generating → done) and auto-navigates to `/dashboard`
+- [ ] Verify minimum-1-channel gate on step 6 still blocks the Continue button when no channels are added
+- [ ] Verify returning users (already has channels) bypass onboarding and go directly to `/dashboard`
 
 ---
 

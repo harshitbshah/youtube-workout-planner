@@ -12,22 +12,22 @@ import {
 interface Props {
   channels: ChannelResponse[];
   onChannelsChange: (channels: ChannelResponse[]) => void;
+  suggestions?: string[];
 }
 
-export default function ChannelManager({ channels, onChannelsChange }: Props) {
+export default function ChannelManager({ channels, onChannelsChange, suggestions }: Props) {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<ChannelSearchResult[]>([]);
   const [searching, setSearching] = useState(false);
   const [adding, setAdding] = useState<string | null>(null);
   const [error, setError] = useState("");
 
-  async function handleSearch() {
-    if (!query.trim()) return;
+  async function performSearch(searchQuery: string) {
     setSearching(true);
     setError("");
     setResults([]);
     try {
-      const data = await searchChannels(query.trim());
+      const data = await searchChannels(searchQuery);
       setResults(data);
       if (data.length === 0) setError("No channels found. Try a different name.");
     } catch {
@@ -35,6 +35,16 @@ export default function ChannelManager({ channels, onChannelsChange }: Props) {
     } finally {
       setSearching(false);
     }
+  }
+
+  async function handleSearch() {
+    if (!query.trim()) return;
+    await performSearch(query.trim());
+  }
+
+  async function handleSuggestionClick(name: string) {
+    setQuery(name);
+    await performSearch(name);
   }
 
   async function handleAdd(result: ChannelSearchResult) {
@@ -68,6 +78,28 @@ export default function ChannelManager({ channels, onChannelsChange }: Props) {
 
   return (
     <div>
+      {/* Suggestions */}
+      {suggestions && suggestions.length > 0 && (
+        <div className="mb-4">
+          <p className="text-xs text-zinc-500 uppercase tracking-wide mb-2">Suggestions</p>
+          <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none">
+            {suggestions.map((name) => {
+              const alreadyAdded = channels.some((c) => c.name.toLowerCase() === name.toLowerCase());
+              return (
+                <button
+                  key={name}
+                  onClick={() => handleSuggestionClick(name)}
+                  disabled={alreadyAdded || searching}
+                  className="shrink-0 rounded-full border border-zinc-700 bg-zinc-800 px-3 py-1.5 text-sm text-white hover:bg-zinc-700 disabled:opacity-40 transition"
+                >
+                  {alreadyAdded ? `${name} ✓` : name}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
       {/* Search */}
       <div className="flex gap-2 mb-4">
         <input

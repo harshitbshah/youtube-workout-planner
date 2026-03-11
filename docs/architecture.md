@@ -438,10 +438,14 @@ still handles the single original user independently.
 / ─────────── Landing page (hero, how it works, features, CTA)
               Signed-in users auto-redirected to /dashboard or /onboarding
 
-/onboarding ─ 3-step sign-up wizard
-              Step 1: Add channels (ChannelManager component)
-              Step 2: Set schedule (ScheduleEditor component)
-              Step 3: Trigger first scan → /dashboard
+/onboarding ─ 7-step onboarding wizard
+              Step 1: Life stage (4 cards, auto-advance)
+              Step 2: Goal (3–4 options by profile, auto-advance)
+              Step 3: Training days (2–6 toggle, auto-advance)
+              Step 4: Session length (4 options, auto-advance)
+              Step 5: Schedule preview (confirm or customise with inline ScheduleEditor)
+              Step 6: Channels (ChannelManager + curated suggestions by profile)
+              Step 7: Live scan progress (polls /jobs/status every 2s, auto-navigates to /dashboard)
 
 /guide ────── User guide (7 sections with sticky desktop sidebar)
               Linked from homepage nav and footer
@@ -486,9 +490,30 @@ still handles the single original user independently.
 in both `/onboarding` and `/settings`. The onboarding page wraps them with step
 navigation; settings wraps them with save buttons.
 
+`ChannelManager` accepts an optional `suggestions` prop — an array of curated channel
+objects shown as clickable chips above the search box. Used in onboarding step 6 to
+surface profile-relevant channels.
+
+`Badge` (`src/components/Badge.tsx`) — shared styled badge pill used in dashboard and
+library pages for workout type, body focus, and difficulty tags.
+
 `Tooltip` (`src/components/Tooltip.tsx`) — CSS-only tooltip using Tailwind `group/tip`
 pattern. Props: `text`, `children`, `position?: "top" | "bottom"`. Used throughout
 the admin console. Hover delay is 300ms (`delay-300`) to reduce accidental triggers.
+
+### Shared utilities (`src/lib/`)
+`lib/utils.ts` — `DAY_LABELS` constant (Mon–Sun labels array) and `formatDuration(sec)`
+helper. Previously duplicated in dashboard, library, and onboarding pages.
+
+`lib/scheduleTemplates.ts` — `buildSchedule()` function that generates a `ScheduleSlot[]`
+from a life-stage profile, goal, number of training days, and session duration. Used in
+onboarding step 5 to produce a sensible default schedule before the user customises it.
+
+### Frontend tests (`frontend/src/test/`)
+`test/setup.ts` — Vitest + `@testing-library/jest-dom` setup file.
+
+Run: `cd frontend && npm run test:run` — 62 tests covering `scheduleTemplates` logic,
+`ChannelManager` component behaviour, and onboarding page step flows.
 
 ### API client (`src/lib/api.ts`)
 Single file with all `fetch` calls and TypeScript types. Uses `credentials: "include"`

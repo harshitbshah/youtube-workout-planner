@@ -115,8 +115,11 @@ Frontend: `http://localhost:3000`
 # Integration tests (real PostgreSQL — requires workout_planner_test DB)
 .venv/bin/pytest tests/integration/ -v
 
-# All tests
+# All backend tests
 .venv/bin/pytest -q
+
+# Frontend tests (Vitest + React Testing Library)
+cd frontend && npm run test:run
 ```
 
 ---
@@ -149,7 +152,7 @@ Frontend: `http://localhost:3000`
 | Path | Purpose |
 |---|---|
 | `app/page.tsx` | Landing/marketing page (hero, how it works, features, CTA, Guide nav link) |
-| `app/onboarding/page.tsx` | 3-step sign-up wizard: channels → schedule → generate |
+| `app/onboarding/page.tsx` | 7-step onboarding wizard: life stage → goal → training days → session length → schedule preview → channels → live scan progress |
 | `app/dashboard/page.tsx` | Weekly plan grid, responsive header, announcement banner, admin nav link |
 | `app/library/page.tsx` | Video library browser with filters + assign-to-day |
 | `app/settings/page.tsx` | Profile, channels, schedule, account deletion |
@@ -157,7 +160,10 @@ Frontend: `http://localhost:3000`
 | `app/admin/page.tsx` | Admin console: stats, user table, announcements (admin only) |
 | `app/admin/guide/page.tsx` | Admin operational guide: admin console, managing users, announcements, monitoring, troubleshooting, railway ops, DB reference, env vars, known issues |
 | `lib/api.ts` | All API calls + TypeScript types |
-| `components/ChannelManager.tsx` | Reusable channel search/add/remove (used in onboarding + settings) |
+| `lib/scheduleTemplates.ts` | `buildSchedule()` — generates ScheduleSlot[] from profile, goal, days, duration |
+| `lib/utils.ts` | Shared `DAY_LABELS` constant + `formatDuration()` utility |
+| `components/ChannelManager.tsx` | Reusable channel search/add/remove; optional `suggestions` prop for curated chips (used in onboarding + settings) |
+| `components/Badge.tsx` | Shared styled badge pill (used in dashboard + library) |
 | `components/ScheduleEditor.tsx` | Reusable weekly schedule grid (used in onboarding + settings) |
 | `components/Tooltip.tsx` | CSS-only tooltip component (`group/tip` pattern, `delay-300`) |
 | `components/Footer.tsx` | Shared footer with YouTube API attribution; accepts optional `isAdmin` prop — shows "Admin Guide" link beside "User Guide" on admin pages |
@@ -208,9 +214,13 @@ Frontend: `http://localhost:3000`
 Google OAuth → /auth/google → Google → /auth/google/callback → /
 
   → New user (no channels): /onboarding
-      Step 1: Add channels (ChannelManager)
-      Step 2: Set schedule (ScheduleEditor)
-      Step 3: Trigger scan → /dashboard
+      Step 1: Life stage (4 cards, auto-advance)
+      Step 2: Goal (3–4 options by profile, auto-advance)
+      Step 3: Training days (2–6 toggle, auto-advance)
+      Step 4: Session length (4 options, auto-advance)
+      Step 5: Schedule preview (confirm or customise with ScheduleEditor)
+      Step 6: Channels (ChannelManager + curated suggestions by profile)
+      Step 7: Live scan progress (polls /jobs/status, auto-navigates to /dashboard)
 
   → Returning user (has channels): /dashboard
       Header nav: Library | Settings | Regenerate | Publish | Admin (admin only) | Sign out
