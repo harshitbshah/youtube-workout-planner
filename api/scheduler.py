@@ -2,15 +2,31 @@
 scheduler.py — APScheduler weekly cron for all users.
 
 Runs every Sunday at 18:00 UTC:
-  For each user with at least one channel:
+  For each user who has been active in the last 14 days AND has at least one channel:
     1. Incremental scan all their channels
     2. Classify new videos
     3. Generate next week's plan
+
+Design intent
+─────────────
+The web app is the primary interface. Users log in, view their plan, optionally swap
+videos, and click "Publish to YouTube" — all within the app. The YouTube playlist is
+a convenience output so users can play videos directly from the YouTube app without
+signing in to the web app each time.
+
+Any authenticated request (viewing the dashboard, swapping a video, clicking Publish)
+updates `user.last_active_at`. We use that as the activity gate for the cron. Users
+who haven't opened the app in 14+ days have no plan to act on — skip them to save
+YouTube API quota and Anthropic credits.
+
+The 14-day threshold tolerates a user missing one week (8–13 days absent) and still
+getting a plan on the next Sunday. Only users absent for two full weeks are skipped.
 
 Started/stopped via FastAPI lifespan in main.py.
 """
 
 import logging
+from datetime import datetime, timedelta, timezone
 
 from apscheduler.schedulers.background import BackgroundScheduler
 
@@ -87,24 +103,40 @@ def _weekly_pipeline_for_user(user_id: str):
         session.close()
 
 
+INACTIVE_THRESHOLD_DAYS = 14  # skip users who haven't opened the app in this many days
+
+
 def run_weekly_pipeline():
-    """Fetch all users and run the pipeline for each."""
+    """Fetch active users and run the pipeline for each.
+
+    Only processes users who have been active within INACTIVE_THRESHOLD_DAYS.
+    Users who haven't logged in (or published) recently have no plan to act on
+    and are skipped to conserve YouTube API quota and Anthropic credits.
+    """
     from .database import SessionLocal
     from .models import User
 
     logger.info("[weekly] Starting weekly pipeline for all users")
+    cutoff = datetime.now(timezone.utc) - timedelta(days=INACTIVE_THRESHOLD_DAYS)
+
     session = SessionLocal()
     try:
-        users = session.query(User).all()
-        logger.info(f"[weekly] {len(users)} users to process")
+        all_users = session.query(User).all()
+        active_users = [u for u in all_users if u.last_active_at and u.last_active_at >= cutoff]
+        skipped = len(all_users) - len(active_users)
+        logger.info(
+            f"[weekly] {len(active_users)} active users to process, "
+            f"{skipped} inactive (>{INACTIVE_THRESHOLD_DAYS}d) skipped"
+        )
+        user_ids = [str(u.id) for u in active_users]
     finally:
         session.close()
 
-    for user in users:
+    for user_id in user_ids:
         try:
-            _weekly_pipeline_for_user(str(user.id))
+            _weekly_pipeline_for_user(user_id)
         except Exception as e:
-            logger.error(f"[weekly] Pipeline failed for user {user.id}: {e}")
+            logger.error(f"[weekly] Pipeline failed for user {user_id}: {e}")
 
     logger.info("[weekly] Weekly pipeline complete")
 

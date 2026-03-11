@@ -152,13 +152,27 @@ Ordered by priority. Each item links to its spec.
 
 ---
 
+## Scheduler — Active-user gate
+> Already implemented in `api/scheduler.py` (2026-03-11). Tests still needed.
+
+- [x] `run_weekly_pipeline()` skips users with `last_active_at` older than 14 days
+- [ ] Unit: user active 7 days ago → pipeline runs
+- [ ] Unit: user active 15 days ago → pipeline skipped, logged
+- [ ] Unit: user with `last_active_at=None` (never logged in after signup) → skipped
+- [ ] Unit: `INACTIVE_THRESHOLD_DAYS` is respected (inject custom value via monkeypatch)
+
+---
+
 ## Phase O1 — Freeform Profile Enrichment
 > Spec: [ai-profile-enrichment-and-coach-chat.md](ai-profile-enrichment-and-coach-chat.md)
 > Add freeform "Anything else?" step to onboarding. Claude Haiku extracts constraints/preferences silently.
 
 ### Migration + models
-- [ ] Migration 009 — add `life_stage`, `goal`, `profile_notes`, `profile_enrichment` to `users` table
-- [ ] Update `api/models.py` — 4 new columns on `User`
+- [ ] Migration 009 — add to `users`: `life_stage`, `goal`, `profile_notes`, `profile_enrichment`
+- [ ] Migration 009 — add to `program_history`: `original_video_id` (FK videos.id, nullable), `published_at` (DateTime, nullable)
+- [ ] Update `api/models.py` — 4 new columns on `User`, 2 new columns on `ProgramHistory`
+- [ ] `api/services/planner.py` — write `original_video_id = video_id` in `_save_plan_to_history()`
+- [ ] `api/services/publisher.py` — write `published_at = now()` on all `ProgramHistory` rows for the week on publish
 
 ### Backend
 - [ ] Create `api/services/enrichment.py` — `enrich_profile(notes: str) -> dict` (Haiku extraction)

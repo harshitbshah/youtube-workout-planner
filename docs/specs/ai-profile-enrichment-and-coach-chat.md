@@ -6,6 +6,36 @@
 
 ---
 
+## App design — how users actually interact
+
+The web app is the primary interface. Users log in, view their auto-generated plan,
+optionally swap videos, and click "Publish to YouTube" — all within the app. The
+YouTube playlist is a **convenience output only** — it lets users play their week's
+videos directly from the YouTube app without signing in to the web app each time.
+
+No feedback flows back from YouTube. All meaningful user-intent signals are captured
+in the web app: plan views, video swaps, schedule changes, and the Publish click itself.
+
+**Activity tracking:** Any authenticated request updates `user.last_active_at`. The
+Sunday cron only runs for users active within the last 14 days — users who haven't
+opened the app (including clicking Publish) are skipped.
+
+**Implicit feedback from the Publish button:**
+The plan auto-generates every Sunday. The user's only required action is the Publish
+click (if they want the YouTube playlist updated). The gap between the AI-generated
+video and the final published video is the feedback signal — if a user swapped Thursday's
+video before publishing, the original AI pick was rejected. No manual "mark as done"
+checkboxes are needed.
+
+This requires two small additions to `ProgramHistory`:
+- `original_video_id` — written at generation time, never overwritten. Lets us detect
+  swaps: `original_video_id != video_id` at publish time = rejection signal.
+- `published_at` — written when `POST /plan/publish` is called. Records engagement.
+
+These are added in migration 009 alongside the O1 profile fields.
+
+---
+
 ## The core insight
 
 The onboarding wizard's strength is scaffolding — it tells users exactly what decisions to
