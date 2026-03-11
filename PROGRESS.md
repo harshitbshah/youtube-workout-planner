@@ -14,6 +14,9 @@ Both Railway (backend) and Vercel (frontend) live and functional on `main`.
 - Frontend test suite added: Vitest + React Testing Library — 62 tests covering scheduleTemplates logic, ChannelManager, and onboarding page steps ✅
 - Code cleanup: `DAY_LABELS` + `formatDuration()` extracted to `src/lib/utils.ts`, shared `Badge.tsx` component, polling change-detection fix, interval ref cleanup, `performSearch()` and `executeScan()` helpers extracted ✅
 - Admin guide: "Optimizations" section added documenting all Phase A backend + Phase B frontend optimizations ✅
+- Admin guide: 4 new reference sections added — Architecture (stack, auth, pipeline, design decisions), Testing (commands, philosophy, DB setup), Infrastructure (Railway gotchas table, CLI commands, migration triggers), Scaling & decisions (cost model, known limits, future pricing) ✅
+- User guide (`/guide` page + `docs/user-guide.md`): Getting started section rewritten for 7-step wizard flow ✅
+- CLAUDE.md: "Docs ↔ Admin guide relationship" convention added — docs/ is canonical, admin guide is operational summaries only ✅
 - Checkpoint docs updated (PROGRESS.md, architecture.md, testing.md, backlog.md, CLAUDE.md, TODO.md) ✅
 
 **Done this session (2026-03-10):**
