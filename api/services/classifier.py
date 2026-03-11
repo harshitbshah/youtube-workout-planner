@@ -9,6 +9,7 @@ Platform-pays model for v1: uses server-side ANTHROPIC_API_KEY.
 
 import logging
 import os
+import re
 import time
 from datetime import datetime, timedelta, timezone
 
@@ -30,6 +31,83 @@ from ..models import Channel, Classification, Video
 logger = logging.getLogger(__name__)
 
 ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY", "")
+
+
+# ─── F5: Adaptive payload trimming ────────────────────────────────────────────
+
+_DESCRIPTIVE_PATTERN = re.compile(
+    r"\b(\d+\s*(?:min|minute)s?|beginner|advanced|intermediate|hiit|strength|"
+    r"cardio|yoga|pilates|mobility|stretching|full[- ]?body|upper[- ]?body|"
+    r"lower[- ]?body|core|abs|glutes|legs|arms|chest|back)\b",
+    re.IGNORECASE,
+)
+
+
+def _title_is_descriptive(title: str) -> bool:
+    """Return True if the title contains enough fitness keywords to classify without transcript."""
+    return bool(_DESCRIPTIVE_PATTERN.search(title))
+
+
+# ─── F6: Rule-based title pre-classifier ──────────────────────────────────────
+
+_TYPE_RULES: list[tuple[re.Pattern, str]] = [
+    (re.compile(r"\b(hiit|interval)\b", re.I), "HIIT"),
+    (re.compile(r"\b(yoga|stretch(?:ing)?|mobility|flexibility|pilates)\b", re.I), "Mobility"),
+    (re.compile(r"\b(strength|weight(?:s)?|dumbbell|barbell|resistance|lifting|weight\s*train)\b", re.I), "Strength"),
+    (re.compile(r"\b(cardio|run(?:ning)?|cycling|bike|treadmill)\b", re.I), "Cardio"),
+]
+
+_FOCUS_RULES: list[tuple[re.Pattern, str]] = [
+    (re.compile(r"\bfull[- ]?body\b", re.I), "full"),
+    (re.compile(r"\bupper[- ]?body\b|(?:^|\b)(arms|chest|back|shoulders)\b", re.I), "upper"),
+    (re.compile(r"\blower[- ]?body\b|(?:^|\b)(legs|glutes|hamstrings|quads|hips)\b", re.I), "lower"),
+    (re.compile(r"\b(core|abs|abdominal)\b", re.I), "core"),
+]
+
+_DIFFICULTY_RULES: list[tuple[re.Pattern, str]] = [
+    (re.compile(r"\bbeginner\b", re.I), "beginner"),
+    (re.compile(r"\badvanced\b", re.I), "advanced"),
+]
+
+
+def title_classify(title: str, duration_sec: int | None) -> dict | None:
+    """
+    Attempt rule-based classification from the video title alone.
+
+    Returns a classification dict if a workout type can be determined with
+    confidence, else None (caller should fall through to AI classification).
+    """
+    workout_type = None
+    for pattern, wtype in _TYPE_RULES:
+        if pattern.search(title):
+            workout_type = wtype
+            break
+
+    if workout_type is None:
+        return None
+
+    body_focus = "full"  # sensible default when type is matched
+    for pattern, focus in _FOCUS_RULES:
+        if pattern.search(title):
+            body_focus = focus
+            break
+
+    difficulty = "intermediate"
+    for pattern, diff in _DIFFICULTY_RULES:
+        if pattern.search(title):
+            difficulty = diff
+            break
+
+    has_warmup = bool(re.search(r"\bwarm[- ]?up\b", title, re.I))
+    has_cooldown = bool(re.search(r"\bcool[- ]?down\b", title, re.I))
+
+    return {
+        "workout_type": workout_type,
+        "body_focus": body_focus,
+        "difficulty": difficulty,
+        "has_warmup": has_warmup,
+        "has_cooldown": has_cooldown,
+    }
 
 
 # ─── DB helpers ───────────────────────────────────────────────────────────────
@@ -160,6 +238,8 @@ def classify_for_user(session: Session, user_id: str, api_key: str = "", on_prog
 
     client = anthropic.Anthropic(api_key=key)
 
+    rule_classified = 0  # videos classified by rules before batch submission
+
     # ── Resume: check for an existing batch from a previous interrupted run ──
     creds = _get_or_create_credentials(session, user_id)
     if creds.classifier_batch_id:
@@ -190,17 +270,42 @@ def classify_for_user(session: Session, user_id: str, api_key: str = "", on_prog
             logger.info(f"[user={user_id}] No unclassified videos.")
             return 0
 
-        videos = all_videos[:MAX_CLASSIFY_PER_RUN]
+        # F6: rule-based pre-classification — saves AI calls for obvious titles
+        to_classify = []
+        for video in all_videos:
+            result = title_classify(video["title"], video["duration_sec"])
+            if result:
+                _save_classification(session, video["id"], result)
+                rule_classified += 1
+            else:
+                to_classify.append(video)
+
+        if rule_classified:
+            logger.info(f"[user={user_id}] {rule_classified} rule-classified, {len(to_classify)} sent to AI")
+
+        if not to_classify:
+            logger.info(f"[user={user_id}] All videos classified by rules — no AI batch needed")
+            return rule_classified
+
+        # Cap AI batch
+        videos = to_classify[:MAX_CLASSIFY_PER_RUN]
         total = len(videos)
-        skipped = len(all_videos) - total
-        if skipped:
-            logger.info(f"[user={user_id}] {len(all_videos)} unclassified — processing first {total}, {skipped} deferred")
+        deferred = len(to_classify) - total
+        if deferred:
+            logger.info(f"[user={user_id}] {len(to_classify)} for AI — processing first {total}, {deferred} deferred")
 
         logger.info(f"[user={user_id}] Building {total} classification requests...")
         requests = []
         for i, video in enumerate(videos):
-            transcript_intro = _fetch_transcript_intro(video["id"])
-            user_message = _build_user_message(video, transcript_intro)
+            # F5: skip transcript fetch and trim description for descriptive titles
+            if _title_is_descriptive(video["title"]):
+                transcript_intro = None
+                video_for_msg = {**video, "description": (video.get("description") or "")[:300]}
+            else:
+                transcript_intro = _fetch_transcript_intro(video["id"])
+                video_for_msg = video
+
+            user_message = _build_user_message(video_for_msg, transcript_intro)
             requests.append({
                 "custom_id": video["id"],
                 "params": {
@@ -254,5 +359,9 @@ def classify_for_user(session: Session, user_id: str, api_key: str = "", on_prog
     except Exception as e:
         logger.warning(f"[user={user_id}] Failed to record batch usage: {e}")
 
-    logger.info(f"[user={user_id}] Done: {classified}/{total} classified, {failed} failed")
-    return classified
+    total_classified = classified + rule_classified
+    logger.info(
+        f"[user={user_id}] Done: {total_classified} classified "
+        f"({rule_classified} by rules, {classified} by AI), {failed} failed"
+    )
+    return total_classified
