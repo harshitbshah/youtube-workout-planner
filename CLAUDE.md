@@ -72,6 +72,21 @@ Covers current features only (no speculative content), written for a non-technic
 **CLAUDE.md itself** — update the API routes table, file map, and user flows whenever
 new routes or pages are added.
 
+### Docs ↔ Admin guide relationship
+
+`docs/` files are the **full source-of-truth** reference documents (detailed, comprehensive).
+`frontend/src/app/admin/guide/page.tsx` surfaces **curated operational summaries** of those docs
+in the web portal for quick in-app access.
+
+Convention:
+- `docs/` is always updated first — it is the canonical record.
+- The admin guide sections are summaries, not full copies — do not paste entire docs into the guide.
+- Only update the admin guide section for a doc when the change is **operationally significant**
+  (e.g. a new stack decision, a new Railway gotcha, a new known limit). Routine feature additions
+  do not need an admin guide update.
+- When in doubt: update `docs/` always, update the admin guide only if an operator reading it
+  mid-incident would need the new information.
+
 ---
 
 ## Project Overview

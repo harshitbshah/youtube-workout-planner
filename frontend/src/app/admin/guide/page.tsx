@@ -18,6 +18,10 @@ const SECTIONS = [
   { id: "env-vars",        label: "Env vars" },
   { id: "known-issues",    label: "Known issues" },
   { id: "optimizations",   label: "Optimizations" },
+  { id: "architecture",    label: "Architecture" },
+  { id: "testing-guide",   label: "Testing" },
+  { id: "infra",           label: "Infrastructure" },
+  { id: "scaling",         label: "Scaling & decisions" },
 ];
 
 function Section({ id, title, children }: { id: string; title: string; children: React.ReactNode }) {
@@ -630,6 +634,241 @@ WHERE last_scan_error IS NOT NULL;`}</Code>
               Phase A optimizations are in production on Railway. The frontend optimizations were
               introduced during Phase B and apply to the Next.js app served via Vercel.
             </Note>
+          </Section>
+
+          {/* ── Architecture ─────────────────────────────────────────────── */}
+          <Section id="architecture" title="Architecture">
+            <H3>Stack</H3>
+            <Table
+              headers={["Layer", "Technology", "Notes"]}
+              rows={[
+                ["API", "FastAPI (Python 3.12)", "Hosted on Railway"],
+                ["Database", "PostgreSQL + Alembic", "Managed by Railway"],
+                ["Auth", "Google OAuth 2.0", "Bearer token handoff — no cross-domain cookies"],
+                ["Encryption", "Fernet", "YouTube refresh tokens encrypted at rest; ENCRYPTION_KEY validated at startup"],
+                ["Scheduler", "APScheduler (in-process)", "Weekly cron, Sunday 18:00 UTC — no Redis/Celery needed at current scale"],
+                ["Frontend", "Next.js 16 + Tailwind CSS v4", "Hosted on Vercel"],
+                ["AI classification", "Claude Haiku 4.5 via Batch API", "50% cheaper than standard API; ~$1–2 per user ever for initial scan"],
+              ]}
+            />
+
+            <H3>Authentication flow</H3>
+            <p>
+              The app uses a URL token handoff pattern instead of session cookies. This is required
+              because <code className="text-zinc-300 bg-zinc-800 px-1 rounded">SameSite=lax</code> blocks
+              cross-origin fetch (Vercel → Railway), and Chrome deprecated third-party cookies in 2024.
+            </p>
+            <Table
+              headers={["Step", "What happens"]}
+              rows={[
+                ["1", "GET /auth/google → redirect to Google consent screen"],
+                ["2", "GET /auth/google/callback → exchange code for tokens, upsert user in DB, store encrypted YouTube refresh token"],
+                ["3", "Server generates a signed token via URLSafeTimedSerializer(SECRET_KEY).dumps(user_id) and redirects to {FRONTEND_URL}?token=<signed>"],
+                ["4", "Frontend extracts ?token= from URL, stores in localStorage, strips from URL"],
+                ["5", "All subsequent API calls send: Authorization: Bearer <token>"],
+              ]}
+            />
+            <Note>
+              Tokens expire after 30 days. <code className="text-zinc-300 bg-zinc-800 px-1 rounded">get_current_user</code> checks{" "}
+              <code className="text-zinc-300 bg-zinc-800 px-1 rounded">Authorization: Bearer</code> first, falls back to session cookie.
+              The token is signed — forgery is not possible without <code className="text-zinc-300 bg-zinc-800 px-1 rounded">SECRET_KEY</code>.
+            </Note>
+
+            <H3>Pipeline stages</H3>
+            <p>
+              The scan → classify → plan pipeline runs for each user independently.
+              The services layer (<code className="text-zinc-300 bg-zinc-800 px-1 rounded">api/services/</code>) are thin adapters
+              that reuse the original CLI logic from <code className="text-zinc-300 bg-zinc-800 px-1 rounded">src/</code> —
+              only the DB I/O layer changes (SQLAlchemy instead of raw SQLite).
+            </p>
+            <Table
+              headers={["Stage", "Service file", "What it does"]}
+              rows={[
+                ["Scanning", "api/services/scanner.py", "Fetches new videos from YouTube for each user channel. Applies pre-classification filters: title keyword blocklist, shorts filter (<3 min), duration cap (>2h), livestream filter. First-scan cap: 75 videos per new channel."],
+                ["Classifying", "api/services/classifier.py", "Submits unclassified videos to Anthropic Batch API (cap: 300/run). Persists batch_id immediately for resumability. Polls until complete. Writes to classifications table + batch_usage_log."],
+                ["Planning", "api/services/planner.py", "Picks one video per schedule slot using scoring (recency, channel variety, jitter). 5 fallback tiers relax constraints progressively — a plan is always produced."],
+              ]}
+            />
+
+            <H3>Key design decisions</H3>
+            <Table
+              headers={["Decision", "Rationale"]}
+              rows={[
+                ["Services reuse src/ logic", "The core scanner/classifier/planner code is unchanged from the CLI tool. Services are thin adapters that swap raw SQLite for SQLAlchemy. ~2,000 lines of tested business logic reused as-is."],
+                ["APScheduler over Celery", "Zero extra infrastructure. At current user counts, sequential per-user weekly runs complete in seconds. Migration path to Celery is straightforward when scale demands it."],
+                ["Fernet encryption for credentials", "YouTube refresh tokens encrypted at rest. ENCRYPTION_KEY validated at startup — server refuses to start without it to prevent silent unencrypted storage."],
+                ["Resumable Anthropic batches", "classifier_batch_id persisted to user_credentials immediately after batch submission. On server restart mid-pipeline, the next scan resumes the existing batch — no double billing."],
+                ["Case-insensitive library filters", "The classifier returns mixed-case workout_type values (e.g. 'HIIT', 'Strength'). GET /library uses func.lower() on both column and query param rather than normalising at write time."],
+                ["Manual publish as engagement gate", "No automatic playlist publishing. User must click 'Publish to YouTube' weekly. This is the intent signal — no login = no publish = no new plan = no Anthropic cost. See Scaling & decisions section."],
+              ]}
+            />
+          </Section>
+
+          {/* ── Testing ───────────────────────────────────────────────────── */}
+          <Section id="testing-guide" title="Testing">
+            <H3>Running tests</H3>
+            <Code>{`# Unit tests (SQLite in-memory, no external deps, fast)
+.venv/bin/pytest tests/api/ tests/test_*.py -v
+
+# Integration tests (real PostgreSQL — requires workout_planner_test DB)
+.venv/bin/pytest tests/integration/ -v
+
+# All backend tests
+.venv/bin/pytest -q
+
+# Frontend tests (Vitest + React Testing Library)
+cd frontend && npm run test:run`}</Code>
+
+            <Note>Current: <strong className="text-white">346/346 passing</strong> — 284 backend + 62 frontend.</Note>
+
+            <H3>Test philosophy</H3>
+            <Table
+              headers={["Test type", "Where", "What it covers"]}
+              rows={[
+                ["Unit (backend)", "tests/api/", "Fast, SQLite in-memory. Mocks YouTube + Anthropic. Happy path + 401 + key error cases. Must pass before every commit."],
+                ["Integration (backend)", "tests/integration/", "Real PostgreSQL (workout_planner_test DB). Verifies FK constraints, correct rows written, user isolation. Tables truncated between tests."],
+                ["Unit (frontend)", "frontend/src/lib/*.test.ts", "Pure logic — scheduleTemplates.ts buildSchedule() for all profile/goal/days/duration combinations."],
+                ["Component (frontend)", "frontend/src/components/*.test.tsx", "React Testing Library — ChannelManager search, suggestions prop, add/remove."],
+                ["Page (frontend)", "frontend/src/app/**/page.test.tsx", "Onboarding page: all 7 steps, auto-advance, schedule preview, min-channel gate, step indicator."],
+              ]}
+            />
+
+            <H3>Setting up the test DB (first time only)</H3>
+            <Code>{`# Create the test database (only needed once)
+createdb workout_planner_test
+
+# Integration tests create and tear down tables automatically via Alembic`}</Code>
+
+            <H3>What is NOT tested (intentionally)</H3>
+            <p>
+              Live YouTube API calls, live Anthropic batch submissions, and Google OAuth flows are not
+              tested in automated suites — they are mocked. E2E testing against the live deployment
+              uses the manual checklist in <code className="text-zinc-300 bg-zinc-800 px-1 rounded">docs/testing.md</code>.
+            </p>
+          </Section>
+
+          {/* ── Infrastructure ────────────────────────────────────────────── */}
+          <Section id="infra" title="Infrastructure">
+            <H3>Stack decisions</H3>
+            <Table
+              headers={["Layer", "Choice", "Why"]}
+              rows={[
+                ["API hosting", "Railway", "Usage-based billing = near-zero cost when idle. All services (API, Postgres) in one project. Migrate to Render if/when stable paying users justify fixed billing."],
+                ["Frontend hosting", "Vercel", "Free tier, instant Next.js deploys, zero config. Branch previews for every PR."],
+                ["Scheduler", "APScheduler (in-process)", "Zero extra infrastructure. Runs inside FastAPI process. Migrate to Celery + Redis when weekly job takes >30s per user or retries/monitoring are needed."],
+                ["Anthropic", "Shared platform key", "~$1–2 per user ever for channel init; pennies/week incremental. Low enough to absorb for v1. Per-user budget cap via CLASSIFY_MAX_AGE_MONTHS + first-scan cap."],
+                ["YouTube API", "Shared key", "10,000 units/day; ~670 units per user per week → supports ~14 concurrent users. Apply for quota increase or use per-user keys before scaling past that."],
+              ]}
+            />
+
+            <H3>Railway gotchas</H3>
+            <Table
+              headers={["Issue", "Cause", "Fix"]}
+              rows={[
+                ["502 on all external traffic", "Proxy port in Railway dashboard doesn't match PORT env var (Railway injects 8080; app defaults to 8000)", "Change proxy port to 8080 in Railway dashboard → Settings → Networking"],
+                ["NoSuchModuleError on startup", "Railway emits DATABASE_URL with postgres:// scheme; SQLAlchemy 2.x dropped support for this alias", "Rewrite before create_engine: DATABASE_URL.replace('postgres://', 'postgresql://', 1)"],
+                ["Session cookie blocked (cross-domain)", "Vercel (frontend) and Railway (backend) are different origins; SameSite=lax blocks cross-origin fetch", "Use URL token handoff (Bearer header in localStorage) — already implemented"],
+                ["Health check passes but 502 externally", "Railway health probes (100.64.x.x) bypass the public proxy — a misconfigured proxy appears healthy internally", "Always test public accessibility from outside Railway's network after config changes"],
+                ["OAuth callback rejected by Google", "GOOGLE_REDIRECT_URI in Railway doesn't match the URI registered in Google Cloud Console", "Update both Railway env var AND Google Cloud Console OAuth config simultaneously"],
+              ]}
+            />
+
+            <H3>Useful Railway CLI commands</H3>
+            <Code>{`railway login --browserless    # when browser auto-open fails
+railway link                   # link local dir to project
+railway service status --all   # show all services + deployment status
+railway logs --service <name>  # tail runtime logs
+railway variables              # show all env vars
+railway redeploy --yes         # redeploy latest cached image (fast)
+railway up --detach            # rebuild + deploy from local source
+railway ssh -- <cmd>           # exec into running container`}</Code>
+
+            <H3>When to migrate away from Railway</H3>
+            <Table
+              headers={["Trigger", "Migration target"]}
+              rows={[
+                ["Stable paying user base (predictable load)", "Render — fixed billing, autoscaling, zero-downtime deploys"],
+                ["Weekly pipeline >30s per user or needs retries", "Add Celery + Redis (can stay on Railway or Render)"],
+                ["YouTube quota exhausted (>14 concurrent users)", "Apply for quota increase or implement per-user API keys"],
+                ["Global low-latency requirements", "Fly.io — edge deployments, managed Postgres from $34/mo"],
+              ]}
+            />
+          </Section>
+
+          {/* ── Scaling & decisions ───────────────────────────────────────── */}
+          <Section id="scaling" title="Scaling &amp; decisions">
+            <H3>Manual publish as the engagement gate</H3>
+            <p>
+              The app has no automatic playlist publishing. Users must click{" "}
+              <strong className="text-white">&quot;Publish to YouTube&quot;</strong> in the dashboard each week
+              to trigger a new plan and update their playlist.
+            </p>
+            <p>
+              This is a deliberate product decision, not a limitation:
+            </p>
+            <Table
+              headers={["Benefit", "Why it matters"]}
+              rows={[
+                ["Intent is ironclad", "The user physically logs in and clicks publish. No inference, no heuristics, no proxy signals."],
+                ["Cost control is automatic", "No login = no publish = pipeline skipped = zero Anthropic cost. Works at any scale without extra engineering."],
+                ["Weekly touchpoint", "The app becomes a genuine weekly check-in (review plan, swap days, publish) rather than a one-time setup tool."],
+                ["No dark patterns", "No guilt-trip re-engagement emails. Inactive users cost nothing and self-select out."],
+              ]}
+            />
+            <Note>
+              The trade-off: removes &quot;set and forget&quot; automation. Users who find the weekly login too much
+              friction self-select out — this is intentional. The app targets motivated, consistent trainers.
+            </Note>
+
+            <H3>Engagement &amp; cost model</H3>
+            <p>
+              YouTube API cannot expose watch history (privacy restriction). So engagement cannot be
+              measured by whether users actually watched their plan. The manual publish is the only
+              reliable intent signal available.
+            </p>
+            <Table
+              headers={["Signal considered", "Why it was rejected"]}
+              rows={[
+                ["last_active_at (app logins)", "Wrong proxy — faithful users work out from YouTube and never open the app"],
+                ["ProgramHistory.completed (marks done)", "Self-reported, unreliable, requires app interaction"],
+                ["OAuth token still valid", "Only means they haven't disconnected — says nothing about whether they're training"],
+                ["Weekly check-in email", "Email ignore rates are high; self-reporting is unreliable"],
+              ]}
+            />
+
+            <H3>Cost per user (Anthropic)</H3>
+            <Table
+              headers={["Operation", "Cost"]}
+              rows={[
+                ["Full channel init (~2,000 videos)", "~$1–2 via Batch API (one-time per user)"],
+                ["Weekly incremental run (10–30 new videos)", "A few cents"],
+                ["max_tokens cap (80 vs 150)", "~47% cost reduction per video vs baseline"],
+                ["18-month video cutoff", "Skips old videos before batch — reduces batch size"],
+                ["First-scan cap (75 videos)", "Keeps initial pipeline fast and cheap"],
+              ]}
+            />
+
+            <H3>Future pricing options</H3>
+            <Table
+              headers={["Model", "When to consider"]}
+              rows={[
+                ["Platform-pays (current)", "v1 — friends. Absorb cost to maximise feedback and remove signup friction."],
+                ["Platform-pays + subscription (~$5–8/mo)", "When scaling to non-technical fitness enthusiasts who won't supply API keys."],
+                ["BYOK (user supplies Anthropic key)", "For technical power users who want unlimited scans. DB schema already supports it."],
+                ["Channel count gate", "Natural paywall: more channels = more init cost. Free tier = 2 channels; paid = unlimited."],
+              ]}
+            />
+
+            <H3>Known scale limits</H3>
+            <Table
+              headers={["Limit", "Current threshold", "Fix when needed"]}
+              rows={[
+                ["YouTube API quota", "~14 concurrent weekly users (10,000 units / ~670 per user)", "Apply for quota increase (Google grants readily) or per-user API keys"],
+                ["APScheduler (sequential)", "Fine for <50 users; weekly runs complete in seconds per user", "Migrate to Celery + Redis when weekly job exceeds 30s per user"],
+                ["Cross-user channel dedup bug", "If two users add the same YouTube channel, the second user's scan creates a PK conflict on videos.id", "GlobalClassificationCache + UserChannelVideo join table (in backlog)"],
+                ["Monthly classification budget cap", "Not implemented — power users could run many manual scans", "Per-user budget cap + admin override (Phase D, in backlog)"],
+              ]}
+            />
           </Section>
 
         </main>
