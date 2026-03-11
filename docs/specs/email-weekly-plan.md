@@ -1,9 +1,63 @@
 # Weekly Plan Email — Design Spec
 
-**Status:** Ready to implement
+**Status:** Deferred — awaiting prerequisites (see section below)
 **Trigger:** Sunday cron in `api/scheduler.py`, immediately after `generate_weekly_plan_for_user`
 **Provider:** Resend API (Python SDK)
-**Last updated:** 2026-03-10
+**Last updated:** 2026-03-11
+
+---
+
+## Prerequisites Checklist (before starting implementation)
+
+These must be completed by the developer before implementation begins. Implementation
+itself is ~1–2 hours once these are in place.
+
+- [ ] **Create Resend account** — resend.com, free tier (3,000 emails/month, 100/day)
+- [ ] **Buy a custom domain** — e.g. `planmyworkout.app` or `planmyworkout.com` (~$10–15/year
+      on Cloudflare, Namecheap, or Google Domains). `planmyworkout.vercel.app` is a
+      Vercel-managed subdomain — DNS cannot be edited, so it cannot be used for Resend verification.
+- [ ] **Verify the domain in Resend** — Domains → Add domain → add MX/TXT/DKIM records
+      to your DNS provider. Verification usually takes a few minutes.
+- [ ] **Create a Resend API key** — API Keys → Create → copy it (shown once)
+- [ ] **Decide the FROM_EMAIL address** — `plan@<your-domain>` or `noreply@<your-domain>`
+
+Once done, bring back:
+1. The Resend API key (`re_xxxxxxxxxxxx`)
+2. Confirmation the domain is verified in Resend
+3. The chosen FROM_EMAIL address
+
+Then set on Railway: `RESEND_API_KEY`, `FROM_EMAIL`, `APP_URL=https://planmyworkout.vercel.app`
+
+### Shortcut for testing only (not production)
+Resend provides a shared sending domain (`onboarding@resend.dev`) that works immediately
+with no DNS setup. Acceptable for local dev/testing but not for real users. Swapping to
+a real domain later is a one-line `FROM_EMAIL` env var change — no code changes needed.
+
+---
+
+## Open Design Questions (resolve before implementing)
+
+These were discussed and left open. Confirm each before starting:
+
+| # | Question | Spec default | Notes |
+|---|---|---|---|
+| 1 | **Video thumbnails in the email?** | No thumbnails | Omitted for Outlook compatibility. Worth adding if targeting Gmail/Apple Mail only. |
+| 2 | **Rest day label** | "Recovery" | Spec uses "Recovery" (not "Rest day") to match the senior-friendly onboarding language. Intentional for all users? |
+| 3 | **Opt-in vs opt-out default** | Opt-out (default `True`) | Everyone gets the email unless they turn it off. Consider opt-in if concerned about unsolicited mail. |
+| 4 | **Unsubscribe flow** | Settings page (requires auth) | No separate token-based unsubscribe link for v1. Acceptable since the user is already signed in. May need a real unsubscribe token for CAN-SPAM compliance if scaling. |
+
+---
+
+## Why This Phase Is Deferred
+
+Email is a **retention tool, not a core feature**. The app already delivers a fresh plan
+every Sunday — the email is a convenience nudge for users who forget to check the app.
+
+Recommended trigger for picking this up: when you have real users and can observe
+week-2+ retention drop-off without the email reminder.
+
+Implementation effort when ready: low — all files are self-contained, no existing
+routes change, scheduler hook is one function call.
 
 ---
 
