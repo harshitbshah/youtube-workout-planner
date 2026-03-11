@@ -340,7 +340,7 @@ export default function AdminPage() {
             )}
           </div>
           <div className="flex items-center gap-4">
-            <Link href="/admin/guide" className="text-sm text-zinc-500 hover:text-zinc-300 transition">
+            <Link href="/admin/guide" className="rounded-lg border border-zinc-700 px-3 py-1.5 text-sm text-zinc-300 hover:bg-zinc-800 transition">
               Guide
             </Link>
             <Link href="/dashboard" className="text-sm text-zinc-500 hover:text-zinc-300 transition">
