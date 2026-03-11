@@ -587,15 +587,8 @@ export default function AdminPage() {
           </div>
         </section>
 
-        {/* Footer */}
-        <div className="border-t border-zinc-800 pt-6 pb-2 flex justify-center">
-          <Link href="/admin/guide" className="text-sm text-zinc-500 hover:text-zinc-300 transition">
-            Admin guide →
-          </Link>
-        </div>
-
       </div>
-      <Footer />
+      <Footer isAdmin />
     </main>
   );
 }

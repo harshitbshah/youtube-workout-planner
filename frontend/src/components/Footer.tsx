@@ -1,10 +1,13 @@
 import Link from "next/link";
 
-export function Footer() {
+export function Footer({ isAdmin }: { isAdmin?: boolean } = {}) {
   return (
     <footer className="border-t border-zinc-800 px-6 py-6 text-center space-y-2">
       <div className="flex items-center justify-center flex-wrap gap-x-4 gap-y-1 text-xs text-zinc-600">
         <Link href="/guide" className="hover:text-zinc-400 transition">User Guide</Link>
+        {isAdmin && (
+          <Link href="/admin/guide" className="hover:text-zinc-400 transition">Admin Guide</Link>
+        )}
         <Link href="/privacy" className="hover:text-zinc-400 transition">Privacy Policy</Link>
         <Link href="/terms" className="hover:text-zinc-400 transition">Terms of Service</Link>
       </div>
