@@ -339,9 +339,14 @@ export default function AdminPage() {
               </p>
             )}
           </div>
-          <Link href="/dashboard" className="text-sm text-zinc-500 hover:text-zinc-300 transition">
-            ← Dashboard
-          </Link>
+          <div className="flex items-center gap-4">
+            <Link href="/admin/guide" className="text-sm text-zinc-500 hover:text-zinc-300 transition">
+              Guide
+            </Link>
+            <Link href="/dashboard" className="text-sm text-zinc-500 hover:text-zinc-300 transition">
+              ← Dashboard
+            </Link>
+          </div>
         </div>
 
         {/* Users */}
