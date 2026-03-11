@@ -331,11 +331,8 @@ export default function AdminPage() {
 
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <div className="flex items-center gap-4">
+          <div>
             <h1 className="text-2xl font-bold text-white">Admin</h1>
-            <Link href="/admin/guide" className="rounded-lg border border-zinc-700 px-3 py-1.5 text-sm text-zinc-300 hover:bg-zinc-800 transition">
-              Guide
-            </Link>
             {lastRefresh && (
               <p className="text-xs text-zinc-600">
                 Updated {lastRefresh.toLocaleTimeString()} · auto-refreshes every 30s
@@ -589,6 +586,13 @@ export default function AdminPage() {
             </table>
           </div>
         </section>
+
+        {/* Footer */}
+        <div className="border-t border-zinc-800 pt-6 pb-2 flex justify-center">
+          <Link href="/admin/guide" className="text-sm text-zinc-500 hover:text-zinc-300 transition">
+            Admin guide →
+          </Link>
+        </div>
 
       </div>
       <Footer />
