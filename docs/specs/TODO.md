@@ -149,3 +149,120 @@ Ordered by priority. Each item links to its spec.
   - [ ] Integration: user A scans → cache populated; user B same channel → cache hits, no batch
 
 - [ ] *(follow-up to F8)* `UserChannelVideo` join table — proper fix for cross-user channel dedup bug
+
+---
+
+## Phase O1 — Freeform Profile Enrichment
+> Spec: [ai-profile-enrichment-and-coach-chat.md](ai-profile-enrichment-and-coach-chat.md)
+> Add freeform "Anything else?" step to onboarding. Claude Haiku extracts constraints/preferences silently.
+
+### Migration + models
+- [ ] Migration 009 — add `life_stage`, `goal`, `profile_notes`, `profile_enrichment` to `users` table
+- [ ] Update `api/models.py` — 4 new columns on `User`
+
+### Backend
+- [ ] Create `api/services/enrichment.py` — `enrich_profile(notes: str) -> dict` (Haiku extraction)
+- [ ] Add `POST /auth/me/enrich` to `api/routers/auth.py`
+- [ ] Extend `PATCH /auth/me` (`PatchMeRequest`) to accept `life_stage` + `goal`
+- [ ] Update `api/schemas.py` — `EnrichRequest`, `EnrichResponse`, extend `PatchMeRequest`
+- [ ] Update `api/services/planner.py` — read `profile_enrichment.avoid_types` to filter plan generation
+
+### Tests
+- [ ] Unit: `test_enrich_profile_extracts_constraint` — "bad knees" → `constraints: ["knee_injury"]`
+- [ ] Unit: `test_enrich_profile_extracts_preference` — "love dancing" → `preferred_types: ["dance"]`
+- [ ] Unit: `test_enrich_profile_empty_input` — empty string → all empty arrays, no crash
+- [ ] Unit: `test_enrich_profile_irrelevant_input` — "I like pizza" → all empty arrays
+- [ ] Unit: `test_enrich_endpoint_saves_to_db` — POST → `profile_notes` + `profile_enrichment` written
+- [ ] Unit: `test_enrich_endpoint_unauthenticated` → 401
+- [ ] Unit: `test_enrich_endpoint_too_long` — 501-char input → 400
+- [ ] Unit: `test_enrich_endpoint_anthropic_failure` — mock Anthropic error → 503
+- [ ] Unit: `test_planner_respects_avoid_types` — `avoid_types: ["high_impact"]` → no HIIT in plan
+- [ ] Unit: `test_planner_no_enrichment` — `profile_enrichment=null` → plan generates normally
+- [ ] Integration: `test_full_enrich_and_plan_flow` — POST enrich → plan generated → avoided types absent
+
+### Frontend
+- [ ] `app/onboarding/page.tsx` — insert step 6 "Anything else?" between schedule and channels
+- [ ] `app/onboarding/page.tsx` — update step numbering (6→7, 7→8); update `StepIndicator`
+- [ ] `app/onboarding/page.tsx` — after schedule save (step 5), call `patchMe({ life_stage, goal })`
+- [ ] `app/settings/page.tsx` — add "About you" section with `profile_notes` textarea
+- [ ] `lib/api.ts` — add `enrichProfile()`, `ProfileEnrichment` type
+
+### Manual
+- [ ] Onboarding: type "bad knees" in step 6 → plan has no jumping/HIIT videos
+- [ ] Onboarding: click Skip → advances to channels with no API call
+- [ ] Onboarding: Anthropic API unavailable → step skips silently, onboarding completes normally
+- [ ] Settings: update "About you" → re-run enrichment → plan changes on next regeneration
+
+---
+
+## Phase O2 — AI Coach Chat
+> Spec: [ai-profile-enrichment-and-coach-chat.md](ai-profile-enrichment-and-coach-chat.md)
+> Floating chat panel on dashboard. Claude Sonnet with tool use (search_library + update_plan_day).
+
+### Migration + models
+- [ ] Migration 009 already covers this phase (no additional schema changes needed for v1)
+
+### Backend
+- [ ] Create `api/services/coach.py` — `build_coach_system_prompt()`, `build_library_summary()`, `run_coach_turn()`, tool executors
+- [ ] Create `api/routers/coach.py` — `POST /coach/chat`, `GET /coach/weekly-review`
+- [ ] Register coach router in `api/main.py`
+- [ ] Update `api/schemas.py` — `CoachChatRequest`, `CoachChatResponse`, `WeeklyReviewResponse`
+
+### Tests
+- [ ] Unit: `test_coach_chat_simple_response` — message with no tool use → text reply returned
+- [ ] Unit: `test_coach_chat_search_library_called` — "give me 15 mins" → `search_library` tool executed
+- [ ] Unit: `test_coach_chat_search_respects_duration` — `max_duration_min` filter applied in DB query
+- [ ] Unit: `test_coach_chat_update_plan_day` — "update Thursday" → `update_plan_day` → history row updated
+- [ ] Unit: `test_coach_chat_update_plan_day_returns_flag` — `plan_updated: true`, `updated_day: "thursday"`
+- [ ] Unit: `test_coach_chat_excludes_this_week_videos` — `exclude_this_week=true` skips plan videos
+- [ ] Unit: `test_coach_chat_constraint_in_system_prompt` — enrichment `knee_injury` → appears in prompt
+- [ ] Unit: `test_coach_chat_unauthenticated` → 401
+- [ ] Unit: `test_coach_chat_rate_limit` — 21 messages in one hour → 429 on 21st
+- [ ] Unit: `test_coach_chat_empty_library` — 0 videos → coach replies gracefully
+- [ ] Unit: `test_weekly_review_no_history` — < 2 weeks → `review: null`
+- [ ] Unit: `test_weekly_review_returns_cached` — second call same week → no new Claude call
+- [ ] Integration: `test_coach_update_persists_to_db` — coach updates Thursday → `program_history` row updated
+
+### Frontend
+- [ ] Create `components/CoachPanel.tsx` — slide-over chat panel (message list, input, typing indicator)
+- [ ] Create `components/VideoRecommendationCard.tsx` — compact horizontal video card for chat
+- [ ] `app/dashboard/page.tsx` — add "Coach" nav button, render `<CoachPanel>`, implement `refetchPlan()`
+- [ ] `lib/api.ts` — add `sendCoachMessage()`, `getWeeklyReview()`, `CoachMessage`, `CoachResponse` types
+
+### Manual
+- [ ] Dashboard: "Coach" button opens slide-over panel
+- [ ] Chat: "give me something shorter" → video card returned with correct duration filter applied
+- [ ] Chat: "my shoulder is sore" → no overhead exercises in suggestions
+- [ ] Chat: "update Thursday" → plan grid refreshes automatically after coach confirms
+- [ ] Chat: 20 messages → 21st returns rate limit error message
+- [ ] Panel: close + reopen → conversation history preserved within session
+- [ ] Panel: page refresh → conversation history cleared (expected)
+- [ ] Mobile: panel opens full-screen
+
+---
+
+## Phase O3 — Weekly AI Review Card
+> Spec: [ai-profile-enrichment-and-coach-chat.md](ai-profile-enrichment-and-coach-chat.md)
+> Dismissible review card on dashboard Monday mornings. Claude Haiku, cached per week.
+
+### Migration + models
+- [ ] Migration 010 — add `weekly_review_cache` (Text), `weekly_review_generated_at` (DateTime) to `users`
+- [ ] Update `api/models.py` — 2 new columns on `User`
+
+### Backend
+- [ ] Add `GET /coach/weekly-review` logic to `api/routers/coach.py` — Haiku call, cache check, return `{ review }`
+
+### Tests
+- [ ] Unit: `test_weekly_review_generates_on_monday` — Monday + no cache → Haiku called
+- [ ] Unit: `test_weekly_review_cached_within_week` — cache hit → Haiku not called
+- [ ] Unit: `test_weekly_review_null_insufficient_history` — < 2 weeks data → `review: null`
+
+### Frontend
+- [ ] `app/dashboard/page.tsx` — fetch weekly review on load; render dismissible card on Mondays
+- [ ] Card includes "Open Coach →" button that opens `CoachPanel`
+
+### Manual
+- [ ] Monday: review card visible at top of dashboard
+- [ ] Dismiss card: does not reappear until next Monday
+- [ ] "Open Coach →" opens the coach panel
+- [ ] Non-Monday: card not shown
