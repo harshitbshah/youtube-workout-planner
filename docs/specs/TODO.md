@@ -105,32 +105,47 @@ Ordered by priority. Each item links to its spec.
 
 ## Phase D — AI Cost Reduction (features 5–8)
 > Spec: [ai-cost-reduction.md](ai-cost-reduction.md)
-> Defer until traffic warrants. Feature 8 requires schema decision.
 
-- [ ] **F5** — Adaptive payload trimming (`title_is_descriptive()` helper)
-  - [ ] Unit: `title_is_descriptive("30 Min Full Body HIIT")` → `True`
-  - [ ] Unit: `title_is_descriptive("My Channel Update")` → `False`
-  - [ ] Unit: descriptive title → built request uses short description, no transcript
-  - [ ] Unit: ambiguous title → built request uses full description + transcript
+### Done (2026-03-11)
 
-- [ ] **F6** — Rule-based title pre-classifier (`title_classify()`, saves 30–40% AI calls)
-  - [ ] Unit: `title_classify("30 Min Full Body HIIT", 1800)` → `workout_type="HIIT"`
-  - [ ] Unit: `title_classify("Beginner Yoga Flow", 2400)` → `workout_type="Mobility"`, `difficulty="beginner"`
-  - [ ] Unit: `title_classify("Upper Body Strength", 1800)` → `body_focus="upper body"`
-  - [ ] Unit: `title_classify("My Vlog", 300)` → `None`
-  - [ ] Unit: end-to-end — 2 obvious + 1 ambiguous video → 2 classifications created without API call, 1 submitted to batch
+- [x] **F5** — Adaptive payload trimming (`_title_is_descriptive()` helper in `api/services/classifier.py`)
+  - [x] Unit: `_title_is_descriptive("30 Min Full Body HIIT")` → `True`
+  - [x] Unit: `_title_is_descriptive("My Channel Update")` → `False`
+  - [x] Unit: descriptive title → `_fetch_transcript_intro` not called, description capped to 300 chars
+  - [x] Unit: ambiguous title → `_fetch_transcript_intro` called, full description used
 
-- [ ] **F7** — Per-user monthly classification budget cap (migration 008, admin UI)
-  - [ ] Unit: budget=10, already classified 10 this month → raises `BudgetExceededError`
-  - [ ] Unit: budget=0 (unlimited) → no error regardless of usage
-  - [ ] Unit: budget=100, used=90 → only 10 videos submitted in next batch
-  - [ ] Unit: admin `PATCH /admin/users/{id}/budget` sets budget; non-admin gets 403
-  - [ ] Integration: budget cap persists across requests; usage count resets at month boundary
+- [x] **F6** — Rule-based title pre-classifier (`title_classify()` in `api/services/classifier.py`)
+  - [x] Unit: `title_classify("30 Min HIIT Cardio Blast", 1800)` → `workout_type="HIIT"`
+  - [x] Unit: `title_classify("Morning Yoga Flow for Beginners", 2400)` → `workout_type="Mobility"`, `difficulty="beginner"`
+  - [x] Unit: `title_classify("Upper Body Strength Workout", 1800)` → `body_focus="upper"`
+  - [x] Unit: `title_classify("My Vlog", 300)` → `None`
+  - [x] Unit: 2 obvious + 1 ambiguous → 2 rule-classified without API call, 1 submitted to batch
+  - [x] Unit: all obvious → AI batch never submitted, `create()` not called
+  - [x] Unit: body focus (full/upper/lower/core), difficulty (beginner/advanced/intermediate), warmup/cooldown flags
 
-- [ ] **F8** — Global classification cache (migration 009, `GlobalClassificationCache` table)
-  - [ ] Unit: video ID in cache → `Classification` row created, no Anthropic batch call
-  - [ ] Unit: video ID not in cache → added to Anthropic batch
-  - [ ] Unit: after Anthropic classifies, `GlobalClassificationCache` row is written
-  - [ ] Integration: scan user A → cache populated; scan user B with same channel → cache hits, no Anthropic batch submitted
+### Deferred (until real users / traffic justifies)
 
-- [ ] *(follow-up)* `UserChannelVideo` join table — fix cross-user channel dedup bug
+- [ ] **F7** — Per-user monthly classification budget cap
+  > Protects against runaway costs from heavy manual scanners. Low priority with 1 user.
+  - [ ] New migration — `users.monthly_classify_budget` int (default 500, 0=unlimited)
+  - [ ] `classify_for_user` raises `BudgetExceededError` when cap hit; pipeline sets stage `budget_exceeded`
+  - [ ] Admin `PATCH /admin/users/{id}/budget` endpoint
+  - [ ] Dashboard shows dismissible warning banner when `stage=budget_exceeded`
+  - [ ] Unit: budget=10, used=10 → raises `BudgetExceededError`
+  - [ ] Unit: budget=0 → no error
+  - [ ] Unit: budget=100, used=90 → only 10 videos submitted
+  - [ ] Unit: admin endpoint sets budget; non-admin gets 403
+
+- [ ] **F8** — Global classification cache (cross-user sharing)
+  > Near-zero benefit with 1 user; massive benefit at 50+ users sharing popular channels.
+  > Also fixes latent cross-user video dedup bug (User B gets no videos from shared channels).
+  - [ ] New migration — `global_classification_cache` table (youtube_video_id PK, full classification fields)
+  - [ ] `classify_for_user` checks cache before batch; cache hits written to `Classification` directly
+  - [ ] After AI classifies, writes to global cache
+  - [ ] Rule-based results (F6) also written to cache
+  - [ ] Unit: cache hit → `Classification` row created, Anthropic not called
+  - [ ] Unit: cache miss → added to batch
+  - [ ] Unit: AI result → cache row written
+  - [ ] Integration: user A scans → cache populated; user B same channel → cache hits, no batch
+
+- [ ] *(follow-up to F8)* `UserChannelVideo` join table — proper fix for cross-user channel dedup bug

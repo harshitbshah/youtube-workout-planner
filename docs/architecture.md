@@ -417,6 +417,8 @@ Applied before fetching video details or sending to classifier:
 - **`CLASSIFY_MAX_AGE_MONTHS` env var** (F2, default 18) — videos older than this are skipped before building the Anthropic batch.
 - **First-scan channel cap** (F3) — new channels are capped at 75 videos on first scan (`first_scan_done=False`); subsequent scans are uncapped incremental.
 - **Skip inactive channels** (F4) — weekly cron skips channels where last published video is >60 days old and channel was added >60 days ago. User-triggered scans always run all channels. `last_video_published_at` updated after each scan.
+- **Rule-based pre-classifier — `title_classify()`** (F6) — before building the Anthropic batch, each video title is tested against regex rules for workout type (HIIT/Strength/Cardio/Mobility), body focus (upper/lower/full/core), difficulty (beginner/intermediate/advanced), and warmup/cooldown flags. If a type rule matches, the video is classified directly and never sent to the AI. Returns `None` for ambiguous titles (falls through to Anthropic). Estimated 30–40% reduction in batch submissions. Applied to all unclassified videos before the `MAX_CLASSIFY_PER_RUN` cap.
+- **Adaptive payload trimming — `_title_is_descriptive()`** (F5) — for videos that do reach the AI batch, titles containing fitness keywords (duration numbers, body part names, workout type words) are sent with a 300-char description and no transcript. Ambiguous titles use the full 800-char description + transcript. Saves ~20–30% of input tokens for obvious-title videos.
 
 ---
 

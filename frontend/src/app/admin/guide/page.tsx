@@ -561,7 +561,7 @@ WHERE last_scan_error IS NOT NULL;`}</Code>
               Cost and performance optimizations applied across the codebase, organised by layer.
             </p>
 
-            <H3>Backend optimizations (Phase A — AI cost reduction)</H3>
+            <H3>Backend optimizations (Phase A + D — AI cost reduction)</H3>
             <Table
               headers={["Optimization", "Where", "Detail"]}
               rows={[
@@ -589,6 +589,16 @@ WHERE last_scan_error IS NOT NULL;`}</Code>
                   "Graceful pipeline failures",
                   "users.last_scan_error (migration 008)",
                   "Pipeline exceptions are caught, stored on the user record, and returned by GET /jobs/status. The dashboard shows an error banner when set. The weekly pipeline continues for other users even when one fails. Cleared automatically on the next successful run.",
+                ],
+                [
+                  "Rule-based title pre-classifier (F6)",
+                  "api/services/classifier.py — title_classify()",
+                  "Before building the Anthropic batch, each video title is checked against regex rules for workout type (HIIT/Strength/Cardio/Mobility), body focus, and difficulty. If a type rule matches, the video is classified directly — no AI call. Estimated 30–40% reduction in Anthropic batch submissions. Ambiguous titles fall through to AI unchanged.",
+                ],
+                [
+                  "Adaptive payload trimming (F5)",
+                  "api/services/classifier.py — _title_is_descriptive()",
+                  "Videos that do reach the AI batch but have obviously descriptive titles (e.g. '30 Min HIIT') skip the transcript fetch entirely and use a 300-char description instead of 800. Ambiguous titles still get the full transcript + 800-char description. Saves ~20–30% input tokens for obvious-title videos.",
                 ],
               ]}
             />
@@ -631,9 +641,30 @@ WHERE last_scan_error IS NOT NULL;`}</Code>
             />
 
             <Note>
-              Phase A optimizations are in production on Railway. The frontend optimizations were
-              introduced during Phase B and apply to the Next.js app served via Vercel.
+              Phase A + D (F5/F6) optimizations are live on Railway. The frontend optimizations
+              were introduced during Phase B and apply to the Next.js app served via Vercel.
             </Note>
+
+            <H3>Future AI cost optimizations (deferred)</H3>
+            <p>
+              Two further optimizations are specced in <code>docs/specs/ai-cost-reduction.md</code>{" "}
+              but deferred until user traffic justifies the complexity:
+            </p>
+            <Table
+              headers={["Feature", "What it does", "When to activate"]}
+              rows={[
+                [
+                  "F7 — Per-user monthly budget cap",
+                  "Adds users.monthly_classify_budget (default 500). classify_for_user raises BudgetExceededError when hit; dashboard shows warning banner. Admin can override per user via PATCH /admin/users/{id}/budget.",
+                  "When you have users who trigger many manual scans and AI cost spikes become visible in admin charts.",
+                ],
+                [
+                  "F8 — Global classification cache",
+                  "New global_classification_cache table (PK = YouTube video ID). When a video has been classified by any user, the result is cached and reused for all other users who add the same channel — no second AI call. Also fixes a latent cross-user video dedup bug (User B currently gets no videos from a channel already scanned by User A).",
+                  "When you have 10+ users sharing popular channels (Heather Robertson, Sydney Cummings, etc.). At that point cache hit rate could exceed 80%, near-eliminating AI costs for new users.",
+                ],
+              ]}
+            />
           </Section>
 
           {/* ── Architecture ─────────────────────────────────────────────── */}

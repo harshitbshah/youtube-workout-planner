@@ -173,6 +173,27 @@ on_progress callback, batch resume logic, batch ID cleared on completion.
 
 **Tests:** 284/284 (+36 new tests covering all F1–F4 cases + graceful failure paths)
 
+### Phase D — AI Cost Reduction F5+F6 (2026-03-11) — complete
+
+**F5 — Adaptive payload trimming:**
+- `_title_is_descriptive(title)` — regex detects fitness keywords (duration numbers, body parts, workout type words)
+- Descriptive titles: skip `_fetch_transcript_intro` + cap description to 300 chars before building Anthropic request
+- Ambiguous titles: unchanged — full 800-char description + transcript
+- Estimated savings: ~20–30% input tokens on obvious-title videos
+
+**F6 — Rule-based title pre-classifier:**
+- `title_classify(title, duration_sec)` — regex rules for type (HIIT/Strength/Cardio/Mobility), body focus (upper/lower/full/core), difficulty (beginner/intermediate/advanced), warmup/cooldown flags
+- Returns classification dict if type is matched with confidence; `None` for ambiguous titles
+- Applied to all unclassified videos before capping and batching — classified by rules skip AI entirely
+- Estimated savings: ~30–40% fewer Anthropic batch submissions
+- F6 runs before F5: a video classified by rules never reaches the payload trimming step
+
+**Tests:** 316/316 backend (+32 in `tests/api/test_phase_d.py`)
+
+**Deferred (F7+F8):**
+- F7 (per-user monthly budget cap) — activate when heavy manual scanners become a cost risk
+- F8 (global classification cache) — activate at 10+ users sharing popular channels
+
 ### Phase B — Onboarding redesign (2026-03-11) — complete
 
 **7-step onboarding wizard:**

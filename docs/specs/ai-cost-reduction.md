@@ -1,8 +1,20 @@
 # Spec: Minimize Anthropic API Usage
 
-**Date:** 2026-03-10
-**Branch:** `claude/design-onboarding-flow-Wb2h7`
+**Last updated:** 2026-03-11
 **Goal:** Reduce Anthropic classification costs through 8 layered optimizations.
+
+## Implementation Status
+
+| # | Feature | Status | Notes |
+|---|---------|--------|-------|
+| F1 | Max tokens 150 → 80 | ✅ Done (2026-03-10) | Phase A |
+| F2 | 18-month video cutoff | ✅ Done (2026-03-10) | Phase A |
+| F3 | First-scan channel cap (75 videos) | ✅ Done (2026-03-10) | Phase A, migration 006 |
+| F4 | Skip inactive channels | ✅ Done (2026-03-10) | Phase A, migration 007 |
+| F5 | Adaptive payload trimming | ✅ Done (2026-03-11) | Phase D — `_title_is_descriptive()` |
+| F6 | Rule-based title pre-classifier | ✅ Done (2026-03-11) | Phase D — `title_classify()`, ~30–40% fewer AI calls |
+| F7 | Per-user monthly budget cap | ⏳ Deferred | Low priority until real users |
+| F8 | Global classification cache | ⏳ Deferred | High impact at scale; schema decision needed |
 
 ---
 
