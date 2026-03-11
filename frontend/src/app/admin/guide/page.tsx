@@ -8,13 +8,15 @@ import { getMe } from "@/lib/api";
 // ─── Section / layout primitives ────────────────────────────────────────────
 
 const SECTIONS = [
-  { id: "architecture",   label: "Architecture overview" },
-  { id: "phase-a",        label: "Phase A — AI cost" },
-  { id: "troubleshooting",label: "Troubleshooting runbook" },
-  { id: "railway-ops",    label: "Railway ops" },
-  { id: "db-reference",   label: "DB quick reference" },
-  { id: "env-vars",       label: "Env vars reference" },
-  { id: "known-issues",   label: "Known issues / debt" },
+  { id: "admin-console",   label: "Admin console" },
+  { id: "managing-users",  label: "Managing users" },
+  { id: "announcements",   label: "Announcements" },
+  { id: "monitoring",      label: "Monitoring pipelines" },
+  { id: "troubleshooting", label: "Troubleshooting" },
+  { id: "railway-ops",     label: "Railway ops" },
+  { id: "db-reference",    label: "DB reference" },
+  { id: "env-vars",        label: "Env vars" },
+  { id: "known-issues",    label: "Known issues" },
 ];
 
 function Section({ id, title, children }: { id: string; title: string; children: React.ReactNode }) {
@@ -85,23 +87,6 @@ function Table({ headers, rows }: { headers: string[]; rows: string[][] }) {
   );
 }
 
-function Checklist({ items }: { items: string[] }) {
-  return (
-    <ul className="space-y-1.5">
-      {items.map((item, i) => (
-        <li key={i} className="flex gap-2 text-sm text-zinc-400">
-          <span className="mt-0.5 shrink-0 w-4 h-4 rounded border border-zinc-600 flex items-center justify-center text-zinc-600">
-            <svg className="w-2.5 h-2.5" fill="none" viewBox="0 0 10 10">
-              <path d="M2 5l2.5 2.5L8 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-          </span>
-          <span>{item}</span>
-        </li>
-      ))}
-    </ul>
-  );
-}
-
 // ─── Page ────────────────────────────────────────────────────────────────────
 
 export default function AdminGuidePage() {
@@ -167,156 +152,197 @@ export default function AdminGuidePage() {
           <div className="mb-10">
             <h1 className="text-3xl font-bold text-white mb-2">Admin Guide</h1>
             <p className="text-zinc-400">
-              Operational reference for running Plan My Workout in production. Everything here requires
-              Railway or DB access — this page is not visible to regular users.
+              Everything you need to run Plan My Workout in production — monitoring users,
+              managing the pipeline, posting announcements, and fixing issues when they come up.
             </p>
           </div>
 
-          {/* ── Architecture overview ─────────────────────────────────────── */}
-          <Section id="architecture" title="Architecture overview">
+          {/* ── Admin console ─────────────────────────────────────────────── */}
+          <Section id="admin-console" title="Admin console">
             <p>
-              Plan My Workout is a FastAPI backend + Next.js frontend. The backend runs on Railway,
-              the frontend on Vercel. They communicate over HTTPS via a Bearer token stored in
-              the user's localStorage.
+              The admin console at <Link href="/admin" className="text-zinc-300 underline">/admin</Link> gives
+              you a live view of the entire platform. It auto-refreshes every 30 seconds.
             </p>
 
-            <H3>Pipeline stages (per user, per week)</H3>
+            <H3>Stats cards</H3>
             <Table
-              headers={["Stage", "What happens", "Triggered by"]}
+              headers={["Card", "What it shows"]}
               rows={[
-                ["scanning", "YouTube playlistItems API fetched for each channel", "POST /jobs/scan · Sunday cron"],
-                ["classifying", "Unclassified videos sent to Anthropic Batch API (Haiku)", "After scan, or POST /jobs/classify"],
-                ["generating", "Planner picks best video per schedule slot", "After classify, or POST /plan/generate"],
-                ["done", "Plan visible on dashboard", "—"],
-                ["failed", "Outer exception in pipeline — last_scan_error set on user", "Unexpected error"],
+                ["Total users", "All registered accounts"],
+                ["New (7 days)", "Accounts created in the last 7 days, with a 30-day sub-count"],
+                ["YouTube connected", "Users with a valid YouTube OAuth token who can publish plans to a playlist"],
+                ["Plans this week", "Users who have a generated plan for the current Mon–Sun week"],
+                ["Total videos", "All videos scanned across every user's channels"],
+                ["Classified", "Videos tagged by AI with workout type, body focus, and difficulty — shown as a percentage"],
+                ["Unclassified", "Videos scanned but not yet sent to the classifier — clears on the next pipeline run"],
+                ["Channels", "Total YouTube channels added across all users, with an average per user"],
+                ["AI usage (7 days)", "Anthropic Batch API input + output tokens and estimated cost for the past week"],
+                ["AI usage (all-time)", "Cumulative token usage and cost since the platform launched"],
               ]}
             />
 
-            <H3>Cron schedule</H3>
+            <H3>Trend charts</H3>
             <p>
-              APScheduler runs <code className="text-zinc-300 bg-zinc-800 px-1 rounded">run_weekly_pipeline()</code> every{" "}
-              <strong className="text-white">Sunday at 18:00 UTC</strong> for all users. Defined in{" "}
-              <code className="text-zinc-300 bg-zinc-800 px-1 rounded">api/scheduler.py</code>.
+              The four charts below the stat cards show daily time-series for the last 30 days:
             </p>
+            <Table
+              headers={["Chart", "What it shows"]}
+              rows={[
+                ["Signups", "New user registrations per day"],
+                ["Active users", "Distinct users who made at least one API request per day"],
+                ["AI cost", "Estimated Anthropic classification spend per day (USD)"],
+                ["Scans", "Number of pipeline runs completed per day"],
+              ]}
+            />
+            <Note>
+              Charts use Haiku 4.5 Batch API pricing: $0.40 / 1M input tokens, $2.00 / 1M output tokens.
+              Days with no activity appear as zero bars — not gaps.
+            </Note>
 
-            <H3>Auth flow</H3>
+            <H3>Active pipelines</H3>
             <p>
-              Google OAuth → callback redirects to{" "}
-              <code className="text-zinc-300 bg-zinc-800 px-1 rounded">{"{FRONTEND_URL}"}?token={"<signed>"}</code> →
-              stored in localStorage → sent as <code className="text-zinc-300 bg-zinc-800 px-1 rounded">Authorization: Bearer</code> on every API call.
-              Sessions are stateless — no server-side session storage.
+              Below the charts, the per-user table shows the current pipeline stage for each user.
+              Stages update in real time as the pipeline progresses. A user stuck on{" "}
+              <code className="text-zinc-300 bg-zinc-800 px-1 rounded">classifying</code> for more than
+              30 minutes likely has a stale batch ID — see <a href="#troubleshooting" className="text-zinc-300 underline">Troubleshooting</a>.
             </p>
-
-            <H3>Key env vars (Railway)</H3>
-            <p>See <a href="#env-vars" className="text-zinc-300 underline">Env vars reference</a> for the full list.</p>
           </Section>
 
-          {/* ── Phase A ───────────────────────────────────────────────────── */}
-          <Section id="phase-a" title="Phase A — AI cost reduction">
+          {/* ── Managing users ────────────────────────────────────────────── */}
+          <Section id="managing-users" title="Managing users">
             <p>
-              Phase A ships four cost-saving features to the classifier and scanner. All are live
-              after migrations 006–008 run on Railway. Below is what each feature does and how to
-              verify it in production.
+              The per-user table shows every registered account with key status information.
             </p>
 
-            <H3>F1 — max_tokens 150 → 80</H3>
-            <p>
-              Each Anthropic batch request now uses <code className="text-zinc-300 bg-zinc-800 px-1 rounded">max_tokens=80</code>.
-              The actual JSON response is ~50–70 tokens so this wastes nothing.
-            </p>
-            <p className="font-medium text-zinc-300">Verify:</p>
-            <Code>{`SELECT ROUND(AVG(output_tokens::float / NULLIF(classified, 0)), 1) AS avg_tokens_per_video
-FROM batch_usage_log
-WHERE created_at > now() - interval '7 days';
--- Expect: ≤ 80`}</Code>
+            <H3>User table columns</H3>
+            <Table
+              headers={["Column", "What it shows"]}
+              rows={[
+                ["User", "Display name and email"],
+                ["Last active", "When the user last made an API request (updates at most every 5 minutes)"],
+                ["Channels", "Number of YouTube channels the user has added"],
+                ["Videos", "Total videos scanned across their channels"],
+                ["YouTube", "Whether they have a connected and valid YouTube OAuth token"],
+                ["Last plan", "When their most recent plan was generated"],
+                ["Pipeline", "Current pipeline stage — blank means idle"],
+              ]}
+            />
 
-            <H3>F2 — 18-month video cutoff</H3>
+            <H3>Triggering a scan</H3>
             <p>
-              Videos with <code className="text-zinc-300 bg-zinc-800 px-1 rounded">published_at</code> older than 18 months
-              are excluded from classification batches. Videos with NULL published_at are always included.
-              Controlled by <code className="text-zinc-300 bg-zinc-800 px-1 rounded">CLASSIFY_MAX_AGE_MONTHS</code> env var (default: 18).
+              Click the <strong className="text-white">↺ Scan</strong> button next to any user to
+              immediately run the full pipeline for them: scan → classify → generate plan.
+              This is the same as the user clicking "Regenerate" but works even if their pipeline
+              is stuck or they haven't logged in.
             </p>
-            <p className="font-medium text-zinc-300">Verify:</p>
-            <Code>{`-- No old videos should be unclassified (they're intentionally skipped)
-SELECT COUNT(*) FROM videos
-WHERE published_at < now() - interval '18 months'
-  AND id NOT IN (SELECT video_id FROM classifications);
--- Expect: 0 (or a small number if they were already unclassified before Phase A)`}</Code>
+            <Note>
+              If a user has no channels, the scan button returns an error — that's expected. Ask them
+              to add channels first via their settings page.
+            </Note>
 
-            <H3>F3 — First-scan channel cap (75 videos)</H3>
+            <H3>Deleting a user</H3>
             <p>
-              When a channel is added for the first time (<code className="text-zinc-300 bg-zinc-800 px-1 rounded">first_scan_done=false</code>),
-              only the 75 most recent videos are fetched. After the first scan, the flag is set to{" "}
-              <code className="text-zinc-300 bg-zinc-800 px-1 rounded">true</code> and subsequent incremental scans have no cap.
+              Click <strong className="text-white">Delete</strong> to permanently remove a user and
+              all their data: channels, videos, classifications, schedule, plan history, and credentials.
+              This cannot be undone. You cannot delete your own account from the admin console
+              (use <Link href="/settings" className="text-zinc-300 underline">/settings</Link> for that).
             </p>
-            <p className="font-medium text-zinc-300">Verify:</p>
-            <Code>{`-- All existing channels should have first_scan_done=true
-SELECT name, first_scan_done, COUNT(v.id) AS video_count
-FROM channels c
-LEFT JOIN videos v ON v.channel_id = c.id
-GROUP BY c.id, c.name, c.first_scan_done
-ORDER BY c.added_at DESC;`}</Code>
-            <p className="font-medium text-zinc-300">Manual E2E:</p>
-            <Checklist items={[
-              "Add a brand-new channel, trigger scan → confirm first_scan_done=true in DB and video_count ≤ 75",
-              "Trigger a second scan on the same channel → confirm video_count grows beyond 75 (incremental, no cap)",
-            ]} />
-
-            <H3>F4 — Skip inactive channels in cron</H3>
-            <p>
-              Channels with no new videos in the last 60 days are skipped during the automated
-              Sunday cron to save YouTube API quota. User-triggered scans (<code className="text-zinc-300 bg-zinc-800 px-1 rounded">POST /jobs/scan</code>)
-              always scan everything. The most recent video date is tracked in{" "}
-              <code className="text-zinc-300 bg-zinc-800 px-1 rounded">channels.last_video_published_at</code>.
-            </p>
-            <p className="font-medium text-zinc-300">Verify:</p>
-            <Code>{`-- See each channel's last video date and whether it would be skipped
-SELECT name,
-       last_video_published_at,
-       added_at,
-       CASE
-         WHEN last_video_published_at IS NULL THEN 'never set (not skipped)'
-         WHEN last_video_published_at < now() - interval '60 days'
-          AND added_at < now() - interval '30 days' THEN 'would be skipped'
-         ELSE 'active'
-       END AS cron_status
-FROM channels
-ORDER BY last_video_published_at ASC NULLS FIRST;`}</Code>
-            <p className="font-medium text-zinc-300">Manual E2E:</p>
-            <Checklist items={[
-              "Set last_video_published_at = now() - interval '90 days' on a channel, then trigger the cron (Railway shell: python -c \"from api.scheduler import run_weekly_pipeline; run_weekly_pipeline()\") — confirm that channel's scan is skipped in logs",
-              "Confirm a user-triggered POST /jobs/scan still scans the same channel",
-              "Confirm last_video_published_at is populated after a normal scan",
-            ]} />
-
-            <H3>Graceful pipeline failure</H3>
-            <p>
-              When the pipeline crashes unexpectedly, the error message is now persisted to{" "}
-              <code className="text-zinc-300 bg-zinc-800 px-1 rounded">users.last_scan_error</code> and
-              surfaced in <code className="text-zinc-300 bg-zinc-800 px-1 rounded">GET /jobs/status</code> as an{" "}
-              <code className="text-zinc-300 bg-zinc-800 px-1 rounded">error</code> field. The dashboard should show
-              this as an error banner (frontend work pending — Phase B scope).
-              Cleared automatically on the next successful run.
-            </p>
-            <p className="font-medium text-zinc-300">Verify:</p>
-            <Code>{`-- Check for any users with a lingering scan error
-SELECT id, email, last_scan_error
-FROM users
-WHERE last_scan_error IS NOT NULL;`}</Code>
             <Warn>
-              If a user is stuck with a non-null <code>last_scan_error</code>, trigger a manual scan
-              from the admin console — a successful run will clear it automatically.
+              Deleting a user does not revoke their YouTube OAuth token with Google. If needed,
+              the token is revoked automatically when a user deletes their own account via settings.
             </Warn>
           </Section>
 
-          {/* ── Troubleshooting runbook ───────────────────────────────────── */}
-          <Section id="troubleshooting" title="Troubleshooting runbook">
+          {/* ── Announcements ─────────────────────────────────────────────── */}
+          <Section id="announcements" title="Announcements">
+            <p>
+              Announcements appear as a dismissible banner at the top of every user's dashboard.
+              Use them to communicate maintenance windows, new features, or known issues.
+            </p>
+
+            <H3>Creating an announcement</H3>
+            <p>
+              Type your message in the text area at the bottom of the admin console and click{" "}
+              <strong className="text-white">Post announcement</strong>. The banner goes live
+              immediately for all users — no deploy needed.
+            </p>
+            <Note>
+              Only one announcement should be active at a time. If a previous one is still active,
+              deactivate it before posting a new one — otherwise users see only the most recent one anyway.
+            </Note>
+
+            <H3>Deactivating vs deleting</H3>
+            <Table
+              headers={["Action", "What happens"]}
+              rows={[
+                ["Deactivate", "Hides the banner from users immediately. The announcement stays in the list for reference."],
+                ["Delete", "Permanently removes the announcement from the database."],
+              ]}
+            />
+
+            <H3>How users see it</H3>
+            <p>
+              The banner appears at the top of <code className="text-zinc-300 bg-zinc-800 px-1 rounded">/dashboard</code> for
+              all logged-in users. Users can dismiss it for their session — it reappears on the next
+              page load until the announcement is deactivated or deleted.
+            </p>
+          </Section>
+
+          {/* ── Monitoring pipelines ─────────────────────────────────────── */}
+          <Section id="monitoring" title="Monitoring pipelines">
+            <p>
+              The weekly pipeline runs automatically every <strong className="text-white">Sunday at 18:00 UTC</strong> for
+              all users. Users can also trigger it manually from their dashboard. Here's what each stage means.
+            </p>
+
+            <H3>Pipeline stages</H3>
+            <Table
+              headers={["Stage", "What's happening"]}
+              rows={[
+                ["scanning", "Fetching new videos from each of the user's YouTube channels"],
+                ["classifying", "Sending unclassified videos to Anthropic Batch API (Haiku) — this is the slowest stage"],
+                ["generating", "Picking the best video per schedule slot and saving the weekly plan"],
+                ["done", "Pipeline finished — plan is visible on the user's dashboard"],
+                ["failed", "An unexpected error stopped the pipeline — check last_scan_error in the user table"],
+              ]}
+            />
+
+            <H3>Pipeline error handling</H3>
+            <p>
+              When the pipeline fails, the error message is saved to the user record and shown in the
+              admin user table. A successful pipeline run (triggered manually or on the next Sunday cron)
+              clears the error automatically.
+            </p>
+            <p>
+              To clear a stuck error: find the user in the table, click{" "}
+              <strong className="text-white">↺ Scan</strong>. If the scan succeeds, the error clears.
+              If it fails again, check Railway logs for that user's ID to diagnose the root cause.
+            </p>
+
+            <H3>How inactive channels are handled</H3>
+            <p>
+              During the automated Sunday cron, channels that haven't published a new video in over
+              60 days are skipped to save YouTube API quota. User-triggered scans always scan all
+              channels regardless. The date of the most recent video per channel is tracked
+              in the database and visible via the{" "}
+              <a href="#db-reference" className="text-zinc-300 underline">DB reference</a> queries below.
+            </p>
+
+            <H3>First-time channel scans</H3>
+            <p>
+              When a user adds a new channel, the first scan fetches up to 75 of the most recent videos
+              to keep the initial pipeline fast. Subsequent scans are incremental with no cap.
+            </p>
+          </Section>
+
+          {/* ── Troubleshooting ───────────────────────────────────────────── */}
+          <Section id="troubleshooting" title="Troubleshooting">
             <Table
               headers={["Symptom", "Likely cause", "Fix"]}
               rows={[
                 [
                   "User's pipeline is stuck on \"classifying\" forever",
-                  "Anthropic batch timed out or server restarted mid-batch — stale classifier_batch_id in DB",
+                  "Anthropic batch timed out or server restarted mid-batch — stale batch ID in DB",
                   "Railway shell: UPDATE user_credentials SET classifier_batch_id = NULL WHERE user_id = '<id>'; then hit ↺ Scan from admin",
                 ],
                 [
@@ -341,16 +367,16 @@ WHERE last_scan_error IS NOT NULL;`}</Code>
                 ],
                 [
                   "Admin stats show 0 AI usage despite classifications",
-                  "Migration 005 not yet applied (batch_usage_log / scan_log tables missing)",
-                  "Trigger a Railway redeploy — Dockerfile runs alembic upgrade head automatically.",
+                  "batch_usage_log table missing — migration not yet applied",
+                  "Trigger a Railway redeploy — the Dockerfile runs alembic upgrade head automatically.",
                 ],
                 [
                   "Channel scan shows 0 new videos but channel is active",
-                  "Channel's last_video_published_at is > 60 days ago and cron skipped it (F4)",
+                  "Channel's last video is >60 days old so the Sunday cron skipped it",
                   "Trigger a manual scan from the admin console — user-triggered scans bypass the inactive skip.",
                 ],
                 [
-                  "User's last_scan_error is set and not clearing",
+                  "User's error banner won't clear",
                   "Pipeline is failing on every run for this user",
                   "Check Railway logs for that user's ID. Fix root cause, then trigger ↺ Scan — success clears the error.",
                 ],
@@ -412,20 +438,20 @@ WHERE user_id = '<user_id>';`}</Code>
             </Warn>
           </Section>
 
-          {/* ── DB quick reference ────────────────────────────────────────── */}
-          <Section id="db-reference" title="DB quick reference">
+          {/* ── DB reference ─────────────────────────────────────────────── */}
+          <Section id="db-reference" title="DB reference">
             <H3>Migration history</H3>
             <Table
               headers={["Migration", "Adds"]}
               rows={[
                 ["001", "Initial schema — users, channels, videos, classifications, schedules, program_history, user_credentials"],
-                ["002", "user_credentials.credentials_valid"],
+                ["002", "user_credentials.credentials_valid + youtube_playlist_id"],
                 ["003", "user_credentials.classifier_batch_id"],
                 ["004", "users.last_active_at, batch_usage_log, announcements"],
                 ["005", "scan_log, user_activity_log"],
-                ["006", "channels.first_scan_done (Phase A — F3)"],
-                ["007", "channels.last_video_published_at (Phase A — F4)"],
-                ["008", "users.last_scan_error (Phase A — graceful failure)"],
+                ["006", "channels.first_scan_done"],
+                ["007", "channels.last_video_published_at"],
+                ["008", "users.last_scan_error"],
               ]}
             />
 
@@ -448,7 +474,7 @@ FROM batch_usage_log
 WHERE created_at > now() - interval '7 days'
 GROUP BY day ORDER BY day DESC;
 
--- Videos not classified (potential backlog)
+-- Videos not yet classified
 SELECT c.name AS channel, COUNT(*) AS unclassified
 FROM videos v
 JOIN channels c ON c.id = v.channel_id
@@ -456,15 +482,20 @@ LEFT JOIN classifications cl ON cl.video_id = v.id
 WHERE cl.video_id IS NULL AND v.duration_sec >= 180
 GROUP BY c.name ORDER BY unclassified DESC;
 
--- Channels that would be skipped by F4 cron
+-- Channels that would be skipped by the Sunday cron
 SELECT name, last_video_published_at, added_at
 FROM channels
 WHERE last_video_published_at < now() - interval '60 days'
-  AND added_at < now() - interval '30 days';`}</Code>
+  AND added_at < now() - interval '30 days';
+
+-- Users with a lingering scan error
+SELECT id, email, last_scan_error
+FROM users
+WHERE last_scan_error IS NOT NULL;`}</Code>
           </Section>
 
           {/* ── Env vars ─────────────────────────────────────────────────── */}
-          <Section id="env-vars" title="Env vars reference">
+          <Section id="env-vars" title="Env vars">
             <Table
               headers={["Var", "Example", "Notes"]}
               rows={[
@@ -479,26 +510,26 @@ WHERE last_video_published_at < now() - interval '60 days'
                 ["SECRET_KEY", "random-string", "Starlette session middleware signing"],
                 ["ADMIN_EMAIL", "harshitspeaks@gmail.com", "Single admin — read at request time"],
                 ["DATABASE_URL", "postgresql://...", "Managed by Railway — set automatically"],
-                ["CLASSIFY_MAX_AGE_MONTHS", "18", "Phase A F2 — videos older than this are skipped (default: 18)"],
-                ["FIRST_SCAN_LIMIT", "75", "Phase A F3 — max videos on a channel's first scan (default: 75)"],
+                ["CLASSIFY_MAX_AGE_MONTHS", "18", "Videos older than this are skipped by the classifier (default: 18)"],
+                ["FIRST_SCAN_LIMIT", "75", "Max videos fetched on a channel's first scan (default: 75)"],
               ]}
             />
           </Section>
 
           {/* ── Known issues ─────────────────────────────────────────────── */}
-          <Section id="known-issues" title="Known issues / debt">
+          <Section id="known-issues" title="Known issues">
             <Table
               headers={["Issue", "Impact", "Planned fix"]}
               rows={[
                 [
                   "Cross-user channel dedup bug",
                   "If two users add the same YouTube channel, the second user's scan creates a PK conflict on videos.id — their channel effectively gets no videos",
-                  "Phase D — F8: GlobalClassificationCache + UserChannelVideo join table",
+                  "GlobalClassificationCache + UserChannelVideo join table (backlog)",
                 ],
                 [
-                  "Graceful failure error banner not shown on dashboard",
-                  "users.last_scan_error is persisted and returned by GET /jobs/status but the frontend doesn't render it yet",
-                  "Phase B scope — add error banner to dashboard alongside the scanning banner",
+                  "Error banner not shown on dashboard",
+                  "users.last_scan_error is persisted and returned by GET /jobs/status but the frontend doesn't render it as a banner yet",
+                  "Add error banner to dashboard — in backlog",
                 ],
                 [
                   "WebSockets not implemented",
@@ -508,12 +539,12 @@ WHERE last_video_published_at < now() - interval '60 days'
                 [
                   "Per-user YouTube API quota",
                   "Shared API key supports ~14 concurrent weekly users (10,000 units / ~670 per user). Beyond that, scans fail silently",
-                  "Per-user BYOK (user_credentials.anthropic_key field exists) or YouTube key rotation",
+                  "Per-user BYOK or YouTube key rotation (backlog)",
                 ],
                 [
                   "Monthly classification budget cap not implemented",
                   "Power users could trigger many manual scans, running up Anthropic costs",
-                  "Phase D — F7: monthly_classify_budget on User + admin override",
+                  "Monthly budget per user + admin override (backlog)",
                 ],
               ]}
             />
