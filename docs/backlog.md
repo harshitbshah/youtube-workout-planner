@@ -157,3 +157,30 @@ Review before starting a new phase to see if anything belongs in scope.
 
 - Telegram / WhatsApp bot interface — weekly plan delivered as a message, reply to
   swap or skip a day.
+
+---
+
+## Re-activation flow (surfaced 2026-03-11)
+
+When an inactive user (skipped by the cron for 2+ weeks) comes back, they land on the
+dashboard with a stale plan — potentially weeks old — and no new plan. Nothing currently
+handles this gracefully.
+
+**The problem:** the scheduler only runs for users active within 14 days. A returning
+user gets no fresh plan automatically; they'd need to manually hit "Regenerate" with no
+prompting to do so.
+
+**Proposed fix (deferred — implement when re-activation becomes a real pattern):**
+
+On dashboard load, check if `plan.week_start < current_week_start`. If so, show a
+dismissible banner:
+
+> "Welcome back! Your last plan was from [date]. Want us to generate a fresh one?"
+> [Generate now]
+
+The "Generate now" button calls `POST /plan/generate` and refreshes the dashboard. No
+new backend logic needed — just a frontend check on the `week_start` field already
+returned by `GET /plan/upcoming`.
+
+**Stale plan detection:** `plan.week_start < get_upcoming_monday()` (or current ISO week
+comparison). Already available in frontend state.
