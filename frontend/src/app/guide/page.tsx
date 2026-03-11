@@ -104,48 +104,51 @@ export default function GuidePage() {
               Sign in with your Google account — no password, no credit card required.
             </p>
 
-            <h3 className="text-white font-semibold text-base mt-6 mb-2">2. Add your channels</h3>
+            <h3 className="text-white font-semibold text-base mt-6 mb-2">2. Tell us about yourself</h3>
             <p>
-              Search for the YouTube fitness creators you follow and add them. These are the channels
-              your plan will be drawn from — the more you add, the more variety you'll get each week.
-            </p>
-            <Note>
-              <strong className="text-white">Good channels to start with:</strong> TIFFxDAN, HASfit,
-              JuiceandToya, Jeff Nippard, Sydney Cummings Houdyshell.
-            </Note>
-
-            <h3 className="text-white font-semibold text-base mt-6 mb-2">3. Set your schedule</h3>
-            <p>
-              Choose what kind of workout you want each day — Strength, HIIT, Cardio, or Mobility —
-              along with a target duration and body focus. The schedule comes pre-filled with a balanced
-              split you can keep or customise:
+              A short setup wizard tailors your plan before you add a single channel. Four quick screens:
             </p>
             <Table
               rows={[
-                ["Monday", "Strength · Upper body · 30–45 min"],
-                ["Tuesday", "HIIT · Full body · 30–45 min"],
-                ["Wednesday", "Strength · Lower body · 30–45 min"],
-                ["Thursday", "HIIT · Core · 15–45 min"],
-                ["Friday", "Strength · Full body · 30–45 min"],
-                ["Saturday", "Cardio · Full body · 30–45 min"],
-                ["Sunday", "Rest"],
+                ["Life stage", "Just starting out · Active adult · 55 and thriving · Training seriously"],
+                ["Your goal", "Options vary by life stage — e.g. Build muscle, Lose fat, Stay active & healthy"],
+                ["Training days", "How many days a week you can train (2–6)"],
+                ["Session length", "15–20 min · 25–35 min · 40–60 min · No preference"],
               ]}
             />
-
-            <h3 className="text-white font-semibold text-base mt-6 mb-2">4. Generate your first plan</h3>
             <p>
-              Hit <strong className="text-white">Scan channels & generate plan</strong>. The app scans
-              your channels, classifies every video with AI, and picks the best match for each day.
-              You'll be taken to your dashboard where a live progress banner tracks each stage:
+              Each screen advances automatically when you tap — no Continue button needed.
+            </p>
+
+            <h3 className="text-white font-semibold text-base mt-6 mb-2">3. Review your personalised schedule</h3>
+            <p>
+              Based on your answers, the app builds a weekly training split and shows it to you before anything is saved.
+              Hit <strong className="text-white">Looks good →</strong> to keep it, or{" "}
+              <strong className="text-white">Customise</strong> to adjust any day yourself.
+            </p>
+
+            <h3 className="text-white font-semibold text-base mt-6 mb-2">4. Add your channels</h3>
+            <p>
+              Search for the YouTube fitness creators you follow and add them. The app shows curated
+              suggestions based on your profile — tap a chip to search instantly. You need at least one
+              channel to continue.
+            </p>
+
+            <h3 className="text-white font-semibold text-base mt-6 mb-2">5. Watch it set up in real time</h3>
+            <p>
+              Hit <strong className="text-white">Continue</strong> and a live progress screen tracks each stage:
             </p>
             <ul className="list-disc list-inside space-y-1 pl-1">
-              <li><strong className="text-white">Scanning</strong> — fetching your channels' recent videos from YouTube</li>
+              <li><strong className="text-white">Scanning</strong> — fetching your channels&apos; recent videos from YouTube</li>
               <li><strong className="text-white">Classifying</strong> — analysing videos with AI (shows a live progress count)</li>
-              <li><strong className="text-white">Generating</strong> — picking the best video for each day of your schedule</li>
+              <li><strong className="text-white">Building your plan</strong> — picking the best video for each day</li>
             </ul>
+            <p>
+              When it&apos;s done, you&apos;re taken straight to your dashboard — no button to click.
+            </p>
             <Note>
               The first scan typically takes <strong className="text-white">5–10 minutes</strong> because
-              it processes up to 300 videos. The plan appears automatically when it's ready — no need to refresh.
+              it processes up to 300 videos. The plan appears automatically when it&apos;s ready.
             </Note>
           </Section>
 

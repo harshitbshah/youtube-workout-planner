@@ -13,38 +13,36 @@ for each training day, and has your plan ready when Monday rolls around.
 Go to the app and click **Get started free**. Sign in with your Google account — no
 password, no credit card, nothing else required.
 
-### Add your channels
+### Set up your plan
 
-After signing in you'll be walked through a quick setup:
+After signing in you'll be walked through a short setup wizard that tailors your plan
+before you add a single channel.
 
-**Step 1 — Add channels.** Search for the YouTube fitness creators you follow and add
-them. These are the channels your plan will be drawn from — the more you add, the more
-variety you'll get each week.
+**Step 1 — Life stage.** Pick the option that fits you best:
+- Just starting out (new to working out, or getting back into it)
+- Active adult (reasonably fit, been training for a while)
+- 55 and thriving (low-impact, joint-friendly)
+- Training seriously (structured programming, performance goals)
 
-> Good channels to start with: TIFFxDAN, HASfit, JuiceandToya, Jeff Nippard, Sydney
-> Cummings Houdyshell.
+**Step 2 — Your goal.** Options vary by life stage — for example, Build muscle, Lose
+fat, Stay active & healthy, or Endurance. One tap, no confirmation needed.
 
-**Step 2 — Set your schedule.** Choose what kind of workout you want each day —
-strength, HIIT, cardio, or mobility — along with a target duration and body focus.
-The schedule comes pre-filled with a balanced split you can keep or adjust:
+**Step 3 — Training days.** Choose how many days a week you can train (2–6).
 
-| Day | Default |
-|---|---|
-| Monday | Strength · Upper · 30–45 min |
-| Tuesday | HIIT · Full body · 30–45 min |
-| Wednesday | Strength · Lower · 30–45 min |
-| Thursday | HIIT · Core · 15–45 min |
-| Friday | Strength · Full body · 30–45 min |
-| Saturday | Cardio · Full body · 30–45 min |
-| Sunday | Rest |
+**Step 4 — Session length.** 15–20 min / 25–35 min / 40–60 min / No preference.
 
-**Step 3 — Generate your first plan.** Hit the button and the app scans your channels,
-classifies every video with AI, and picks the best match for each day. You'll be
-taken to your dashboard where a live progress banner tracks each stage as it runs:
+**Step 5 — Review your schedule.** Based on your answers, the app builds a personalised
+weekly training split and shows it to you before saving anything. Hit
+**Looks good →** to keep it, or **Customise** to adjust any day yourself using the
+full schedule editor.
 
-- **Scanning** — fetching your channels' recent videos from YouTube
-- **Classifying** — analysing videos with AI (shows a progress count: "X / N done")
-- **Generating** — picking the best video for each day of your schedule
+**Step 6 — Add your channels.** Search for the YouTube fitness creators you follow.
+The app shows curated suggestions based on your profile — tap a chip to search
+instantly. You need at least one channel to continue.
+
+**Step 7 — Live setup progress.** Hit Continue and a real-time checklist tracks each
+stage: scanning channels → classifying videos → building your first plan. When it's
+done you're taken straight to your dashboard — no button to click.
 
 The first scan typically takes 5–10 minutes because it processes up to 300 videos. The
 plan appears automatically when it's ready — no need to refresh.
