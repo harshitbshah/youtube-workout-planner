@@ -331,22 +331,20 @@ export default function AdminPage() {
 
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <div>
+          <div className="flex items-center gap-4">
             <h1 className="text-2xl font-bold text-white">Admin</h1>
+            <Link href="/admin/guide" className="rounded-lg border border-zinc-700 px-3 py-1.5 text-sm text-zinc-300 hover:bg-zinc-800 transition">
+              Guide
+            </Link>
             {lastRefresh && (
-              <p className="text-xs text-zinc-600 mt-0.5">
+              <p className="text-xs text-zinc-600">
                 Updated {lastRefresh.toLocaleTimeString()} · auto-refreshes every 30s
               </p>
             )}
           </div>
-          <div className="flex items-center gap-4">
-            <Link href="/admin/guide" className="rounded-lg border border-zinc-700 px-3 py-1.5 text-sm text-zinc-300 hover:bg-zinc-800 transition">
-              Guide
-            </Link>
-            <Link href="/dashboard" className="text-sm text-zinc-500 hover:text-zinc-300 transition">
-              ← Dashboard
-            </Link>
-          </div>
+          <Link href="/dashboard" className="text-sm text-zinc-500 hover:text-zinc-300 transition">
+            ← Dashboard
+          </Link>
         </div>
 
         {/* Users */}
