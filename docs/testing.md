@@ -26,7 +26,7 @@ Run before every commit:
 .venv/bin/pytest -q
 ```
 
-Current: **248/248 passing**
+Current: **284/284 passing**
 
 New test files added:
 - `tests/api/test_jobs.py` — `POST /jobs/scan` (202, 400 no channels, 503 no key, 401 unauth, channel count); `GET /jobs/status` (no pipeline, unauthenticated, reflects live state); scanner filters (upper duration cap, title blocklist); classifier (batch cap limits to 300, `on_progress` callback during polling, resume existing batch, batch ID cleared on completion)

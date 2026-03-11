@@ -16,6 +16,11 @@ Both Railway (backend) and Vercel (frontend) live and functional on `main`.
 - Google Search Console domain verified ✅
 - Google OAuth branding verified + published ✅
 - Google sensitive scope (`youtube`) submitted for review ✅ (4–6 week wait)
+- Phase A checkpoint docs updated (PROGRESS.md, architecture.md, MEMORY.md) ✅
+- Admin guide page (`/admin/guide`) committed and deployed ✅
+- Admin guide rewritten as operational reference (9 sections: admin console, managing users, announcements, monitoring, troubleshooting, railway ops, DB reference, env vars, known issues) ✅
+- Footer updated with `isAdmin` prop — shows "Admin Guide" link beside "User Guide" on admin pages only ✅
+- Admin page Guide link: styled as button, repositioned to bottom footer ✅
 
 **Next:** Phase B (onboarding redesign).
 
