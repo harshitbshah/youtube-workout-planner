@@ -6,6 +6,9 @@ Phases 1–5 complete + admin console + charts + guide page + mobile UX complete
 Both Railway (backend) and Vercel (frontend) live and functional on `main`.
 **Ready for first users** — Google OAuth sensitive scope review in progress (4–6 week wait). Users see "unverified app" warning until review completes.
 
+**Done this session (2026-03-13, part 4):**
+- Bug fix: theme toggle hidden behind feedback pill — moved from `bottom-16` → `bottom-20` so it sits clearly above the feedback button ✅
+
 **Done this session (2026-03-13, checkpoint):**
 - Feedback widget: floating button on all post-login pages; modal with 3 categories; emails admin via Resend with reply_to set to user's email ✅
 - `POST /feedback` backend endpoint (category validation, message trimming, 503 on email failure) ✅
