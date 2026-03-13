@@ -1,10 +1,16 @@
 # Progress
 
 ## Status
-Phases 1–5 complete + admin console + charts + guide page + mobile UX complete. Phase A (AI cost reduction) complete. Phase B (onboarding redesign) complete.
-**346/346 tests passing** (284 backend + 62 frontend).
+Phases 1–5 complete + admin console + charts + guide page + mobile UX complete. Phase A complete. Phase B complete. Phase D F5+F6 complete. Backlog items T1+T2+S1 complete.
+**378/378 tests passing** (316 backend + 62 frontend).
 Both Railway (backend) and Vercel (frontend) live and functional on `main`.
 **Ready for first users** — Google OAuth sensitive scope review in progress (4–6 week wait). Users see "unverified app" warning until review completes.
+
+**Done this session (2026-03-13):**
+- T1: Dashboard scan polling uses functional state updates — no re-renders when polled stage/progress is unchanged ✅
+- T2: "Curated by AI" disclosure badge added above plan grid on dashboard (FTC compliance) ✅
+- S1: Admin runbook panel — collapsible symptom/cause/fix table at bottom of `/admin` for common operational issues ✅
+- All docs updated: PROGRESS.md, backlog.md, MEMORY.md ✅
 
 **Done this session (2026-03-11, continued):**
 - Phase D F5 (adaptive payload trimming) — descriptive titles skip transcript fetch + use 300-char description; ambiguous titles keep full 800-char + transcript ✅

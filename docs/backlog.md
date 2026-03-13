@@ -14,8 +14,7 @@ Review before starting a new phase to see if anything belongs in scope.
 - Health disclaimer onboarding checkbox — defer to pre-paid-tier (covered in ToS for now)
 - Footer: YouTube API attribution links + "Not affiliated with YouTube, Google, or featured channels"
 - Verify `DELETE /auth/me` fully purges YouTube OAuth tokens (Google API ToS requirement)
-- Add "Curated by AI" badge on plan dashboard (FTC AI disclosure)
-  → **Fits into Phase B** (onboarding redesign touches dashboard). Small addition.
+- ~~Add "Curated by AI" badge on plan dashboard (FTC AI disclosure)~~ ✅ Done (2026-03-13) — subtle `✦ Curated by AI` label right-aligned above the plan grid.
 - Long-term: lawyer-reviewed docs before paid tier; GDPR cookie banner when analytics added; CCPA compliance at scale
 - See `docs/legal.md` for full details
 
@@ -93,21 +92,7 @@ Review before starting a new phase to see if anything belongs in scope.
 
 ## Admin / Ops
 
-- **Admin runbook panel** — add a collapsed `<details>` section at the bottom of `/admin`
-  with quick answers to the most likely operational questions. Content to cover:
-
-  | Symptom | Cause | Fix |
-  |---|---|---|
-  | User's pipeline is stuck on "classifying" forever | Anthropic batch timed out or server restarted mid-batch; stale `classifier_batch_id` in DB | Use Railway shell: `UPDATE user_credentials SET classifier_batch_id = NULL WHERE user_id = '<id>';` then hit ↺ Scan |
-  | User has 0 videos after a scan | All videos filtered by pre-classification blocklist (non-workout titles), or YouTube API quota exhausted | Check Railway logs for that user's scan; if quota, wait 24h |
-  | User's plan is all Rest days | Planner found no matching videos (library too small or schedule too restrictive) | Try ↺ Scan to get more videos; check user's schedule settings |
-  | "Unclassified" count keeps growing | New videos scanned faster than Anthropic batches can process them, or batch cap (300/run) hit | Normal — will clear on next scheduled Sunday scan; or trigger ↺ Scan manually |
-  | YouTube "credentials invalid" for a user | User's Google OAuth refresh token was revoked (changed Google password, or revoked app access at myaccount.google.com) | User must re-authenticate: sign out → sign in again to re-grant YouTube access |
-  | Admin stats show 0 AI usage despite classifications | Migration 005 not yet applied (UserActivityLog / ScanLog tables missing) | Trigger a Railway redeploy — Dockerfile runs `alembic upgrade head` automatically |
-
-  Implementation: inline `<details><summary>Runbook</summary>…</details>` at the bottom
-  of the admin page. No separate route needed — keeps it contextual and zero maintenance.
-  Build when first users are onboarded and real incidents arise to validate the content.
+- ~~**Admin runbook panel**~~ ✅ Done (2026-03-13) — collapsible `<details>` section at the bottom of `/admin` with 6-row symptom/cause/fix table (stuck pipeline, 0 videos, all-Rest plan, growing unclassified, revoked credentials, missing migration).
 
 ## Infrastructure / Ops
 
@@ -137,10 +122,7 @@ Review before starting a new phase to see if anything belongs in scope.
   browser-level test. Vitest unit tests are sufficient for now; add Playwright when the
   onboarding flow stabilises and E2E coverage becomes a priority.
 
-- **Dashboard polling change-detection** — `setPipelineStage` in the dashboard page could
-  use the same functional update pattern introduced in onboarding step 7
-  (`prev === next ? prev : next`) to avoid unnecessary re-renders when the poll returns the
-  same stage. Minor improvement; same pattern, low priority.
+- ~~**Dashboard polling change-detection**~~ ✅ Done (2026-03-13) — `setPipelineStage` and `setClassifyProgress` now use functional updates; no re-render when polled value is unchanged.
 
 ---
 
