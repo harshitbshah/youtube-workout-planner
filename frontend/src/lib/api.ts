@@ -231,3 +231,11 @@ export interface ChartsResponse {
 
 export const getAdminCharts = (days = 30) =>
   apiFetch<ChartsResponse>(`/admin/charts?days=${days}`);
+
+// ─── Feedback ─────────────────────────────────────────────────────────────────
+
+export const submitFeedback = (category: string, message: string) =>
+  apiFetch<void>("/feedback", {
+    method: "POST",
+    body: JSON.stringify({ category, message }),
+  });

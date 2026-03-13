@@ -100,6 +100,13 @@ class MeResponse(BaseModel):
     email_notifications: bool = True
 
 
+# ─── Feedback ─────────────────────────────────────────────────────────────────
+
+class FeedbackRequest(BaseModel):
+    category: str   # feedback | help | bug
+    message: str
+
+
 # ─── Publish ───────────────────────────────────────────────────────────────────
 
 class PublishResponse(BaseModel):

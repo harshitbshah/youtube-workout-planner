@@ -113,3 +113,45 @@ def send_weekly_plan_email(user, plan: list[dict]) -> None:
     })
 
     logger.info(f"[email] Weekly plan sent to {user.email} for week of {week_start_str}")
+
+
+CATEGORY_LABELS = {
+    "feedback": "💬 General feedback",
+    "help":     "🙋 I need help",
+    "bug":      "🐛 Found a bug",
+}
+
+
+def send_feedback_email(user, category: str, message: str) -> None:
+    """
+    Forward a user feedback submission to the admin inbox.
+
+    user     — SQLAlchemy User instance (needs .email, .display_name)
+    category — one of: feedback | help | bug
+    message  — free-text from the user
+    """
+    api_key = os.environ.get("RESEND_API_KEY")
+    if not api_key:
+        raise RuntimeError("RESEND_API_KEY not set")
+
+    resend.api_key = api_key
+
+    from_email = os.environ.get("FROM_EMAIL", "hello@planmyworkout.app")
+    admin_email = os.environ.get("ADMIN_EMAIL", "harshitspeaks@gmail.com")
+    label = CATEGORY_LABELS.get(category, category)
+    display = user.display_name or user.email.split("@")[0]
+
+    resend.Emails.send({
+        "from": f"Plan My Workout <{from_email}>",
+        "to": admin_email,
+        "reply_to": user.email,
+        "subject": f"[{label}] from {display}",
+        "html": (
+            f"<p><strong>From:</strong> {display} ({user.email})</p>"
+            f"<p><strong>Category:</strong> {label}</p>"
+            f"<hr/>"
+            f"<p>{message.replace(chr(10), '<br/>')}</p>"
+        ),
+    })
+
+    logger.info(f"[email] Feedback ({category}) received from {user.email}")

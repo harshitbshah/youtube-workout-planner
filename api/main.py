@@ -17,7 +17,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.sessions import SessionMiddleware
 
-from .routers import admin, auth, channels, health, jobs, library, plan, schedule
+from .routers import admin, auth, channels, feedback, health, jobs, library, plan, schedule
 from .scheduler import start_scheduler, stop_scheduler
 
 
@@ -68,3 +68,4 @@ app.include_router(plan.router)
 app.include_router(jobs.router)
 app.include_router(library.router)
 app.include_router(admin.router)
+app.include_router(feedback.router)
