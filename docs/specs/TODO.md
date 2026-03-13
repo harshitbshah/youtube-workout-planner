@@ -153,13 +153,17 @@ Ordered by priority. Each item links to its spec.
 ---
 
 ## Scheduler — Active-user gate
-> Already implemented in `api/scheduler.py` (2026-03-11). Tests still needed.
+> Implemented in `api/scheduler.py`. Tests added in `tests/api/test_scheduler.py` (2026-03-13).
 
 - [x] `run_weekly_pipeline()` skips users with `last_active_at` older than 14 days
-- [ ] Unit: user active 7 days ago → pipeline runs
-- [ ] Unit: user active 15 days ago → pipeline skipped, logged
-- [ ] Unit: user with `last_active_at=None` (never logged in after signup) → skipped
-- [ ] Unit: `INACTIVE_THRESHOLD_DAYS` is respected (inject custom value via monkeypatch)
+- [x] Unit: user active 7 days ago → pipeline runs
+- [x] Unit: user active 15 days ago → pipeline skipped
+- [x] Unit: user with `last_active_at=None` → skipped
+- [x] Unit: boundary at exactly threshold-1 days → included
+- [x] Unit: boundary at threshold+1 days → skipped
+- [x] Unit: mixed users — only active ones processed
+- [x] Unit: pipeline error for one user does not block others
+- [x] Unit: DB session always closed in finally block
 
 ---
 

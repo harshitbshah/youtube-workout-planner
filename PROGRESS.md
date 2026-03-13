@@ -2,9 +2,15 @@
 
 ## Status
 Phases 1–5 complete + admin console + charts + guide page + mobile UX complete. Phase A complete. Phase B complete. Phase D F5+F6 complete. Backlog items T1+T2+S1 complete.
-**378/378 tests passing** (316 backend + 62 frontend).
+**387/387 tests passing** (325 backend + 62 frontend).
 Both Railway (backend) and Vercel (frontend) live and functional on `main`.
 **Ready for first users** — Google OAuth sensitive scope review in progress (4–6 week wait). Users see "unverified app" warning until review completes.
+
+**Done this session (2026-03-13, continued):**
+- Merged `origin/claude/exercise-plan-with-gifs-b1bRg` into `main` — brought in active-user gate, 3 new spec files (exercise-breakdown-with-gifs, channel-recommendations, ai-profile-enrichment-and-coach-chat), docs/specs/TODO.md expansion ✅
+- Active-user gate (`api/scheduler.py`) — weekly cron skips users inactive >14 days; saves YouTube API quota + Anthropic credits ✅
+- 9 new unit tests for active-user gate in `tests/api/test_scheduler.py` — boundary conditions, mixed users, error isolation, session cleanup ✅
+- **3 new specs captured** (exercise breakdown with GIFs, channel recommendations R1/R2/R3, AI profile enrichment + coach chat O1/O2/O3) ✅
 
 **Done this session (2026-03-13):**
 - T1: Dashboard scan polling uses functional state updates — no re-renders when polled stage/progress is unchanged ✅
