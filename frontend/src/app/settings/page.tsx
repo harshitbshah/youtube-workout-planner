@@ -43,7 +43,6 @@ export default function SettingsPage() {
   const [nameStatus, setNameStatus] = useState<"idle" | "ok" | "err">("idle");
 
   // Notifications
-  const [emailNotifications, setEmailNotifications] = useState(true);
   const [savingNotifications, setSavingNotifications] = useState(false);
 
   // Schedule
@@ -59,7 +58,6 @@ export default function SettingsPage() {
       .then(([u, ch, sched]) => {
         setUser(u);
         setDisplayName(u.display_name ?? "");
-        setEmailNotifications(u.email_notifications);
         setChannels(ch);
         setSchedule(sched.schedule);
       })
@@ -87,7 +85,6 @@ export default function SettingsPage() {
     try {
       const updated = await updateEmailNotifications(checked);
       setUser(updated);
-      setEmailNotifications(updated.email_notifications);
     } finally {
       setSavingNotifications(false);
     }
@@ -185,18 +182,18 @@ export default function SettingsPage() {
                   <input
                     type="checkbox"
                     className="sr-only"
-                    checked={emailNotifications}
+                    checked={user?.email_notifications ?? true}
                     disabled={savingNotifications}
                     onChange={(e) => handleToggleNotifications(e.target.checked)}
                   />
                   <div
                     className={`w-10 h-6 rounded-full transition ${
-                      emailNotifications ? "bg-white" : "bg-zinc-700"
+                      user?.email_notifications ? "bg-white" : "bg-zinc-700"
                     }`}
                   />
                   <div
                     className={`absolute top-1 w-4 h-4 rounded-full transition-all ${
-                      emailNotifications
+                      user?.email_notifications
                         ? "left-5 bg-zinc-900"
                         : "left-1 bg-zinc-400"
                     }`}

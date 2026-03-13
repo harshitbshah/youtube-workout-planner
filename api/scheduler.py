@@ -47,6 +47,11 @@ def _weekly_pipeline_for_user(user_id: str):
 
     session = SessionLocal()
     try:
+        user = session.query(User).filter(User.id == user_id).first()
+        if not user:
+            logger.info(f"[weekly] user={user_id} not found, skipping")
+            return
+
         channels = session.query(Channel).filter(Channel.user_id == user_id).all()
         if not channels:
             logger.info(f"[weekly] user={user_id} has no channels, skipping")
@@ -81,8 +86,7 @@ def _weekly_pipeline_for_user(user_id: str):
             return  # can't publish or email without a plan
 
         # Step 4: send weekly plan email
-        user = session.query(User).filter(User.id == user_id).first()
-        if user and user.email_notifications:
+        if user.email_notifications:
             from .services.email import send_weekly_plan_email
             try:
                 send_weekly_plan_email(user, plan)

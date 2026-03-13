@@ -4,6 +4,7 @@ email.py — Resend-powered transactional emails.
 import logging
 import os
 from pathlib import Path
+from urllib.parse import parse_qs, urlparse
 
 import resend
 from jinja2 import Environment, FileSystemLoader
@@ -25,7 +26,6 @@ def _format_duration(duration_sec: int | None) -> str:
 
 def _extract_youtube_id(url: str) -> str | None:
     """Extract the YouTube video ID from a watch or short URL."""
-    from urllib.parse import urlparse, parse_qs
     parsed = urlparse(url)
     if parsed.hostname in ("www.youtube.com", "youtube.com"):
         return parse_qs(parsed.query).get("v", [None])[0]

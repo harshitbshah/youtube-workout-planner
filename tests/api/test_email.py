@@ -94,8 +94,8 @@ def test_send_html_contains_youtube_urls():
     assert "https://youtube.com/watch?v=abc0" in html
 
 
-def test_send_html_contains_recovery_for_rest_days():
-    """HTML body shows 'Recovery' for rest days."""
+def test_send_html_excludes_rest_days():
+    """HTML body does not include rest days — only active workout days are shown."""
     plan = _make_plan(active_days=3)
     with (
         patch.dict(os.environ, {"RESEND_API_KEY": "re_test123"}),
@@ -106,7 +106,10 @@ def test_send_html_contains_recovery_for_rest_days():
         send_weekly_plan_email(_make_user(), plan)
 
     html = mock_resend.Emails.send.call_args[0][0]["html"]
-    assert "Recovery" in html
+    assert "Recovery" not in html
+    assert "Workout Video 1" in html
+    assert "Workout Video 2" in html
+    assert "Workout Video 3" in html
 
 
 def test_send_to_correct_recipient():
