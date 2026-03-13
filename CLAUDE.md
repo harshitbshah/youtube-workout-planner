@@ -7,8 +7,10 @@
 
 ## Checkpoint — MANDATORY when user says "checkpoint"
 
-When the user says "let's checkpoint" or "take a checkpoint", update ALL of the following
-in order before committing:
+When the user says "let's checkpoint" or "take a checkpoint", run the following in order:
+
+**Step 0: Run `/simplify`** — code review and cleanup before locking anything in.
+Wait for it to complete and fix all findings before proceeding to the doc updates below.
 
 1. **`PROGRESS.md`** — update status line, test count, and add a dated section summarising
    everything built/fixed this session. Keep it factual and scannable (bullet points).
