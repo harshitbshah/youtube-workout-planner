@@ -425,8 +425,31 @@ Applied before fetching video details or sending to classifier:
 ## Scheduler (`api/scheduler.py`)
 
 APScheduler runs inside the FastAPI process. On startup it registers a cron job
-that fires every Sunday at 6pm UTC, iterates over all users, and runs the full
-scan → classify → plan pipeline for each.
+that fires every Sunday at 6pm UTC and runs the full scan → classify → plan
+pipeline for each **active** user.
+
+### YouTube publish — design intent
+
+The web app is the primary interface. The YouTube playlist publish button is a
+convenience feature — it lets users play their week's videos directly from the
+YouTube app without having to open the web app each time. It is not the primary
+engagement surface.
+
+All meaningful user-intent signals (plan views, video swaps, schedule changes,
+publish clicks) are captured within the web app. YouTube is a read-only output;
+no feedback flows back from it.
+
+### Active-user gate
+
+Any authenticated request updates `user.last_active_at` (throttled to once per
+5 minutes in `get_current_user`). The weekly cron uses this to skip users who
+haven't opened the app in **14 days**, saving YouTube API quota and Anthropic
+credits. Users absent for 8–13 days (missed one week) still get a plan on the
+next Sunday; only users absent for two full weeks are skipped.
+
+The Publish button counts as activity — a user who only opens the app to publish
+once a week will always have `last_active_at` within 7 days and will never be
+skipped.
 
 This replaces GitHub Actions for web app users. The CLI tool on GitHub Actions
 still handles the single original user independently.
