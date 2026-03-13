@@ -45,30 +45,7 @@
           <tr>
             <td style="padding:0 32px 8px;">
 
-              {% for entry in days %}
-
-              {% if entry.is_rest %}
-              <!-- Rest day row — compact hairline -->
-              <table width="100%" cellpadding="0" cellspacing="0" border="0"
-                     style="margin-bottom:4px;">
-                <tr>
-                  <td style="padding:5px 2px;">
-                    <table width="100%" cellpadding="0" cellspacing="0" border="0">
-                      <tr>
-                        <td style="width:40%;border-bottom:1px solid #f3f4f6;vertical-align:middle;"></td>
-                        <td style="white-space:nowrap;padding:0 10px;text-align:center;vertical-align:middle;">
-                          <span style="font-size:11px;color:#d1d5db;letter-spacing:0.3px;">
-                            {{ entry.day }} &middot; Recovery
-                          </span>
-                        </td>
-                        <td style="width:40%;border-bottom:1px solid #f3f4f6;vertical-align:middle;"></td>
-                      </tr>
-                    </table>
-                  </td>
-                </tr>
-              </table>
-
-              {% else %}
+              {% for entry in days if not entry.is_rest %}
               <!-- Active day row -->
               <table width="100%" cellpadding="0" cellspacing="0" border="0"
                      style="margin-bottom:8px;border:1px solid #e5e7eb;border-radius:8px;
@@ -133,7 +110,6 @@
                   </td>
                 </tr>
               </table>
-              {% endif %}
 
               {% endfor %}
 
