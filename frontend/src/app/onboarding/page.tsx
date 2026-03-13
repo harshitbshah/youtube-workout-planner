@@ -101,26 +101,46 @@ const PROGRESS_ITEMS = [
   "Building your first plan",
 ];
 const STAGE_INDEX: Record<string, number> = {
-  scanning: 2, classifying: 3, planning: 4,
+  scanning: 2, classifying: 3, generating: 4,
 };
 
-function ProgressTracker({ stage }: { stage: string | null }) {
-  // activeIndex is always >= 2, so items 0 ("Profile saved") and 1 ("Schedule saved")
-  // are always shown as done — they were completed before step 7 was reached.
+function ProgressTracker({
+  stage,
+  classifyProgress,
+}: {
+  stage: string | null;
+  classifyProgress: { total: number; done: number } | null;
+}) {
   const activeIndex = stage === "done" ? 5 : (stage ? (STAGE_INDEX[stage] ?? 2) : 2);
   return (
     <div className="space-y-4">
       {PROGRESS_ITEMS.map((item, i) => {
         const done = stage === "done" ? true : i < activeIndex;
         const active = stage !== "done" && i === activeIndex;
+        const showProgress = active && i === 3 && classifyProgress;
         return (
-          <div key={item} className="flex items-center gap-3">
-            <div className={`h-6 w-6 rounded-full flex items-center justify-center text-xs shrink-0 transition-colors ${done ? "bg-zinc-600 text-white" : active ? "bg-white text-zinc-900 animate-pulse" : "bg-zinc-800 text-zinc-600"}`}>
-              {done ? "✓" : active ? "⟳" : ""}
+          <div key={item}>
+            <div className="flex items-center gap-3">
+              <div className={`h-6 w-6 rounded-full flex items-center justify-center text-xs shrink-0 transition-colors ${done ? "bg-zinc-600 text-white" : active ? "bg-white text-zinc-900 animate-pulse" : "bg-zinc-800 text-zinc-600"}`}>
+                {done ? "✓" : active ? "⟳" : ""}
+              </div>
+              <span className={`text-sm ${done ? "text-zinc-300" : active ? "text-white font-medium" : "text-zinc-600"}`}>
+                {item}{active ? "…" : ""}
+                {showProgress && (
+                  <span className="ml-2 text-zinc-400 font-normal">
+                    {classifyProgress!.done} / {classifyProgress!.total}
+                  </span>
+                )}
+              </span>
             </div>
-            <span className={`text-sm ${done ? "text-zinc-300" : active ? "text-white font-medium" : "text-zinc-600"}`}>
-              {item}{active ? "…" : ""}
-            </span>
+            {showProgress && (
+              <div className="ml-9 mt-2 w-full bg-zinc-800 rounded-full h-1">
+                <div
+                  className="bg-white h-1 rounded-full transition-all duration-500"
+                  style={{ width: `${Math.round((classifyProgress!.done / classifyProgress!.total) * 100)}%` }}
+                />
+              </div>
+            )}
           </div>
         );
       })}
@@ -178,6 +198,7 @@ export default function OnboardingPage() {
   const [error, setError] = useState("");
   const [scanStage, setScanStage] = useState<string | null>(null);
   const [scanError, setScanError] = useState("");
+  const [classifyProgress, setClassifyProgress] = useState<{ total: number; done: number } | null>(null);
 
   const isSenior = profile === "senior";
 
@@ -247,12 +268,19 @@ export default function OnboardingPage() {
 
   const pollStatus = useCallback(async () => {
     try {
-      const status = await getJobStatus();
-      setScanStage((prev) => (prev === status.stage ? prev : status.stage));
-      if (status.error) {
-        setScanError((prev) => (prev === status.error ? prev : status.error!));
+      const { stage, total, done, error } = await getJobStatus();
+      setScanStage((prev) => (prev === stage ? prev : stage));
+      if (stage === "classifying" && total !== null && done !== null) {
+        setClassifyProgress((prev) =>
+          prev?.total === total && prev?.done === done ? prev : { total, done }
+        );
+      } else {
+        setClassifyProgress(null);
       }
-      if (status.stage === "done") {
+      if (error) {
+        setScanError((prev) => (prev === error ? prev : error));
+      }
+      if (stage === "done") {
         if (intervalRef.current) {
           clearInterval(intervalRef.current);
           intervalRef.current = null;
@@ -438,8 +466,11 @@ export default function OnboardingPage() {
         {step === 7 && (
           <div className="w-full max-w-md">
             <h2 className="text-xl font-semibold text-white mb-2">Setting up your plan…</h2>
-            <p className="text-zinc-400 text-sm mb-8">Hang tight, this usually takes a minute or two.</p>
-            <ProgressTracker stage={scanStage} />
+            <p className="text-zinc-400 text-sm mb-8">
+              We&apos;re scanning your channels and classifying videos with AI.
+              This takes 2–5 minutes on first setup — worth the wait.
+            </p>
+            <ProgressTracker stage={scanStage} classifyProgress={classifyProgress} />
             {scanError && (
               <div className="mt-6 rounded-lg border border-red-800 bg-red-900/30 px-4 py-3">
                 <p className="text-sm text-red-400 mb-3">{scanError}</p>
