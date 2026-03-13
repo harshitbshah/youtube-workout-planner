@@ -587,6 +587,67 @@ export default function AdminPage() {
           </div>
         </section>
 
+        {/* Runbook */}
+        <details className="mt-8 rounded-lg border border-zinc-800 bg-zinc-900/40 group">
+          <summary className="flex items-center justify-between px-5 py-4 cursor-pointer list-none select-none">
+            <span className="text-sm font-semibold text-zinc-400 group-open:text-white transition">
+              Runbook — common operational issues
+            </span>
+            <span className="text-zinc-600 text-xs group-open:rotate-180 transition-transform">▼</span>
+          </summary>
+          <div className="px-5 pb-5 overflow-x-auto">
+            <table className="w-full text-xs border-collapse">
+              <thead>
+                <tr className="border-b border-zinc-800">
+                  <th className="text-left py-2 pr-4 font-semibold text-zinc-500 uppercase tracking-wide w-1/4">Symptom</th>
+                  <th className="text-left py-2 pr-4 font-semibold text-zinc-500 uppercase tracking-wide w-1/3">Cause</th>
+                  <th className="text-left py-2 font-semibold text-zinc-500 uppercase tracking-wide">Fix</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-zinc-800">
+                {([
+                  [
+                    'Pipeline stuck on "classifying" forever',
+                    "Anthropic batch timed out or server restarted mid-batch — stale classifier_batch_id in DB",
+                    "Railway shell: UPDATE user_credentials SET classifier_batch_id = NULL WHERE user_id = '<id>'; then hit Scan",
+                  ],
+                  [
+                    "User has 0 videos after a scan",
+                    "All videos filtered by pre-classification blocklist (non-workout titles), or YouTube API quota exhausted",
+                    "Check Railway logs for that user's scan. If quota, wait 24 h and retry.",
+                  ],
+                  [
+                    "User's plan is all Rest days",
+                    "Planner found no matching videos — library too small or schedule too restrictive",
+                    "Try Scan to classify more videos; check user's schedule settings in DB.",
+                  ],
+                  [
+                    '"Unclassified" count keeps growing',
+                    "New videos scanned faster than Anthropic batches process them, or 300/run batch cap hit",
+                    "Normal — clears on next Sunday scan. Trigger Scan manually to accelerate.",
+                  ],
+                  [
+                    'YouTube "credentials invalid" for a user',
+                    "User's Google OAuth refresh token was revoked (changed password, or revoked app access)",
+                    "User must re-authenticate: sign out then sign in again to re-grant YouTube access.",
+                  ],
+                  [
+                    "Admin stats show 0 AI usage despite classifications",
+                    "Migration 005 not yet applied (batch_usage_log table missing)",
+                    "Trigger a Railway redeploy — Dockerfile runs alembic upgrade head automatically.",
+                  ],
+                ] as [string, string, string][]).map(([symptom, cause, fix]) => (
+                  <tr key={symptom} className="align-top">
+                    <td className="py-2.5 pr-4 text-zinc-300 font-medium">{symptom}</td>
+                    <td className="py-2.5 pr-4 text-zinc-500">{cause}</td>
+                    <td className="py-2.5 text-zinc-400 font-mono">{fix}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </details>
+
       </div>
       <Footer isAdmin />
     </main>

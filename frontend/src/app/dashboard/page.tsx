@@ -135,9 +135,11 @@ export default function DashboardPage() {
     const interval = setInterval(async () => {
       try {
         const { stage, total, done } = await getJobStatus();
-        setPipelineStage(stage);
+        setPipelineStage((prev) => prev === stage ? prev : stage);
         if (stage === "classifying" && total !== null && done !== null) {
-          setClassifyProgress({ total, done });
+          setClassifyProgress((prev) =>
+            prev?.total === total && prev?.done === done ? prev : { total, done }
+          );
         } else {
           setClassifyProgress(null);
         }
@@ -426,6 +428,8 @@ export default function DashboardPage() {
 
         {/* Plan grid */}
         {plan && (
+          <>
+          <p className="text-xs text-zinc-600 mb-3 text-right">✦ Curated by AI</p>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {plan.days.map((day: PlanDay) => (
               <div key={day.day}>
@@ -442,6 +446,7 @@ export default function DashboardPage() {
               </div>
             ))}
           </div>
+          </>
         )}
 
       </div>
