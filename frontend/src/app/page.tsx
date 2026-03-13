@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { getMe, loginUrl, setToken } from "@/lib/api";
+import { getChannels, getMe, loginUrl, setToken } from "@/lib/api";
 import { Footer } from "@/components/Footer";
 
 const HOW_IT_WORKS = [
@@ -53,7 +53,10 @@ export default function LandingPage() {
     }
 
     getMe()
-      .then(() => router.replace("/dashboard"))
+      .then(() => getChannels())
+      .then((channels) =>
+        router.replace(channels.length === 0 ? "/onboarding" : "/dashboard")
+      )
       .catch(() => setChecking(false));
   }, [router]);
 
