@@ -9,7 +9,7 @@ export default function ThemeToggle() {
     <button
       onClick={toggleTheme}
       aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
-      className="fixed bottom-24 right-6 z-40 flex h-9 w-9 items-center justify-center rounded-full bg-zinc-100 dark:bg-zinc-800 shadow-md ring-1 ring-zinc-300 dark:ring-zinc-700 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition cursor-pointer"
+      className="fixed bottom-20 right-6 z-40 flex h-9 w-9 items-center justify-center rounded-full bg-zinc-100 dark:bg-zinc-800 shadow-md ring-1 ring-zinc-300 dark:ring-zinc-700 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition cursor-pointer"
     >
       {theme === "dark" ? (
         // Sun — shown in dark mode, click to go light
