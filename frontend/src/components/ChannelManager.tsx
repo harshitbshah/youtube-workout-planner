@@ -90,7 +90,7 @@ export default function ChannelManager({ channels, onChannelsChange, suggestions
                   key={name}
                   onClick={() => handleSuggestionClick(name)}
                   disabled={alreadyAdded || searching}
-                  className="shrink-0 rounded-full border border-zinc-700 bg-zinc-800 px-3 py-1.5 text-sm text-white hover:bg-zinc-700 disabled:opacity-40 transition"
+                  className="shrink-0 rounded-full border border-zinc-200 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-800 px-3 py-1.5 text-sm text-zinc-900 dark:text-white hover:bg-zinc-200 dark:hover:bg-zinc-700 disabled:opacity-40 transition"
                 >
                   {alreadyAdded ? `${name} ✓` : name}
                 </button>
@@ -108,12 +108,12 @@ export default function ChannelManager({ channels, onChannelsChange, suggestions
           onChange={(e) => setQuery(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && handleSearch()}
           placeholder="e.g. TIFFxDAN, HASfit"
-          className="flex-1 rounded-lg bg-zinc-800 border border-zinc-700 px-4 py-2.5 text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-zinc-500"
+          className="flex-1 rounded-lg bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 px-4 py-2.5 text-sm text-zinc-900 dark:text-white placeholder-zinc-500 focus:outline-none focus:border-zinc-500"
         />
         <button
           onClick={handleSearch}
           disabled={searching || !query.trim()}
-          className="rounded-lg bg-zinc-700 px-4 py-2.5 text-sm font-medium text-white hover:bg-zinc-600 disabled:opacity-40 transition"
+          className="rounded-lg bg-zinc-200 dark:bg-zinc-700 px-4 py-2.5 text-sm font-medium text-zinc-900 dark:text-white hover:bg-zinc-300 dark:hover:bg-zinc-600 disabled:opacity-40 transition"
         >
           {searching ? "Searching…" : "Search"}
         </button>
@@ -123,7 +123,7 @@ export default function ChannelManager({ channels, onChannelsChange, suggestions
 
       {/* Search results */}
       {results.length > 0 && (
-        <div className="rounded-lg border border-zinc-700 bg-zinc-900 mb-5 divide-y divide-zinc-800">
+        <div className="rounded-lg border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-900 mb-5 divide-y divide-zinc-200 dark:divide-zinc-800">
           {results.map((r) => (
             <div key={r.youtube_channel_id} className="flex items-center gap-3 px-4 py-3">
               {r.thumbnail_url && (
@@ -131,7 +131,7 @@ export default function ChannelManager({ channels, onChannelsChange, suggestions
                 <img src={r.thumbnail_url} alt="" className="h-9 w-9 rounded-full object-cover" />
               )}
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-white truncate">{r.name}</p>
+                <p className="text-sm font-medium text-zinc-900 dark:text-white truncate">{r.name}</p>
                 <p className="text-xs text-zinc-500 truncate">{r.description}</p>
               </div>
               {addedIds.has(r.youtube_channel_id) ? (
@@ -140,7 +140,7 @@ export default function ChannelManager({ channels, onChannelsChange, suggestions
                 <button
                   onClick={() => handleAdd(r)}
                   disabled={adding === r.youtube_channel_id}
-                  className="rounded-md bg-zinc-700 px-3 py-1.5 text-xs font-medium text-white hover:bg-zinc-600 disabled:opacity-40 transition shrink-0"
+                  className="rounded-md bg-zinc-200 dark:bg-zinc-700 px-3 py-1.5 text-xs font-medium text-zinc-900 dark:text-white hover:bg-zinc-300 dark:hover:bg-zinc-600 disabled:opacity-40 transition shrink-0"
                 >
                   {adding === r.youtube_channel_id ? "Adding…" : "Add"}
                 </button>
@@ -158,9 +158,9 @@ export default function ChannelManager({ channels, onChannelsChange, suggestions
             {channels.map((ch) => (
               <div
                 key={ch.id}
-                className="flex items-center gap-2 rounded-full bg-zinc-800 border border-zinc-700 px-3 py-1.5"
+                className="flex items-center gap-2 rounded-full bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 px-3 py-1.5"
               >
-                <span className="text-sm text-white">{ch.name}</span>
+                <span className="text-sm text-zinc-900 dark:text-white">{ch.name}</span>
                 <button
                   onClick={() => handleRemove(ch.id)}
                   className="text-zinc-500 hover:text-red-400 text-xs transition"

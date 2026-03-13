@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Footer } from "@/components/Footer";
 import FeedbackWidget from "@/components/FeedbackWidget";
+import ThemeToggle from "@/components/ThemeToggle";
 import {
   getMe,
   getChannels,
@@ -23,8 +24,8 @@ import ScheduleEditor from "@/components/ScheduleEditor";
 
 function SectionCard({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div className="rounded-xl border border-zinc-800 bg-zinc-900 p-6">
-      <h2 className="text-sm font-semibold text-white mb-5">{title}</h2>
+    <div className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-6">
+      <h2 className="text-sm font-semibold text-zinc-900 dark:text-white mb-5">{title}</h2>
       {children}
     </div>
   );
@@ -119,22 +120,22 @@ export default function SettingsPage() {
 
   if (loading) {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-zinc-950">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-zinc-600 border-t-white" />
+      <main className="flex min-h-screen items-center justify-center bg-white dark:bg-zinc-950">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-zinc-300 border-t-zinc-900 dark:border-zinc-600 dark:border-t-white" />
       </main>
     );
   }
 
   return (
-    <main className="min-h-screen bg-zinc-950 px-4 py-8">
+    <main className="min-h-screen bg-white dark:bg-zinc-950 px-4 py-8">
       <div className="max-w-2xl mx-auto">
 
         {/* Header */}
         <div className="flex items-center gap-4 mb-8">
-          <Link href="/dashboard" className="text-zinc-500 hover:text-zinc-300 text-sm transition">
+          <Link href="/dashboard" className="text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 text-sm transition">
             ← Dashboard
           </Link>
-          <h1 className="text-2xl font-bold text-white">Settings</h1>
+          <h1 className="text-2xl font-bold text-zinc-900 dark:text-white">Settings</h1>
         </div>
 
         <div className="space-y-6">
@@ -151,7 +152,7 @@ export default function SettingsPage() {
                     onChange={(e) => setDisplayName(e.target.value)}
                     onKeyDown={(e) => e.key === "Enter" && handleSaveName()}
                     placeholder="Your name"
-                    className="flex-1 rounded-lg bg-zinc-800 border border-zinc-700 px-4 py-2.5 text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-zinc-500"
+                    className="flex-1 rounded-lg bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 px-4 py-2.5 text-sm text-zinc-900 dark:text-white placeholder-zinc-500 focus:outline-none focus:border-zinc-500"
                   />
                   <button
                     onClick={handleSaveName}
@@ -170,7 +171,7 @@ export default function SettingsPage() {
               </div>
               <div>
                 <label className="block text-xs text-zinc-500 mb-1.5">Email</label>
-                <p className="text-sm text-zinc-400">{user?.email}</p>
+                <p className="text-sm text-zinc-600 dark:text-zinc-400">{user?.email}</p>
               </div>
             </div>
           </SectionCard>
@@ -189,7 +190,7 @@ export default function SettingsPage() {
                   />
                   <div
                     className={`w-10 h-6 rounded-full transition ${
-                      user?.email_notifications ? "bg-white" : "bg-zinc-700"
+                      user?.email_notifications ? "bg-white" : "bg-zinc-200 dark:bg-zinc-700"
                     }`}
                   />
                   <div
@@ -200,7 +201,7 @@ export default function SettingsPage() {
                     }`}
                   />
                 </div>
-                <span className="text-sm text-zinc-300">
+                <span className="text-sm text-zinc-700 dark:text-zinc-300">
                   Send me a weekly plan summary every Sunday evening
                 </span>
               </label>
@@ -242,7 +243,7 @@ export default function SettingsPage() {
           </SectionCard>
 
           {/* Danger zone */}
-          <div className="rounded-xl border border-red-900/50 bg-zinc-900 p-6">
+          <div className="rounded-xl border border-red-900/50 bg-white dark:bg-zinc-900 p-6">
             <h2 className="text-sm font-semibold text-red-400 mb-2">Danger zone</h2>
             <p className="text-xs text-zinc-500 mb-5">
               Permanently delete your account and all data — channels, schedule, plan history.
@@ -271,7 +272,7 @@ export default function SettingsPage() {
                   </button>
                   <button
                     onClick={() => setConfirmDelete(false)}
-                    className="rounded-lg border border-zinc-700 px-4 py-2 text-sm text-zinc-400 hover:bg-zinc-800 transition"
+                    className="rounded-lg border border-zinc-200 dark:border-zinc-700 px-4 py-2 text-sm text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition"
                   >
                     Cancel
                   </button>
@@ -283,6 +284,7 @@ export default function SettingsPage() {
         </div>
       </div>
       <Footer />
+      <ThemeToggle />
       <FeedbackWidget />
     </main>
   );

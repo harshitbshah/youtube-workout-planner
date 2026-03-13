@@ -52,18 +52,18 @@ export default function ScheduleEditor({ schedule, onScheduleChange }: Props) {
           <div
             key={day}
             className={`rounded-lg border px-4 py-3 transition-colors ${
-              isRest ? "border-zinc-800 bg-zinc-900/50" : "border-zinc-700 bg-zinc-900"
+              isRest ? "border-zinc-200 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/50" : "border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-900"
             }`}
           >
             <div className="flex items-center gap-4 flex-wrap">
-              <span className="w-24 text-sm font-medium text-white capitalize shrink-0">{day}</span>
+              <span className="w-24 text-sm font-medium text-zinc-900 dark:text-white capitalize shrink-0">{day}</span>
 
               <button
                 onClick={() => toggleRest(day, !isRest)}
                 className={`text-xs px-2.5 py-1 rounded-full border transition shrink-0 ${
                   isRest
-                    ? "border-zinc-600 text-zinc-400 bg-zinc-800"
-                    : "border-zinc-700 text-zinc-500 hover:border-zinc-500 hover:text-zinc-400"
+                    ? "border-zinc-300 dark:border-zinc-600 text-zinc-600 dark:text-zinc-400 bg-zinc-100 dark:bg-zinc-800"
+                    : "border-zinc-200 dark:border-zinc-700 text-zinc-500 hover:border-zinc-400 dark:hover:border-zinc-500 hover:text-zinc-600 dark:hover:text-zinc-400"
                 }`}
               >
                 {isRest ? "Rest" : "Set rest"}
@@ -74,7 +74,7 @@ export default function ScheduleEditor({ schedule, onScheduleChange }: Props) {
                   <select
                     value={slot.workout_type ?? ""}
                     onChange={(e) => updateDay(day, { workout_type: e.target.value })}
-                    className="rounded-md bg-zinc-800 border border-zinc-700 px-2 py-1 text-xs text-white focus:outline-none focus:border-zinc-500"
+                    className="rounded-md bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 px-2 py-1 text-xs text-zinc-900 dark:text-white focus:outline-none focus:border-zinc-500"
                   >
                     {WORKOUT_TYPES.map((t) => (
                       <option key={t} value={t}>{t}</option>
@@ -84,7 +84,7 @@ export default function ScheduleEditor({ schedule, onScheduleChange }: Props) {
                   <select
                     value={slot.body_focus ?? ""}
                     onChange={(e) => updateDay(day, { body_focus: e.target.value || null })}
-                    className="rounded-md bg-zinc-800 border border-zinc-700 px-2 py-1 text-xs text-white focus:outline-none focus:border-zinc-500"
+                    className="rounded-md bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 px-2 py-1 text-xs text-zinc-900 dark:text-white focus:outline-none focus:border-zinc-500"
                   >
                     <option value="">any focus</option>
                     {BODY_FOCUS_OPTIONS.map((f) => (
@@ -95,21 +95,21 @@ export default function ScheduleEditor({ schedule, onScheduleChange }: Props) {
                   <select
                     value={slot.difficulty}
                     onChange={(e) => updateDay(day, { difficulty: e.target.value })}
-                    className="rounded-md bg-zinc-800 border border-zinc-700 px-2 py-1 text-xs text-white focus:outline-none focus:border-zinc-500"
+                    className="rounded-md bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 px-2 py-1 text-xs text-zinc-900 dark:text-white focus:outline-none focus:border-zinc-500"
                   >
                     {DIFFICULTY_OPTIONS.map((d) => (
                       <option key={d} value={d}>{d}</option>
                     ))}
                   </select>
 
-                  <div className="flex items-center gap-1 text-xs text-zinc-400">
+                  <div className="flex items-center gap-1 text-xs text-zinc-600 dark:text-zinc-400">
                     <input
                       type="number"
                       min={5}
                       max={120}
                       value={slot.duration_min ?? ""}
                       onChange={(e) => updateDay(day, { duration_min: Number(e.target.value) || null })}
-                      className="w-12 rounded-md bg-zinc-800 border border-zinc-700 px-2 py-1 text-xs text-white text-center focus:outline-none focus:border-zinc-500"
+                      className="w-12 rounded-md bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 px-2 py-1 text-xs text-zinc-900 dark:text-white text-center focus:outline-none focus:border-zinc-500"
                     />
                     <span>–</span>
                     <input
@@ -118,7 +118,7 @@ export default function ScheduleEditor({ schedule, onScheduleChange }: Props) {
                       max={120}
                       value={slot.duration_max ?? ""}
                       onChange={(e) => updateDay(day, { duration_max: Number(e.target.value) || null })}
-                      className="w-12 rounded-md bg-zinc-800 border border-zinc-700 px-2 py-1 text-xs text-white text-center focus:outline-none focus:border-zinc-500"
+                      className="w-12 rounded-md bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 px-2 py-1 text-xs text-zinc-900 dark:text-white text-center focus:outline-none focus:border-zinc-500"
                     />
                     <span>min</span>
                   </div>

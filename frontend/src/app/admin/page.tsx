@@ -15,6 +15,7 @@ import {
 import { getMe, getAdminCharts, type ChartsResponse } from "@/lib/api";
 import { Tooltip } from "@/components/Tooltip";
 import { Footer } from "@/components/Footer";
+import ThemeToggle from "@/components/ThemeToggle";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 
@@ -76,23 +77,23 @@ type Announcement = { id: number; message: string; is_active: boolean; created_a
 
 function StatCard({ label, value, sub, tooltip }: { label: string; value: string | number; sub?: string; tooltip?: string }) {
   return (
-    <div className="rounded-xl border border-zinc-800 bg-zinc-900 p-5">
+    <div className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 p-5">
       <div className="flex items-center gap-1.5 mb-2">
         <p className="text-xs font-semibold text-zinc-500 uppercase tracking-widest">{label}</p>
         {tooltip && (
           <Tooltip text={tooltip} position="top">
-            <span className="text-zinc-600 hover:text-zinc-400 cursor-default text-xs leading-none">ⓘ</span>
+            <span className="text-zinc-500 dark:text-zinc-600 hover:text-zinc-600 dark:hover:text-zinc-400 cursor-default text-xs leading-none">ⓘ</span>
           </Tooltip>
         )}
       </div>
-      <p className="text-3xl font-bold text-white">{value}</p>
+      <p className="text-3xl font-bold text-zinc-900 dark:text-white">{value}</p>
       {sub && <p className="text-xs text-zinc-500 mt-1">{sub}</p>}
     </div>
   );
 }
 
 function StagePill({ stage }: { stage: string | null }) {
-  if (!stage) return <span className="text-zinc-600 text-xs">—</span>;
+  if (!stage) return <span className="text-zinc-500 dark:text-zinc-600 text-xs">—</span>;
   const colours: Record<string, string> = {
     scanning: "bg-blue-900/40 text-blue-400 border-blue-800",
     classifying: "bg-purple-900/40 text-purple-400 border-purple-800",
@@ -101,7 +102,7 @@ function StagePill({ stage }: { stage: string | null }) {
     failed: "bg-red-900/40 text-red-400 border-red-800",
   };
   return (
-    <span className={`rounded-full border px-2 py-0.5 text-xs capitalize ${colours[stage] ?? "bg-zinc-800 text-zinc-400 border-zinc-700"}`}>
+    <span className={`rounded-full border px-2 py-0.5 text-xs capitalize ${colours[stage] ?? "bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 border-zinc-200 dark:border-zinc-700"}`}>
       {stage}
     </span>
   );
@@ -142,7 +143,7 @@ function MiniChart({ data, dataKey, color, label, valueFormatter }: MiniChartPro
   // Show a tick every ~7 days to keep x-axis readable
   const tickInterval = Math.max(1, Math.floor(data.length / 5));
   return (
-    <div className="rounded-xl border border-zinc-800 bg-zinc-900 p-4">
+    <div className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 p-4">
       <p className="text-xs font-semibold text-zinc-500 uppercase tracking-widest mb-4">{label}</p>
       <ResponsiveContainer width="100%" height={160}>
         <BarChart data={data} barCategoryGap="30%">
@@ -181,17 +182,17 @@ function MetricRow({ label, value, tooltip }: { label: string; value: React.Reac
       <span className="text-zinc-500 flex items-center gap-1">
         {label}
         <Tooltip text={tooltip}>
-          <span className="text-zinc-600 hover:text-zinc-400 cursor-default text-xs">ⓘ</span>
+          <span className="text-zinc-500 dark:text-zinc-600 hover:text-zinc-600 dark:hover:text-zinc-400 cursor-default text-xs">ⓘ</span>
         </Tooltip>
       </span>
-      <span className="text-white font-medium">{value}</span>
+      <span className="text-zinc-900 dark:text-white font-medium">{value}</span>
     </>
   );
 }
 
 function UsageBlock({ label, data }: { label: string; data: UsagePeriod }) {
   return (
-    <div className="rounded-lg border border-zinc-800 bg-zinc-900 p-4 space-y-2">
+    <div className="rounded-lg border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 p-4 space-y-2">
       <p className="text-xs font-semibold text-zinc-500 uppercase tracking-widest">{label}</p>
       <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-sm">
         <MetricRow label="Batches" value={data.batches} tooltip="Number of Anthropic Batch API calls made in this period" />
@@ -309,15 +310,15 @@ export default function AdminPage() {
 
   if (loading) {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-zinc-950">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-zinc-600 border-t-white" />
+      <main className="flex min-h-screen items-center justify-center bg-white dark:bg-zinc-950">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-zinc-300 border-t-zinc-900 dark:border-zinc-600 dark:border-t-white" />
       </main>
     );
   }
 
   if (error) {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-zinc-950 text-red-400 text-sm">
+      <main className="flex min-h-screen items-center justify-center bg-white dark:bg-zinc-950 text-red-400 text-sm">
         {error}
       </main>
     );
@@ -326,20 +327,20 @@ export default function AdminPage() {
   if (!stats) return null;
 
   return (
-    <main className="min-h-screen bg-zinc-950 px-4 py-8">
+    <main className="min-h-screen bg-white dark:bg-zinc-950 px-4 py-8">
       <div className="max-w-6xl mx-auto space-y-10 overflow-x-hidden">
 
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
-            <h1 className="text-2xl font-bold text-white">Admin</h1>
+            <h1 className="text-2xl font-bold text-zinc-900 dark:text-white">Admin</h1>
             {lastRefresh && (
-              <p className="text-xs text-zinc-600">
+              <p className="text-xs text-zinc-500 dark:text-zinc-600">
                 Updated {lastRefresh.toLocaleTimeString()} · auto-refreshes every 30s
               </p>
             )}
           </div>
-          <Link href="/dashboard" className="text-sm text-zinc-500 hover:text-zinc-300 transition">
+          <Link href="/dashboard" className="text-sm text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 transition">
             ← Dashboard
           </Link>
         </div>
@@ -373,7 +374,7 @@ export default function AdminPage() {
             <UsageBlock label="Last 7 days" data={stats.ai_usage.last_7d} />
             <UsageBlock label="All time" data={stats.ai_usage.all_time} />
           </div>
-          <p className="text-xs text-zinc-600 mt-2">Cost estimate uses Batch API pricing: $0.40/MTok input · $2.00/MTok output</p>
+          <p className="text-xs text-zinc-500 dark:text-zinc-600 mt-2">Cost estimate uses Batch API pricing: $0.40/MTok input · $2.00/MTok output</p>
         </section>
 
         {/* Charts */}
@@ -418,14 +419,14 @@ export default function AdminPage() {
             Active pipelines ({stats.pipelines.active_count})
           </h2>
           {stats.pipelines.active_count === 0 ? (
-            <div className="rounded-lg border border-zinc-800 bg-zinc-900 px-4 py-3 text-sm text-zinc-600">
+            <div className="rounded-lg border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 px-4 py-3 text-sm text-zinc-500 dark:text-zinc-600">
               No pipelines running
             </div>
           ) : (
-            <div className="rounded-lg border border-zinc-800 bg-zinc-900 divide-y divide-zinc-800">
+            <div className="rounded-lg border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 divide-y divide-zinc-200 dark:divide-zinc-800">
               {stats.pipelines.active.map((p) => (
                 <div key={p.user_id} className="flex items-center justify-between px-4 py-3">
-                  <span className="text-zinc-400 font-mono text-xs">{p.user_id}</span>
+                  <span className="text-zinc-600 dark:text-zinc-400 font-mono text-xs">{p.user_id}</span>
                   <StagePill stage={p.stage} />
                 </div>
               ))}
@@ -442,7 +443,7 @@ export default function AdminPage() {
               value={newMsg}
               onChange={(e) => setNewMsg(e.target.value)}
               placeholder="New announcement message…"
-              className="flex-1 rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-zinc-500"
+              className="flex-1 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-900 px-3 py-2 text-sm text-zinc-900 dark:text-white placeholder-zinc-500 dark:placeholder-zinc-600 focus:outline-none focus:border-zinc-500"
             />
             <Tooltip text="Post this announcement — it will appear as a banner on all users' dashboards immediately">
               <button
@@ -454,16 +455,16 @@ export default function AdminPage() {
             </Tooltip>
           </form>
           {announcements.length === 0 ? (
-            <div className="rounded-lg border border-zinc-800 bg-zinc-900 px-4 py-3 text-sm text-zinc-600">
+            <div className="rounded-lg border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 px-4 py-3 text-sm text-zinc-500 dark:text-zinc-600">
               No announcements
             </div>
           ) : (
-            <div className="rounded-lg border border-zinc-800 bg-zinc-900 divide-y divide-zinc-800">
+            <div className="rounded-lg border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 divide-y divide-zinc-200 dark:divide-zinc-800">
               {announcements.map((a) => (
                 <div key={a.id} className="flex items-start justify-between gap-4 px-4 py-3">
                   <div className="flex-1 min-w-0">
-                    <p className={`text-sm ${a.is_active ? "text-white" : "text-zinc-600 line-through"}`}>{a.message}</p>
-                    <p className="text-xs text-zinc-600 mt-0.5">{formatDate(a.created_at)}</p>
+                    <p className={`text-sm ${a.is_active ? "text-zinc-900 dark:text-white" : "text-zinc-500 dark:text-zinc-600 line-through"}`}>{a.message}</p>
+                    <p className="text-xs text-zinc-500 dark:text-zinc-600 mt-0.5">{formatDate(a.created_at)}</p>
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
                     {a.is_active && (
@@ -474,7 +475,7 @@ export default function AdminPage() {
                         <Tooltip text="Hide this announcement from users without deleting it">
                           <button
                             onClick={() => handleDeactivateAnnouncement(a.id)}
-                            className="text-xs text-zinc-500 hover:text-zinc-300 transition"
+                            className="text-xs text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 transition"
                           >
                             Deactivate
                           </button>
@@ -501,10 +502,10 @@ export default function AdminPage() {
           <h2 className="text-xs font-semibold text-zinc-500 uppercase tracking-widest mb-3">
             Users ({stats.users.total})
           </h2>
-          <div className="rounded-lg border border-zinc-800 overflow-x-auto">
+          <div className="rounded-lg border border-zinc-200 dark:border-zinc-800 overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-zinc-800 text-left">
+                <tr className="border-b border-zinc-200 dark:border-zinc-800 text-left">
                   <th className="px-4 py-3 text-xs font-semibold text-zinc-500 uppercase tracking-wide">User</th>
                   <th className="px-4 py-3 text-xs font-semibold text-zinc-500 uppercase tracking-wide">Joined</th>
                   <th className="px-4 py-3 text-xs font-semibold text-zinc-500 uppercase tracking-wide">
@@ -542,21 +543,21 @@ export default function AdminPage() {
               </thead>
               <tbody>
                 {stats.user_rows.map((u) => (
-                  <tr key={u.id} className="border-b border-zinc-800 last:border-0 hover:bg-zinc-900/60">
+                  <tr key={u.id} className="border-b border-zinc-200 dark:border-zinc-800 last:border-0 hover:bg-zinc-50/60 dark:hover:bg-zinc-900/60">
                     <td className="px-4 py-3">
-                      <p className="text-white font-medium">{u.display_name ?? "—"}</p>
+                      <p className="text-zinc-900 dark:text-white font-medium">{u.display_name ?? "—"}</p>
                       <p className="text-zinc-500 text-xs">{u.email}</p>
                     </td>
-                    <td className="px-4 py-3 text-zinc-400 text-xs whitespace-nowrap">{formatDate(u.created_at)}</td>
-                    <td className="px-4 py-3 text-zinc-400 text-xs whitespace-nowrap">{formatRelative(u.last_active_at)}</td>
-                    <td className="px-4 py-3 text-zinc-300 text-right">{u.channels}</td>
-                    <td className="px-4 py-3 text-zinc-300 text-right">{u.videos.toLocaleString()}</td>
+                    <td className="px-4 py-3 text-zinc-600 dark:text-zinc-400 text-xs whitespace-nowrap">{formatDate(u.created_at)}</td>
+                    <td className="px-4 py-3 text-zinc-600 dark:text-zinc-400 text-xs whitespace-nowrap">{formatRelative(u.last_active_at)}</td>
+                    <td className="px-4 py-3 text-zinc-700 dark:text-zinc-300 text-right">{u.channels}</td>
+                    <td className="px-4 py-3 text-zinc-700 dark:text-zinc-300 text-right">{u.videos.toLocaleString()}</td>
                     <td className="px-4 py-3">
                       {u.youtube_connected
                         ? <span className="text-green-400 text-xs">Connected</span>
-                        : <span className="text-zinc-600 text-xs">—</span>}
+                        : <span className="text-zinc-500 dark:text-zinc-600 text-xs">—</span>}
                     </td>
-                    <td className="px-4 py-3 text-zinc-400 text-xs whitespace-nowrap">{u.last_plan ?? "—"}</td>
+                    <td className="px-4 py-3 text-zinc-600 dark:text-zinc-400 text-xs whitespace-nowrap">{u.last_plan ?? "—"}</td>
                     <td className="px-4 py-3"><StagePill stage={u.pipeline_stage} /></td>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2">
@@ -564,7 +565,7 @@ export default function AdminPage() {
                           <button
                             onClick={() => handleRetryScan(u.id, u.email)}
                             disabled={retryingUser === u.id || !!u.pipeline_stage}
-                            className="text-xs text-zinc-500 hover:text-zinc-200 disabled:opacity-30 transition"
+                            className="text-xs text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200 disabled:opacity-30 transition"
                           >
                             {retryingUser === u.id ? "Starting…" : "↺ Scan"}
                           </button>
@@ -588,23 +589,23 @@ export default function AdminPage() {
         </section>
 
         {/* Runbook */}
-        <details className="mt-8 rounded-lg border border-zinc-800 bg-zinc-900/40 group">
+        <details className="mt-8 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-zinc-50/40 dark:bg-zinc-900/40 group">
           <summary className="flex items-center justify-between px-5 py-4 cursor-pointer list-none select-none">
-            <span className="text-sm font-semibold text-zinc-400 group-open:text-white transition">
+            <span className="text-sm font-semibold text-zinc-600 dark:text-zinc-400 group-open:text-zinc-900 dark:group-open:text-white transition">
               Runbook — common operational issues
             </span>
-            <span className="text-zinc-600 text-xs group-open:rotate-180 transition-transform">▼</span>
+            <span className="text-zinc-500 dark:text-zinc-600 text-xs group-open:rotate-180 transition-transform">▼</span>
           </summary>
           <div className="px-5 pb-5 overflow-x-auto">
             <table className="w-full text-xs border-collapse">
               <thead>
-                <tr className="border-b border-zinc-800">
+                <tr className="border-b border-zinc-200 dark:border-zinc-800">
                   <th className="text-left py-2 pr-4 font-semibold text-zinc-500 uppercase tracking-wide w-1/4">Symptom</th>
                   <th className="text-left py-2 pr-4 font-semibold text-zinc-500 uppercase tracking-wide w-1/3">Cause</th>
                   <th className="text-left py-2 font-semibold text-zinc-500 uppercase tracking-wide">Fix</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-zinc-800">
+              <tbody className="divide-y divide-zinc-200 dark:divide-zinc-800">
                 {([
                   [
                     'Pipeline stuck on "classifying" forever',
@@ -638,9 +639,9 @@ export default function AdminPage() {
                   ],
                 ] as [string, string, string][]).map(([symptom, cause, fix]) => (
                   <tr key={symptom} className="align-top">
-                    <td className="py-2.5 pr-4 text-zinc-300 font-medium">{symptom}</td>
+                    <td className="py-2.5 pr-4 text-zinc-700 dark:text-zinc-300 font-medium">{symptom}</td>
                     <td className="py-2.5 pr-4 text-zinc-500">{cause}</td>
-                    <td className="py-2.5 text-zinc-400 font-mono">{fix}</td>
+                    <td className="py-2.5 text-zinc-600 dark:text-zinc-400 font-mono">{fix}</td>
                   </tr>
                 ))}
               </tbody>
@@ -649,6 +650,7 @@ export default function AdminPage() {
         </details>
 
       </div>
+      <ThemeToggle />
       <Footer isAdmin />
     </main>
   );

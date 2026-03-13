@@ -57,12 +57,12 @@ export default function FeedbackWidget() {
 
       {/* Modal */}
       {open && (
-        <div className="fixed bottom-20 right-6 z-50 w-full max-w-sm rounded-xl border border-zinc-700 bg-zinc-900 p-5 shadow-2xl">
+        <div className="fixed bottom-20 right-6 z-50 w-full max-w-sm rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 p-5 shadow-2xl">
 
           {status === "done" ? (
             <div className="py-6 text-center">
-              <p className="text-white font-medium mb-1">Thanks for the feedback!</p>
-              <p className="text-sm text-zinc-400 mb-5">We&apos;ll get back to you if needed.</p>
+              <p className="text-zinc-900 dark:text-white font-medium mb-1">Thanks for the feedback!</p>
+              <p className="text-sm text-zinc-600 dark:text-zinc-400 mb-5">We&apos;ll get back to you if needed.</p>
               <button
                 onClick={handleClose}
                 className="rounded-lg bg-white px-5 py-2 text-sm font-semibold text-zinc-900 hover:bg-zinc-100 transition"
@@ -73,10 +73,10 @@ export default function FeedbackWidget() {
           ) : (
             <>
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-sm font-semibold text-white">Share feedback or get help</h3>
+                <h3 className="text-sm font-semibold text-zinc-900 dark:text-white">Share feedback or get help</h3>
                 <button
                   onClick={handleClose}
-                  className="text-zinc-500 hover:text-zinc-300 text-lg leading-none transition"
+                  className="text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 text-lg leading-none transition"
                 >
                   ✕
                 </button>
@@ -91,7 +91,7 @@ export default function FeedbackWidget() {
                       className={`flex-1 rounded-lg border px-2 py-2 text-xs font-medium transition ${
                         category === c.value
                           ? "border-white bg-white text-zinc-900"
-                          : "border-zinc-700 text-zinc-400 hover:border-zinc-500 hover:text-zinc-200"
+                          : "border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-400 hover:border-zinc-400 dark:hover:border-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200"
                       }`}
                     >
                       {c.label}
@@ -104,7 +104,7 @@ export default function FeedbackWidget() {
                   onChange={(e) => setMessage(e.target.value)}
                   placeholder="Tell us what's on your mind…"
                   rows={4}
-                  className="w-full rounded-lg bg-zinc-800 border border-zinc-700 px-3 py-2.5 text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-zinc-500 resize-none"
+                  className="w-full rounded-lg bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 px-3 py-2.5 text-sm text-zinc-900 dark:text-white placeholder-zinc-500 focus:outline-none focus:border-zinc-500 resize-none"
                 />
 
                 {status === "err" && (

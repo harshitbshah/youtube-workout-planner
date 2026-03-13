@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Footer } from "@/components/Footer";
 import FeedbackWidget from "@/components/FeedbackWidget";
+import ThemeToggle from "@/components/ThemeToggle";
 import {
   getMe,
   getChannels,
@@ -30,10 +31,10 @@ function VideoCard({ video }: { video: VideoSummary }) {
       href={video.url}
       target="_blank"
       rel="noopener noreferrer"
-      className="group block rounded-lg overflow-hidden border border-zinc-700 bg-zinc-900 hover:border-zinc-500 transition"
+      className="group block rounded-lg overflow-hidden border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 hover:border-zinc-400 dark:hover:border-zinc-500 transition"
     >
       {/* Thumbnail */}
-      <div className="relative aspect-video bg-zinc-800">
+      <div className="relative aspect-video bg-zinc-100 dark:bg-zinc-800">
         {/* YouTube thumbnail via video ID */}
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
@@ -42,7 +43,7 @@ function VideoCard({ video }: { video: VideoSummary }) {
           className="w-full h-full object-cover"
         />
         {video.duration_sec && (
-          <span className="absolute bottom-1.5 right-1.5 rounded bg-black/80 px-1.5 py-0.5 text-xs text-white">
+          <span className="absolute bottom-1.5 right-1.5 rounded bg-black/70 px-1.5 py-0.5 text-xs text-white">
             {formatDuration(Math.round(video.duration_sec / 60), Math.round(video.duration_sec / 60))}
           </span>
         )}
@@ -50,7 +51,7 @@ function VideoCard({ video }: { video: VideoSummary }) {
 
       {/* Info */}
       <div className="p-3 space-y-2">
-        <p className="text-sm font-medium text-white leading-snug line-clamp-2 group-hover:text-zinc-200">
+        <p className="text-sm font-medium text-zinc-900 dark:text-white leading-snug line-clamp-2 group-hover:text-zinc-700 dark:group-hover:text-zinc-200">
           {video.title}
         </p>
         <p className="text-xs text-zinc-500">{video.channel_name}</p>
@@ -198,8 +199,8 @@ export default function DashboardPage() {
 
   if (loading) {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-zinc-950">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-zinc-600 border-t-white" />
+      <main className="flex min-h-screen items-center justify-center bg-white dark:bg-zinc-950">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-zinc-300 border-t-zinc-900 dark:border-zinc-600 dark:border-t-white" />
       </main>
     );
   }
@@ -215,13 +216,13 @@ export default function DashboardPage() {
     : null;
 
   return (
-    <main className="min-h-screen bg-zinc-950 px-4 py-8">
+    <main className="min-h-screen bg-white dark:bg-zinc-950 px-4 py-8">
       <div className="max-w-5xl mx-auto">
 
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-8 gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-white">
+            <h1 className="text-2xl font-bold text-zinc-900 dark:text-white">
               {user?.display_name ? `${user.display_name.split(" ")[0]}'s plan` : "Your plan"}
             </h1>
             {weekLabel && (
@@ -231,20 +232,20 @@ export default function DashboardPage() {
           <div className="flex flex-wrap items-center gap-2">
             <Link
               href="/library"
-              className="rounded-lg border border-zinc-700 px-3 py-2 text-sm text-zinc-400 hover:bg-zinc-800 transition"
+              className="rounded-lg border border-zinc-200 dark:border-zinc-700 px-3 py-2 text-sm text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition"
             >
               Library
             </Link>
             <Link
               href="/settings"
-              className="rounded-lg border border-zinc-700 px-3 py-2 text-sm text-zinc-400 hover:bg-zinc-800 transition"
+              className="rounded-lg border border-zinc-200 dark:border-zinc-700 px-3 py-2 text-sm text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition"
             >
               Settings
             </Link>
             {user?.is_admin && (
               <Link
                 href="/admin"
-                className="rounded-lg border border-zinc-700 px-3 py-2 text-sm text-zinc-400 hover:bg-zinc-800 transition"
+                className="rounded-lg border border-zinc-200 dark:border-zinc-700 px-3 py-2 text-sm text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition"
               >
                 Admin
               </Link>
@@ -284,14 +285,14 @@ export default function DashboardPage() {
                     ? "YouTube access revoked — sign out and sign in again to reconnect"
                     : "Generate a plan first"
                 }
-                className="rounded-lg border border-zinc-700 px-3 py-2 text-sm text-zinc-600 opacity-50 cursor-not-allowed transition"
+                className="rounded-lg border border-zinc-200 dark:border-zinc-700 px-3 py-2 text-sm text-zinc-500 dark:text-zinc-600 opacity-50 cursor-not-allowed transition"
               >
                 Publish to YouTube
               </button>
             )}
             <button
               onClick={handleLogout}
-              className="rounded-lg border border-zinc-700 px-3 py-2 text-sm text-zinc-400 hover:bg-zinc-800 cursor-pointer transition"
+              className="rounded-lg border border-zinc-200 dark:border-zinc-700 px-3 py-2 text-sm text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 cursor-pointer transition"
             >
               Sign out
             </button>
@@ -308,8 +309,8 @@ export default function DashboardPage() {
 
         {/* Generate in progress banner */}
         {generating && !scanning && (
-          <div className="mb-6 flex items-center gap-3 rounded-lg border border-zinc-700 bg-zinc-800/60 px-4 py-3 text-sm text-zinc-300">
-            <svg className="h-4 w-4 animate-spin shrink-0 text-zinc-400" viewBox="0 0 24 24" fill="none">
+          <div className="mb-6 flex items-center gap-3 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-zinc-100/60 dark:bg-zinc-800/60 px-4 py-3 text-sm text-zinc-700 dark:text-zinc-300">
+            <svg className="h-4 w-4 animate-spin shrink-0 text-zinc-600 dark:text-zinc-400" viewBox="0 0 24 24" fill="none">
               <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
               <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"/>
             </svg>
@@ -319,9 +320,9 @@ export default function DashboardPage() {
 
         {/* Scan in progress banner */}
         {scanning && (
-          <div className="mb-6 rounded-lg border border-zinc-700 bg-zinc-800/60 px-4 py-3 text-sm text-zinc-300 space-y-2">
+          <div className="mb-6 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-zinc-100/60 dark:bg-zinc-800/60 px-4 py-3 text-sm text-zinc-700 dark:text-zinc-300 space-y-2">
             <div className="flex items-center gap-3">
-              <svg className="h-4 w-4 animate-spin shrink-0 text-zinc-400" viewBox="0 0 24 24" fill="none">
+              <svg className="h-4 w-4 animate-spin shrink-0 text-zinc-600 dark:text-zinc-400" viewBox="0 0 24 24" fill="none">
                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"/>
               </svg>
@@ -340,7 +341,7 @@ export default function DashboardPage() {
               </span>
             </div>
             {pipelineStage === "classifying" && classifyProgress && (
-              <div className="w-full bg-zinc-700 rounded-full h-1.5">
+              <div className="w-full bg-zinc-200 dark:bg-zinc-700 rounded-full h-1.5">
                 <div
                   className="bg-white h-1.5 rounded-full transition-all duration-500"
                   style={{ width: `${Math.round((Math.abs(classifyProgress.done) / classifyProgress.total) * 100)}%` }}
@@ -382,10 +383,10 @@ export default function DashboardPage() {
 
         {/* No plan yet */}
         {!plan && (
-          <div className="rounded-lg border border-zinc-800 bg-zinc-900 p-12 text-center">
+          <div className="rounded-lg border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 p-12 text-center">
             {!hasChannels ? (
               <>
-                <p className="text-zinc-400 text-sm mb-4">
+                <p className="text-zinc-600 dark:text-zinc-400 text-sm mb-4">
                   Add your favourite YouTube fitness channels to get started.
                 </p>
                 <Link
@@ -399,7 +400,7 @@ export default function DashboardPage() {
               <p className="text-zinc-500 text-sm">Hang tight — building your plan in the background…</p>
             ) : (
               <>
-                <p className="text-zinc-400 text-sm mb-4">No plan generated yet.</p>
+                <p className="text-zinc-600 dark:text-zinc-400 text-sm mb-4">No plan generated yet.</p>
                 <button
                   onClick={handleScan}
                   disabled={generating}
@@ -415,7 +416,7 @@ export default function DashboardPage() {
         {/* Plan grid */}
         {plan && (
           <>
-          <p className="text-xs text-zinc-600 mb-3 text-right">✦ Curated by AI</p>
+          <p className="text-xs text-zinc-500 dark:text-zinc-600 mb-3 text-right">✦ Curated by AI</p>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {plan.days.filter((day: PlanDay) => day.video).map((day: PlanDay) => (
               <div key={day.day}>
@@ -431,6 +432,7 @@ export default function DashboardPage() {
 
       </div>
       <Footer />
+      <ThemeToggle />
       <FeedbackWidget />
     </main>
   );

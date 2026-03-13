@@ -13,6 +13,7 @@ import ChannelManager from "@/components/ChannelManager";
 import ScheduleEditor from "@/components/ScheduleEditor";
 import { buildSchedule, type LifeStage, type SessionLength } from "@/lib/scheduleTemplates";
 import { DAY_LABELS } from "@/lib/utils";
+import ThemeToggle from "@/components/ThemeToggle";
 
 // ─── Step Indicator ───────────────────────────────────────────────────────────
 
@@ -28,15 +29,15 @@ function StepIndicator({ internalStep }: { internalStep: number }) {
         return (
           <div key={label} className="flex items-center gap-3">
             <div className="flex items-center gap-2">
-              <div className={`h-7 w-7 rounded-full flex items-center justify-center text-xs font-bold transition-colors ${active ? "bg-white text-zinc-900" : done ? "bg-zinc-600 text-white" : "bg-zinc-800 text-zinc-500"}`}>
+              <div className={`h-7 w-7 rounded-full flex items-center justify-center text-xs font-bold transition-colors ${active ? "bg-white text-zinc-900" : done ? "bg-zinc-400 dark:bg-zinc-600 text-white" : "bg-zinc-100 dark:bg-zinc-800 text-zinc-500"}`}>
                 {done ? "✓" : step}
               </div>
-              <span className={`text-sm ${active ? "text-white font-medium" : "text-zinc-500"}`}>
+              <span className={`text-sm ${active ? "text-zinc-900 dark:text-white font-medium" : "text-zinc-500"}`}>
                 {label}
               </span>
             </div>
             {i < steps.length - 1 && (
-              <div className={`h-px w-8 ${done ? "bg-zinc-600" : "bg-zinc-800"}`} />
+              <div className={`h-px w-8 ${done ? "bg-zinc-400 dark:bg-zinc-600" : "bg-zinc-200 dark:bg-zinc-800"}`} />
             )}
           </div>
         );
@@ -51,10 +52,10 @@ function OptionCard({ label, sublabel, onClick }: { label: string; sublabel?: st
   return (
     <button
       onClick={onClick}
-      className="w-full text-left rounded-xl border border-zinc-700 bg-zinc-900 px-5 py-4 hover:border-zinc-500 hover:bg-zinc-800 transition"
+      className="w-full text-left rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-900 px-5 py-4 hover:border-zinc-400 dark:hover:border-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition"
     >
-      <p className="font-medium text-white">{label}</p>
-      {sublabel && <p className="text-sm text-zinc-400 mt-0.5">{sublabel}</p>}
+      <p className="font-medium text-zinc-900 dark:text-white">{label}</p>
+      {sublabel && <p className="text-sm text-zinc-600 dark:text-zinc-400 mt-0.5">{sublabel}</p>}
     </button>
   );
 }
@@ -71,13 +72,13 @@ const WORKOUT_LABELS: Record<string, string> = {
 function SchedulePreview({ schedule, isSenior }: { schedule: ScheduleSlot[]; isSenior: boolean }) {
   const restLabel = isSenior ? "Recovery day" : "Rest day";
   return (
-    <div className="rounded-xl border border-zinc-700 bg-zinc-900 divide-y divide-zinc-800 overflow-hidden">
+    <div className="rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-900 divide-y divide-zinc-200 dark:divide-zinc-800 overflow-hidden">
       {schedule.map((slot) => (
         <div key={slot.day} className="flex items-center gap-4 px-5 py-3">
-          <span className="w-8 text-sm font-medium text-zinc-400 shrink-0">{DAY_LABELS[slot.day]}</span>
+          <span className="w-8 text-sm font-medium text-zinc-600 dark:text-zinc-400 shrink-0">{DAY_LABELS[slot.day]}</span>
           {slot.workout_type ? (
             <>
-              <span className="text-sm text-white">{WORKOUT_LABELS[slot.workout_type] ?? slot.workout_type}</span>
+              <span className="text-sm text-zinc-900 dark:text-white">{WORKOUT_LABELS[slot.workout_type] ?? slot.workout_type}</span>
               {slot.duration_min != null && slot.duration_max != null && (
                 <span className="ml-auto text-xs text-zinc-500 shrink-0">{slot.duration_min}–{slot.duration_max} min</span>
               )}
@@ -121,20 +122,20 @@ function ProgressTracker({
         return (
           <div key={item}>
             <div className="flex items-center gap-3">
-              <div className={`h-6 w-6 rounded-full flex items-center justify-center text-xs shrink-0 transition-colors ${done ? "bg-zinc-600 text-white" : active ? "bg-white text-zinc-900 animate-pulse" : "bg-zinc-800 text-zinc-600"}`}>
+              <div className={`h-6 w-6 rounded-full flex items-center justify-center text-xs shrink-0 transition-colors ${done ? "bg-zinc-400 dark:bg-zinc-600 text-white" : active ? "bg-white text-zinc-900 animate-pulse" : "bg-zinc-100 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-600"}`}>
                 {done ? "✓" : active ? "⟳" : ""}
               </div>
-              <span className={`text-sm ${done ? "text-zinc-300" : active ? "text-white font-medium" : "text-zinc-600"}`}>
+              <span className={`text-sm ${done ? "text-zinc-700 dark:text-zinc-300" : active ? "text-zinc-900 dark:text-white font-medium" : "text-zinc-500 dark:text-zinc-600"}`}>
                 {item}{active ? "…" : ""}
                 {showProgress && (
-                  <span className="ml-2 text-zinc-400 font-normal">
+                  <span className="ml-2 text-zinc-600 dark:text-zinc-400 font-normal">
                     {classifyProgress!.done} / {classifyProgress!.total}
                   </span>
                 )}
               </span>
             </div>
             {showProgress && (
-              <div className="ml-9 mt-2 w-full bg-zinc-800 rounded-full h-1">
+              <div className="ml-9 mt-2 w-full bg-zinc-200 dark:bg-zinc-800 rounded-full h-1">
                 <div
                   className="bg-white h-1 rounded-full transition-all duration-500"
                   style={{ width: `${Math.round((classifyProgress!.done / classifyProgress!.total) * 100)}%` }}
@@ -306,7 +307,8 @@ export default function OnboardingPage() {
   const contentClass = `w-full ${isSenior ? "text-lg" : ""}`;
 
   return (
-    <main className="min-h-screen bg-zinc-950 flex flex-col items-center justify-center px-4 py-12">
+    <main className="min-h-screen bg-white dark:bg-zinc-950 flex flex-col items-center justify-center px-4 py-12">
+      <ThemeToggle />
       <div className="w-full max-w-2xl">
         <StepIndicator internalStep={step} />
 
@@ -319,8 +321,8 @@ export default function OnboardingPage() {
         {/* Step 1 — Life Stage */}
         {step === 1 && (
           <div className={contentClass}>
-            <h2 className="text-xl font-semibold text-white mb-1">First, tell us a bit about yourself</h2>
-            <p className="text-zinc-400 text-sm mb-6">We&apos;ll tailor your plan to fit.</p>
+            <h2 className="text-xl font-semibold text-zinc-900 dark:text-white mb-1">First, tell us a bit about yourself</h2>
+            <p className="text-zinc-600 dark:text-zinc-400 text-sm mb-6">We&apos;ll tailor your plan to fit.</p>
             <div className="flex flex-col gap-3">
               {LIFE_STAGES.map((ls) => (
                 <OptionCard key={ls.value} label={ls.label} sublabel={ls.sublabel} onClick={() => handleProfileSelect(ls.value)} />
@@ -332,14 +334,14 @@ export default function OnboardingPage() {
         {/* Step 2 — Goal */}
         {step === 2 && profile && (
           <div className={contentClass}>
-            <h2 className="text-xl font-semibold text-white mb-1">What&apos;s your main goal?</h2>
-            <p className="text-zinc-400 text-sm mb-6">Pick the one that feels most right.</p>
+            <h2 className="text-xl font-semibold text-zinc-900 dark:text-white mb-1">What&apos;s your main goal?</h2>
+            <p className="text-zinc-600 dark:text-zinc-400 text-sm mb-6">Pick the one that feels most right.</p>
             <div className="flex flex-col gap-3">
               {GOALS[profile].map((g) => (
                 <OptionCard key={g} label={g} onClick={() => handleGoalSelect(g)} />
               ))}
             </div>
-            <button onClick={() => setStep(1)} className="mt-4 text-sm text-zinc-500 hover:text-zinc-300 transition">
+            <button onClick={() => setStep(1)} className="mt-4 text-sm text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 transition">
               ← Back
             </button>
           </div>
@@ -348,21 +350,21 @@ export default function OnboardingPage() {
         {/* Step 3 — Training Days */}
         {step === 3 && (
           <div className={contentClass}>
-            <h2 className="text-xl font-semibold text-white mb-1">How many days a week can you train?</h2>
+            <h2 className="text-xl font-semibold text-zinc-900 dark:text-white mb-1">How many days a week can you train?</h2>
             <div className="flex gap-3 mt-6 mb-4">
               {(isSenior ? [2, 3, 4, 5] : [2, 3, 4, 5, 6]).map((d) => (
                 <button
                   key={d}
                   onClick={() => handleDaysSelect(d)}
                   className={`h-12 w-12 rounded-xl border text-sm font-bold transition
-                    ${trainingDays === d ? "border-white bg-white text-zinc-900" : "border-zinc-700 bg-zinc-900 text-white hover:border-zinc-500 hover:bg-zinc-800"}`}
+                    ${trainingDays === d ? "border-white bg-white text-zinc-900" : "border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-900 text-zinc-900 dark:text-white hover:border-zinc-400 dark:hover:border-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800"}`}
                 >
                   {d}
                 </button>
               ))}
             </div>
             <p className="text-sm text-zinc-500">Even 2 days/week makes a real difference.</p>
-            <button onClick={() => setStep(2)} className="mt-4 text-sm text-zinc-500 hover:text-zinc-300 transition">
+            <button onClick={() => setStep(2)} className="mt-4 text-sm text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 transition">
               ← Back
             </button>
           </div>
@@ -371,16 +373,16 @@ export default function OnboardingPage() {
         {/* Step 4 — Session Length */}
         {step === 4 && (
           <div className={contentClass}>
-            <h2 className="text-xl font-semibold text-white mb-1">How long per session?</h2>
+            <h2 className="text-xl font-semibold text-zinc-900 dark:text-white mb-1">How long per session?</h2>
             {(isSenior || profile === "beginner") && (
-              <p className="text-zinc-400 text-sm mb-2">Short sessions are just as effective when done consistently.</p>
+              <p className="text-zinc-600 dark:text-zinc-400 text-sm mb-2">Short sessions are just as effective when done consistently.</p>
             )}
             <div className="flex flex-col gap-3 mt-4">
               {SESSION_OPTIONS.map((opt) => (
                 <OptionCard key={opt.value} label={opt.label} sublabel={opt.sublabel} onClick={() => handleSessionLengthSelect(opt.value)} />
               ))}
             </div>
-            <button onClick={() => setStep(3)} className="mt-4 text-sm text-zinc-500 hover:text-zinc-300 transition">
+            <button onClick={() => setStep(3)} className="mt-4 text-sm text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 transition">
               ← Back
             </button>
           </div>
@@ -389,8 +391,8 @@ export default function OnboardingPage() {
         {/* Step 5 — Schedule Preview */}
         {step === 5 && (
           <div className="w-full">
-            <h2 className="text-xl font-semibold text-white mb-1">Here&apos;s your personalised plan</h2>
-            <p className="text-zinc-400 text-sm mb-6">Based on your goals. Tweak anything you like.</p>
+            <h2 className="text-xl font-semibold text-zinc-900 dark:text-white mb-1">Here&apos;s your personalised plan</h2>
+            <p className="text-zinc-600 dark:text-zinc-400 text-sm mb-6">Based on your goals. Tweak anything you like.</p>
 
             {!customising ? (
               <>
@@ -405,7 +407,7 @@ export default function OnboardingPage() {
                   </button>
                   <button
                     onClick={() => setCustomising(true)}
-                    className="rounded-lg border border-zinc-700 px-4 py-3 text-sm font-medium text-zinc-300 hover:bg-zinc-800 transition"
+                    className="rounded-lg border border-zinc-200 dark:border-zinc-700 px-4 py-3 text-sm font-medium text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition"
                   >
                     Customise
                   </button>
@@ -415,7 +417,7 @@ export default function OnboardingPage() {
               <>
                 <ScheduleEditor schedule={schedule} onScheduleChange={setSchedule} />
                 <div className="flex gap-3 mt-6">
-                  <button onClick={() => setStep(4)} className="rounded-lg border border-zinc-700 px-4 py-3 text-sm font-medium text-zinc-300 hover:bg-zinc-800 transition">
+                  <button onClick={() => setStep(4)} className="rounded-lg border border-zinc-200 dark:border-zinc-700 px-4 py-3 text-sm font-medium text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition">
                     ← Back
                   </button>
                   <button
@@ -434,8 +436,8 @@ export default function OnboardingPage() {
         {/* Step 6 — Channels */}
         {step === 6 && profile && (
           <div className="w-full max-w-lg">
-            <h2 className="text-xl font-semibold text-white mb-1">Add your favourite channels</h2>
-            <p className="text-zinc-400 text-sm mb-6">
+            <h2 className="text-xl font-semibold text-zinc-900 dark:text-white mb-1">Add your favourite channels</h2>
+            <p className="text-zinc-600 dark:text-zinc-400 text-sm mb-6">
               {isSenior
                 ? "Search for YouTube channels focused on gentle movement and healthy ageing."
                 : profile === "beginner"
@@ -448,7 +450,7 @@ export default function OnboardingPage() {
               suggestions={SUGGESTIONS[profile]}
             />
             <div className="flex gap-3 mt-6">
-              <button onClick={() => setStep(5)} className="rounded-lg border border-zinc-700 px-4 py-3 text-sm font-medium text-zinc-300 hover:bg-zinc-800 transition">
+              <button onClick={() => setStep(5)} className="rounded-lg border border-zinc-200 dark:border-zinc-700 px-4 py-3 text-sm font-medium text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition">
                 ← Back
               </button>
               <button
@@ -465,8 +467,8 @@ export default function OnboardingPage() {
         {/* Step 7 — Live Progress */}
         {step === 7 && (
           <div className="w-full max-w-md">
-            <h2 className="text-xl font-semibold text-white mb-2">Setting up your plan…</h2>
-            <p className="text-zinc-400 text-sm mb-8">
+            <h2 className="text-xl font-semibold text-zinc-900 dark:text-white mb-2">Setting up your plan…</h2>
+            <p className="text-zinc-600 dark:text-zinc-400 text-sm mb-8">
               We&apos;re scanning your channels and classifying videos with AI.
               This takes 2–5 minutes on first setup — worth the wait.
             </p>

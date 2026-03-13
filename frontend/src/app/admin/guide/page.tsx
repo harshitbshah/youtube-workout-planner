@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { getMe } from "@/lib/api";
+import ThemeToggle from "@/components/ThemeToggle";
 
 // ─── Section / layout primitives ────────────────────────────────────────────
 
@@ -27,19 +28,19 @@ const SECTIONS = [
 function Section({ id, title, children }: { id: string; title: string; children: React.ReactNode }) {
   return (
     <section id={id} className="scroll-mt-8 pt-10 first:pt-0">
-      <h2 className="text-xl font-bold text-white mb-4 pb-3 border-b border-zinc-800">{title}</h2>
-      <div className="space-y-4 text-zinc-400 text-sm leading-relaxed">{children}</div>
+      <h2 className="text-xl font-bold text-zinc-900 dark:text-white mb-4 pb-3 border-b border-zinc-200 dark:border-zinc-800">{title}</h2>
+      <div className="space-y-4 text-zinc-600 dark:text-zinc-400 text-sm leading-relaxed">{children}</div>
     </section>
   );
 }
 
 function H3({ children }: { children: React.ReactNode }) {
-  return <h3 className="text-white font-semibold text-base mt-6 mb-2">{children}</h3>;
+  return <h3 className="text-zinc-900 dark:text-white font-semibold text-base mt-6 mb-2">{children}</h3>;
 }
 
 function Note({ children }: { children: React.ReactNode }) {
   return (
-    <div className="rounded-lg border border-zinc-700 bg-zinc-900 px-4 py-3 text-zinc-400 text-sm">
+    <div className="rounded-lg border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-900 px-4 py-3 text-zinc-600 dark:text-zinc-400 text-sm">
       {children}
     </div>
   );
@@ -55,7 +56,7 @@ function Warn({ children }: { children: React.ReactNode }) {
 
 function Code({ children }: { children: React.ReactNode }) {
   return (
-    <pre className="rounded-lg bg-zinc-900 border border-zinc-800 px-4 py-3 text-xs text-zinc-300 overflow-x-auto leading-relaxed">
+    <pre className="rounded-lg bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 px-4 py-3 text-xs text-zinc-700 dark:text-zinc-300 overflow-x-auto leading-relaxed">
       {children}
     </pre>
   );
@@ -63,13 +64,13 @@ function Code({ children }: { children: React.ReactNode }) {
 
 function Table({ headers, rows }: { headers: string[]; rows: string[][] }) {
   return (
-    <div className="overflow-x-auto rounded-lg border border-zinc-800">
+    <div className="overflow-x-auto rounded-lg border border-zinc-200 dark:border-zinc-800">
       <table className="w-full text-sm">
         {headers.length > 0 && (
           <thead>
-            <tr className="border-b border-zinc-700">
+            <tr className="border-b border-zinc-200 dark:border-zinc-700">
               {headers.map((h) => (
-                <th key={h} className="px-4 py-2.5 text-left text-xs font-semibold text-zinc-400 uppercase tracking-wide">
+                <th key={h} className="px-4 py-2.5 text-left text-xs font-semibold text-zinc-500 uppercase tracking-wide">
                   {h}
                 </th>
               ))}
@@ -78,9 +79,9 @@ function Table({ headers, rows }: { headers: string[]; rows: string[][] }) {
         )}
         <tbody>
           {rows.map((row, i) => (
-            <tr key={i} className="border-b border-zinc-800 last:border-0">
+            <tr key={i} className="border-b border-zinc-200 dark:border-zinc-800 last:border-0">
               {row.map((cell, j) => (
-                <td key={j} className={`px-4 py-2.5 align-top ${j === 0 ? "font-medium text-white whitespace-nowrap" : "text-zinc-400"}`}>
+                <td key={j} className={`px-4 py-2.5 align-top ${j === 0 ? "font-medium text-zinc-900 dark:text-white whitespace-nowrap" : "text-zinc-600 dark:text-zinc-400"}`}>
                   {cell}
                 </td>
               ))}
@@ -109,27 +110,28 @@ export default function AdminGuidePage() {
 
   if (!ready) {
     return (
-      <div className="min-h-screen bg-zinc-950 flex items-center justify-center">
-        <div className="w-5 h-5 border-2 border-zinc-600 border-t-white rounded-full animate-spin" />
+      <div className="min-h-screen bg-white dark:bg-zinc-950 flex items-center justify-center">
+        <div className="w-5 h-5 border-2 border-zinc-300 border-t-zinc-900 dark:border-zinc-600 dark:border-t-white rounded-full animate-spin" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-zinc-950 text-white">
+    <div className="min-h-screen bg-white dark:bg-zinc-950 text-zinc-900 dark:text-white">
+      <ThemeToggle />
 
       {/* Nav */}
-      <nav className="flex items-center justify-between px-6 py-5 max-w-5xl mx-auto border-b border-zinc-800">
+      <nav className="flex items-center justify-between px-6 py-5 max-w-5xl mx-auto border-b border-zinc-200 dark:border-zinc-800">
         <div className="flex items-center gap-4">
-          <Link href="/admin" className="font-semibold text-white tracking-tight hover:text-zinc-300 transition">
+          <Link href="/admin" className="font-semibold text-zinc-900 dark:text-white tracking-tight hover:text-zinc-700 dark:hover:text-zinc-300 transition">
             Admin
           </Link>
-          <span className="text-zinc-700">/</span>
-          <span className="text-zinc-400 text-sm">Guide</span>
+          <span className="text-zinc-400 dark:text-zinc-700">/</span>
+          <span className="text-zinc-600 dark:text-zinc-400 text-sm">Guide</span>
         </div>
         <Link
           href="/admin"
-          className="rounded-lg border border-zinc-700 px-4 py-2 text-sm text-zinc-300 hover:bg-zinc-800 transition"
+          className="rounded-lg border border-zinc-200 dark:border-zinc-700 px-4 py-2 text-sm text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition"
         >
           ← Back to admin
         </Link>
@@ -143,7 +145,7 @@ export default function AdminGuidePage() {
             <p className="text-xs font-semibold text-zinc-500 uppercase tracking-widest mb-4">Contents</p>
             <nav className="space-y-1">
               {SECTIONS.map(({ id, label }) => (
-                <a key={id} href={`#${id}`} className="block text-sm text-zinc-500 hover:text-zinc-200 py-1 transition">
+                <a key={id} href={`#${id}`} className="block text-sm text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200 py-1 transition">
                   {label}
                 </a>
               ))}
@@ -155,8 +157,8 @@ export default function AdminGuidePage() {
         <main className="flex-1 min-w-0 space-y-2">
 
           <div className="mb-10">
-            <h1 className="text-3xl font-bold text-white mb-2">Admin Guide</h1>
-            <p className="text-zinc-400">
+            <h1 className="text-3xl font-bold text-zinc-900 dark:text-white mb-2">Admin Guide</h1>
+            <p className="text-zinc-600 dark:text-zinc-400">
               Everything you need to run Plan My Workout in production — monitoring users,
               managing the pipeline, posting announcements, and fixing issues when they come up.
             </p>
@@ -165,7 +167,7 @@ export default function AdminGuidePage() {
           {/* ── Admin console ─────────────────────────────────────────────── */}
           <Section id="admin-console" title="Admin console">
             <p>
-              The admin console at <Link href="/admin" className="text-zinc-300 underline">/admin</Link> gives
+              The admin console at <Link href="/admin" className="text-zinc-700 dark:text-zinc-300 underline">/admin</Link> gives
               you a live view of the entire platform. It auto-refreshes every 30 seconds.
             </p>
 
@@ -208,8 +210,8 @@ export default function AdminGuidePage() {
             <p>
               Below the charts, the per-user table shows the current pipeline stage for each user.
               Stages update in real time as the pipeline progresses. A user stuck on{" "}
-              <code className="text-zinc-300 bg-zinc-800 px-1 rounded">classifying</code> for more than
-              30 minutes likely has a stale batch ID — see <a href="#troubleshooting" className="text-zinc-300 underline">Troubleshooting</a>.
+              <code className="text-zinc-700 dark:text-zinc-300 bg-zinc-100 dark:bg-zinc-800 px-1 rounded">classifying</code> for more than
+              30 minutes likely has a stale batch ID — see <a href="#troubleshooting" className="text-zinc-700 dark:text-zinc-300 underline">Troubleshooting</a>.
             </p>
           </Section>
 
@@ -235,7 +237,7 @@ export default function AdminGuidePage() {
 
             <H3>Triggering a scan</H3>
             <p>
-              Click the <strong className="text-white">↺ Scan</strong> button next to any user to
+              Click the <strong className="text-zinc-900 dark:text-white">↺ Scan</strong> button next to any user to
               immediately run the full pipeline for them: scan → classify → generate plan.
               This is the same as the user clicking "Regenerate" but works even if their pipeline
               is stuck or they haven't logged in.
@@ -247,10 +249,10 @@ export default function AdminGuidePage() {
 
             <H3>Deleting a user</H3>
             <p>
-              Click <strong className="text-white">Delete</strong> to permanently remove a user and
+              Click <strong className="text-zinc-900 dark:text-white">Delete</strong> to permanently remove a user and
               all their data: channels, videos, classifications, schedule, plan history, and credentials.
               This cannot be undone. You cannot delete your own account from the admin console
-              (use <Link href="/settings" className="text-zinc-300 underline">/settings</Link> for that).
+              (use <Link href="/settings" className="text-zinc-700 dark:text-zinc-300 underline">/settings</Link> for that).
             </p>
             <Warn>
               Deleting a user does not revoke their YouTube OAuth token with Google. If needed,
@@ -268,7 +270,7 @@ export default function AdminGuidePage() {
             <H3>Creating an announcement</H3>
             <p>
               Type your message in the text area at the bottom of the admin console and click{" "}
-              <strong className="text-white">Post announcement</strong>. The banner goes live
+              <strong className="text-zinc-900 dark:text-white">Post announcement</strong>. The banner goes live
               immediately for all users — no deploy needed.
             </p>
             <Note>
@@ -287,7 +289,7 @@ export default function AdminGuidePage() {
 
             <H3>How users see it</H3>
             <p>
-              The banner appears at the top of <code className="text-zinc-300 bg-zinc-800 px-1 rounded">/dashboard</code> for
+              The banner appears at the top of <code className="text-zinc-700 dark:text-zinc-300 bg-zinc-100 dark:bg-zinc-800 px-1 rounded">/dashboard</code> for
               all logged-in users. Users can dismiss it for their session — it reappears on the next
               page load until the announcement is deactivated or deleted.
             </p>
@@ -296,7 +298,7 @@ export default function AdminGuidePage() {
           {/* ── Monitoring pipelines ─────────────────────────────────────── */}
           <Section id="monitoring" title="Monitoring pipelines">
             <p>
-              The weekly pipeline runs automatically every <strong className="text-white">Sunday at 18:00 UTC</strong> for
+              The weekly pipeline runs automatically every <strong className="text-zinc-900 dark:text-white">Sunday at 18:00 UTC</strong> for
               all users. Users can also trigger it manually from their dashboard. Here's what each stage means.
             </p>
 
@@ -320,7 +322,7 @@ export default function AdminGuidePage() {
             </p>
             <p>
               To clear a stuck error: find the user in the table, click{" "}
-              <strong className="text-white">↺ Scan</strong>. If the scan succeeds, the error clears.
+              <strong className="text-zinc-900 dark:text-white">↺ Scan</strong>. If the scan succeeds, the error clears.
               If it fails again, check Railway logs for that user's ID to diagnose the root cause.
             </p>
 
@@ -330,7 +332,7 @@ export default function AdminGuidePage() {
               60 days are skipped to save YouTube API quota. User-triggered scans always scan all
               channels regardless. The date of the most recent video per channel is tracked
               in the database and visible via the{" "}
-              <a href="#db-reference" className="text-zinc-300 underline">DB reference</a> queries below.
+              <a href="#db-reference" className="text-zinc-700 dark:text-zinc-300 underline">DB reference</a> queries below.
             </p>
 
             <H3>First-time channel scans</H3>
@@ -686,7 +688,7 @@ WHERE last_scan_error IS NOT NULL;`}</Code>
             <H3>Authentication flow</H3>
             <p>
               The app uses a URL token handoff pattern instead of session cookies. This is required
-              because <code className="text-zinc-300 bg-zinc-800 px-1 rounded">SameSite=lax</code> blocks
+              because <code className="text-zinc-700 dark:text-zinc-300 bg-zinc-100 dark:bg-zinc-800 px-1 rounded">SameSite=lax</code> blocks
               cross-origin fetch (Vercel → Railway), and Chrome deprecated third-party cookies in 2024.
             </p>
             <Table
@@ -700,16 +702,16 @@ WHERE last_scan_error IS NOT NULL;`}</Code>
               ]}
             />
             <Note>
-              Tokens expire after 30 days. <code className="text-zinc-300 bg-zinc-800 px-1 rounded">get_current_user</code> checks{" "}
-              <code className="text-zinc-300 bg-zinc-800 px-1 rounded">Authorization: Bearer</code> first, falls back to session cookie.
-              The token is signed — forgery is not possible without <code className="text-zinc-300 bg-zinc-800 px-1 rounded">SECRET_KEY</code>.
+              Tokens expire after 30 days. <code className="text-zinc-700 dark:text-zinc-300 bg-zinc-100 dark:bg-zinc-800 px-1 rounded">get_current_user</code> checks{" "}
+              <code className="text-zinc-700 dark:text-zinc-300 bg-zinc-100 dark:bg-zinc-800 px-1 rounded">Authorization: Bearer</code> first, falls back to session cookie.
+              The token is signed — forgery is not possible without <code className="text-zinc-700 dark:text-zinc-300 bg-zinc-100 dark:bg-zinc-800 px-1 rounded">SECRET_KEY</code>.
             </Note>
 
             <H3>Pipeline stages</H3>
             <p>
               The scan → classify → plan pipeline runs for each user independently.
-              The services layer (<code className="text-zinc-300 bg-zinc-800 px-1 rounded">api/services/</code>) are thin adapters
-              that reuse the original CLI logic from <code className="text-zinc-300 bg-zinc-800 px-1 rounded">src/</code> —
+              The services layer (<code className="text-zinc-700 dark:text-zinc-300 bg-zinc-100 dark:bg-zinc-800 px-1 rounded">api/services/</code>) are thin adapters
+              that reuse the original CLI logic from <code className="text-zinc-700 dark:text-zinc-300 bg-zinc-100 dark:bg-zinc-800 px-1 rounded">src/</code> —
               only the DB I/O layer changes (SQLAlchemy instead of raw SQLite).
             </p>
             <Table
@@ -750,7 +752,7 @@ WHERE last_scan_error IS NOT NULL;`}</Code>
 # Frontend tests (Vitest + React Testing Library)
 cd frontend && npm run test:run`}</Code>
 
-            <Note>Current: <strong className="text-white">346/346 passing</strong> — 284 backend + 62 frontend.</Note>
+            <Note>Current: <strong className="text-zinc-900 dark:text-white">346/346 passing</strong> — 284 backend + 62 frontend.</Note>
 
             <H3>Test philosophy</H3>
             <Table
@@ -774,7 +776,7 @@ createdb workout_planner_test
             <p>
               Live YouTube API calls, live Anthropic batch submissions, and Google OAuth flows are not
               tested in automated suites — they are mocked. E2E testing against the live deployment
-              uses the manual checklist in <code className="text-zinc-300 bg-zinc-800 px-1 rounded">docs/testing.md</code>.
+              uses the manual checklist in <code className="text-zinc-700 dark:text-zinc-300 bg-zinc-100 dark:bg-zinc-800 px-1 rounded">docs/testing.md</code>.
             </p>
           </Section>
 
@@ -831,7 +833,7 @@ railway ssh -- <cmd>           # exec into running container`}</Code>
             <H3>Manual publish as the engagement gate</H3>
             <p>
               The app has no automatic playlist publishing. Users must click{" "}
-              <strong className="text-white">&quot;Publish to YouTube&quot;</strong> in the dashboard each week
+              <strong className="text-zinc-900 dark:text-white">&quot;Publish to YouTube&quot;</strong> in the dashboard each week
               to trigger a new plan and update their playlist.
             </p>
             <p>

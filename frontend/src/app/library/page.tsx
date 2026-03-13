@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Footer } from "@/components/Footer";
 import FeedbackWidget from "@/components/FeedbackWidget";
+import ThemeToggle from "@/components/ThemeToggle";
 import {
   getMe,
   getChannels,
@@ -65,7 +66,7 @@ function AssignButton({ videoId }: { videoId: string }) {
       value={selected}
       onChange={(e) => handleAssign(e.target.value)}
       disabled={status === "loading"}
-      className="w-full rounded bg-zinc-800 border border-zinc-700 px-2 py-1 text-xs text-zinc-400 disabled:opacity-40 focus:outline-none focus:border-zinc-500"
+      className="w-full rounded bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 px-2 py-1 text-xs text-zinc-600 dark:text-zinc-400 disabled:opacity-40 focus:outline-none focus:border-zinc-500"
     >
       <option value="">Assign to day…</option>
       {DAYS.map((d) => (
@@ -79,14 +80,14 @@ function AssignButton({ videoId }: { videoId: string }) {
 
 function VideoCard({ video }: { video: VideoSummary }) {
   return (
-    <div className="rounded-lg overflow-hidden border border-zinc-700 bg-zinc-900 flex flex-col">
+    <div className="rounded-lg overflow-hidden border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 flex flex-col">
       <a
         href={video.url}
         target="_blank"
         rel="noopener noreferrer"
         className="group block"
       >
-        <div className="relative aspect-video bg-zinc-800">
+        <div className="relative aspect-video bg-zinc-100 dark:bg-zinc-800">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={`https://i.ytimg.com/vi/${video.id}/mqdefault.jpg`}
@@ -94,13 +95,13 @@ function VideoCard({ video }: { video: VideoSummary }) {
             className="w-full h-full object-cover group-hover:opacity-90 transition"
           />
           {video.duration_sec && (
-            <span className="absolute bottom-1.5 right-1.5 rounded bg-black/80 px-1.5 py-0.5 text-xs text-white">
+            <span className="absolute bottom-1.5 right-1.5 rounded bg-black/70 px-1.5 py-0.5 text-xs text-white">
               {formatDuration(Math.round(video.duration_sec / 60), Math.round(video.duration_sec / 60))}
             </span>
           )}
         </div>
         <div className="p-3 pb-2">
-          <p className="text-sm font-medium text-white leading-snug line-clamp-2 group-hover:text-zinc-200 mb-1">
+          <p className="text-sm font-medium text-zinc-900 dark:text-white leading-snug line-clamp-2 group-hover:text-zinc-700 dark:group-hover:text-zinc-200 mb-1">
             {video.title}
           </p>
           <p className="text-xs text-zinc-500 mb-2">{video.channel_name}</p>
@@ -135,7 +136,7 @@ function FilterSelect({
     <select
       value={value}
       onChange={(e) => onChange(e.target.value)}
-      className="rounded-lg bg-zinc-900 border border-zinc-700 px-3 py-2 text-sm text-zinc-300 focus:outline-none focus:border-zinc-500"
+      className="rounded-lg bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 px-3 py-2 text-sm text-zinc-700 dark:text-zinc-300 focus:outline-none focus:border-zinc-500"
     >
       <option value="">{label}</option>
       {options.map((o) => (
@@ -205,7 +206,7 @@ export default function LibraryPage() {
   const hasFilters = workoutType || bodyFocus || difficulty || channelId;
 
   return (
-    <main className="min-h-screen bg-zinc-950 px-4 py-8">
+    <main className="min-h-screen bg-white dark:bg-zinc-950 px-4 py-8">
       <div className="max-w-6xl mx-auto">
 
         {/* Header */}
@@ -213,11 +214,11 @@ export default function LibraryPage() {
           <div className="flex items-center gap-4">
             <Link
               href="/dashboard"
-              className="text-zinc-500 hover:text-zinc-300 text-sm transition"
+              className="text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 text-sm transition"
             >
               ← Back
             </Link>
-            <h1 className="text-2xl font-bold text-white">Video Library</h1>
+            <h1 className="text-2xl font-bold text-zinc-900 dark:text-white">Video Library</h1>
           </div>
           {data && (
             <p className="text-sm text-zinc-500">{data.total.toLocaleString()} videos</p>
@@ -249,7 +250,7 @@ export default function LibraryPage() {
             <select
               value={channelId}
               onChange={(e) => applyFilter(setChannelId, e.target.value)}
-              className="rounded-lg bg-zinc-900 border border-zinc-700 px-3 py-2 text-sm text-zinc-300 focus:outline-none focus:border-zinc-500"
+              className="rounded-lg bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 px-3 py-2 text-sm text-zinc-700 dark:text-zinc-300 focus:outline-none focus:border-zinc-500"
             >
               <option value="">All channels</option>
               {channels.map((c) => (
@@ -262,7 +263,7 @@ export default function LibraryPage() {
           {hasFilters && (
             <button
               onClick={clearFilters}
-              className="text-sm text-zinc-500 hover:text-zinc-300 transition"
+              className="text-sm text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 transition"
             >
               Clear filters
             </button>
@@ -278,7 +279,7 @@ export default function LibraryPage() {
         {/* Grid */}
         {loading ? (
           <div className="flex justify-center py-24">
-            <div className="h-8 w-8 animate-spin rounded-full border-4 border-zinc-600 border-t-white" />
+            <div className="h-8 w-8 animate-spin rounded-full border-4 border-zinc-300 border-t-zinc-900 dark:border-zinc-600 dark:border-t-white" />
           </div>
         ) : data && data.videos.length > 0 ? (
           <>
@@ -294,7 +295,7 @@ export default function LibraryPage() {
                 <button
                   onClick={() => setPage((p) => Math.max(1, p - 1))}
                   disabled={page === 1}
-                  className="rounded-lg border border-zinc-700 px-4 py-2 text-sm text-zinc-400 hover:bg-zinc-800 disabled:opacity-30 transition"
+                  className="rounded-lg border border-zinc-200 dark:border-zinc-700 px-4 py-2 text-sm text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 disabled:opacity-30 transition"
                 >
                   Previous
                 </button>
@@ -304,7 +305,7 @@ export default function LibraryPage() {
                 <button
                   onClick={() => setPage((p) => Math.min(data.pages, p + 1))}
                   disabled={page === data.pages}
-                  className="rounded-lg border border-zinc-700 px-4 py-2 text-sm text-zinc-400 hover:bg-zinc-800 disabled:opacity-30 transition"
+                  className="rounded-lg border border-zinc-200 dark:border-zinc-700 px-4 py-2 text-sm text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 disabled:opacity-30 transition"
                 >
                   Next
                 </button>
@@ -312,8 +313,8 @@ export default function LibraryPage() {
             )}
           </>
         ) : (
-          <div className="rounded-lg border border-zinc-800 bg-zinc-900 p-12 text-center">
-            <p className="text-zinc-400 text-sm">
+          <div className="rounded-lg border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 p-12 text-center">
+            <p className="text-zinc-600 dark:text-zinc-400 text-sm">
               {hasFilters
                 ? "No videos match these filters."
                 : "No videos in your library yet. Generate a plan to scan your channels."}
@@ -321,7 +322,7 @@ export default function LibraryPage() {
             {hasFilters && (
               <button
                 onClick={clearFilters}
-                className="mt-4 text-sm text-zinc-500 hover:text-zinc-300 transition"
+                className="mt-4 text-sm text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 transition"
               >
                 Clear filters
               </button>
@@ -331,6 +332,7 @@ export default function LibraryPage() {
 
       </div>
       <Footer />
+      <ThemeToggle />
       <FeedbackWidget />
     </main>
   );
