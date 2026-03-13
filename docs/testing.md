@@ -29,7 +29,7 @@ Run before every commit:
 cd frontend && npm run test:run
 ```
 
-Current: **396/396 passing** (334 backend + 62 frontend)
+Current: **388/388 passing** (317 backend + 71 frontend)
 
 New test files added:
 - `tests/api/test_jobs.py` — `POST /jobs/scan` (202, 400 no channels, 503 no key, 401 unauth, channel count); `GET /jobs/status` (no pipeline, unauthenticated, reflects live state); scanner filters (upper duration cap, title blocklist); classifier (batch cap limits to 300, `on_progress` callback during polling, resume existing batch, batch ID cleared on completion)
@@ -37,6 +37,11 @@ New test files added:
 - `tests/integration/test_jobs_api.py` — 5 integration cases for `POST /jobs/scan` against real Postgres (user isolation, FK constraints, channel count)
 - `tests/integration/test_schema.py` — updated to expect Alembic version "003" (update to "004" after next migration run)
 - `tests/api/test_email.py` — 9 tests for `send_weekly_plan_email`: subject line, HTML content (video titles + URLs), recipient address, missing API key error, display name fallback, FROM_EMAIL env var, all-rest plan, rest days excluded from output
+- `tests/api/test_feedback.py` — 13 unit tests for `POST /feedback` router (happy path, all categories, invalid category, blank message, unauthenticated, trim, 503 on email failure) and `send_feedback_email` service (to=admin, reply_to=user, subject label, HTML body, missing API key, display_name fallback)
+- `tests/integration/test_feedback_api.py` — 5 integration tests for `POST /feedback` against real PostgreSQL
+- `tests/api/helpers.py` — shared `make_mock_user()` factory used by test_email.py and test_feedback.py
+- `frontend/src/test/ThemeProvider.test.tsx` — 6 tests: system-dark default, system-light default, explicit dark/light override, toggle persists, system change respects explicit choice
+- `frontend/src/test/ThemeToggle.test.tsx` — 3 tests: renders correctly, toggles on click, aria-label reflects current theme
 
 ---
 
@@ -209,7 +214,28 @@ Authenticate via browser first (session cookie), then use Swagger:
 
 ---
 
-### Group 8 — Guide page (`/guide`)
+### Group 8 — Theme toggle (all pages)
+
+- [ ] On first visit (no localStorage), page renders in system-preferred theme (light or dark)
+- [ ] Floating sun/moon button visible bottom-right on all pages (dashboard, library, settings, guide)
+- [ ] Clicking the toggle switches theme immediately (no page reload)
+- [ ] Theme persists across page refresh (localStorage)
+- [ ] Theme persists when navigating between pages
+- [ ] Changing system preference while "system" is active updates theme; explicit user toggle is not overridden by system changes
+
+---
+
+### Group 9 — Feedback widget
+
+- [ ] Floating "Feedback" pill visible bottom-right on dashboard, library, and settings pages
+- [ ] Clicking opens a modal with category dropdown (Feedback / Help / Bug report) and a textarea
+- [ ] Submitting with blank message shows an inline error (blocked)
+- [ ] Submitting valid feedback closes modal and shows success toast
+- [ ] Feedback not visible on landing page, guide, admin pages
+
+---
+
+### Group 10 — Guide page (`/guide`)
 
 - [ ] Page loads at `https://planmyworkout.vercel.app/guide`
 - [ ] Sticky sidebar nav visible on desktop (≥ lg breakpoint)
@@ -221,7 +247,7 @@ Authenticate via browser first (session cookie), then use Swagger:
 
 ---
 
-### Group 9 — Admin console (`/admin`)
+### Group 11 — Admin console (`/admin`)
 
 - [ ] Non-admin user hitting `/admin` sees "Access denied" (or redirect)
 - [ ] Admin user sees stat cards: Total users, Library size, AI usage (7d), AI usage (all-time)

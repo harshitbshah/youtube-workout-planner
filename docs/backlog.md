@@ -27,10 +27,7 @@ Review before starting a new phase to see if anything belongs in scope.
   (screenshots or video demo), testimonials section once first users exist, animated
   "how it works" steps. Captured as pending task, not yet started.
 
-- Light theme as default with a one-click toggle to dark mode. Currently the app
-  is dark-only (hardcoded `zinc-950` backgrounds). Would need a theme context/provider,
-  CSS variable-based colour tokens, and a toggle button (e.g. sun/moon icon in the
-  dashboard header). Light theme should be the out-of-the-box experience for new users.
+- ~~Light/dark theme system~~ ✅ Done (2026-03-13) — system preference default, localStorage persistence, floating sun/moon ThemeToggle button on all pages (in layout.tsx). Anti-FOUC inline script. All pages updated with dual-mode zinc/neutral Tailwind classes.
 
 - `PATCH /plan/{day}` with null `video_id` to skip a day for that week only (mark as
   rest without swapping). Needs an explicit "Skip this day" button on the dashboard

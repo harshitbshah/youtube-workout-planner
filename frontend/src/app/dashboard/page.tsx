@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Footer } from "@/components/Footer";
 import FeedbackWidget from "@/components/FeedbackWidget";
-import ThemeToggle from "@/components/ThemeToggle";
 import {
   getMe,
   getChannels,
@@ -432,7 +431,6 @@ export default function DashboardPage() {
 
       </div>
       <Footer />
-      <ThemeToggle />
       <FeedbackWidget />
     </main>
   );

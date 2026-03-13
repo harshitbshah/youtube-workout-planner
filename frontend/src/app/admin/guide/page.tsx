@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { getMe } from "@/lib/api";
-import ThemeToggle from "@/components/ThemeToggle";
 
 // ─── Section / layout primitives ────────────────────────────────────────────
 
@@ -118,7 +117,6 @@ export default function AdminGuidePage() {
 
   return (
     <div className="min-h-screen bg-white dark:bg-zinc-950 text-zinc-900 dark:text-white">
-      <ThemeToggle />
 
       {/* Nav */}
       <nav className="flex items-center justify-between px-6 py-5 max-w-5xl mx-auto border-b border-zinc-200 dark:border-zinc-800">

@@ -7,19 +7,11 @@ run with no network access and a deterministic week_start date.
 
 import os
 from datetime import date
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import pytest
 
-
-# ─── Helpers ──────────────────────────────────────────────────────────────────
-
-def _make_user(email="test@example.com", display_name="Test User", email_notifications=True):
-    user = MagicMock()
-    user.email = email
-    user.display_name = display_name
-    user.email_notifications = email_notifications
-    return user
+from tests.api.helpers import make_mock_user as _make_user
 
 
 def _make_plan(active_days=3):

@@ -2,9 +2,22 @@
 
 ## Status
 Phases 1–5 complete + admin console + charts + guide page + mobile UX complete. Phase A complete. Phase B complete. Phase C complete. Phase D F5+F6 complete. Backlog items T1+T2+S1 complete.
-**396/396 tests passing** (334 backend + 62 frontend).
+**317 backend + 71 frontend = 388 tests passing**.
 Both Railway (backend) and Vercel (frontend) live and functional on `main`.
 **Ready for first users** — Google OAuth sensitive scope review in progress (4–6 week wait). Users see "unverified app" warning until review completes.
+
+**Done this session (2026-03-13, checkpoint):**
+- Feedback widget: floating button on all post-login pages; modal with 3 categories; emails admin via Resend with reply_to set to user's email ✅
+- `POST /feedback` backend endpoint (category validation, message trimming, 503 on email failure) ✅
+- 13 unit + 5 integration tests for feedback ✅
+- Light/dark theme system: system preference default, localStorage persistence, floating sun/moon toggle ✅
+- ThemeProvider + ThemeToggle in layout.tsx (single mount, no per-page duplication) ✅
+- Anti-flash inline `<script>` in layout.tsx — no FOUC on dark-system users ✅
+- 9 new frontend tests for ThemeProvider + ThemeToggle ✅
+- All 13 pages/components updated with dual-mode zinc/neutral Tailwind classes ✅
+- Bug fixes: new-user redirect to /onboarding, mobile horizontal scroll, onboarding progress tracker stuck on "scanning" ✅
+- Simplify cleanup: ThemeProvider merged effects, stale closure fix, `applyTheme` helper, `mockMatchMedia` test helper, `_FEEDBACK_ENV` constant, shared `make_mock_user` in `tests/api/helpers.py` ✅
+- CLAUDE.md: testing workflow note (push before done), removed simplify from checkpoint ✅
 
 **Done this session (2026-03-13, continued, part 3):**
 - Phase C (weekly plan email) complete — code fully implemented, awaiting Resend account + `planmyworkout.app` domain verification to go live ✅

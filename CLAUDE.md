@@ -14,9 +14,6 @@ committed and pushed — not just working in a local dev server.
 
 When the user says "let's checkpoint" or "take a checkpoint", run the following in order:
 
-**Step 0: Run `/simplify`** — code review and cleanup before locking anything in.
-Wait for it to complete and fix all findings before proceeding to the doc updates below.
-
 1. **`PROGRESS.md`** — update status line, test count, and add a dated section summarising
    everything built/fixed this session. Keep it factual and scannable (bullet points).
 
@@ -165,9 +162,12 @@ cd frontend && npm run test:run
 | `api/routers/library.py` | `GET /library` — paginated, filtered video browser |
 | `api/routers/jobs.py` | `POST /jobs/scan`, `GET /jobs/status`, `get_all_pipeline_statuses()` |
 | `api/routers/admin.py` | Admin stats, user management, announcements (ADMIN_EMAIL gated) |
+| `api/routers/feedback.py` | `POST /feedback` — category validation, message trim, calls send_feedback_email |
 | `api/services/scanner.py` | YouTube channel scanning (uses `src/scanner.py` internals) |
 | `api/services/classifier.py` | Video classification via Anthropic Batch API; records BatchUsageLog |
 | `api/services/planner.py` | Weekly plan generation (uses `src/planner.py`) |
+| `api/services/email.py` | `send_weekly_plan_email()` + `send_feedback_email()` via Resend SDK |
+| `tests/api/helpers.py` | Shared `make_mock_user()` factory used by unit test files |
 | `alembic/` | Database migrations (currently at 004) |
 
 ### Frontend (`frontend/src/`)
@@ -189,6 +189,9 @@ cd frontend && npm run test:run
 | `components/ScheduleEditor.tsx` | Reusable weekly schedule grid (used in onboarding + settings) |
 | `components/Tooltip.tsx` | CSS-only tooltip component (`group/tip` pattern, `delay-300`) |
 | `components/Footer.tsx` | Shared footer with YouTube API attribution; accepts optional `isAdmin` prop — shows "Admin Guide" link beside "User Guide" on admin pages |
+| `components/ThemeProvider.tsx` | React context for light/dark theme; reads system pref, persists to localStorage, exposes `useTheme()` |
+| `components/ThemeToggle.tsx` | Floating sun/moon button (bottom-right); mounted once in `layout.tsx` |
+| `components/FeedbackWidget.tsx` | Floating "Feedback" pill + modal; calls `POST /feedback`; shown on dashboard/library/settings |
 
 ---
 
@@ -218,6 +221,7 @@ cd frontend && npm run test:run
 | POST | `/jobs/scan` | Yes | Trigger manual channel scan |
 | GET | `/jobs/status` | Yes | Pipeline stage + classify progress `{stage, total, done}` |
 | GET | `/announcements/active` | Yes | Active announcement or null (any auth'd user) |
+| POST | `/feedback` | Yes | Submit feedback/help/bug (emails admin via Resend; 400 invalid category or blank; 503 on email failure) |
 | GET | `/admin/stats` | Admin | Aggregate stats + per-user rows |
 | DELETE | `/admin/users/{id}` | Admin | Delete any user (blocks self-deletion) |
 | POST | `/admin/users/{id}/scan` | Admin | Trigger pipeline for any user |

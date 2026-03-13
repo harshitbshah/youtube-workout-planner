@@ -13,42 +13,45 @@ export function useTheme() {
   return useContext(ThemeContext);
 }
 
+function applyTheme(theme: Theme) {
+  document.documentElement.classList.toggle("dark", theme === "dark");
+}
+
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [theme, setTheme] = useState<Theme>("light");
 
   useEffect(() => {
+    // Single effect: read saved pref (or fall back to system), apply, then
+    // watch for system changes — but only when no explicit pref is saved.
     const saved = localStorage.getItem("theme") as Theme | null;
-    if (saved === "light" || saved === "dark") {
-      setTheme(saved);
-      document.documentElement.classList.toggle("dark", saved === "dark");
-    } else {
-      // No saved pref — use system preference
-      const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-      setTheme(prefersDark ? "dark" : "light");
-      document.documentElement.classList.toggle("dark", prefersDark);
-    }
-  }, []);
+    const initial =
+      saved === "light" || saved === "dark"
+        ? saved
+        : window.matchMedia("(prefers-color-scheme: dark)").matches
+        ? "dark"
+        : "light";
 
-  useEffect(() => {
-    // Listen for system preference changes when no saved preference
-    const saved = localStorage.getItem("theme");
-    if (saved) return;
+    setTheme(initial);
+    applyTheme(initial);
+
     const mq = window.matchMedia("(prefers-color-scheme: dark)");
     const handler = (e: MediaQueryListEvent) => {
-      setTheme(e.matches ? "dark" : "light");
-      document.documentElement.classList.toggle("dark", e.matches);
+      // Re-check localStorage inside the handler so the guard reflects the
+      // current value at the time of the event, not just at registration time.
+      if (localStorage.getItem("theme")) return;
+      const next = e.matches ? "dark" : "light";
+      setTheme(next);
+      applyTheme(next);
     };
     mq.addEventListener("change", handler);
     return () => mq.removeEventListener("change", handler);
   }, []);
 
   function toggleTheme() {
-    setTheme((prev) => {
-      const next = prev === "dark" ? "light" : "dark";
-      localStorage.setItem("theme", next);
-      document.documentElement.classList.toggle("dark", next === "dark");
-      return next;
-    });
+    const next: Theme = theme === "dark" ? "light" : "dark";
+    localStorage.setItem("theme", next);
+    applyTheme(next);
+    setTheme(next);
   }
 
   return (

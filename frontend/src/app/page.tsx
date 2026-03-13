@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { getChannels, getMe, loginUrl, setToken } from "@/lib/api";
 import { Footer } from "@/components/Footer";
-import ThemeToggle from "@/components/ThemeToggle";
 
 const HOW_IT_WORKS = [
   {
@@ -71,7 +70,6 @@ export default function LandingPage() {
 
   return (
     <main className="min-h-screen bg-white dark:bg-zinc-950 text-zinc-900 dark:text-white">
-      <ThemeToggle />
 
       {/* Nav */}
       <nav className="flex items-center justify-between px-6 py-5 max-w-5xl mx-auto">

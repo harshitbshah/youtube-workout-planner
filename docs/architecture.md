@@ -364,6 +364,8 @@ reads `ADMIN_EMAIL` env var at request time and raises 403 if the current user's
 doesn't match. Env var is read at request time (not import time) for test isolation.
 
 ```
+POST /feedback                            → submit user feedback (category: feedback/help/bug; trimmed message; emails admin via Resend; 400 invalid category/blank message; 503 on email failure)
+
 GET  /admin/stats                         → aggregate stats + per-user rows
 DELETE /admin/users/{user_id}             → delete any user (blocks self-deletion)
 POST /admin/users/{user_id}/scan          → trigger full pipeline for any user
@@ -391,7 +393,23 @@ instead of raw SQLite. The business logic lives in `src/`; services handle DB I/
 api/services/scanner.py    uses src/scanner.py      → scans YouTube channels
 api/services/classifier.py uses src/classifier.py   → Anthropic Batch API classification
 api/services/planner.py    uses src/planner.py      → weekly plan generation
+api/services/email.py                               → send_weekly_plan_email() + send_feedback_email()
 ```
+
+### Email service (`api/services/email.py`)
+
+`send_weekly_plan_email(user, plan)` — sends a formatted HTML email with the week's
+workout plan via the Resend SDK. Uses `api/templates/weekly_plan_email.html` (Jinja2,
+table-based, inline CSS). Only sends if `user.email_notifications` is True. Called by
+APScheduler after each successful plan generation; errors are caught and logged — never
+break the pipeline.
+
+`send_feedback_email(user, category, message)` — sends admin-facing notification when a
+user submits feedback. `to` = `ADMIN_EMAIL`, `reply_to` = user's email (so admin can reply
+directly). Raises `RuntimeError` if `RESEND_API_KEY` is not set.
+
+Required env vars: `RESEND_API_KEY`, `FROM_EMAIL` (sender address), `APP_URL` (included
+in weekly plan email CTA link).
 
 ### Scanner pre-classification filters (reduce Anthropic API cost)
 
@@ -526,6 +544,21 @@ library pages for workout type, body focus, and difficulty tags.
 pattern. Props: `text`, `children`, `position?: "top" | "bottom"`. Used throughout
 the admin console. Hover delay is 300ms (`delay-300`) to reduce accidental triggers.
 
+`ThemeProvider` (`src/components/ThemeProvider.tsx`) — React context that reads system
+preference (`prefers-color-scheme: dark`) on first load, persists user choice in
+`localStorage`, and toggles the `dark` class on `<html>`. Exposes `useTheme()` hook.
+Single `useEffect` merges system detection, localStorage read, and system-change listener.
+The system-change listener guards against overriding an explicit user choice (`localStorage` check inside the handler, not at registration time).
+
+`ThemeToggle` (`src/components/ThemeToggle.tsx`) — floating sun/moon button (bottom-right,
+`z-40`, `bg-zinc-100 dark:bg-zinc-800`). Mounted once in `layout.tsx`; not imported on
+individual pages.
+
+`FeedbackWidget` (`src/components/FeedbackWidget.tsx`) — floating "Feedback" pill button
+(bottom-right corner, above ThemeToggle). Opens a modal with category select (feedback /
+help / bug) and a free-text textarea. Calls `POST /feedback`; on success shows a toast
+and closes. Shown on all post-login pages (dashboard, library, settings).
+
 ### Shared utilities (`src/lib/`)
 `lib/utils.ts` — `DAY_LABELS` constant (Mon–Sun labels array) and `formatDuration(sec)`
 helper. Previously duplicated in dashboard, library, and onboarding pages.
@@ -537,8 +570,8 @@ onboarding step 5 to produce a sensible default schedule before the user customi
 ### Frontend tests (`frontend/src/test/`)
 `test/setup.ts` — Vitest + `@testing-library/jest-dom` setup file.
 
-Run: `cd frontend && npm run test:run` — 62 tests covering `scheduleTemplates` logic,
-`ChannelManager` component behaviour, and onboarding page step flows.
+Run: `cd frontend && npm run test:run` — 71 tests covering `scheduleTemplates` logic,
+`ChannelManager` component behaviour, onboarding page step flows, ThemeProvider, and ThemeToggle.
 
 ### API client (`src/lib/api.ts`)
 Single file with all `fetch` calls and TypeScript types. Uses `credentials: "include"`

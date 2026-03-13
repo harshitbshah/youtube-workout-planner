@@ -13,7 +13,6 @@ import ChannelManager from "@/components/ChannelManager";
 import ScheduleEditor from "@/components/ScheduleEditor";
 import { buildSchedule, type LifeStage, type SessionLength } from "@/lib/scheduleTemplates";
 import { DAY_LABELS } from "@/lib/utils";
-import ThemeToggle from "@/components/ThemeToggle";
 
 // ─── Step Indicator ───────────────────────────────────────────────────────────
 
@@ -308,7 +307,6 @@ export default function OnboardingPage() {
 
   return (
     <main className="min-h-screen bg-white dark:bg-zinc-950 flex flex-col items-center justify-center px-4 py-12">
-      <ThemeToggle />
       <div className="w-full max-w-2xl">
         <StepIndicator internalStep={step} />
 
