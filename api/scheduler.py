@@ -6,6 +6,8 @@ Runs every Sunday at 18:00 UTC:
     1. Incremental scan all their channels
     2. Classify new videos
     3. Generate next week's plan
+    4. Send weekly plan email (if email_notifications=True)
+    5. Auto-publish to YouTube playlist (if credentials valid)
 
 Design intent
 ─────────────
@@ -38,7 +40,7 @@ scheduler = BackgroundScheduler(timezone="UTC")
 def _weekly_pipeline_for_user(user_id: str):
     """Run the full weekly pipeline for one user. Creates its own DB session."""
     from .database import SessionLocal
-    from .models import Channel
+    from .models import Channel, User
     from .services.classifier import classify_for_user
     from .services.scanner import scan_channel
     from .services.planner import generate_weekly_plan_for_user
@@ -70,14 +72,26 @@ def _weekly_pipeline_for_user(user_id: str):
                 logger.error(f"[weekly] Classification failed for user {user_id}: {e}")
 
         # Step 3: generate next week's plan
+        plan = None
         try:
-            generate_weekly_plan_for_user(session, user_id)
+            plan = generate_weekly_plan_for_user(session, user_id)
             logger.info(f"[weekly] user={user_id}: plan generated")
         except Exception as e:
             logger.error(f"[weekly] Plan generation failed for user {user_id}: {e}")
-            return  # can't publish without a plan
+            return  # can't publish or email without a plan
 
-        # Step 4: auto-publish if user has valid YouTube credentials
+        # Step 4: send weekly plan email
+        user = session.query(User).filter(User.id == user_id).first()
+        if user and user.email_notifications:
+            from .services.email import send_weekly_plan_email
+            try:
+                send_weekly_plan_email(user, plan)
+                logger.info(f"[weekly] user={user_id}: plan email sent to {user.email}")
+            except Exception as e:
+                logger.error(f"[weekly] user={user_id}: email failed — {e}")
+                # Never let email failure break the pipeline
+
+        # Step 5: auto-publish if user has valid YouTube credentials
         from .models import UserCredentials
         from .services.publisher import (
             YouTubeAccessRevokedError,

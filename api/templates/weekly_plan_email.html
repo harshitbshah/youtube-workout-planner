@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="color-scheme" content="light" />
+  <title>Your weekly workout plan</title>
+</head>
+<body style="margin:0;padding:0;background-color:#f9fafb;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased;">
+
+  <!-- Outer wrapper -->
+  <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#f9fafb;">
+    <tr>
+      <td align="center" style="padding:32px 16px;">
+
+        <!-- Card -->
+        <table width="600" cellpadding="0" cellspacing="0" border="0"
+               style="max-width:600px;width:100%;background-color:#ffffff;border-radius:12px;
+                      border:1px solid #e5e7eb;overflow:hidden;">
+
+          <!-- ── Header bar ── -->
+          <tr>
+            <td style="background-color:#18181b;padding:20px 32px;">
+              <p style="margin:0;font-size:15px;font-weight:700;color:#ffffff;
+                        letter-spacing:-0.2px;line-height:1;">Plan My Workout</p>
+            </td>
+          </tr>
+
+          <!-- ── Hero ── -->
+          <tr>
+            <td style="padding:32px 32px 20px;">
+              <h1 style="margin:0 0 6px;font-size:22px;font-weight:700;color:#111827;
+                         line-height:1.3;letter-spacing:-0.4px;">
+                Your plan for the week of {{ week_start }}
+              </h1>
+              <p style="margin:0;font-size:14px;color:#6b7280;line-height:1.5;">
+                Hi {{ display_name }} — here's your
+                {% if active_days == 0 %}rest week{% else %}{{ active_days }}-day plan{% endif %}
+                {% if total_duration_min > 0 %}({{ total_duration_min }} min total){% endif %}.
+              </p>
+            </td>
+          </tr>
+
+          <!-- ── Day rows ── -->
+          <tr>
+            <td style="padding:0 32px 8px;">
+
+              {% for entry in days %}
+
+              {% if entry.is_rest %}
+              <!-- Rest day row — compact hairline -->
+              <table width="100%" cellpadding="0" cellspacing="0" border="0"
+                     style="margin-bottom:4px;">
+                <tr>
+                  <td style="padding:5px 2px;">
+                    <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                      <tr>
+                        <td style="width:40%;border-bottom:1px solid #f3f4f6;vertical-align:middle;"></td>
+                        <td style="white-space:nowrap;padding:0 10px;text-align:center;vertical-align:middle;">
+                          <span style="font-size:11px;color:#d1d5db;letter-spacing:0.3px;">
+                            {{ entry.day }} &middot; Recovery
+                          </span>
+                        </td>
+                        <td style="width:40%;border-bottom:1px solid #f3f4f6;vertical-align:middle;"></td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+
+              {% else %}
+              <!-- Active day row -->
+              <table width="100%" cellpadding="0" cellspacing="0" border="0"
+                     style="margin-bottom:8px;border:1px solid #e5e7eb;border-radius:8px;
+                            overflow:hidden;">
+                <!-- Day label bar -->
+                <tr>
+                  <td style="padding:8px 14px;background-color:#f9fafb;
+                             border-bottom:1px solid #e5e7eb;">
+                    <p style="margin:0;font-size:11px;font-weight:700;color:#9ca3af;
+                              text-transform:uppercase;letter-spacing:0.7px;">
+                      {{ entry.day }}
+                    </p>
+                  </td>
+                </tr>
+                <!-- Video content -->
+                <tr>
+                  <td style="padding:12px 14px;">
+                    <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                      <tr>
+                        {% if entry.thumbnail_url %}
+                        <!-- Thumbnail -->
+                        <td style="vertical-align:top;width:100px;padding-right:12px;">
+                          <a href="{{ entry.video.url }}">
+                            <img src="{{ entry.thumbnail_url }}"
+                                 width="100" height="56"
+                                 alt="{{ entry.video.title }}"
+                                 style="display:block;border-radius:5px;
+                                        border:0;width:100px;height:56px;
+                                        object-fit:cover;" />
+                          </a>
+                        </td>
+                        {% endif %}
+                        <!-- Title + meta -->
+                        <td style="vertical-align:top;padding-right:12px;">
+                          <a href="{{ entry.video.url }}"
+                             style="font-size:14px;font-weight:600;color:#111827;
+                                    text-decoration:none;line-height:1.4;
+                                    display:block;margin-bottom:4px;">
+                            {{ entry.video.title }}
+                          </a>
+                          <p style="margin:0;font-size:12px;color:#9ca3af;line-height:1.4;">
+                            {{ entry.video.channel_name }}
+                            {% if entry.duration_str %}
+                              &nbsp;·&nbsp;{{ entry.duration_str }}
+                            {% endif %}
+                          </p>
+                        </td>
+                        <!-- Workout type pill -->
+                        <td style="vertical-align:top;white-space:nowrap;text-align:right;
+                                   width:1%;">
+                          <span style="display:inline-block;
+                                       background-color:{{ entry.type_style.bg }};
+                                       color:{{ entry.type_style.color }};
+                                       font-size:11px;font-weight:700;
+                                       padding:3px 9px;border-radius:5px;
+                                       text-transform:capitalize;letter-spacing:0.2px;">
+                            {{ entry.video.workout_type or 'Other' }}
+                          </span>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+              {% endif %}
+
+              {% endfor %}
+
+            </td>
+          </tr>
+
+          <!-- ── CTA ── -->
+          <tr>
+            <td style="padding:16px 32px 32px;">
+              <a href="{{ dashboard_url }}"
+                 style="display:inline-block;background-color:#18181b;color:#ffffff;
+                        text-decoration:none;font-size:14px;font-weight:600;
+                        padding:12px 22px;border-radius:8px;letter-spacing:-0.1px;">
+                Open my dashboard &rarr;
+              </a>
+            </td>
+          </tr>
+
+          <!-- ── Divider ── -->
+          <tr>
+            <td style="border-top:1px solid #f3f4f6;"></td>
+          </tr>
+
+          <!-- ── Footer ── -->
+          <tr>
+            <td style="padding:20px 32px;background-color:#fafafa;">
+              <p style="margin:0;font-size:12px;color:#9ca3af;line-height:1.7;">
+                You're receiving this because you have a Plan My Workout account.<br />
+                <a href="{{ unsubscribe_url }}"
+                   style="color:#9ca3af;text-decoration:underline;">
+                  Manage notification preferences
+                </a>
+                &nbsp;·&nbsp;
+                <a href="{{ dashboard_url }}"
+                   style="color:#9ca3af;text-decoration:underline;">
+                  planmyworkout.app
+                </a>
+              </p>
+            </td>
+          </tr>
+
+        </table>
+        <!-- /Card -->
+
+      </td>
+    </tr>
+  </table>
+  <!-- /Outer wrapper -->
+
+</body>
+</html>

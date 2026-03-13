@@ -86,6 +86,10 @@ class PatchMeRequest(BaseModel):
     display_name: str
 
 
+class PatchMeNotificationsRequest(BaseModel):
+    email_notifications: bool
+
+
 class MeResponse(BaseModel):
     id: str
     email: str
@@ -93,6 +97,7 @@ class MeResponse(BaseModel):
     youtube_connected: bool
     credentials_valid: bool
     is_admin: bool = False
+    email_notifications: bool = True
 
 
 # ─── Publish ───────────────────────────────────────────────────────────────────

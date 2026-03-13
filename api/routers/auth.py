@@ -21,7 +21,7 @@ from sqlalchemy.orm import Session
 from ..crypto import encrypt, decrypt
 from ..dependencies import get_current_user, get_db
 from ..models import User, UserCredentials
-from ..schemas import MeResponse, PatchMeRequest
+from ..schemas import MeResponse, PatchMeNotificationsRequest, PatchMeRequest
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -148,6 +148,7 @@ def _me_response(user: User, db: Session) -> MeResponse:
         youtube_connected=bool(creds and creds.youtube_refresh_token),
         credentials_valid=creds.credentials_valid if creds else True,
         is_admin=bool(admin_email and user.email == admin_email),
+        email_notifications=user.email_notifications,
     )
 
 
@@ -195,6 +196,18 @@ async def delete_me(
     db.delete(current_user)
     db.commit()
     request.session.clear()
+
+
+@router.patch("/me/notifications", response_model=MeResponse)
+def patch_me_notifications(
+    body: PatchMeNotificationsRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Update the current user's email notification preference."""
+    current_user.email_notifications = body.email_notifications
+    db.commit()
+    return _me_response(current_user, db)
 
 
 @router.post("/logout")

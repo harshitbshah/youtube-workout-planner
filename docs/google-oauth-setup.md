@@ -56,6 +56,25 @@ when sharing more broadly.
 
 ---
 
+## Custom Domain Migration (2026-03-13)
+
+Migrated frontend from `planmyworkout.vercel.app` → `planmyworkout.app` (purchased on Hostinger).
+
+**Railway env vars updated:**
+- `FRONTEND_URL` → `https://planmyworkout.app`
+- `FRONTEND_ORIGINS` → `https://planmyworkout.app`
+- `GOOGLE_REDIRECT_URI` remains `https://planmyworkout-api.up.railway.app/auth/google/callback` (backend, unchanged)
+
+**Google Cloud Console updated:**
+- Authorized JavaScript origins: added `https://planmyworkout.app`
+- Removed `https://planmyworkout.vercel.app` entries
+
+**Domain ownership:** Verified via Google Search Console DNS TXT record on Hostinger.
+
+**Google OAuth verification:** Re-submitted to Trust & Safety team on 2026-03-13 with updated homepage `https://planmyworkout.app`. Review in progress.
+
+---
+
 ## Manual Sign-In E2E Checklist
 
 Test this after any auth or redirect change:

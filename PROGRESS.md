@@ -1,10 +1,29 @@
 # Progress
 
 ## Status
-Phases 1–5 complete + admin console + charts + guide page + mobile UX complete. Phase A complete. Phase B complete. Phase D F5+F6 complete. Backlog items T1+T2+S1 complete.
-**387/387 tests passing** (325 backend + 62 frontend).
+Phases 1–5 complete + admin console + charts + guide page + mobile UX complete. Phase A complete. Phase B complete. Phase C complete. Phase D F5+F6 complete. Backlog items T1+T2+S1 complete.
+**396/396 tests passing** (334 backend + 62 frontend).
 Both Railway (backend) and Vercel (frontend) live and functional on `main`.
 **Ready for first users** — Google OAuth sensitive scope review in progress (4–6 week wait). Users see "unverified app" warning until review completes.
+
+**Done this session (2026-03-13, continued, part 3):**
+- Phase C (weekly plan email) complete — code fully implemented, awaiting Resend account + `planmyworkout.app` domain verification to go live ✅
+- `api/services/email.py` — `send_weekly_plan_email()`, Jinja2 template rendering, Resend SDK integration ✅
+- `api/templates/weekly_plan_email.html` — table-based HTML email, inline CSS, workout type pills, recovery rows ✅
+- `alembic/versions/015_add_email_notifications.py` — `users.email_notifications` boolean (default True) ✅
+- `api/scheduler.py` — step 4 calls `send_weekly_plan_email` after plan generation; errors never break pipeline ✅
+- `PATCH /auth/me/notifications` endpoint — toggle email preference; exposed in `GET /auth/me` ✅
+- Settings page `#notifications` section — toggle with immediate save ✅
+- 9 new unit tests in `tests/api/test_email.py` — all passing ✅
+- Railway env vars needed: `RESEND_API_KEY`, `FROM_EMAIL=plan@planmyworkout.app`, `APP_URL=https://planmyworkout.app`
+
+**Done this session (2026-03-13, continued, part 2):**
+- Migrated frontend domain from `planmyworkout.vercel.app` → `planmyworkout.app` (Hostinger) ✅
+- Updated Railway env vars: `FRONTEND_URL`, `FRONTEND_ORIGINS` ✅
+- Updated Google Cloud Console OAuth authorized origins ✅
+- Verified `planmyworkout.app` ownership via Google Search Console (DNS TXT record) ✅
+- Re-submitted Google OAuth verification with updated homepage to Trust & Safety ✅
+- Updated `docs/google-oauth-setup.md` with migration notes ✅
 
 **Done this session (2026-03-13, continued):**
 - Merged `origin/claude/exercise-plan-with-gifs-b1bRg` into `main` — brought in active-user gate, 3 new spec files (exercise-breakdown-with-gifs, channel-recommendations, ai-profile-enrichment-and-coach-chat), docs/specs/TODO.md expansion ✅
@@ -353,8 +372,8 @@ on_progress callback, batch resume logic, batch ID cleared on completion.
   - OAuth redirect working (`/auth/google` → Google consent screen)
   - All env vars set and verified via `railway variables`
   - Railway CLI installed (`npm install -g @railway/cli`) and linked to project `endearing-abundance`
-- **Vercel (frontend):** ✅ Live at `https://planmyworkout.vercel.app`
-  - Branch: `feat/web-app`, root directory: `frontend`
+- **Vercel (frontend):** ✅ Live at `https://planmyworkout.app` (custom domain, Hostinger DNS)
+  - Branch: `main`, root directory: `frontend`
   - `NEXT_PUBLIC_API_URL` set to `https://planmyworkout-api.up.railway.app`
 
 ## Deployment Bug Log

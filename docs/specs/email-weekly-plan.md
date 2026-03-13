@@ -1,6 +1,6 @@
 # Weekly Plan Email — Design Spec
 
-**Status:** Deferred — awaiting prerequisites (see section below)
+**Status:** ✅ Implemented (2026-03-13) — code complete, awaiting Resend account + domain verification to go live
 **Trigger:** Sunday cron in `api/scheduler.py`, immediately after `generate_weekly_plan_for_user`
 **Provider:** Resend API (Python SDK)
 **Last updated:** 2026-03-11
@@ -26,7 +26,7 @@ Once done, bring back:
 2. Confirmation the domain is verified in Resend
 3. The chosen FROM_EMAIL address
 
-Then set on Railway: `RESEND_API_KEY`, `FROM_EMAIL`, `APP_URL=https://planmyworkout.vercel.app`
+Then set on Railway: `RESEND_API_KEY`, `FROM_EMAIL`, `APP_URL=https://planmyworkout.app`
 
 ### Shortcut for testing only (not production)
 Resend provides a shared sending domain (`onboarding@resend.dev`) that works immediately
@@ -95,7 +95,7 @@ they're doing all week without opening the app.
 | Var | Example | Notes |
 |---|---|---|
 | `RESEND_API_KEY` | `re_xxxxxxxxxxxx` | From Resend dashboard |
-| `FROM_EMAIL` | `plan@planmyworkout.app` | Must be a verified Resend domain |
+| `FROM_EMAIL` | `hello@planmyworkout.app` | Must be a verified Resend domain |
 | `APP_URL` | `https://planmyworkout.vercel.app` | Used to build dashboard link in email |
 
 ---

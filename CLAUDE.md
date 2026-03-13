@@ -194,6 +194,7 @@ cd frontend && npm run test:run
 | GET | `/auth/google/callback` | No | OAuth callback, set session |
 | GET | `/auth/me` | Yes | Current user profile |
 | PATCH | `/auth/me` | Yes | Update display name |
+| PATCH | `/auth/me/notifications` | Yes | Update email_notifications preference |
 | DELETE | `/auth/me` | Yes | Delete account + all data |
 | POST | `/auth/logout` | Yes | Clear session |
 | GET | `/channels` | Yes | List user's channels |

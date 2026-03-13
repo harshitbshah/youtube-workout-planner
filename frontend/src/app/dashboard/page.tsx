@@ -63,18 +63,12 @@ function VideoCard({ video }: { video: VideoSummary }) {
   );
 }
 
-function RestDayCard() {
+function RecoveryStrip() {
   return (
-    <div className="rounded-lg border border-zinc-800 bg-zinc-900/40 p-4 flex items-center justify-center min-h-[180px]">
-      <p className="text-zinc-600 text-sm">Rest day</p>
-    </div>
-  );
-}
-
-function EmptyDayCard() {
-  return (
-    <div className="rounded-lg border border-dashed border-zinc-800 bg-zinc-900/20 p-4 flex items-center justify-center min-h-[180px]">
-      <p className="text-zinc-700 text-sm">No video assigned</p>
+    <div className="flex items-center gap-3 py-2">
+      <div className="flex-1 h-px bg-zinc-800" />
+      <span className="text-xs text-zinc-700 shrink-0">Recovery</span>
+      <div className="flex-1 h-px bg-zinc-800" />
     </div>
   );
 }
@@ -438,10 +432,8 @@ export default function DashboardPage() {
                 </p>
                 {day.video ? (
                   <VideoCard video={day.video} />
-                ) : day.day === "sunday" ? (
-                  <RestDayCard />
                 ) : (
-                  <EmptyDayCard />
+                  <RecoveryStrip />
                 )}
               </div>
             ))}

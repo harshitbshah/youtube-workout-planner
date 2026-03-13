@@ -11,6 +11,7 @@ import {
   patchMe,
   deleteMe,
   updateSchedule,
+  updateEmailNotifications,
   logout,
   type User,
   type ChannelResponse,
@@ -41,6 +42,10 @@ export default function SettingsPage() {
   const [savingName, setSavingName] = useState(false);
   const [nameStatus, setNameStatus] = useState<"idle" | "ok" | "err">("idle");
 
+  // Notifications
+  const [emailNotifications, setEmailNotifications] = useState(true);
+  const [savingNotifications, setSavingNotifications] = useState(false);
+
   // Schedule
   const [savingSchedule, setSavingSchedule] = useState(false);
   const [scheduleStatus, setScheduleStatus] = useState<"idle" | "ok" | "err">("idle");
@@ -54,6 +59,7 @@ export default function SettingsPage() {
       .then(([u, ch, sched]) => {
         setUser(u);
         setDisplayName(u.display_name ?? "");
+        setEmailNotifications(u.email_notifications);
         setChannels(ch);
         setSchedule(sched.schedule);
       })
@@ -73,6 +79,17 @@ export default function SettingsPage() {
       setNameStatus("err");
     } finally {
       setSavingName(false);
+    }
+  }
+
+  async function handleToggleNotifications(checked: boolean) {
+    setSavingNotifications(true);
+    try {
+      const updated = await updateEmailNotifications(checked);
+      setUser(updated);
+      setEmailNotifications(updated.email_notifications);
+    } finally {
+      setSavingNotifications(false);
     }
   }
 
@@ -159,6 +176,41 @@ export default function SettingsPage() {
               </div>
             </div>
           </SectionCard>
+
+          {/* Notifications */}
+          <div id="notifications">
+            <SectionCard title="Notifications">
+              <label className="flex items-center gap-3 cursor-pointer">
+                <div className="relative">
+                  <input
+                    type="checkbox"
+                    className="sr-only"
+                    checked={emailNotifications}
+                    disabled={savingNotifications}
+                    onChange={(e) => handleToggleNotifications(e.target.checked)}
+                  />
+                  <div
+                    className={`w-10 h-6 rounded-full transition ${
+                      emailNotifications ? "bg-white" : "bg-zinc-700"
+                    }`}
+                  />
+                  <div
+                    className={`absolute top-1 w-4 h-4 rounded-full transition-all ${
+                      emailNotifications
+                        ? "left-5 bg-zinc-900"
+                        : "left-1 bg-zinc-400"
+                    }`}
+                  />
+                </div>
+                <span className="text-sm text-zinc-300">
+                  Send me a weekly plan summary every Sunday evening
+                </span>
+              </label>
+              {savingNotifications && (
+                <p className="text-xs text-zinc-500 mt-2">Saving…</p>
+              )}
+            </SectionCard>
+          </div>
 
           {/* Channels */}
           <SectionCard title="Channels">

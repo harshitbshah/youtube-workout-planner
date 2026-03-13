@@ -58,6 +58,11 @@ export const loginUrl = () => `${API_BASE}/auth/google`;
 export const patchMe = (display_name: string) =>
   apiFetch<User>("/auth/me", { method: "PATCH", body: JSON.stringify({ display_name }) });
 export const deleteMe = () => apiFetch<void>("/auth/me", { method: "DELETE" });
+export const updateEmailNotifications = (email_notifications: boolean) =>
+  apiFetch<User>("/auth/me/notifications", {
+    method: "PATCH",
+    body: JSON.stringify({ email_notifications }),
+  });
 
 // ─── Channels ────────────────────────────────────────────────────────────────
 
@@ -136,6 +141,7 @@ export interface User {
   youtube_connected: boolean;
   credentials_valid: boolean;
   is_admin: boolean;
+  email_notifications: boolean;
 }
 
 export interface ChannelCreate {

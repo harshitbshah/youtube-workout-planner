@@ -27,6 +27,7 @@ class User(Base):
     created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
     last_active_at = Column(DateTime(timezone=True), nullable=True)
     last_scan_error = Column(Text, nullable=True)  # set on pipeline failure, cleared on success
+    email_notifications = Column(Boolean, nullable=False, default=True, server_default="true")
 
     channels = relationship("Channel", back_populates="user", cascade="all, delete-orphan")
     schedules = relationship("Schedule", back_populates="user", cascade="all, delete-orphan")
