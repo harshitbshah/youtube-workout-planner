@@ -5,6 +5,11 @@
 2. Run `git log --oneline -10` to see recent commits
 3. Continue from where the last session left off
 
+## Testing workflow
+The user does **not** test locally. All end-to-end testing happens on Vercel (frontend)
+and Railway (backend) after pushing to `main`. A change is not "done" until it is
+committed and pushed — not just working in a local dev server.
+
 ## Checkpoint — MANDATORY when user says "checkpoint"
 
 When the user says "let's checkpoint" or "take a checkpoint", run the following in order:
