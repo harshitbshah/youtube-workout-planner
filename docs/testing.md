@@ -29,13 +29,14 @@ Run before every commit:
 cd frontend && npm run test:run
 ```
 
-Current: **378/378 passing** (316 backend + 62 frontend)
+Current: **396/396 passing** (334 backend + 62 frontend)
 
 New test files added:
 - `tests/api/test_jobs.py` — `POST /jobs/scan` (202, 400 no channels, 503 no key, 401 unauth, channel count); `GET /jobs/status` (no pipeline, unauthenticated, reflects live state); scanner filters (upper duration cap, title blocklist); classifier (batch cap limits to 300, `on_progress` callback during polling, resume existing batch, batch ID cleared on completion)
 - `tests/api/test_admin.py` — 21 tests: stats shape, user/library counts, last_active_at, AI usage aggregation (7d + all-time), 403 for non-admin, 403 with no ADMIN_EMAIL set, delete user, cannot delete self, 404 nonexistent, retry scan (no channels → 400, with channels → 202), create/list/delete/deactivate announcements, active announcement for regular user, null when none active, inactive not returned
 - `tests/integration/test_jobs_api.py` — 5 integration cases for `POST /jobs/scan` against real Postgres (user isolation, FK constraints, channel count)
 - `tests/integration/test_schema.py` — updated to expect Alembic version "003" (update to "004" after next migration run)
+- `tests/api/test_email.py` — 9 tests for `send_weekly_plan_email`: subject line, HTML content (video titles + URLs), recipient address, missing API key error, display name fallback, FROM_EMAIL env var, all-rest plan, rest days excluded from output
 
 ---
 
