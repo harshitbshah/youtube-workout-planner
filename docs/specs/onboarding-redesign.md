@@ -1,8 +1,12 @@
 # Onboarding Redesign — Design Spec
 
-**Status:** Ready to implement
+**Status:** ✅ Implemented (2026-03-11)
 **Replaces:** `frontend/src/app/onboarding/page.tsx` (current 3-step wizard)
-**Last updated:** 2026-03-10
+**Last updated:** 2026-03-13
+
+> **Subsequent specs that affect this flow:**
+> - [ai-profile-enrichment.md](ai-profile-enrichment.md) — Phase O1 inserts a new **step 6 ("Anything else?")** between schedule preview and channels, making the total **8 steps** (not 7). O1 also persists `life_stage` and `goal` to the DB via `PATCH /auth/me`.
+> - [channel-recommendations.md](channel-recommendations.md) — Phase R1 replaces the hardcoded channel suggestion chips in step 6/7 with a dynamic `GET /channels/curated` card grid. The `suggestions?: string[]` prop on `ChannelManager` becomes `showCurated / profile / goal / scheduleTypes` props.
 
 ---
 
@@ -231,6 +235,10 @@ Sun  · Recovery day
 
 **Curated suggestions row** (shown above the search bar):
 
+> **Superseded by Phase R1:** The hardcoded chips below will be replaced by a dynamic
+> `GET /channels/curated` card grid once [channel-recommendations.md](channel-recommendations.md)
+> Phase R1 is implemented. Until then, the hardcoded list is used as-is.
+
 These are hardcoded display names + channel IDs. Show as horizontal scrollable chips
 that add the channel on tap (same as clicking search result). Filter by profile:
 
@@ -317,9 +325,14 @@ from feeling overwhelming.)
 - The backend API is unchanged.
 - The routing logic (`new user → /onboarding`, returning user → /dashboard`) is unchanged
   — it lives in `api/routers/auth.py` and the landing page `useEffect`.
-- No new DB columns needed. Life stage and goal are onboarding-only UI state; they
-  don't need to be persisted (they only inform the generated schedule, which is saved
-  as normal via `PUT /schedule`).
+
+> **Superseded by Phase O1:** `life_stage` and `goal` are now persisted to the DB
+> via migration 009 and `PATCH /auth/me`. The claim below is no longer accurate
+> once Phase O1 is implemented.
+
+- ~~No new DB columns needed. Life stage and goal are onboarding-only UI state; they
+  don't need to be persisted.~~ — **Superseded by Phase O1.** See
+  [ai-profile-enrichment.md](ai-profile-enrichment.md).
 
 ---
 

@@ -285,7 +285,7 @@ None. (Could later show "X classified by rules, Y by AI" in admin stats — defe
 - `api/services/classifier.py` — check budget before submitting
 - `api/routers/jobs.py` — surface 429 response
 - `api/routers/admin.py` — allow admin to update budget
-- `alembic/versions/008_add_user_monthly_classify_budget.py`
+- `alembic/versions/013_add_monthly_classify_budget.py`
 
 ### Schema change
 ```python
@@ -294,7 +294,7 @@ monthly_classify_budget = Column(Integer, default=500, nullable=False, server_de
 # 0 = unlimited (admin override)
 ```
 
-### Migration (008)
+### Migration (013)
 ```python
 def upgrade():
     op.add_column("users", sa.Column("monthly_classify_budget", sa.Integer(),
@@ -359,7 +359,7 @@ This requires two changes:
 - `api/models.py` — new `GlobalClassificationCache` table
 - `api/services/scanner.py` — fix dedup logic for shared channels
 - `api/services/classifier.py` — check cache before batch, write cache after
-- `alembic/versions/009_add_global_classification_cache.py`
+- `alembic/versions/014_add_global_classification_cache.py`
 
 ### Schema change — new table
 ```python
@@ -374,7 +374,7 @@ class GlobalClassificationCache(Base):
     cached_at        = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
 ```
 
-### Migration (009)
+### Migration (014)
 ```python
 def upgrade():
     op.create_table(
@@ -464,12 +464,15 @@ None directly. Admin stats page could show "Cache hit rate: X%" — defer to bac
 
 ## Migration Sequence
 
-| Migration | Number | Adds |
-|-----------|--------|------|
-| First-scan cap | 006 | `channels.first_scan_done` |
-| Inactive channel skip | 007 | `channels.last_video_published_at` |
-| Monthly budget | 008 | `users.monthly_classify_budget` |
-| Global cache | 009 | `global_classification_cache` table |
+| Migration | Number | Adds | Status |
+|-----------|--------|------|--------|
+| First-scan cap | 006 | `channels.first_scan_done` | ✅ Live |
+| Inactive channel skip | 007 | `channels.last_video_published_at` | ✅ Live |
+| Graceful failure | 008 | `users.last_scan_error` | ✅ Live |
+| Monthly budget (F7) | 013 | `users.monthly_classify_budget` | ⏳ Deferred |
+| Global cache (F8) | 014 | `global_classification_cache` table | ⏳ Deferred |
+
+> Note: 009–012 are claimed by other specs. See [migrations-roadmap.md](migrations-roadmap.md) for the full sequence.
 
 Run `alembic upgrade head` after adding migrations.
 

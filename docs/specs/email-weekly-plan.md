@@ -85,7 +85,7 @@ they're doing all week without opening the app.
 | `api/models.py` | Add `email_notifications` boolean to `User` (default `True`) |
 | `api/routers/auth.py` | Expose `email_notifications` in `GET /auth/me` response |
 | `frontend/src/app/settings/page.tsx` | Add email preference toggle in Profile section |
-| `alembic/` | New migration for `users.email_notifications` column |
+| `alembic/versions/015_add_email_notifications.py` | Migration 015: `users.email_notifications` boolean (default `True`) |
 | `requirements.txt` | Add `resend` package |
 
 ---

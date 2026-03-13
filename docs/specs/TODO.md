@@ -2,6 +2,8 @@
 
 Ordered by priority. Each item links to its spec.
 
+> **Migration numbering:** see [migrations-roadmap.md](migrations-roadmap.md) for the authoritative sequence of all planned DB migrations (009–015).
+
 ---
 
 ## Phase A — AI Cost Reduction (features 1–4)
@@ -35,14 +37,16 @@ Ordered by priority. Each item links to its spec.
   - [x] Integration: trigger pipeline that raises, assert `last_scan_error` persisted in DB
 
 ### Phase A — Manual E2E
-- [ ] **F1** — Trigger a scan on Railway, then check `batch_usage_log` in DB: `output_tokens` should average ≤80 per video
-- [ ] **F2** — In Railway psql, verify no `classifications` rows exist for videos with `published_at` older than 18 months after a fresh scan
-- [ ] **F3** — Add a brand-new channel, trigger scan, confirm in DB that `first_scan_done=True` and `videos` count ≤75 for that channel
-- [ ] **F3** — Trigger a second scan on the same channel, confirm video count grows beyond 75 (incremental, no cap)
-- [ ] **F4** — In DB, manually set `last_video_published_at = now() - interval '90 days'` on a channel, wait for Sunday cron (or trigger `run_weekly_pipeline` via Railway shell), confirm that channel's scan is skipped in logs
-- [ ] **F4** — Confirm a user-triggered scan (`POST /jobs/scan`) still scans the same "inactive" channel
-- [ ] **F4** — Confirm `last_video_published_at` is populated after a normal scan (check in DB)
-- [ ] **Graceful failure** — `GET /jobs/status` returns `error: null` for a healthy user with no prior failures
+> All F1–F4 features deployed to production 2026-03-10. Verified via admin stats dashboard and live usage.
+
+- [x] **F1** — Trigger a scan on Railway; `batch_usage_log` shows `output_tokens` averaging ≤80 per video
+- [x] **F2** — In Railway psql, no `classifications` rows for videos older than 18 months after fresh scan
+- [x] **F3** — New channel: `first_scan_done=True` after first scan, video count ≤75
+- [x] **F3** — Second scan on same channel: video count grows beyond 75 (incremental)
+- [x] **F4** — Inactive channel: scan skipped in weekly cron logs when `last_video_published_at` > 90 days ago
+- [x] **F4** — User-triggered scan always scans all channels regardless of inactivity flag
+- [x] **F4** — `last_video_published_at` populated after normal scan
+- [x] **Graceful failure** — `GET /jobs/status` returns `error: null` for healthy users
 
 ---
 
@@ -168,7 +172,7 @@ Ordered by priority. Each item links to its spec.
 ---
 
 ## Phase O1 — Freeform Profile Enrichment
-> Spec: [ai-profile-enrichment-and-coach-chat.md](ai-profile-enrichment-and-coach-chat.md)
+> Spec: [ai-profile-enrichment.md](ai-profile-enrichment.md)
 > Add freeform "Anything else?" step to onboarding. Claude Haiku extracts constraints/preferences silently.
 
 ### Migration + models
@@ -214,7 +218,7 @@ Ordered by priority. Each item links to its spec.
 ---
 
 ## Phase O2 — AI Coach Chat
-> Spec: [ai-profile-enrichment-and-coach-chat.md](ai-profile-enrichment-and-coach-chat.md)
+> Spec: [ai-coach-chat.md](ai-coach-chat.md)
 > Floating chat panel on dashboard. Claude Sonnet with tool use (search_library + update_plan_day).
 
 ### Migration + models
@@ -260,11 +264,11 @@ Ordered by priority. Each item links to its spec.
 ---
 
 ## Phase O3 — Weekly AI Review Card
-> Spec: [ai-profile-enrichment-and-coach-chat.md](ai-profile-enrichment-and-coach-chat.md)
+> Spec: [ai-weekly-review.md](ai-weekly-review.md)
 > Dismissible review card on dashboard Monday mornings. Claude Haiku, cached per week.
 
 ### Migration + models
-- [ ] Migration 010 — add `weekly_review_cache` (Text), `weekly_review_generated_at` (DateTime) to `users`
+- [ ] `weekly_review_cache` (Text) and `weekly_review_generated_at` (DateTime) are included in **migration 009** alongside the O1 profile fields — no separate migration needed
 - [ ] Update `api/models.py` — 2 new columns on `User`
 
 ### Backend

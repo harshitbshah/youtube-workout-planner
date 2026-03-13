@@ -294,7 +294,7 @@ curated list. Options (pick one at implementation time):
 a one-line addition to the scanner and makes the whole system richer (settings page,
 library page could use it too).
 
-### Migration for Option A (migration 010 or 011)
+### Migration for Option A (migration 011)
 
 ```python
 # Add to channels table:
@@ -316,7 +316,7 @@ swapped), that's a positive signal.
 Track these signals → identify which channels consistently produce "kept" videos →
 surface those channels to similar users.
 
-### New table: `video_feedback` (migration 011 or 012)
+### New table: `video_feedback` (migration 012)
 
 ```python
 class VideoFeedback(Base):
@@ -445,8 +445,8 @@ Until R3 has data (< ~20 users), blended_score degrades gracefully:
 | `scripts/discover_channels.py` | One-off: YouTube API search → `channel_candidates.json` |
 | `api/data/curated_channels.json` | Committed curated channel data (output of manual curation) |
 | `api/services/recommender.py` | Scoring functions: `score_channel()`, `content_match_channels()`, `similar_user_channels()`, `blended_recommendations()` |
-| `alembic/versions/010_add_channel_thumbnail.py` | Add `thumbnail_url` to `channels` table |
-| `alembic/versions/011_add_user_profile.py` | Add `life_stage` + `goal` to `users` table |
+| `alembic/versions/011_add_channel_thumbnail.py` | Add `thumbnail_url` to `channels` table |
+| ~~`011_add_user_profile.py`~~ | ~~Add `life_stage` + `goal` to `users` table~~ — **removed**, covered by migration 009 (Phase O1). See [migrations-roadmap.md](migrations-roadmap.md). |
 | `alembic/versions/012_add_video_feedback.py` | `video_feedback` table |
 | `tests/api/test_recommender.py` | Unit tests for scoring functions |
 | `tests/api/test_curated_channels.py` | Unit tests for `GET /channels/curated` endpoint |
@@ -514,7 +514,7 @@ Until R3 has data (< ~20 users), blended_score degrades gracefully:
 ### Phase R1 (ship first — standalone, no DB changes beyond thumbnail)
 
 1. Run `scripts/discover_channels.py` → curate `api/data/curated_channels.json` manually
-2. Migration 010: `channels.thumbnail_url`; update scanner to populate it
+2. Migration 011: `channels.thumbnail_url`; update scanner to populate it
 3. `api/services/recommender.py` — `score_channel()` + `load_curated()` only
 4. `GET /channels/curated` endpoint + Pydantic schema
 5. Unit tests 1–5, 13–16 — all passing
@@ -532,7 +532,7 @@ Until R3 has data (< ~20 users), blended_score degrades gracefully:
 
 ### Phase R3 (add after R2, requires user base)
 
-14. Store `life_stage` + `goal` in onboarding → `PATCH /auth/me`; migration 011
+14. `life_stage` + `goal` are already on the `users` table via migration 009 (Phase O1) — no additional migration needed. If O1 is not yet deployed, do it first.
 15. Migration 012: `video_feedback` table
 16. Record `swapped` in `PATCH /plan/{day}`; record `kept` in `POST /plan/generate`
 17. `channel_quality_score()` + `similar_user_channels()` in `recommender.py`
@@ -544,7 +544,7 @@ Until R3 has data (< ~20 users), blended_score degrades gracefully:
 
 ## Notes for implementing session
 
-- **Migration numbers:** check `alembic/versions/` — currently at 008. The exercise-breakdown spec claims 009. Confirm actual state before numbering migrations here (010, 011, 012 assumed).
+- **Migration numbers:** see [migrations-roadmap.md](migrations-roadmap.md) for the authoritative sequence. This spec uses 011 (thumbnail_url) and 012 (video_feedback). Migration 009 (O1 profile fields) already covers `life_stage` + `goal` on `users`.
 - **curated_channels.json size:** ~35 channels × ~10 fields = ~15 KB. Fine to commit.
 - **Thumbnail URL stability:** YouTube channel thumbnail URLs are stable for years. No TTL/refresh needed for v1. If a thumbnail 404s, `<img>` falls back gracefully to a broken-image placeholder — add `onError` to swap to a grey avatar div.
 - **Cross-user channel data in R2:** `GET /channels/recommended` queries classifications across all users. This is aggregate usage data (channel profiles), not user-identifiable. No privacy concern, but worth noting in architecture docs.

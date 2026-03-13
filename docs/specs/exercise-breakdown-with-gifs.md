@@ -75,7 +75,7 @@ overhead for v1.
 
 ## Data model
 
-### New table: `exercise_breakdowns` (migration 009)
+### New table: `exercise_breakdowns` (migration 010)
 
 ```python
 class ExerciseBreakdown(Base):
@@ -292,7 +292,7 @@ export async function getPlanDayExercises(day: string): Promise<ExerciseBreakdow
 | `api/routers/exercises.py` | `GET /plan/{day}/exercises` endpoint |
 | `api/data/exercise_db.json` | Local exercise name → GIF URL lookup table |
 | `scripts/build_exercise_db.py` | One-off script to generate exercise_db.json |
-| `alembic/versions/009_add_exercise_breakdowns.py` | Migration: exercise_breakdowns table |
+| `alembic/versions/010_add_exercise_breakdowns.py` | Migration: exercise_breakdowns table |
 | `tests/api/test_exercise_extractor.py` | Unit tests (see below) |
 | `tests/integration/test_exercises_api.py` | Integration tests |
 
@@ -374,15 +374,16 @@ No new env vars required. The feature uses:
    ~200 KB. Fine to commit. Only build/update it when the dataset is stale.
 4. **Fuzzy matching library:** `difflib.SequenceMatcher` from stdlib is sufficient —
    no need to add a dependency. Use `cutoff=0.8` ratio.
-5. **Migration number:** next migration is **009**. Confirm by checking
-   `alembic/versions/` before writing the migration file.
+5. **Migration number:** **010**. Migration 009 is reserved for Phase O1 user
+   profile fields. See [migrations-roadmap.md](migrations-roadmap.md) for the
+   full sequence before writing the migration file.
 
 ---
 
 ## Implementation order (suggested)
 
 1. `scripts/build_exercise_db.py` → generate `api/data/exercise_db.json`
-2. Migration 009 + `ExerciseBreakdown` model
+2. Migration 010 + `ExerciseBreakdown` model
 3. `api/services/exercise_extractor.py` (with full unit test suite)
 4. `api/routers/exercises.py` + schema + register in `main.py`
 5. Unit + integration tests — all passing
