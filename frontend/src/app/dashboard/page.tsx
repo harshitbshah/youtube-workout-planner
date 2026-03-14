@@ -78,6 +78,7 @@ export default function DashboardPage() {
   const [publishing, setPublishing] = useState(false);
   const [publishResult, setPublishResult] = useState<PublishResponse | null>(null);
   const [announcement, setAnnouncement] = useState<{ id: number; message: string } | null>(null);
+  const [stalePlanDismissed, setStalePlanDismissed] = useState(false);
   const [error, setError] = useState("");
 
   useEffect(() => {
@@ -206,6 +207,18 @@ export default function DashboardPage() {
 
   const allDaysEmpty = plan && plan.days.every((d: PlanDay) => !d.video);
 
+  // True when plan.week_start is from a previous week
+  const isPlanStale = (() => {
+    if (!plan) return false;
+    const today = new Date();
+    const dayOfWeek = today.getDay(); // 0=Sun, 1=Mon…
+    const daysToMonday = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
+    const monday = new Date(today);
+    monday.setDate(today.getDate() + daysToMonday);
+    const currentWeekISO = monday.toISOString().slice(0, 10);
+    return plan.week_start < currentWeekISO;
+  })();
+
   const weekLabel = plan
     ? new Date(plan.week_start + "T00:00:00").toLocaleDateString("en-GB", {
         day: "numeric",
@@ -303,6 +316,31 @@ export default function DashboardPage() {
           <div className="mb-6 flex items-start justify-between gap-3 rounded-lg border border-blue-800 bg-blue-900/20 px-4 py-3 text-sm text-blue-300">
             <span>{announcement.message}</span>
             <button onClick={() => setAnnouncement(null)} className="shrink-0 text-blue-500 hover:text-blue-300 transition">✕</button>
+          </div>
+        )}
+
+        {/* Stale plan banner */}
+        {isPlanStale && !stalePlanDismissed && !scanning && (
+          <div className="mb-6 flex items-center justify-between gap-3 rounded-lg border border-zinc-300 dark:border-zinc-600 bg-zinc-50 dark:bg-zinc-800/60 px-4 py-3 text-sm text-zinc-700 dark:text-zinc-300">
+            <span>
+              Welcome back! Your plan is from a previous week.{" "}
+              <button
+                onClick={async () => {
+                  setStalePlanDismissed(true);
+                  await handleGenerate();
+                }}
+                disabled={generating}
+                className="font-semibold underline hover:text-zinc-900 dark:hover:text-white disabled:opacity-40 transition"
+              >
+                Generate a fresh plan →
+              </button>
+            </span>
+            <button
+              onClick={() => setStalePlanDismissed(true)}
+              className="shrink-0 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 transition"
+            >
+              ✕
+            </button>
           </div>
         )}
 
