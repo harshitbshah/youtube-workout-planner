@@ -531,7 +531,7 @@ export default function OnboardingPage() {
             <div className="flex flex-col gap-3">
               <OptionCard
                 label="Yes, email me my weekly plan"
-                sublabel="Arrives every Monday morning"
+                sublabel="Arrives every Sunday evening"
                 selected={emailNotifications}
                 onClick={() => setEmailNotifications(true)}
               />
