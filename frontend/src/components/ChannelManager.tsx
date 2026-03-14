@@ -20,6 +20,8 @@ export default function ChannelManager({ channels, onChannelsChange, suggestions
   const [results, setResults] = useState<ChannelSearchResult[]>([]);
   const [searching, setSearching] = useState(false);
   const [adding, setAdding] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [deleteError, setDeleteError] = useState("");
   const [error, setError] = useState("");
 
   async function performSearch(searchQuery: string) {
@@ -66,11 +68,15 @@ export default function ChannelManager({ channels, onChannelsChange, suggestions
   }
 
   async function handleRemove(id: string) {
+    setDeletingId(id);
+    setDeleteError("");
     try {
       await deleteChannel(id);
       onChannelsChange(channels.filter((ch) => ch.id !== id));
     } catch {
-      // ignore — channel stays in list if delete fails
+      setDeleteError("Failed to remove channel. Please try again.");
+    } finally {
+      setDeletingId(null);
     }
   }
 
@@ -154,6 +160,7 @@ export default function ChannelManager({ channels, onChannelsChange, suggestions
       {channels.length > 0 && (
         <div>
           <p className="text-xs text-zinc-500 uppercase tracking-wide mb-2">Your channels</p>
+          {deleteError && <p className="text-red-400 text-xs mb-2">{deleteError}</p>}
           <div className="flex flex-wrap gap-2">
             {channels.map((ch) => (
               <div
@@ -163,10 +170,11 @@ export default function ChannelManager({ channels, onChannelsChange, suggestions
                 <span className="text-sm text-zinc-900 dark:text-white">{ch.name}</span>
                 <button
                   onClick={() => handleRemove(ch.id)}
-                  className="text-zinc-500 hover:text-red-400 text-xs transition"
+                  disabled={deletingId === ch.id}
+                  className="text-zinc-500 hover:text-red-400 text-xs transition disabled:opacity-40"
                   title="Remove channel"
                 >
-                  ✕
+                  {deletingId === ch.id ? "…" : "✕"}
                 </button>
               </div>
             ))}
