@@ -135,13 +135,13 @@ def delete_channel(
 # Curated 3-channel list per onboarding profile. These names are used to look up
 # (or fetch-and-cache) the full channel data from YouTube once, then serve from
 # the shared channels table forever.
-_SUGGESTION_NAMES: dict[Optional[str], list[str]] = {
+_SUGGESTION_NAMES: dict[str, list[str]] = {
     "senior":   ["Grow Young Fitness", "HASfit", "SilverSneakers"],
     "beginner": ["Sydney Cummings Houdyshell", "Heather Robertson", "MommaStrong"],
     "adult":    ["Athlean-X", "Jeff Nippard", "Heather Robertson"],
     "athlete":  ["Athlean-X", "Jeff Nippard", "Renaissance Periodization"],
 }
-_GENERAL_SUGGESTIONS = ["Athlean-X", "Jeff Nippard", "Heather Robertson"]
+_GENERAL_SUGGESTIONS = _SUGGESTION_NAMES["adult"]
 
 
 @router.get("/suggestions", response_model=list[ChannelSearchResult])
@@ -157,36 +157,36 @@ async def get_suggestions(
     users. If the YouTube API key is missing, cached rows are still returned and
     uncached names are silently skipped.
     """
-    names = _SUGGESTION_NAMES.get(profile, _GENERAL_SUGGESTIONS)
+    names = _SUGGESTION_NAMES.get(profile or "", _GENERAL_SUGGESTIONS)
     results: list[ChannelSearchResult] = []
 
-    for name in names:
-        # Cache hit: channel already in DB with thumbnail
-        ch = (
-            db.query(Channel)
-            .filter(
-                func.lower(Channel.name) == name.lower(),
-                Channel.thumbnail_url.isnot(None),
-            )
-            .first()
-        )
-        if ch:
-            results.append(
-                ChannelSearchResult(
-                    youtube_channel_id=ch.youtube_channel_id or "",
-                    name=ch.name,
-                    description=ch.description or "",
-                    thumbnail_url=ch.thumbnail_url,
+    async with httpx.AsyncClient() as client:
+        for name in names:
+            # Cache hit: channel already in DB with thumbnail
+            ch = (
+                db.query(Channel)
+                .filter(
+                    func.lower(Channel.name) == name.lower(),
+                    Channel.thumbnail_url.isnot(None),
                 )
+                .first()
             )
-            continue
+            if ch:
+                results.append(
+                    ChannelSearchResult(
+                        youtube_channel_id=ch.youtube_channel_id or "",
+                        name=ch.name,
+                        description=ch.description or "",
+                        thumbnail_url=ch.thumbnail_url,
+                    )
+                )
+                continue
 
-        # Cache miss — fetch from YouTube and store
-        if not YOUTUBE_API_KEY:
-            continue  # no key: skip this suggestion silently
+            # Cache miss — fetch from YouTube and store
+            if not YOUTUBE_API_KEY:
+                continue  # no key: skip this suggestion silently
 
-        try:
-            async with httpx.AsyncClient() as client:
+            try:
                 resp = await client.get(
                     YOUTUBE_SEARCH_URL,
                     params={
@@ -198,62 +198,61 @@ async def get_suggestions(
                     },
                     timeout=5.0,
                 )
-            if resp.status_code != 200:
-                continue
+                if resp.status_code != 200:
+                    continue
 
-            items = resp.json().get("items", [])
-            if not items:
-                continue
+                items = resp.json().get("items", [])
+                if not items:
+                    continue
 
-            snippet = items[0].get("snippet", {})
-            channel_id = items[0].get("id", {}).get("channelId", "")
-            ch_name = snippet.get("title", name)
-            thumb_url = snippet.get("thumbnails", {}).get("default", {}).get("url")
-            desc = snippet.get("description", "")
+                snippet = items[0].get("snippet", {})
+                channel_id = items[0].get("id", {}).get("channelId", "")
+                ch_name = snippet.get("title", name)
+                thumb_url = snippet.get("thumbnails", {}).get("default", {}).get("url")
+                desc = snippet.get("description", "")
 
-            # Upsert: prefer matching by youtube_channel_id, then by name
-            existing = None
-            if channel_id:
-                existing = (
-                    db.query(Channel)
-                    .filter(Channel.youtube_channel_id == channel_id)
-                    .first()
-                )
-            if not existing:
-                existing = (
-                    db.query(Channel)
-                    .filter(func.lower(Channel.name) == ch_name.lower())
-                    .first()
-                )
+                # Upsert: prefer matching by youtube_channel_id, then by name
+                existing = None
+                if channel_id:
+                    existing = (
+                        db.query(Channel)
+                        .filter(Channel.youtube_channel_id == channel_id)
+                        .first()
+                    )
+                if not existing:
+                    existing = (
+                        db.query(Channel)
+                        .filter(func.lower(Channel.name) == ch_name.lower())
+                        .first()
+                    )
 
-            if existing:
-                existing.thumbnail_url = thumb_url
-                existing.description = desc
-                if channel_id and not existing.youtube_channel_id:
-                    existing.youtube_channel_id = channel_id
+                if existing:
+                    existing.thumbnail_url = thumb_url
+                    existing.description = desc
+                    if channel_id and not existing.youtube_channel_id:
+                        existing.youtube_channel_id = channel_id
+                else:
+                    existing = Channel(
+                        name=ch_name,
+                        youtube_url=f"https://www.youtube.com/channel/{channel_id}",
+                        youtube_channel_id=channel_id,
+                        thumbnail_url=thumb_url,
+                        description=desc,
+                    )
+                    db.add(existing)
                 db.commit()
-            else:
-                existing = Channel(
-                    name=ch_name,
-                    youtube_url=f"https://www.youtube.com/channel/{channel_id}",
-                    youtube_channel_id=channel_id,
-                    thumbnail_url=thumb_url,
-                    description=desc,
-                )
-                db.add(existing)
-                db.commit()
 
-            results.append(
-                ChannelSearchResult(
-                    youtube_channel_id=channel_id,
-                    name=ch_name,
-                    description=desc,
-                    thumbnail_url=thumb_url,
+                results.append(
+                    ChannelSearchResult(
+                        youtube_channel_id=channel_id,
+                        name=ch_name,
+                        description=desc,
+                        thumbnail_url=thumb_url,
+                    )
                 )
-            )
 
-        except Exception:
-            continue  # network / parse error — skip this suggestion
+            except Exception:
+                continue  # network / parse error — skip this suggestion
 
     return results
 

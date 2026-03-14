@@ -170,7 +170,6 @@ function ProgressTracker({
         const showProgress = active && i === 3 && classifyProgress;
         // Negative done = batch still being built (Phase 1); positive = AI processing (Phase 3)
         const isBuilding = showProgress && classifyProgress!.done < 0;
-        const buildCount = isBuilding ? Math.abs(classifyProgress!.done) : 0;
         const pct = showProgress && !isBuilding
           ? Math.round((classifyProgress!.done / classifyProgress!.total) * 100)
           : 0;
@@ -185,7 +184,7 @@ function ProgressTracker({
                 {showProgress && (
                   <span className="ml-2 text-zinc-600 dark:text-zinc-400 font-normal">
                     {isBuilding
-                      ? `preparing ${buildCount} / ${classifyProgress!.total}`
+                      ? `preparing ${Math.abs(classifyProgress!.done)} / ${classifyProgress!.total}`
                       : `${classifyProgress!.done} / ${classifyProgress!.total}`}
                   </span>
                 )}
@@ -275,7 +274,7 @@ export default function OnboardingPage() {
   }
 
   // Step 4 → 5: build schedule then advance
-  function handleNextStep4() {
+  function handleBuildSchedule() {
     const generated = buildSchedule(profile!, goal!, trainingDays, sessionLength);
     setSchedule(generated);
     setCustomising(false);
@@ -458,7 +457,7 @@ export default function OnboardingPage() {
                 />
               ))}
             </div>
-            <StepNav onBack={() => setStep(3)} onNext={handleNextStep4} />
+            <StepNav onBack={() => setStep(3)} onNext={handleBuildSchedule} />
           </div>
         )}
 

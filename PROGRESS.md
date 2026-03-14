@@ -1,10 +1,17 @@
 # Progress
 
 ## Status
-Phases 1–5 complete + admin console + charts + guide page + mobile UX complete. Phase A complete. Phase B complete. Phase C complete. Phase D F5+F6 complete. Backlog items T1+T2+S1 complete. M2 (swap video from dashboard) complete. Channel suggestion card UI with DB caching complete.
-**359 backend + 148 frontend = 507 tests passing**.
+Phases 1–5 complete + admin console + charts + guide page + mobile UX complete. Phase A complete. Phase B complete. Phase C complete. Phase D F5+F6 complete. Backlog items T1+T2+S1 complete. M2 (swap video from dashboard) complete. Channel suggestion card UI with DB caching complete. Onboarding select-then-Next UX complete. Progress tracker negative display fix + "Go to dashboard" escape hatch.
+**359 backend + 152 frontend = 511 tests passing**.
 Both Railway (backend) and Vercel (frontend) live and functional on `main`.
 **Ready for first users** — Google OAuth sensitive scope review in progress (4–6 week wait). Users see "unverified app" warning until review completes.
+
+**Done this session (2026-03-14, checkpoint):**
+- Simplify cleanup: `_GENERAL_SUGGESTIONS` now references `_SUGGESTION_NAMES["adult"]` (was duplicated); `dict[Optional[str], ...]` → `dict[str, ...]`; single `httpx.AsyncClient` reused across suggestion loop (was new client per name); double `db.commit()` in upsert consolidated to one; `handleNextStep4` renamed to `handleBuildSchedule`; unused `buildCount` variable inlined ✅
+- Onboarding steps 1–4: select-then-Next UX (OptionCard `selected` prop, `StepNav` component, explicit Next button) ✅
+- Progress tracker: negative `done` values (batch-building phase) now display as `"preparing X / total"` instead of `"-X / total"` ✅
+- Onboarding step 7: "Go to dashboard" escape hatch for long-running AI classify ✅
+- **511 total (359 backend + 152 frontend)** ✅
 
 **Done this session (2026-03-14, continued):**
 - Channel suggestion card UI: replaced text chips with thumbnail card grid in both onboarding step 6 and settings ✅
