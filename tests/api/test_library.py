@@ -5,18 +5,19 @@ Exercises filtering, pagination, user isolation, and field serialisation
 against an SQLite in-memory database (no real PostgreSQL required).
 """
 
-from api.models import Channel, Classification, Video
+from api.models import Channel, Classification, UserChannel, Video
 
 
 # ─── Helpers ──────────────────────────────────────────────────────────────────
 
 def _seed_channel(db_session, user, name="TestChannel"):
     ch = Channel(
-        user_id=user.id,
         name=name,
         youtube_url=f"https://youtube.com/@{name.lower().replace(' ', '')}",
     )
     db_session.add(ch)
+    db_session.flush()
+    db_session.add(UserChannel(user_id=user.id, channel_id=ch.id))
     db_session.commit()
     db_session.refresh(ch)
     return ch

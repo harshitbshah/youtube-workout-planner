@@ -7,7 +7,7 @@ from datetime import date, timedelta
 
 import pytest
 
-from api.models import Channel, Classification, ProgramHistory, Schedule, User, Video
+from api.models import Channel, Classification, ProgramHistory, Schedule, User, UserChannel, Video
 from api.services.planner import (
     _fetch_candidates_for_user,
     generate_weekly_plan_for_user,
@@ -28,8 +28,10 @@ def user(db_session):
 
 @pytest.fixture
 def channel(db_session, user):
-    ch = Channel(user_id=user.id, name="TestChannel", youtube_url="https://youtube.com/@test")
+    ch = Channel(name="TestChannel", youtube_url="https://youtube.com/@test")
     db_session.add(ch)
+    db_session.flush()
+    db_session.add(UserChannel(user_id=user.id, channel_id=ch.id))
     db_session.commit()
     db_session.refresh(ch)
     return ch

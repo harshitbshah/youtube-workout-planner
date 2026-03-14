@@ -13,7 +13,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from api.models import Channel, Classification, User, Video
+from api.models import Channel, Classification, User, UserChannel, Video
 from api.services.classifier import _title_is_descriptive, title_classify
 
 
@@ -28,11 +28,12 @@ def _make_user(db, suffix="d"):
 
 def _make_channel(db, user, suffix="d"):
     ch = Channel(
-        user_id=user.id,
         name=f"Channel-{suffix}",
         youtube_url=f"https://youtube.com/@ch{suffix}",
     )
     db.add(ch)
+    db.flush()
+    db.add(UserChannel(user_id=user.id, channel_id=ch.id))
     db.commit()
     db.refresh(ch)
     return ch

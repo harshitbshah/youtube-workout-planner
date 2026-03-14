@@ -12,7 +12,7 @@ from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from ..dependencies import get_current_user, get_db
-from ..models import Channel, Classification, Video, User
+from ..models import Channel, Classification, User, UserChannel, Video
 from ..schemas import LibraryResponse, VideoSummary
 
 router = APIRouter(prefix="/library", tags=["library"])
@@ -34,7 +34,7 @@ def get_library(
         db.query(Video)
         .join(Channel, Channel.id == Video.channel_id)
         .join(Classification, Classification.video_id == Video.id)
-        .filter(Channel.user_id == current_user.id)
+        .join(UserChannel, (UserChannel.channel_id == Channel.id) & (UserChannel.user_id == current_user.id))
     )
 
     if workout_type:

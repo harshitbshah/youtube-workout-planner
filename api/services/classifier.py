@@ -26,7 +26,7 @@ from src.classifier import (
 
 from sqlalchemy import or_
 
-from ..models import Channel, Classification, Video
+from ..models import Channel, Classification, UserChannel, Video
 
 logger = logging.getLogger(__name__)
 
@@ -121,9 +121,9 @@ def _fetch_unclassified_for_user(session: Session, user_id: str) -> list[dict]:
     rows = (
         session.query(Video)
         .join(Channel, Channel.id == Video.channel_id)
+        .join(UserChannel, (UserChannel.channel_id == Channel.id) & (UserChannel.user_id == user_id))
         .outerjoin(Classification, Classification.video_id == Video.id)
         .filter(
-            Channel.user_id == user_id,
             Classification.video_id.is_(None),
             Video.duration_sec >= 180,
             # Include videos with NULL published_at (unknown age — better to classify than skip)

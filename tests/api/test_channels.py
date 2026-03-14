@@ -6,14 +6,16 @@ YouTube search calls are mocked — no real network calls.
 
 from unittest.mock import AsyncMock, patch
 
-from api.models import Channel
+from api.models import Channel, UserChannel
 
 
 # ─── Helpers ──────────────────────────────────────────────────────────────────
 
 def _add_channel(db_session, user, name="Jeff Nippard", url="https://youtube.com/@jeffnippard"):
-    ch = Channel(user_id=user.id, name=name, youtube_url=url, youtube_channel_id="UCe0TLA0EsQbE-MjuHXevj2A")
+    ch = Channel(name=name, youtube_url=url, youtube_channel_id="UCe0TLA0EsQbE-MjuHXevj2A")
     db_session.add(ch)
+    db_session.flush()
+    db_session.add(UserChannel(user_id=user.id, channel_id=ch.id))
     db_session.commit()
     db_session.refresh(ch)
     return ch
@@ -59,8 +61,10 @@ def test_add_channel(auth_client, db_session):
     assert data["youtube_url"] == "https://youtube.com/@athleanx"
     assert "id" in data
 
-    # Persisted in DB
-    ch = db_session.query(Channel).filter(Channel.user_id == user.id).first()
+    # Persisted in DB — verify via UserChannel join
+    uc = db_session.query(UserChannel).filter(UserChannel.user_id == user.id).first()
+    assert uc is not None
+    ch = db_session.query(Channel).filter(Channel.id == uc.channel_id).first()
     assert ch is not None
     assert ch.name == "Athlean-X"
 
@@ -86,7 +90,11 @@ def test_delete_channel(auth_client, db_session):
     resp = client.delete(f"/channels/{ch.id}")
     assert resp.status_code == 204
 
-    assert db_session.query(Channel).filter(Channel.id == ch.id).first() is None
+    # Channel row is preserved; only the user_channels link is removed
+    assert db_session.query(UserChannel).filter(
+        UserChannel.user_id == user.id, UserChannel.channel_id == ch.id
+    ).first() is None
+    assert db_session.query(Channel).filter(Channel.id == ch.id).first() is not None
 
 
 def test_delete_channel_not_found(auth_client):

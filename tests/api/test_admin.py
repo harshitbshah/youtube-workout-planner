@@ -11,7 +11,7 @@ from api.dependencies import get_current_user
 from api.main import app
 from datetime import datetime, timezone
 
-from api.models import Announcement, BatchUsageLog, Channel, Classification, ProgramHistory, ScanLog, User, UserActivityLog, UserCredentials, Video
+from api.models import Announcement, BatchUsageLog, Channel, Classification, ProgramHistory, ScanLog, User, UserActivityLog, UserChannel, UserCredentials, Video
 
 
 # --- Fixtures ---
@@ -95,8 +95,10 @@ def test_admin_stats_user_counts(admin_client):
 
 def test_admin_stats_library_counts(admin_client):
     client, admin, db = admin_client
-    channel = Channel(user_id=admin.id, name="Ch", youtube_url="https://youtube.com/c/test")
+    channel = Channel(name="Ch", youtube_url="https://youtube.com/c/test")
     db.add(channel)
+    db.flush()
+    db.add(UserChannel(user_id=admin.id, channel_id=channel.id))
     db.flush()
     video = Video(id="vid1", channel_id=channel.id, title="V", url="https://youtube.com/watch?v=vid1")
     db.add(video)
@@ -200,7 +202,10 @@ def test_admin_retry_scan_with_channels_202(admin_client):
     user = User(google_id="u3", email="u3@example.com")
     db.add(user)
     db.flush()
-    db.add(Channel(user_id=user.id, name="Ch", youtube_url="https://youtube.com/c/ch"))
+    ch = Channel(name="Ch", youtube_url="https://youtube.com/c/ch")
+    db.add(ch)
+    db.flush()
+    db.add(UserChannel(user_id=user.id, channel_id=ch.id))
     db.commit()
     db.refresh(user)
     res = client.post(f"/admin/users/{user.id}/scan")

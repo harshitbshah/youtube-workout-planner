@@ -11,7 +11,7 @@ from unittest.mock import patch
 import pytest
 
 from api.crypto import encrypt
-from api.models import ProgramHistory, UserCredentials, Video, Channel
+from api.models import ProgramHistory, UserChannel, UserCredentials, Video, Channel
 from api.services.publisher import YouTubeAccessRevokedError, YouTubeNotConnectedError
 
 
@@ -26,8 +26,10 @@ def _make_user_with_plan(db_session):
     db_session.add(user)
     db_session.flush()
 
-    channel = Channel(user_id=user.id, name="FitCh", youtube_url="https://yt.com/c/FitCh")
+    channel = Channel(name="FitCh", youtube_url="https://yt.com/c/FitCh")
     db_session.add(channel)
+    db_session.flush()
+    db_session.add(UserChannel(user_id=user.id, channel_id=channel.id))
     db_session.flush()
 
     video = Video(

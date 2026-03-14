@@ -9,12 +9,14 @@ What these add over unit tests:
 
 from unittest.mock import patch
 
-from api.models import Channel
+from api.models import Channel, UserChannel
 
 
 def _add_channel(db_session, user, name="FitnessChannel", url="https://youtube.com/@fitness"):
-    ch = Channel(user_id=user.id, name=name, youtube_url=url)
+    ch = Channel(name=name, youtube_url=url)
     db_session.add(ch)
+    db_session.flush()
+    db_session.add(UserChannel(user_id=user.id, channel_id=ch.id))
     db_session.commit()
     db_session.refresh(ch)
     return ch

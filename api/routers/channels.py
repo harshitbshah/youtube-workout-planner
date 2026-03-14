@@ -3,9 +3,9 @@ channels.py — Manage a user's YouTube channels and search for new ones.
 
 Routes:
   GET    /channels          — list user's channels
-  POST   /channels          — add a channel
-  DELETE /channels/{id}     — remove a channel
-  GET    /channels/search?q= — search YouTube for channels by name
+  POST   /channels          — add channel (creates global Channel if needed, then links user)
+  DELETE /channels/{id}     — unlink channel from user (channel + videos are preserved)
+  GET    /channels/search?q= — search YouTube channels by name
 """
 
 import os
@@ -15,7 +15,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from ..dependencies import get_current_user, get_db
-from ..models import Channel, User
+from ..models import Channel, User, UserChannel
 from ..schemas import ChannelCreate, ChannelResponse, ChannelSearchResult
 
 router = APIRouter(prefix="/channels", tags=["channels"])
@@ -31,16 +31,21 @@ def list_channels(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    channels = db.query(Channel).filter(Channel.user_id == current_user.id).all()
+    rows = (
+        db.query(UserChannel, Channel)
+        .join(Channel, Channel.id == UserChannel.channel_id)
+        .filter(UserChannel.user_id == current_user.id)
+        .all()
+    )
     return [
         ChannelResponse(
             id=ch.id,
             name=ch.name,
             youtube_url=ch.youtube_url,
             youtube_channel_id=ch.youtube_channel_id,
-            added_at=ch.added_at.isoformat() if ch.added_at else "",
+            added_at=uc.added_at.isoformat() if uc.added_at else "",
         )
-        for ch in channels
+        for uc, ch in rows
     ]
 
 
@@ -52,34 +57,48 @@ def add_channel(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    # Prevent duplicates per user
+    # Find or create the global channel record
+    channel = None
+    if body.youtube_channel_id:
+        channel = (
+            db.query(Channel)
+            .filter(Channel.youtube_channel_id == body.youtube_channel_id)
+            .first()
+        )
+    if not channel:
+        channel = db.query(Channel).filter(Channel.youtube_url == body.youtube_url).first()
+    if not channel:
+        channel = Channel(
+            name=body.name,
+            youtube_url=body.youtube_url,
+            youtube_channel_id=body.youtube_channel_id,
+        )
+        db.add(channel)
+        db.flush()  # assign id without committing
+
+    # Check the user isn't already subscribed
     existing = (
-        db.query(Channel)
+        db.query(UserChannel)
         .filter(
-            Channel.user_id == current_user.id,
-            Channel.youtube_url == body.youtube_url,
+            UserChannel.user_id == current_user.id,
+            UserChannel.channel_id == channel.id,
         )
         .first()
     )
     if existing:
         raise HTTPException(status_code=409, detail="Channel already added")
 
-    channel = Channel(
-        user_id=current_user.id,
-        name=body.name,
-        youtube_url=body.youtube_url,
-        youtube_channel_id=body.youtube_channel_id,
-    )
-    db.add(channel)
+    uc = UserChannel(user_id=current_user.id, channel_id=channel.id)
+    db.add(uc)
     db.commit()
-    db.refresh(channel)
+    db.refresh(uc)
 
     return ChannelResponse(
         id=channel.id,
         name=channel.name,
         youtube_url=channel.youtube_url,
         youtube_channel_id=channel.youtube_channel_id,
-        added_at=channel.added_at.isoformat() if channel.added_at else "",
+        added_at=uc.added_at.isoformat() if uc.added_at else "",
     )
 
 
@@ -91,15 +110,19 @@ def delete_channel(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    channel = (
-        db.query(Channel)
-        .filter(Channel.id == channel_id, Channel.user_id == current_user.id)
+    """Remove the user's subscription to this channel. Channel and videos are preserved."""
+    uc = (
+        db.query(UserChannel)
+        .filter(
+            UserChannel.channel_id == channel_id,
+            UserChannel.user_id == current_user.id,
+        )
         .first()
     )
-    if not channel:
+    if not uc:
         raise HTTPException(status_code=404, detail="Channel not found")
 
-    db.delete(channel)
+    db.delete(uc)
     db.commit()
 
 

@@ -10,7 +10,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from api.models import Channel, Classification, User, Video
+from api.models import Channel, Classification, User, UserChannel, Video
 
 
 # ─── helpers ──────────────────────────────────────────────────────────────────
@@ -25,12 +25,13 @@ def _make_user(session, suffix):
 
 def _make_channel(session, user, suffix, **kwargs):
     ch = Channel(
-        user_id=user.id,
         name=f"IntCh-{suffix}",
         youtube_url=f"https://youtube.com/@intch{suffix}",
         **kwargs,
     )
     session.add(ch)
+    session.flush()
+    session.add(UserChannel(user_id=user.id, channel_id=ch.id))
     session.commit()
     session.refresh(ch)
     return ch

@@ -40,7 +40,7 @@ scheduler = BackgroundScheduler(timezone="UTC")
 def _weekly_pipeline_for_user(user_id: str):
     """Run the full weekly pipeline for one user. Creates its own DB session."""
     from .database import SessionLocal
-    from .models import Channel, User
+    from .models import Channel, User, UserChannel
     from .services.classifier import classify_for_user
     from .services.scanner import scan_channel
     from .services.planner import generate_weekly_plan_for_user
@@ -52,7 +52,12 @@ def _weekly_pipeline_for_user(user_id: str):
             logger.info(f"[weekly] user={user_id} not found, skipping")
             return
 
-        channels = session.query(Channel).filter(Channel.user_id == user_id).all()
+        channels = (
+            session.query(Channel)
+            .join(UserChannel, UserChannel.channel_id == Channel.id)
+            .filter(UserChannel.user_id == user_id)
+            .all()
+        )
         if not channels:
             logger.info(f"[weekly] user={user_id} has no channels, skipping")
             return

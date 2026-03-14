@@ -29,7 +29,7 @@ class User(Base):
     last_scan_error = Column(Text, nullable=True)  # set on pipeline failure, cleared on success
     email_notifications = Column(Boolean, nullable=False, default=True, server_default="true")
 
-    channels = relationship("Channel", back_populates="user", cascade="all, delete-orphan")
+    user_channels = relationship("UserChannel", back_populates="user", cascade="all, delete-orphan")
     schedules = relationship("Schedule", back_populates="user", cascade="all, delete-orphan")
     history = relationship("ProgramHistory", back_populates="user", cascade="all, delete-orphan")
     credentials = relationship("UserCredentials", back_populates="user", uselist=False, cascade="all, delete-orphan")
@@ -39,7 +39,6 @@ class Channel(Base):
     __tablename__ = "channels"
 
     id = Column(String(36), primary_key=True, default=_uuid)
-    user_id = Column(String(36), ForeignKey("users.id"), nullable=False)
     name = Column(String, nullable=False)
     youtube_url = Column(String, nullable=False)
     youtube_channel_id = Column(String)
@@ -47,8 +46,20 @@ class Channel(Base):
     first_scan_done = Column(Boolean, default=False, nullable=False, server_default="false")
     last_video_published_at = Column(DateTime(timezone=True), nullable=True)
 
-    user = relationship("User", back_populates="channels")
+    user_channels = relationship("UserChannel", back_populates="channel", cascade="all, delete-orphan")
     videos = relationship("Video", back_populates="channel", cascade="all, delete-orphan")
+
+
+class UserChannel(Base):
+    """Join table linking users to channels they've subscribed to."""
+    __tablename__ = "user_channels"
+
+    user_id = Column(String(36), ForeignKey("users.id", ondelete="CASCADE"), primary_key=True)
+    channel_id = Column(String(36), ForeignKey("channels.id", ondelete="CASCADE"), primary_key=True)
+    added_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+
+    user = relationship("User", back_populates="user_channels")
+    channel = relationship("Channel", back_populates="user_channels")
 
 
 class Video(Base):

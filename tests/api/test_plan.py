@@ -9,7 +9,7 @@ from unittest.mock import patch
 
 import pytest
 
-from api.models import Channel, Classification, ProgramHistory, Schedule, Video
+from api.models import Channel, Classification, ProgramHistory, Schedule, UserChannel, Video
 
 
 # ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -35,8 +35,10 @@ def _seed_video(db_session, channel_id, video_id="vid1", title="Push Day"):
 
 
 def _seed_channel(db_session, user):
-    ch = Channel(user_id=user.id, name="Jeff Nippard", youtube_url="https://youtube.com/@jeff")
+    ch = Channel(name="Jeff Nippard", youtube_url="https://youtube.com/@jeff")
     db_session.add(ch)
+    db_session.flush()
+    db_session.add(UserChannel(user_id=user.id, channel_id=ch.id))
     db_session.commit()
     db_session.refresh(ch)
     return ch

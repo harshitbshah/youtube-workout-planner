@@ -9,15 +9,17 @@ What these add over unit tests:
 
 from datetime import date, datetime, timezone
 
-from api.models import Channel, Classification, ProgramHistory, Video
+from api.models import Channel, Classification, ProgramHistory, UserChannel, Video
 from src.planner import get_upcoming_monday
 
 
 # ─── Helpers ──────────────────────────────────────────────────────────────────
 
 def _seed_channel(db_session, user, name="TestChannel", url="https://youtube.com/@test"):
-    ch = Channel(user_id=user.id, name=name, youtube_url=url, added_at=datetime.now(timezone.utc))
+    ch = Channel(name=name, youtube_url=url, added_at=datetime.now(timezone.utc))
     db_session.add(ch)
+    db_session.flush()
+    db_session.add(UserChannel(user_id=user.id, channel_id=ch.id))
     db_session.commit()
     db_session.refresh(ch)
     return ch

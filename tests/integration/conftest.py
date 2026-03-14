@@ -80,7 +80,7 @@ def clean_tables(pg_engine):
     with pg_engine.connect() as conn:
         conn.execute(text(
             "TRUNCATE TABLE user_credentials, program_history, classifications, "
-            "schedules, videos, channels, users RESTART IDENTITY CASCADE"
+            "schedules, videos, user_channels, channels, users RESTART IDENTITY CASCADE"
         ))
         conn.commit()
 
@@ -160,17 +160,18 @@ def auth_client(db_session):
 
 @pytest.fixture
 def make_channel(db_session):
-    """Factory fixture — creates and returns a persisted Channel."""
-    from api.models import Channel
+    """Factory fixture — creates and returns a persisted Channel with a UserChannel join row."""
+    from api.models import Channel, UserChannel
 
     def _make(user_id, name="TestChannel", youtube_url="https://youtube.com/@test"):
         ch = Channel(
-            user_id=user_id,
             name=name,
             youtube_url=youtube_url,
             added_at=datetime.now(timezone.utc),
         )
         db_session.add(ch)
+        db_session.flush()
+        db_session.add(UserChannel(user_id=user_id, channel_id=ch.id))
         db_session.commit()
         db_session.refresh(ch)
         return ch

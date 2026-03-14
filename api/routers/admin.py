@@ -28,6 +28,7 @@ from ..models import (
     ScanLog,
     User,
     UserActivityLog,
+    UserChannel,
     UserCredentials,
     Video,
 )
@@ -146,15 +147,16 @@ def get_admin_stats(
     users = db.query(User).order_by(User.created_at.desc()).all()
 
     channel_counts = dict(
-        db.query(Channel.user_id, func.count(Channel.id))
-        .group_by(Channel.user_id)
+        db.query(UserChannel.user_id, func.count(UserChannel.channel_id))
+        .group_by(UserChannel.user_id)
         .all()
     )
 
     video_counts = dict(
-        db.query(Channel.user_id, func.count(Video.id))
+        db.query(UserChannel.user_id, func.count(Video.id))
+        .join(Channel, Channel.id == UserChannel.channel_id)
         .join(Video, Video.channel_id == Channel.id)
-        .group_by(Channel.user_id)
+        .group_by(UserChannel.user_id)
         .all()
     )
 
@@ -338,7 +340,12 @@ def admin_retry_scan(
     user = db.get(User, user_id)
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
-    channels = db.query(Channel).filter(Channel.user_id == user_id).all()
+    channels = (
+        db.query(Channel)
+        .join(UserChannel, UserChannel.channel_id == Channel.id)
+        .filter(UserChannel.user_id == user_id)
+        .all()
+    )
     if not channels:
         raise HTTPException(status_code=400, detail="User has no channels")
 

@@ -11,19 +11,26 @@ import pytest
 from sqlalchemy import text
 from sqlalchemy.exc import IntegrityError
 
-from api.models import Channel, Classification, Schedule, User, UserCredentials, Video
+from api.models import Channel, Classification, Schedule, User, UserChannel, UserCredentials, Video
 
 
 # ─── FK violations ────────────────────────────────────────────────────────────
 
-def test_channel_without_valid_user_raises(db_session):
-    """Cannot insert a channel referencing a non-existent user."""
+def test_user_channel_without_valid_user_raises(db_session):
+    """Cannot insert a UserChannel row referencing a non-existent user."""
+    # First create a real channel (no user_id on Channel anymore)
     ch = Channel(
-        user_id=str(uuid.uuid4()),   # random UUID — no such user in DB
         name="Ghost Channel",
         youtube_url="https://youtube.com/@ghost",
     )
     db_session.add(ch)
+    db_session.flush()
+
+    uc = UserChannel(
+        user_id=str(uuid.uuid4()),  # random UUID — no such user in DB
+        channel_id=ch.id,
+    )
+    db_session.add(uc)
     with pytest.raises(IntegrityError):
         db_session.flush()
 
@@ -78,7 +85,7 @@ def test_delete_user_cascades_to_channels(db_session, make_user, make_channel):
     db_session.commit()
 
     remaining = db_session.execute(
-        text("SELECT COUNT(*) FROM channels WHERE user_id = :uid"),
+        text("SELECT COUNT(*) FROM user_channels WHERE user_id = :uid"),
         {"uid": user.id},
     ).scalar()
     assert remaining == 0

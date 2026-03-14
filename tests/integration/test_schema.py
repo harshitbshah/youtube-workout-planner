@@ -15,7 +15,7 @@ def test_all_tables_exist(pg_engine):
     inspector = inspect(pg_engine)
     tables = set(inspector.get_table_names())
     expected = {
-        "users", "channels", "videos", "classifications",
+        "users", "channels", "user_channels", "videos", "classifications",
         "schedules", "program_history", "user_credentials", "alembic_version",
     }
     assert expected.issubset(tables)
@@ -24,7 +24,7 @@ def test_all_tables_exist(pg_engine):
 def test_alembic_version_is_current(pg_engine):
     with pg_engine.connect() as conn:
         version = conn.execute(text("SELECT version_num FROM alembic_version")).scalar()
-    assert version == "008"
+    assert version == "017"
 
 
 def test_users_columns(pg_engine):
@@ -45,11 +45,13 @@ def test_users_google_id_unique_constraint(pg_engine):
     assert "google_id" in unique_cols
 
 
-def test_channels_foreign_key_to_users(pg_engine):
+def test_user_channels_foreign_keys(pg_engine):
+    """user_channels must have FKs to both users and channels."""
     inspector = inspect(pg_engine)
-    fks = inspector.get_foreign_keys("channels")
-    fk_cols = [fk["constrained_columns"][0] for fk in fks]
-    assert "user_id" in fk_cols
+    fks = inspector.get_foreign_keys("user_channels")
+    referred_tables = {fk["referred_table"] for fk in fks}
+    assert "users" in referred_tables
+    assert "channels" in referred_tables
 
 
 def test_videos_foreign_key_to_channels(pg_engine):

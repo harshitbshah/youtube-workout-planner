@@ -14,7 +14,7 @@ from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from ..dependencies import get_current_user, get_db
-from ..models import Channel, Classification, ProgramHistory, Video, User
+from ..models import Channel, Classification, ProgramHistory, User, UserChannel, Video
 from ..schemas import PatchDayRequest, PlanDay, PlanResponse, PublishResponse, VideoSummary
 from ..services.planner import generate_weekly_plan_for_user, pick_video_for_slot_for_user
 from ..services.publisher import (
@@ -192,7 +192,8 @@ def patch_plan_day(
     video = (
         db.query(Video)
         .join(Channel, Channel.id == Video.channel_id)
-        .filter(Video.id == body.video_id, Channel.user_id == current_user.id)
+        .join(UserChannel, (UserChannel.channel_id == Channel.id) & (UserChannel.user_id == current_user.id))
+        .filter(Video.id == body.video_id)
         .first()
     )
     if not video:

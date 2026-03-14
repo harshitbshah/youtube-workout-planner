@@ -14,7 +14,7 @@ from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from ..dependencies import get_current_user, get_db
-from ..models import Channel, User
+from ..models import Channel, User, UserChannel
 
 logger = logging.getLogger(__name__)
 
@@ -87,7 +87,12 @@ def _run_full_pipeline(user_id: str):
         scan_log_id = scan_log.id
 
         _pipeline_status[user_id] = {"stage": "scanning", "total": None, "done": None}
-        channels = session.query(Channel).filter(Channel.user_id == user_id).all()
+        channels = (
+            session.query(Channel)
+            .join(UserChannel, UserChannel.channel_id == Channel.id)
+            .filter(UserChannel.user_id == user_id)
+            .all()
+        )
 
         total_new = 0
         for channel in channels:
@@ -189,7 +194,12 @@ def trigger_scan(
     if not YOUTUBE_API_KEY:
         raise HTTPException(status_code=503, detail="YouTube API key not configured")
 
-    channels = db.query(Channel).filter(Channel.user_id == current_user.id).all()
+    channels = (
+        db.query(Channel)
+        .join(UserChannel, UserChannel.channel_id == Channel.id)
+        .filter(UserChannel.user_id == current_user.id)
+        .all()
+    )
     if not channels:
         raise HTTPException(status_code=400, detail="No channels added yet")
 
@@ -237,13 +247,14 @@ def trigger_channel_scan(
 
     max_videos: optionally cap the number of videos fetched (useful for testing).
     """
-    channel = (
-        db.query(Channel)
-        .filter(Channel.id == channel_id, Channel.user_id == current_user.id)
+    uc = (
+        db.query(UserChannel)
+        .filter(UserChannel.channel_id == channel_id, UserChannel.user_id == current_user.id)
         .first()
     )
-    if not channel:
+    if not uc:
         raise HTTPException(status_code=404, detail="Channel not found")
+    channel = db.query(Channel).filter(Channel.id == channel_id).first()
 
     if not YOUTUBE_API_KEY:
         raise HTTPException(status_code=503, detail="YouTube API key not configured")

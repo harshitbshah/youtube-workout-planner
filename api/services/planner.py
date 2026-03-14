@@ -21,7 +21,7 @@ from src.planner import (
     get_upcoming_monday,
 )
 
-from ..models import Channel, Classification, ProgramHistory, Schedule, Video
+from ..models import Channel, Classification, ProgramHistory, Schedule, UserChannel, Video
 
 logger = logging.getLogger(__name__)
 
@@ -66,8 +66,8 @@ def _fetch_candidates_for_user(
         session.query(Video, Classification, Channel)
         .join(Classification, Classification.video_id == Video.id)
         .join(Channel, Channel.id == Video.channel_id)
+        .join(UserChannel, (UserChannel.channel_id == Channel.id) & (UserChannel.user_id == user_id))
         .filter(
-            Channel.user_id == user_id,
             func.lower(Classification.workout_type) == workout_type.lower(),
             or_(
                 Classification.body_focus == body_focus,

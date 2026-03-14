@@ -10,7 +10,7 @@ What these add over unit tests:
 
 from datetime import datetime, timezone
 
-from api.models import Channel, Classification, Video
+from api.models import Channel, Classification, UserChannel, Video
 from api.services.classifier import _fetch_unclassified_for_user, _save_classification
 
 
@@ -139,11 +139,13 @@ def test_scan_endpoint_returns_202(auth_client, db_session):
     client, user = auth_client
 
     ch = Channel(
-        user_id=user.id, name="Jeff Nippard",
+        name="Jeff Nippard",
         youtube_url="https://youtube.com/@jeffnippard",
         added_at=datetime.now(timezone.utc),
     )
     db_session.add(ch)
+    db_session.flush()
+    db_session.add(UserChannel(user_id=user.id, channel_id=ch.id))
     db_session.commit()
     db_session.refresh(ch)
 
@@ -165,9 +167,11 @@ def test_scan_endpoint_rejects_other_users_channel(auth_client, db_session):
     db_session.add(other)
     db_session.commit()
 
-    ch = Channel(user_id=other.id, name="Other", youtube_url="https://youtube.com/@other",
+    ch = Channel(name="Other", youtube_url="https://youtube.com/@other",
                  added_at=datetime.now(timezone.utc))
     db_session.add(ch)
+    db_session.flush()
+    db_session.add(UserChannel(user_id=other.id, channel_id=ch.id))
     db_session.commit()
     db_session.refresh(ch)
 

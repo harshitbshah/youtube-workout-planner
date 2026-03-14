@@ -10,7 +10,7 @@ from unittest.mock import MagicMock, call, patch
 
 import pytest
 
-from api.models import Channel, Classification, User, UserCredentials, Video
+from api.models import Channel, Classification, User, UserChannel, UserCredentials, Video
 
 
 # ─── helpers ──────────────────────────────────────────────────────────────────
@@ -24,12 +24,13 @@ def _make_user(db, suffix="a"):
 
 def _make_channel(db, user, suffix="a", **kwargs):
     ch = Channel(
-        user_id=user.id,
         name=f"Channel-{suffix}",
         youtube_url=f"https://youtube.com/@ch{suffix}",
         **kwargs,
     )
     db.add(ch)
+    db.flush()
+    db.add(UserChannel(user_id=user.id, channel_id=ch.id))
     db.commit()
     db.refresh(ch)
     return ch

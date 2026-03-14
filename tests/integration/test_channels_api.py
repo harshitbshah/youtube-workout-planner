@@ -9,7 +9,7 @@ What these add over unit tests:
 
 from datetime import datetime, timezone
 
-from api.models import Channel, Classification, Video
+from api.models import Channel, Classification, UserChannel, Video
 
 
 # ─── List ─────────────────────────────────────────────────────────────────────
@@ -29,8 +29,14 @@ def test_list_channels_returns_only_current_users(auth_client, db_session):
     other = User(google_id="other-google", email="other@example.com", created_at=datetime.now(timezone.utc))
     db_session.add(other)
     db_session.commit()
-    db_session.add(Channel(user_id=other.id, name="Other Channel", youtube_url="https://youtube.com/@other"))
-    db_session.add(Channel(user_id=user.id, name="My Channel", youtube_url="https://youtube.com/@mine"))
+
+    ch_other = Channel(name="Other Channel", youtube_url="https://youtube.com/@other")
+    ch_mine = Channel(name="My Channel", youtube_url="https://youtube.com/@mine")
+    db_session.add(ch_other)
+    db_session.add(ch_mine)
+    db_session.flush()
+    db_session.add(UserChannel(user_id=other.id, channel_id=ch_other.id))
+    db_session.add(UserChannel(user_id=user.id, channel_id=ch_mine.id))
     db_session.commit()
 
     resp = client.get("/channels")
@@ -48,7 +54,9 @@ def test_add_channel_persists_to_postgres(auth_client, db_session):
     resp = client.post("/channels", json=payload)
     assert resp.status_code == 201
 
-    row = db_session.query(Channel).filter(Channel.user_id == user.id).first()
+    uc = db_session.query(UserChannel).filter(UserChannel.user_id == user.id).first()
+    assert uc is not None
+    row = db_session.query(Channel).filter(Channel.id == uc.channel_id).first()
     assert row is not None
     assert row.name == "Jeff Nippard"
     assert row.youtube_channel_id == "UC123"
@@ -56,14 +64,17 @@ def test_add_channel_persists_to_postgres(auth_client, db_session):
 
 def test_add_duplicate_url_returns_409(auth_client, db_session):
     client, user = auth_client
-    db_session.add(Channel(user_id=user.id, name="Jeff", youtube_url="https://youtube.com/@jeff"))
+    ch = Channel(name="Jeff", youtube_url="https://youtube.com/@jeff")
+    db_session.add(ch)
+    db_session.flush()
+    db_session.add(UserChannel(user_id=user.id, channel_id=ch.id))
     db_session.commit()
 
     resp = client.post("/channels", json={"name": "Jeff Again", "youtube_url": "https://youtube.com/@jeff"})
     assert resp.status_code == 409
 
     # Still only one row
-    assert db_session.query(Channel).filter(Channel.user_id == user.id).count() == 1
+    assert db_session.query(UserChannel).filter(UserChannel.user_id == user.id).count() == 1
 
 
 def test_same_url_allowed_for_different_users(auth_client, db_session):
@@ -74,7 +85,10 @@ def test_same_url_allowed_for_different_users(auth_client, db_session):
     other = User(google_id="other-g2", email="other2@example.com", created_at=datetime.now(timezone.utc))
     db_session.add(other)
     db_session.commit()
-    db_session.add(Channel(user_id=other.id, name="Shared Channel", youtube_url="https://youtube.com/@shared"))
+    ch = Channel(name="Shared Channel", youtube_url="https://youtube.com/@shared")
+    db_session.add(ch)
+    db_session.flush()
+    db_session.add(UserChannel(user_id=other.id, channel_id=ch.id))
     db_session.commit()
 
     resp = client.post("/channels", json={"name": "Shared Channel", "youtube_url": "https://youtube.com/@shared"})
@@ -83,37 +97,48 @@ def test_same_url_allowed_for_different_users(auth_client, db_session):
 
 # ─── Delete ───────────────────────────────────────────────────────────────────
 
-def test_delete_channel_removes_from_postgres(auth_client, db_session):
+def test_delete_channel_removes_user_link(auth_client, db_session):
+    """Deleting a channel removes the user_channels link; channel row is preserved."""
     client, user = auth_client
-    ch = Channel(user_id=user.id, name="To Delete", youtube_url="https://youtube.com/@delete")
+    ch = Channel(name="To Delete", youtube_url="https://youtube.com/@delete")
     db_session.add(ch)
+    db_session.flush()
+    db_session.add(UserChannel(user_id=user.id, channel_id=ch.id))
     db_session.commit()
     db_session.refresh(ch)
 
     resp = client.delete(f"/channels/{ch.id}")
     assert resp.status_code == 204
-    assert db_session.query(Channel).filter(Channel.id == ch.id).first() is None
+    # Link is gone
+    assert db_session.query(UserChannel).filter(
+        UserChannel.user_id == user.id, UserChannel.channel_id == ch.id
+    ).first() is None
+    # Channel and videos are preserved
+    assert db_session.query(Channel).filter(Channel.id == ch.id).first() is not None
 
 
-def test_delete_channel_cascades_to_videos_and_classifications(auth_client, db_session):
-    """Real PostgreSQL CASCADE: deleting a channel removes its videos and classifications."""
+def test_delete_channel_preserves_videos(auth_client, db_session):
+    """Videos stay in DB when a user unsubscribes from a channel."""
     client, user = auth_client
 
-    ch = Channel(user_id=user.id, name="CascadeTest", youtube_url="https://youtube.com/@cascade")
+    ch = Channel(name="PreserveTest", youtube_url="https://youtube.com/@preserve")
     db_session.add(ch)
+    db_session.flush()
+    db_session.add(UserChannel(user_id=user.id, channel_id=ch.id))
     db_session.commit()
     db_session.refresh(ch)
 
-    video = Video(id="vid-cascade", channel_id=ch.id, title="Test Video", url="https://youtube.com/watch?v=vid-cascade")
+    video = Video(id="vid-preserve", channel_id=ch.id, title="Test Video", url="https://youtube.com/watch?v=vid-preserve")
     db_session.add(video)
-    db_session.add(Classification(video_id="vid-cascade", workout_type="strength", body_focus="upper", difficulty="intermediate"))
+    db_session.add(Classification(video_id="vid-preserve", workout_type="strength", body_focus="upper", difficulty="intermediate"))
     db_session.commit()
 
     resp = client.delete(f"/channels/{ch.id}")
     assert resp.status_code == 204
 
-    assert db_session.query(Video).filter(Video.id == "vid-cascade").first() is None
-    assert db_session.query(Classification).filter(Classification.video_id == "vid-cascade").first() is None
+    # Videos and classifications are still in the DB
+    assert db_session.query(Video).filter(Video.id == "vid-preserve").first() is not None
+    assert db_session.query(Classification).filter(Classification.video_id == "vid-preserve").first() is not None
 
 
 def test_delete_other_users_channel_returns_404(auth_client, db_session):
@@ -123,8 +148,10 @@ def test_delete_other_users_channel_returns_404(auth_client, db_session):
     other = User(google_id="other-g3", email="other3@example.com", created_at=datetime.now(timezone.utc))
     db_session.add(other)
     db_session.commit()
-    ch = Channel(user_id=other.id, name="Not Yours", youtube_url="https://youtube.com/@notyours")
+    ch = Channel(name="Not Yours", youtube_url="https://youtube.com/@notyours")
     db_session.add(ch)
+    db_session.flush()
+    db_session.add(UserChannel(user_id=other.id, channel_id=ch.id))
     db_session.commit()
     db_session.refresh(ch)
 

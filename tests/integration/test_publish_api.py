@@ -15,7 +15,7 @@ import google.auth.exceptions
 import pytest
 
 from api.crypto import encrypt
-from api.models import Channel, ProgramHistory, User, UserCredentials, Video
+from api.models import Channel, ProgramHistory, User, UserChannel, UserCredentials, Video
 
 
 # ─── Fixtures ─────────────────────────────────────────────────────────────────
@@ -35,12 +35,13 @@ def plan_user(db_session):
     db_session.flush()
 
     channel = Channel(
-        user_id=user.id,
         name="FitChannel",
         youtube_url="https://yt.com/@fit",
         added_at=datetime.now(timezone.utc),
     )
     db_session.add(channel)
+    db_session.flush()
+    db_session.add(UserChannel(user_id=user.id, channel_id=channel.id))
     db_session.flush()
 
     video = Video(

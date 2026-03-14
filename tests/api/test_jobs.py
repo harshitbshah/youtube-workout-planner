@@ -8,16 +8,17 @@ YouTube API calls and the scan/classify pipeline are mocked — no real network 
 
 from unittest.mock import MagicMock, patch
 
-from api.models import Channel
+from api.models import Channel, UserChannel
 
 
 def _add_channel(db_session, user):
     ch = Channel(
-        user_id=user.id,
         name="Jeff Nippard",
         youtube_url="https://youtube.com/@jeffnippard",
     )
     db_session.add(ch)
+    db_session.flush()
+    db_session.add(UserChannel(user_id=user.id, channel_id=ch.id))
     db_session.commit()
     db_session.refresh(ch)
     return ch
@@ -107,8 +108,10 @@ def test_trigger_scan_other_users_channel(auth_client, db_session):
     other = User(google_id="other-scan-g", email="otherscan@example.com")
     db_session.add(other)
     db_session.commit()
-    ch = Channel(user_id=other.id, name="Other", youtube_url="https://youtube.com/@other")
+    ch = Channel(name="Other", youtube_url="https://youtube.com/@other")
     db_session.add(ch)
+    db_session.flush()
+    db_session.add(UserChannel(user_id=other.id, channel_id=ch.id))
     db_session.commit()
     db_session.refresh(ch)
 
@@ -135,15 +138,17 @@ def test_trigger_scan_unauthenticated(client, db_session):
 
 def test_scan_channel_full_scan_when_no_videos(db_session):
     """Full scan triggered when channel has no videos."""
-    from api.models import Channel, User, Video
+    from api.models import Channel, User, UserChannel, Video
     from api.services.scanner import _get_since_date
 
     user = User(google_id="scanner-g", email="scanner@test.com")
     db_session.add(user)
     db_session.commit()
 
-    ch = Channel(user_id=user.id, name="Test", youtube_url="https://youtube.com/@test")
+    ch = Channel(name="Test", youtube_url="https://youtube.com/@test")
     db_session.add(ch)
+    db_session.flush()
+    db_session.add(UserChannel(user_id=user.id, channel_id=ch.id))
     db_session.commit()
     db_session.refresh(ch)
 
@@ -152,15 +157,17 @@ def test_scan_channel_full_scan_when_no_videos(db_session):
 
 def test_scan_channel_incremental_when_videos_exist(db_session):
     """Incremental scan triggered when videos already exist."""
-    from api.models import Channel, User, Video
+    from api.models import Channel, User, UserChannel, Video
     from api.services.scanner import _get_since_date
 
     user = User(google_id="scanner-g2", email="scanner2@test.com")
     db_session.add(user)
     db_session.commit()
 
-    ch = Channel(user_id=user.id, name="Test2", youtube_url="https://youtube.com/@test2")
+    ch = Channel(name="Test2", youtube_url="https://youtube.com/@test2")
     db_session.add(ch)
+    db_session.flush()
+    db_session.add(UserChannel(user_id=user.id, channel_id=ch.id))
     db_session.commit()
     db_session.refresh(ch)
 
@@ -180,15 +187,17 @@ def test_scan_channel_incremental_when_videos_exist(db_session):
 
 def test_save_videos_skips_duplicates(db_session):
     """_save_videos should not insert a video that already exists."""
-    from api.models import Channel, User, Video
+    from api.models import Channel, User, UserChannel, Video
     from api.services.scanner import _save_videos
 
     user = User(google_id="scanner-g3", email="scanner3@test.com")
     db_session.add(user)
     db_session.commit()
 
-    ch = Channel(user_id=user.id, name="Test3", youtube_url="https://youtube.com/@test3")
+    ch = Channel(name="Test3", youtube_url="https://youtube.com/@test3")
     db_session.add(ch)
+    db_session.flush()
+    db_session.add(UserChannel(user_id=user.id, channel_id=ch.id))
     db_session.commit()
     db_session.refresh(ch)
 
@@ -300,15 +309,17 @@ def test_classify_resumes_existing_batch(db_session):
 def test_classify_clears_batch_id_on_completion(db_session):
     """Batch ID is cleared from DB after successful classification."""
     from unittest.mock import MagicMock, patch
-    from api.models import Channel, User, UserCredentials, Video
+    from api.models import Channel, User, UserChannel, UserCredentials, Video
     from api.services.classifier import classify_for_user
 
     user = User(google_id="clear-g", email="clear@test.com")
     db_session.add(user)
     db_session.commit()
 
-    ch = Channel(user_id=user.id, name="Ch", youtube_url="https://youtube.com/@ch")
+    ch = Channel(name="Ch", youtube_url="https://youtube.com/@ch")
     db_session.add(ch)
+    db_session.flush()
+    db_session.add(UserChannel(user_id=user.id, channel_id=ch.id))
     db_session.commit()
     db_session.add(Video(id="clear-vid", channel_id=ch.id, title="Workout",
                          url="https://youtube.com/watch?v=clear-vid", duration_sec=1800))
@@ -339,15 +350,17 @@ def test_classify_clears_batch_id_on_completion(db_session):
 def test_classify_cap_limits_batch(db_session):
     """classify_for_user should only process up to MAX_CLASSIFY_PER_RUN videos."""
     from unittest.mock import MagicMock, patch
-    from api.models import Channel, User, Video
+    from api.models import Channel, User, UserChannel, Video
     from api.services.classifier import classify_for_user, MAX_CLASSIFY_PER_RUN
 
     user = User(google_id="cap-test-g", email="cap@test.com")
     db_session.add(user)
     db_session.commit()
 
-    ch = Channel(user_id=user.id, name="BigCh", youtube_url="https://youtube.com/@bigch")
+    ch = Channel(name="BigCh", youtube_url="https://youtube.com/@bigch")
     db_session.add(ch)
+    db_session.flush()
+    db_session.add(UserChannel(user_id=user.id, channel_id=ch.id))
     db_session.commit()
 
     # Add MAX_CLASSIFY_PER_RUN + 10 videos — only the first batch should be classified
@@ -390,15 +403,17 @@ def test_classify_cap_limits_batch(db_session):
 def test_classify_on_progress_called_during_polling(db_session):
     """on_progress callback is called during batch polling with total and done counts."""
     from unittest.mock import MagicMock, patch
-    from api.models import Channel, User, Video
+    from api.models import Channel, User, UserChannel, Video
     from api.services.classifier import classify_for_user
 
     user = User(google_id="prog-test-g", email="prog@test.com")
     db_session.add(user)
     db_session.commit()
 
-    ch = Channel(user_id=user.id, name="ProgCh", youtube_url="https://youtube.com/@progch")
+    ch = Channel(name="ProgCh", youtube_url="https://youtube.com/@progch")
     db_session.add(ch)
+    db_session.flush()
+    db_session.add(UserChannel(user_id=user.id, channel_id=ch.id))
     db_session.commit()
     db_session.add(Video(id="prog-vid", channel_id=ch.id, title="Workout",
                          url="https://youtube.com/watch?v=prog-vid", duration_sec=1800))
@@ -458,7 +473,7 @@ def test_is_blocked_title_case_insensitive():
 
 def test_fetch_unclassified_for_user_scoped(db_session):
     """Only returns videos from the target user's channels."""
-    from api.models import Channel, Classification, User, Video
+    from api.models import Channel, Classification, User, UserChannel, Video
     from api.services.classifier import _fetch_unclassified_for_user
 
     user_a = User(google_id="clf-a", email="clfa@test.com")
@@ -466,9 +481,12 @@ def test_fetch_unclassified_for_user_scoped(db_session):
     db_session.add_all([user_a, user_b])
     db_session.commit()
 
-    ch_a = Channel(user_id=user_a.id, name="A", youtube_url="https://youtube.com/@a")
-    ch_b = Channel(user_id=user_b.id, name="B", youtube_url="https://youtube.com/@b")
+    ch_a = Channel(name="A", youtube_url="https://youtube.com/@a")
+    ch_b = Channel(name="B", youtube_url="https://youtube.com/@b")
     db_session.add_all([ch_a, ch_b])
+    db_session.flush()
+    db_session.add(UserChannel(user_id=user_a.id, channel_id=ch_a.id))
+    db_session.add(UserChannel(user_id=user_b.id, channel_id=ch_b.id))
     db_session.commit()
 
     db_session.add(Video(id="vid-a", channel_id=ch_a.id, title="A Video",
@@ -484,15 +502,17 @@ def test_fetch_unclassified_for_user_scoped(db_session):
 
 def test_fetch_unclassified_excludes_already_classified(db_session):
     """Classified videos must not appear in the unclassified list."""
-    from api.models import Channel, Classification, User, Video
+    from api.models import Channel, Classification, User, UserChannel, Video
     from api.services.classifier import _fetch_unclassified_for_user
 
     user = User(google_id="clf-c", email="clfc@test.com")
     db_session.add(user)
     db_session.commit()
 
-    ch = Channel(user_id=user.id, name="C", youtube_url="https://youtube.com/@c")
+    ch = Channel(name="C", youtube_url="https://youtube.com/@c")
     db_session.add(ch)
+    db_session.flush()
+    db_session.add(UserChannel(user_id=user.id, channel_id=ch.id))
     db_session.commit()
 
     db_session.add(Video(id="vid-classified", channel_id=ch.id, title="Done",
@@ -507,15 +527,17 @@ def test_fetch_unclassified_excludes_already_classified(db_session):
 
 def test_fetch_unclassified_excludes_shorts(db_session):
     """Videos shorter than 3 minutes (Shorts) must be excluded."""
-    from api.models import Channel, User, Video
+    from api.models import Channel, User, UserChannel, Video
     from api.services.classifier import _fetch_unclassified_for_user
 
     user = User(google_id="clf-d", email="clfd@test.com")
     db_session.add(user)
     db_session.commit()
 
-    ch = Channel(user_id=user.id, name="D", youtube_url="https://youtube.com/@d")
+    ch = Channel(name="D", youtube_url="https://youtube.com/@d")
     db_session.add(ch)
+    db_session.flush()
+    db_session.add(UserChannel(user_id=user.id, channel_id=ch.id))
     db_session.commit()
 
     db_session.add(Video(id="short-vid", channel_id=ch.id, title="Short",

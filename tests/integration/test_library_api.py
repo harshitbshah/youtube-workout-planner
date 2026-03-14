@@ -10,19 +10,20 @@ What these add over unit tests:
 
 from datetime import datetime, timezone
 
-from api.models import Channel, Classification, Video
+from api.models import Channel, Classification, UserChannel, Video
 
 
 # ─── Helpers ──────────────────────────────────────────────────────────────────
 
 def _seed_channel(db_session, user, name="TestChannel"):
     ch = Channel(
-        user_id=user.id,
         name=name,
         youtube_url=f"https://youtube.com/@{name.lower().replace(' ', '')}",
         added_at=datetime.now(timezone.utc),
     )
     db_session.add(ch)
+    db_session.flush()
+    db_session.add(UserChannel(user_id=user.id, channel_id=ch.id))
     db_session.commit()
     db_session.refresh(ch)
     return ch
