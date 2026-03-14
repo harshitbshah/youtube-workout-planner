@@ -104,17 +104,27 @@ function SwapPicker({
               <button
                 onClick={() => handleSelect(v)}
                 disabled={swapping !== null}
-                className="w-full text-left px-3 py-2.5 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition disabled:opacity-50 flex items-center justify-between gap-2"
+                className="w-full text-left px-3 py-2 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition disabled:opacity-50 flex items-center gap-3 cursor-pointer"
               >
-                <div className="min-w-0">
-                  <p className="text-xs font-medium text-zinc-900 dark:text-white line-clamp-1">{v.title}</p>
+                {/* Thumbnail */}
+                <div className="shrink-0 w-16 aspect-video rounded overflow-hidden bg-zinc-100 dark:bg-zinc-800">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={`https://i.ytimg.com/vi/${v.id}/mqdefault.jpg`}
+                    alt=""
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+                {/* Text */}
+                <div className="min-w-0 flex-1">
+                  <p className="text-xs font-medium text-zinc-900 dark:text-white line-clamp-2 leading-snug">{v.title}</p>
                   <p className="text-xs text-zinc-500 mt-0.5">
                     {v.channel_name}
                     {v.duration_sec && ` · ${formatDuration(Math.round(v.duration_sec / 60), Math.round(v.duration_sec / 60))}`}
                   </p>
                 </div>
                 <span className="shrink-0 text-xs text-zinc-400">
-                  {swapping === v.id ? "…" : "↵"}
+                  {swapping === v.id ? "…" : ""}
                 </span>
               </button>
             </li>
