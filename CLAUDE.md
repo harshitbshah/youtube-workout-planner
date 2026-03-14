@@ -21,15 +21,21 @@ When the user says "let's checkpoint" or "take a checkpoint", run the following 
 
 3. **`docs/backlog.md`** — append any new ideas or deferred work that surfaced this session.
 
-4. **`docs/testing.md`** — add new features/pages to the manual checklist if applicable.
+4. **`docs/testing.md`** — update test count; add new test files and manual checklist items.
 
-5. **`CLAUDE.md` itself** — update the API routes table and file map if new routes or files
+5. **`docs/user-guide.md`** — update if any user-facing features were added or changed.
+
+6. **`frontend/src/app/admin/guide/page.tsx`** — update if any operationally significant
+   changes were made (new Railway gotcha, new known limit, new admin flow). Skip for routine
+   UX additions — see "Docs ↔ Admin guide relationship" convention below.
+
+7. **`CLAUDE.md` itself** — update the API routes table and file map if new routes or files
    were added.
 
-6. **Claude's memory** (`~/.claude/projects/.../memory/MEMORY.md`) — update status line,
+8. **Claude's memory** (`~/.claude/projects/.../memory/MEMORY.md`) — update status line,
    test count, and any key architectural facts that changed.
 
-7. **Commit all doc changes** with message: `docs: checkpoint — <one-line summary> (<date>)`
+9. **Commit all doc changes** with message: `docs: checkpoint — <one-line summary> (<date>)`
 
 The goal: any future session (or a knowledge agent) can read these docs and fully understand
 the current state without needing conversation history.

@@ -56,6 +56,15 @@ thumbnail, duration, channel name, and workout tags.
 
 Click any card to open the video directly on YouTube.
 
+**Swap video** — not feeling today's pick? Click **Swap video** below any day card to
+instantly browse replacements. The picker shows the top 10 videos from your library
+pre-filtered to the same workout type. Hit **Show all types** to browse everything.
+Tap any row to swap — the card updates in place, no page navigation needed.
+
+**Coming back after a break?** If your plan is from a previous week, you'll see a
+banner at the top offering to generate a fresh one. Hit **Generate a fresh plan** or
+dismiss the banner if you want to keep the old one.
+
 **Regenerate** — want a fresh set of picks? Hit Regenerate in the top right. The plan
 is rebuilt instantly from your existing video library — you'll see a brief "Generating…"
 indicator while it runs, then the grid updates.

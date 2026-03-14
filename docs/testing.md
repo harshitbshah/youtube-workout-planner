@@ -29,7 +29,7 @@ Run before every commit:
 cd frontend && npm run test:run
 ```
 
-Current: **423/423 passing** (352 backend + 71 frontend)
+Current: **497/497 passing** (352 backend + 145 frontend)
 
 New test files added:
 - `tests/api/test_jobs.py` — `POST /jobs/scan` (202, 400 no channels, 503 no key, 401 unauth, channel count); `GET /jobs/status` (no pipeline, unauthenticated, reflects live state); scanner filters (upper duration cap, title blocklist); classifier (batch cap limits to 300, `on_progress` callback during polling, resume existing batch, batch ID cleared on completion)
@@ -42,6 +42,11 @@ New test files added:
 - `tests/api/helpers.py` — shared `make_mock_user()` factory used by test_email.py and test_feedback.py
 - `frontend/src/test/ThemeProvider.test.tsx` — 6 tests: system-dark default, system-light default, explicit dark/light override, toggle persists, system change respects explicit choice
 - `frontend/src/test/ThemeToggle.test.tsx` — 3 tests: renders correctly, toggles on click, aria-label reflects current theme
+- `frontend/src/app/dashboard/page.test.tsx` — 19 tests: stale plan banner (show/hide/dismiss/generate), plan rendering, week label, announcement banner, swap picker (open, video list, type filter, show-all-types, cancel, swap call, post-swap close)
+- `frontend/src/app/settings/page.test.tsx` — 15 tests: initial render, display name save/error, schedule save/error, delete 2-step confirm/cancel/confirm-calls-API
+- `frontend/src/app/library/page.test.tsx` — 16 tests: video rendering, total count, empty state, filters, clear filters, no-match empty state, assign-to-day success/error, pagination
+- `frontend/src/components/FeedbackWidget.test.tsx` — 11 tests: floating button, modal open/close, state reset, category selection, submit disabled on empty/whitespace, submit calls API, success state, error state
+- `frontend/src/components/ScheduleEditor.test.tsx` — 11 tests: all 7 days render, Rest/Set-rest button counts, toggle rest clears fields, toggle active restores defaults, workout type select, body focus select, clear body focus, duration min/max inputs
 
 ---
 
@@ -51,10 +56,16 @@ New test files added:
 cd frontend && npm run test:run
 ```
 
-62 tests covering:
+145 tests covering:
 - `scheduleTemplates.ts` — `buildSchedule()` logic for all life-stage/goal/days/duration combinations
 - `ChannelManager.tsx` — search, add, remove, suggestions chips, minimum-1-channel gate
 - Onboarding page steps — step rendering, auto-advance, schedule preview, scan progress
+- `ThemeProvider.tsx` + `ThemeToggle.tsx` — theme context, localStorage, system preference
+- `DashboardPage` — stale banner, plan rendering, announcements, swap picker
+- `SettingsPage` — display name, schedule save, delete account flow
+- `LibraryPage` — video rendering, filters, assign-to-day, pagination
+- `FeedbackWidget` — modal, category selection, submit, error/success states
+- `ScheduleEditor` — toggle rest/active, workout type/focus dropdowns, duration inputs
 
 ---
 
