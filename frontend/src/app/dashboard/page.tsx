@@ -14,6 +14,8 @@ import {
   triggerScan,
   getJobStatus,
   getActiveAnnouncement,
+  getLibrary,
+  swapPlanDay,
   logout,
   type User,
   type PlanResponse,
@@ -23,6 +25,105 @@ import {
 } from "@/lib/api";
 import { DAY_LABELS, formatDuration } from "@/lib/utils";
 import Badge from "@/components/Badge";
+
+function SwapPicker({
+  day,
+  workoutType,
+  currentVideoId,
+  onSwap,
+  onClose,
+}: {
+  day: string;
+  workoutType: string | null;
+  currentVideoId: string;
+  onSwap: (video: VideoSummary) => Promise<void>;
+  onClose: () => void;
+}) {
+  const [videos, setVideos] = useState<VideoSummary[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [filterType, setFilterType] = useState<string | null>(workoutType);
+  const [swapping, setSwapping] = useState<string | null>(null);
+
+  useEffect(() => {
+    setLoading(true);
+    getLibrary({ workout_type: filterType ?? undefined, limit: 10 })
+      .then((r) => setVideos(r.videos.filter((v) => v.id !== currentVideoId)))
+      .catch(() => setVideos([]))
+      .finally(() => setLoading(false));
+  }, [filterType, currentVideoId]);
+
+  async function handleSelect(video: VideoSummary) {
+    setSwapping(video.id);
+    await onSwap(video);
+    setSwapping(null);
+  }
+
+  return (
+    <div className="mt-2 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 overflow-hidden" data-testid={`swap-picker-${day}`}>
+      {/* Header */}
+      <div className="flex items-center justify-between px-3 py-2 border-b border-zinc-100 dark:border-zinc-800">
+        <div className="flex items-center gap-2">
+          <span className="text-xs font-medium text-zinc-500">Pick a replacement</span>
+          {filterType && (
+            <button
+              onClick={() => setFilterType(null)}
+              className="text-xs text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 underline transition"
+            >
+              Show all types
+            </button>
+          )}
+        </div>
+        <button
+          onClick={onClose}
+          className="text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 transition text-base leading-none"
+        >
+          ✕
+        </button>
+      </div>
+
+      {/* Active filter chip */}
+      {filterType && (
+        <div className="px-3 py-1.5 border-b border-zinc-100 dark:border-zinc-800">
+          <span className="inline-flex items-center rounded-full bg-zinc-100 dark:bg-zinc-800 px-2 py-0.5 text-xs text-zinc-600 dark:text-zinc-400 capitalize">
+            {filterType}
+          </span>
+        </div>
+      )}
+
+      {/* Video list */}
+      {loading ? (
+        <div className="flex justify-center py-5">
+          <div className="h-4 w-4 animate-spin rounded-full border-2 border-zinc-300 border-t-zinc-600" />
+        </div>
+      ) : videos.length === 0 ? (
+        <p className="px-3 py-4 text-xs text-zinc-500 text-center">No videos found.</p>
+      ) : (
+        <ul>
+          {videos.map((v) => (
+            <li key={v.id} className="border-b border-zinc-100 dark:border-zinc-800 last:border-0">
+              <button
+                onClick={() => handleSelect(v)}
+                disabled={swapping !== null}
+                className="w-full text-left px-3 py-2.5 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition disabled:opacity-50 flex items-center justify-between gap-2"
+              >
+                <div className="min-w-0">
+                  <p className="text-xs font-medium text-zinc-900 dark:text-white line-clamp-1">{v.title}</p>
+                  <p className="text-xs text-zinc-500 mt-0.5">
+                    {v.channel_name}
+                    {v.duration_sec && ` · ${formatDuration(Math.round(v.duration_sec / 60), Math.round(v.duration_sec / 60))}`}
+                  </p>
+                </div>
+                <span className="shrink-0 text-xs text-zinc-400">
+                  {swapping === v.id ? "…" : "↵"}
+                </span>
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
 
 function VideoCard({ video }: { video: VideoSummary }) {
   return (
@@ -79,6 +180,7 @@ export default function DashboardPage() {
   const [publishResult, setPublishResult] = useState<PublishResponse | null>(null);
   const [announcement, setAnnouncement] = useState<{ id: number; message: string } | null>(null);
   const [stalePlanDismissed, setStalePlanDismissed] = useState(false);
+  const [openSwapDay, setOpenSwapDay] = useState<string | null>(null);
   const [error, setError] = useState("");
 
   useEffect(() => {
@@ -156,6 +258,24 @@ export default function DashboardPage() {
     } finally {
       setGenerating(false);
     }
+  }
+
+  // Close swap picker on Esc
+  useEffect(() => {
+    if (!openSwapDay) return;
+    function onKey(e: KeyboardEvent) {
+      if (e.key === "Escape") setOpenSwapDay(null);
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [openSwapDay]);
+
+  async function handleSwap(day: string, video: VideoSummary) {
+    await swapPlanDay(day, video.id);
+    setPlan((p) =>
+      p ? { ...p, days: p.days.map((d) => (d.day === day ? { ...d, video } : d)) } : p
+    );
+    setOpenSwapDay(null);
   }
 
   async function handleGenerate() {
@@ -461,6 +581,21 @@ export default function DashboardPage() {
                   {DAY_LABELS[day.day] ?? day.day}
                 </p>
                 <VideoCard video={day.video!} />
+                <button
+                  onClick={() => setOpenSwapDay(openSwapDay === day.day ? null : day.day)}
+                  className="mt-1.5 w-full text-xs text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 transition py-1"
+                >
+                  {openSwapDay === day.day ? "Cancel" : "Swap video"}
+                </button>
+                {openSwapDay === day.day && (
+                  <SwapPicker
+                    day={day.day}
+                    workoutType={day.video!.workout_type}
+                    currentVideoId={day.video!.id}
+                    onSwap={(video) => handleSwap(day.day, video)}
+                    onClose={() => setOpenSwapDay(null)}
+                  />
+                )}
               </div>
             ))}
           </div>

@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import DashboardPage from "./page";
 import * as api from "@/lib/api";
+import userEvent from "@testing-library/user-event";
 
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ replace: vi.fn() }),
@@ -28,6 +29,8 @@ vi.mock("@/lib/api", () => ({
   triggerScan: vi.fn(),
   getJobStatus: vi.fn(),
   getActiveAnnouncement: vi.fn(),
+  getLibrary: vi.fn(),
+  swapPlanDay: vi.fn(),
   logout: vi.fn(),
 }));
 
@@ -37,6 +40,8 @@ const mockGetUpcomingPlan = api.getUpcomingPlan as ReturnType<typeof vi.fn>;
 const mockGeneratePlan = api.generatePlan as ReturnType<typeof vi.fn>;
 const mockGetJobStatus = api.getJobStatus as ReturnType<typeof vi.fn>;
 const mockGetActiveAnnouncement = api.getActiveAnnouncement as ReturnType<typeof vi.fn>;
+const mockGetLibrary = api.getLibrary as ReturnType<typeof vi.fn>;
+const mockSwapPlanDay = api.swapPlanDay as ReturnType<typeof vi.fn>;
 
 const mockUser = {
   id: 1,
@@ -90,6 +95,34 @@ beforeEach(() => {
   mockGetJobStatus.mockResolvedValue({ stage: null, total: null, done: null });
   mockGetActiveAnnouncement.mockResolvedValue(null);
   mockGeneratePlan.mockResolvedValue(makePlan(getCurrentMondayISO()));
+  mockGetLibrary.mockResolvedValue({
+    videos: [
+      {
+        id: "alt1",
+        title: "20 Min Core Blast",
+        url: "https://youtube.com/watch?v=alt1",
+        channel_name: "HASfit",
+        duration_sec: 1200,
+        workout_type: "HIIT",
+        body_focus: "core",
+        difficulty: null,
+      },
+      {
+        id: "alt2",
+        title: "45 Min Leg Day",
+        url: "https://youtube.com/watch?v=alt2",
+        channel_name: "FitnessBlender",
+        duration_sec: 2700,
+        workout_type: "Strength",
+        body_focus: "lower",
+        difficulty: null,
+      },
+    ],
+    total: 2,
+    page: 1,
+    pages: 1,
+  });
+  mockSwapPlanDay.mockResolvedValue({ day: "monday", video: null });
 });
 
 // ---------------------------------------------------------------------------
@@ -213,5 +246,100 @@ describe("DashboardPage — announcement banner", () => {
     );
     fireEvent.click(screen.getByRole("button", { name: "✕" }));
     expect(screen.queryByText("Maintenance notice")).not.toBeInTheDocument();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Swap picker
+// ---------------------------------------------------------------------------
+
+describe("DashboardPage — swap picker", () => {
+  it("shows 'Swap video' button for each plan day", async () => {
+    mockGetUpcomingPlan.mockResolvedValue(makePlan(getCurrentMondayISO()));
+    render(<DashboardPage />);
+    await waitFor(() => screen.getByText("30 Min Full Body HIIT"));
+    expect(screen.getByRole("button", { name: /Swap video/i })).toBeInTheDocument();
+  });
+
+  it("opens swap picker when 'Swap video' is clicked", async () => {
+    mockGetUpcomingPlan.mockResolvedValue(makePlan(getCurrentMondayISO()));
+    render(<DashboardPage />);
+    await waitFor(() => screen.getByText("30 Min Full Body HIIT"));
+    fireEvent.click(screen.getByRole("button", { name: /Swap video/i }));
+    await waitFor(() =>
+      expect(screen.getByText(/Pick a replacement/i)).toBeInTheDocument()
+    );
+  });
+
+  it("shows fetched videos in the picker", async () => {
+    mockGetUpcomingPlan.mockResolvedValue(makePlan(getCurrentMondayISO()));
+    render(<DashboardPage />);
+    await waitFor(() => screen.getByText("30 Min Full Body HIIT"));
+    fireEvent.click(screen.getByRole("button", { name: /Swap video/i }));
+    await waitFor(() =>
+      expect(screen.getByText("20 Min Core Blast")).toBeInTheDocument()
+    );
+    expect(screen.getByText("45 Min Leg Day")).toBeInTheDocument();
+  });
+
+  it("calls getLibrary with the current day's workout_type as default filter", async () => {
+    mockGetUpcomingPlan.mockResolvedValue(makePlan(getCurrentMondayISO()));
+    render(<DashboardPage />);
+    await waitFor(() => screen.getByText("30 Min Full Body HIIT"));
+    fireEvent.click(screen.getByRole("button", { name: /Swap video/i }));
+    await waitFor(() =>
+      expect(mockGetLibrary).toHaveBeenCalledWith(
+        expect.objectContaining({ workout_type: "HIIT" })
+      )
+    );
+  });
+
+  it("closes picker when Cancel is clicked", async () => {
+    mockGetUpcomingPlan.mockResolvedValue(makePlan(getCurrentMondayISO()));
+    render(<DashboardPage />);
+    await waitFor(() => screen.getByText("30 Min Full Body HIIT"));
+    fireEvent.click(screen.getByRole("button", { name: /Swap video/i }));
+    await waitFor(() => screen.getByText(/Pick a replacement/i));
+    fireEvent.click(screen.getByRole("button", { name: /Cancel/i }));
+    expect(screen.queryByText(/Pick a replacement/i)).not.toBeInTheDocument();
+  });
+
+  it("calls swapPlanDay and updates the plan when a video is selected", async () => {
+    mockGetUpcomingPlan.mockResolvedValue(makePlan(getCurrentMondayISO()));
+    mockSwapPlanDay.mockResolvedValue({ day: "monday", video: null });
+    render(<DashboardPage />);
+    await waitFor(() => screen.getByText("30 Min Full Body HIIT"));
+    fireEvent.click(screen.getByRole("button", { name: /Swap video/i }));
+    await waitFor(() => screen.getByText("20 Min Core Blast"));
+    fireEvent.click(screen.getByText("20 Min Core Blast"));
+    await waitFor(() =>
+      expect(mockSwapPlanDay).toHaveBeenCalledWith("monday", "alt1")
+    );
+  });
+
+  it("closes picker after a swap is made", async () => {
+    mockGetUpcomingPlan.mockResolvedValue(makePlan(getCurrentMondayISO()));
+    render(<DashboardPage />);
+    await waitFor(() => screen.getByText("30 Min Full Body HIIT"));
+    fireEvent.click(screen.getByRole("button", { name: /Swap video/i }));
+    await waitFor(() => screen.getByText("20 Min Core Blast"));
+    fireEvent.click(screen.getByText("20 Min Core Blast"));
+    await waitFor(() =>
+      expect(screen.queryByText(/Pick a replacement/i)).not.toBeInTheDocument()
+    );
+  });
+
+  it("fetches all types when 'Show all types' is clicked", async () => {
+    mockGetUpcomingPlan.mockResolvedValue(makePlan(getCurrentMondayISO()));
+    render(<DashboardPage />);
+    await waitFor(() => screen.getByText("30 Min Full Body HIIT"));
+    fireEvent.click(screen.getByRole("button", { name: /Swap video/i }));
+    await waitFor(() => screen.getByText(/Show all types/i));
+    fireEvent.click(screen.getByText(/Show all types/i));
+    await waitFor(() =>
+      expect(mockGetLibrary).toHaveBeenCalledWith(
+        expect.objectContaining({ workout_type: undefined })
+      )
+    );
   });
 });
