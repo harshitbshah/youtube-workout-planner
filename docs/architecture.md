@@ -509,6 +509,10 @@ still handles the single original user independently.
               Nav: Library | Settings | Generate plan / Regenerate | Publish to YouTube
                    | Admin (admin users only) | Sign out
               Announcement banner (dismissible) shown when active announcement exists
+              Re-activation banner (dismissible) shown when plan.week_start < current Monday
+              Swap picker: "Swap video" button below each day card opens inline SwapPicker —
+                fetches top 10 from GET /library filtered by day's workout_type; "Show all
+                types" clears filter; selecting calls PATCH /plan/{day}; updates in place
               - "Generate plan" (no plan): triggers POST /jobs/scan, shows scanning banner,
                 polls GET /jobs/status every 5s; polls GET /plan/upcoming until plan appears
               - "Regenerate" (plan exists): calls POST /plan/generate synchronously,

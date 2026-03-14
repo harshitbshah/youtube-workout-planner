@@ -1,10 +1,17 @@
 # Progress
 
 ## Status
-Phases 1–5 complete + admin console + charts + guide page + mobile UX complete. Phase A complete. Phase B complete. Phase C complete. Phase D F5+F6 complete. Backlog items T1+T2+S1 complete.
-**352 backend + 71 frontend = 423 tests passing**.
+Phases 1–5 complete + admin console + charts + guide page + mobile UX complete. Phase A complete. Phase B complete. Phase C complete. Phase D F5+F6 complete. Backlog items T1+T2+S1 complete. M2 (swap video from dashboard) complete.
+**352 backend + 145 frontend = 497 tests passing**.
 Both Railway (backend) and Vercel (frontend) live and functional on `main`.
 **Ready for first users** — Google OAuth sensitive scope review in progress (4–6 week wait). Users see "unverified app" warning until review completes.
+
+**Done this session (2026-03-14):**
+- Re-activation banner: dismissible banner on dashboard when plan.week_start is from a previous week; inline "Generate a fresh plan →" link ✅
+- M2: Swap video inline from dashboard — "Swap video" button below each day card opens an inline picker with top 10 videos pre-filtered by workout type; "Show all types" clears filter; selecting a video calls PATCH /plan/{day} and updates card in place; Esc/Cancel closes ✅
+- Frontend test coverage audit: identified gaps, wrote tests for FeedbackWidget, ScheduleEditor, SettingsPage, LibraryPage, DashboardPage ✅
+- CLAUDE.md: frontend test rule now mandatory (alongside backend rule); skip list for static pages and trivial display components ✅
+- **Frontend tests: 71 → 145 (+74)**; total: 352 backend + 145 frontend = 497 passing ✅
 
 **Done this session (2026-03-13, part 6 — checkpoint):**
 - Bug fix: delete channel silently swallowed errors — now shows error message + loading state ✅

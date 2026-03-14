@@ -39,8 +39,7 @@ Review before starting a new phase to see if anything belongs in scope.
 - Welcome back screen for returning users showing last week's completion rate before
   showing the new plan.
 
-- Swap video from dashboard directly — click a day card to open a mini library picker
-  (filtered to that day's workout type) without navigating to the full library page.
+- ~~Swap video from dashboard directly~~ ✅ Done (2026-03-14) — "Swap video" button below each day card opens inline picker with top 10 videos pre-filtered by workout type. "Show all types" clears filter. Selecting calls PATCH /plan/{day} and updates card in place.
 
 ---
 
