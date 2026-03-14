@@ -168,6 +168,12 @@ function ProgressTracker({
         const done = stage === "done" ? true : i < activeIndex;
         const active = stage !== "done" && i === activeIndex;
         const showProgress = active && i === 3 && classifyProgress;
+        // Negative done = batch still being built (Phase 1); positive = AI processing (Phase 3)
+        const isBuilding = showProgress && classifyProgress!.done < 0;
+        const buildCount = isBuilding ? Math.abs(classifyProgress!.done) : 0;
+        const pct = showProgress && !isBuilding
+          ? Math.round((classifyProgress!.done / classifyProgress!.total) * 100)
+          : 0;
         return (
           <div key={item}>
             <div className="flex items-center gap-3">
@@ -178,16 +184,18 @@ function ProgressTracker({
                 {item}{active ? "…" : ""}
                 {showProgress && (
                   <span className="ml-2 text-zinc-600 dark:text-zinc-400 font-normal">
-                    {classifyProgress!.done} / {classifyProgress!.total}
+                    {isBuilding
+                      ? `preparing ${buildCount} / ${classifyProgress!.total}`
+                      : `${classifyProgress!.done} / ${classifyProgress!.total}`}
                   </span>
                 )}
               </span>
             </div>
-            {showProgress && (
+            {showProgress && !isBuilding && (
               <div className="ml-9 mt-2 w-full bg-zinc-200 dark:bg-zinc-800 rounded-full h-1">
                 <div
                   className="bg-white h-1 rounded-full transition-all duration-500"
-                  style={{ width: `${Math.round((classifyProgress!.done / classifyProgress!.total) * 100)}%` }}
+                  style={{ width: `${pct}%` }}
                 />
               </div>
             )}
@@ -551,6 +559,16 @@ export default function OnboardingPage() {
                 </button>
               </div>
             )}
+            <p className="mt-8 text-xs text-zinc-500 text-center">
+              Taking too long?{" "}
+              <button
+                onClick={() => router.push("/dashboard")}
+                className="underline hover:text-zinc-300 transition"
+              >
+                Go to dashboard
+              </button>
+              {" "}— setup continues in the background.
+            </p>
           </div>
         )}
       </div>

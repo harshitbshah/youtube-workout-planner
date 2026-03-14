@@ -319,6 +319,57 @@ describe("OnboardingPage — Step 6 (Channels)", () => {
   });
 });
 
+describe("OnboardingPage — Step 7 (Progress)", () => {
+  async function goToStep7() {
+    const mockAddChannel = api.addChannel as ReturnType<typeof vi.fn>;
+    mockAddChannel.mockResolvedValue({
+      id: "ch1", name: "Athlean-X", youtube_url: "https://youtube.com/channel/UCabc",
+      youtube_channel_id: "UCabc", thumbnail_url: null, added_at: "2024-01-01",
+    });
+
+    render(<OnboardingPage />);
+    fireEvent.click(screen.getByText("Active adult"));
+    clickNext();
+    fireEvent.click(screen.getByText("Build muscle"));
+    clickNext();
+    fireEvent.click(screen.getByRole("button", { name: "4" }));
+    clickNext();
+    fireEvent.click(screen.getByText("25–35 min"));
+    clickNext();
+    fireEvent.click(screen.getByRole("button", { name: /Looks good/i }));
+    await waitFor(() => screen.getByText(/Add your favourite channels/i));
+
+    // Add a channel via suggestion card then continue
+    await waitFor(() => screen.getByText("Athlean-X"));
+    fireEvent.click(screen.getAllByRole("button", { name: /\+ Add/i })[0]);
+    await waitFor(() => screen.getByRole("button", { name: /Continue →/i }));
+    fireEvent.click(screen.getByRole("button", { name: /Continue →/i }));
+    await waitFor(() => screen.getByText(/Setting up your plan/i));
+  }
+
+  it("shows 'Go to dashboard' escape hatch on step 7", async () => {
+    await goToStep7();
+    expect(screen.getByRole("button", { name: /Go to dashboard/i })).toBeInTheDocument();
+  });
+
+  it("shows 'preparing X / total' for negative classify progress", async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    try {
+      (api.getJobStatus as ReturnType<typeof vi.fn>).mockResolvedValue({
+        stage: "classifying", total: 43, done: -40, error: null,
+      });
+      await goToStep7();
+      // Advance past the 3s poll interval so pollStatus fires
+      await vi.advanceTimersByTimeAsync(3100);
+      await waitFor(() =>
+        expect(screen.getByText(/preparing 40 \/ 43/i)).toBeInTheDocument()
+      );
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+});
+
 describe("OnboardingPage — Step Indicator", () => {
   it("shows 'Profile' as active on step 1", () => {
     render(<OnboardingPage />);
