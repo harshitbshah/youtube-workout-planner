@@ -19,6 +19,7 @@ from sqlalchemy.orm import Session
 from ..dependencies import get_current_user, get_db
 from ..models import Channel, User, UserChannel
 from ..schemas import ChannelCreate, ChannelResponse, ChannelSearchResult
+from ..services.channel_validator import validate_channel_fitness
 
 router = APIRouter(prefix="/channels", tags=["channels"])
 
@@ -60,7 +61,7 @@ def add_channel(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    # Find or create the global channel record
+    # Find existing global channel record
     channel = None
     if body.youtube_channel_id:
         channel = (
@@ -70,11 +71,35 @@ def add_channel(
         )
     if not channel:
         channel = db.query(Channel).filter(Channel.youtube_url == body.youtube_url).first()
+
+    # Validate channel fits user's fitness profile BEFORE any DB writes
+    if current_user.profile and current_user.goal:
+        # Prefer cached description from DB; fall back to what the frontend sent
+        desc = (channel.description if channel else None) or body.description or ""
+        channel_name = channel.name if channel else body.name
+        ok, label = validate_channel_fitness(
+            channel_name=channel_name,
+            channel_description=desc,
+            profile=current_user.profile,
+            goal=current_user.goal,
+        )
+        if not ok:
+            raise HTTPException(
+                status_code=422,
+                detail=(
+                    f"This looks like a {label} channel. "
+                    f"Your plan is focused on {current_user.goal}. "
+                    f"Try adding a fitness channel instead."
+                ),
+            )
+
+    # Create the global channel record if it doesn't exist yet
     if not channel:
         channel = Channel(
             name=body.name,
             youtube_url=body.youtube_url,
             youtube_channel_id=body.youtube_channel_id,
+            description=body.description,
         )
         db.add(channel)
         db.flush()  # assign id without committing

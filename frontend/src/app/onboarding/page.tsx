@@ -288,7 +288,7 @@ export default function OnboardingPage() {
     setSavingSchedule(true);
     setError("");
     try {
-      await updateSchedule(schedule);
+      await updateSchedule(schedule, profile!, goal!);
       setStep(6);
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : "Failed to save schedule");

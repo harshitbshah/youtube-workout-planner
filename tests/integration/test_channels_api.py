@@ -193,3 +193,148 @@ def test_delete_other_users_channel_returns_404(auth_client, db_session):
     assert resp.status_code == 404
     # Channel must still exist
     assert db_session.query(Channel).filter(Channel.id == ch.id).first() is not None
+
+
+# ─── Channel validation (integration) ────────────────────────────────────────
+
+def test_add_channel_validation_mismatch_not_saved(auth_client, db_session):
+    """On validation mismatch, the channel row is NOT written to the DB."""
+    from unittest.mock import MagicMock, patch
+    from api.dependencies import get_current_user
+    from api.models import User
+    from api.main import app
+
+    client, _ = auth_client
+
+    user_with_profile = User(
+        google_id="val-test-google",
+        email="valtest@example.com",
+        display_name="Val User",
+        profile="adult",
+        goal="Build muscle",
+        created_at=__import__("datetime").datetime.now(__import__("datetime").timezone.utc),
+    )
+    db_session.add(user_with_profile)
+    db_session.commit()
+    db_session.refresh(user_with_profile)
+
+    app.dependency_overrides[get_current_user] = lambda: user_with_profile
+
+    content_block = MagicMock()
+    content_block.text = "no: cooking channel"
+    mock_response = MagicMock()
+    mock_response.content = [content_block]
+    mock_client = MagicMock()
+    mock_client.messages.create.return_value = mock_response
+
+    try:
+        with patch("api.services.channel_validator.anthropic.Anthropic", return_value=mock_client), \
+             patch.dict("os.environ", {"ANTHROPIC_API_KEY": "test-key"}):
+            resp = client.post("/channels", json={
+                "name": "Cooking With Gordon",
+                "youtube_url": "https://youtube.com/@gordonramsay",
+                "youtube_channel_id": "UCcooking",
+                "description": "Cooking and recipes",
+            })
+    finally:
+        from api.dependencies import get_current_user as _gcu
+        app.dependency_overrides[get_current_user] = lambda: auth_client[1]
+
+    assert resp.status_code == 422
+    assert "cooking channel" in resp.json()["detail"]
+
+    # Verify nothing was written to the DB
+    from api.models import Channel, UserChannel
+    assert db_session.query(Channel).filter(Channel.name == "Cooking With Gordon").first() is None
+    assert db_session.query(UserChannel).filter(UserChannel.user_id == user_with_profile.id).count() == 0
+
+
+def test_add_channel_validation_match_is_saved(auth_client, db_session):
+    """On validation pass, the channel row IS written to the DB."""
+    from unittest.mock import MagicMock, patch
+    from api.dependencies import get_current_user
+    from api.models import User
+    from api.main import app
+
+    client, _ = auth_client
+
+    user_with_profile = User(
+        google_id="val-match-google",
+        email="valmatch@example.com",
+        display_name="Val Match User",
+        profile="adult",
+        goal="Build muscle",
+        created_at=__import__("datetime").datetime.now(__import__("datetime").timezone.utc),
+    )
+    db_session.add(user_with_profile)
+    db_session.commit()
+    db_session.refresh(user_with_profile)
+
+    app.dependency_overrides[get_current_user] = lambda: user_with_profile
+
+    content_block = MagicMock()
+    content_block.text = "yes"
+    mock_response = MagicMock()
+    mock_response.content = [content_block]
+    mock_client = MagicMock()
+    mock_client.messages.create.return_value = mock_response
+
+    try:
+        with patch("api.services.channel_validator.anthropic.Anthropic", return_value=mock_client), \
+             patch.dict("os.environ", {"ANTHROPIC_API_KEY": "test-key"}):
+            resp = client.post("/channels", json={
+                "name": "Athlean-X",
+                "youtube_url": "https://youtube.com/@athleanx",
+                "youtube_channel_id": "UCathlean",
+                "description": "Science-based strength training",
+            })
+    finally:
+        app.dependency_overrides[get_current_user] = lambda: auth_client[1]
+
+    assert resp.status_code == 201
+
+    from api.models import Channel, UserChannel
+    ch = db_session.query(Channel).filter(Channel.name == "Athlean-X").first()
+    assert ch is not None
+    assert ch.description == "Science-based strength training"
+    uc = db_session.query(UserChannel).filter(UserChannel.user_id == user_with_profile.id).first()
+    assert uc is not None
+
+
+def test_schedule_update_saves_profile_and_goal(auth_client, db_session):
+    """PUT /schedule with profile+goal persists them on the user row."""
+    client, user = auth_client
+
+    resp = client.put("/schedule", json={
+        "schedule": [
+            {"day": "monday", "workout_type": "strength", "body_focus": "full_body",
+             "duration_min": 30, "duration_max": 45, "difficulty": "intermediate"},
+        ],
+        "profile": "adult",
+        "goal": "Build muscle",
+    })
+
+    assert resp.status_code == 200
+    db_session.refresh(user)
+    assert user.profile == "adult"
+    assert user.goal == "Build muscle"
+
+
+def test_schedule_update_without_profile_leaves_existing(auth_client, db_session):
+    """PUT /schedule without profile/goal does NOT overwrite existing values."""
+    client, user = auth_client
+    user.profile = "athlete"
+    user.goal = "Athletic performance"
+    db_session.commit()
+
+    resp = client.put("/schedule", json={
+        "schedule": [
+            {"day": "monday", "workout_type": "strength", "body_focus": "full_body",
+             "duration_min": 30, "duration_max": 45, "difficulty": "intermediate"},
+        ],
+    })
+
+    assert resp.status_code == 200
+    db_session.refresh(user)
+    assert user.profile == "athlete"
+    assert user.goal == "Athletic performance"

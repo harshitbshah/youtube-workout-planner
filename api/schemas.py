@@ -15,6 +15,7 @@ class ChannelCreate(BaseModel):
     name: str
     youtube_url: str
     youtube_channel_id: Optional[str] = None
+    description: Optional[str] = None
 
 
 class ChannelResponse(BaseModel):
@@ -52,6 +53,8 @@ class ScheduleResponse(BaseModel):
 
 class ScheduleUpdate(BaseModel):
     schedule: list[ScheduleSlot]
+    profile: Optional[str] = None
+    goal: Optional[str] = None
 
 
 # ─── Plan ─────────────────────────────────────────────────────────────────────

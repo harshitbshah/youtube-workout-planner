@@ -273,6 +273,18 @@ describe("OnboardingPage — Step 5 (Schedule Preview)", () => {
       expect(screen.getByText(/Get your weekly plan by email/i)).toBeInTheDocument();
     });
   });
+
+  it("'Looks good →' passes profile and goal to updateSchedule", async () => {
+    goToStep5("Active adult", "Build muscle", "4", "25–35 min");
+    fireEvent.click(screen.getByRole("button", { name: /Looks good/i }));
+    await waitFor(() => {
+      expect(mockUpdateSchedule).toHaveBeenCalledWith(
+        expect.any(Array),
+        "adult",
+        "Build muscle",
+      );
+    });
+  });
 });
 
 describe("OnboardingPage — Step 6 (Email Notifications)", () => {

@@ -86,10 +86,10 @@ export const getSuggestions = (profile?: string) => {
 
 export const getSchedule = () => apiFetch<ScheduleResponse>("/schedule");
 
-export const updateSchedule = (schedule: ScheduleSlot[]) =>
+export const updateSchedule = (schedule: ScheduleSlot[], profile?: string, goal?: string) =>
   apiFetch<ScheduleResponse>("/schedule", {
     method: "PUT",
-    body: JSON.stringify({ schedule }),
+    body: JSON.stringify({ schedule, ...(profile !== undefined && { profile }), ...(goal !== undefined && { goal }) }),
   });
 
 // ─── Plan ────────────────────────────────────────────────────────────────────
@@ -153,6 +153,7 @@ export interface ChannelCreate {
   name: string;
   youtube_url: string;
   youtube_channel_id?: string;
+  description?: string;
 }
 
 export interface ChannelResponse {

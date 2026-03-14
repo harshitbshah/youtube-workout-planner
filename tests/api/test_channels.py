@@ -273,3 +273,163 @@ def test_suggestions_unknown_profile_falls_back_to_general(auth_client, db_sessi
 def test_suggestions_unauthenticated(client):
     resp = client.get("/channels/suggestions?profile=adult")
     assert resp.status_code == 401
+
+
+# ─── Channel validation ───────────────────────────────────────────────────────
+
+def test_add_channel_blocked_when_mismatch(auth_client, db_session):
+    """When user has profile+goal and Claude returns no, the channel is rejected."""
+    from unittest.mock import MagicMock, patch
+    from api.dependencies import get_current_user
+    from api.models import User
+
+    user_with_profile = User(
+        google_id="profile-user",
+        email="profile@example.com",
+        profile="adult",
+        goal="Build muscle",
+    )
+    db_session.add(user_with_profile)
+    db_session.commit()
+    db_session.refresh(user_with_profile)
+
+    # Override get_current_user to return user with profile
+    from api.main import app
+    app.dependency_overrides[get_current_user] = lambda: user_with_profile
+
+    content_block = MagicMock()
+    content_block.text = "no: cooking recipes"
+    mock_response = MagicMock()
+    mock_response.content = [content_block]
+    mock_client = MagicMock()
+    mock_client.messages.create.return_value = mock_response
+
+    try:
+        with patch("api.services.channel_validator.anthropic.Anthropic", return_value=mock_client), \
+             patch.dict("os.environ", {"ANTHROPIC_API_KEY": "test-key"}):
+            resp = auth_client[0].post("/channels", json={
+                "name": "Gordon Ramsay",
+                "youtube_url": "https://youtube.com/@gordonramsay",
+                "youtube_channel_id": "UCabc123",
+                "description": "Cooking and recipes for every meal",
+            })
+    finally:
+        app.dependency_overrides[get_current_user] = lambda: auth_client[1]
+
+    assert resp.status_code == 422
+    assert "cooking recipes" in resp.json()["detail"]
+    assert "Build muscle" in resp.json()["detail"]
+
+    # Channel must NOT have been saved
+    from api.models import Channel
+    ch = db_session.query(Channel).filter(Channel.name == "Gordon Ramsay").first()
+    assert ch is None
+
+
+def test_add_channel_allowed_when_match(auth_client, db_session):
+    """When Claude returns yes, the channel is added normally."""
+    from unittest.mock import MagicMock, patch
+    from api.dependencies import get_current_user
+    from api.models import User
+
+    user_with_profile = User(
+        google_id="profile-user-2",
+        email="profile2@example.com",
+        profile="adult",
+        goal="Build muscle",
+    )
+    db_session.add(user_with_profile)
+    db_session.commit()
+    db_session.refresh(user_with_profile)
+
+    from api.main import app
+    app.dependency_overrides[get_current_user] = lambda: user_with_profile
+
+    content_block = MagicMock()
+    content_block.text = "yes"
+    mock_response = MagicMock()
+    mock_response.content = [content_block]
+    mock_client = MagicMock()
+    mock_client.messages.create.return_value = mock_response
+
+    try:
+        with patch("api.services.channel_validator.anthropic.Anthropic", return_value=mock_client), \
+             patch.dict("os.environ", {"ANTHROPIC_API_KEY": "test-key"}):
+            resp = auth_client[0].post("/channels", json={
+                "name": "Athlean-X",
+                "youtube_url": "https://youtube.com/@athleanx",
+                "youtube_channel_id": "UCfit123",
+                "description": "Strength training workouts",
+            })
+    finally:
+        app.dependency_overrides[get_current_user] = lambda: auth_client[1]
+
+    assert resp.status_code == 201
+    assert resp.json()["name"] == "Athlean-X"
+
+
+def test_add_channel_skips_validation_when_no_profile(auth_client):
+    """When user has no profile/goal set, validation is skipped and channel is added."""
+    from unittest.mock import patch
+    # auth_client user has no profile/goal (default None)
+    client, user = auth_client
+    assert user.profile is None
+
+    with patch("api.services.channel_validator.validate_channel_fitness") as mock_validate:
+        resp = client.post("/channels", json={
+            "name": "Random Channel",
+            "youtube_url": "https://youtube.com/@random",
+            "youtube_channel_id": "UCrandom",
+            "description": "Some content",
+        })
+        mock_validate.assert_not_called()
+
+    assert resp.status_code == 201
+
+
+def test_add_channel_validation_fails_open_on_error(auth_client, db_session):
+    """If the validator raises an exception, the channel is still added (fail open)."""
+    from unittest.mock import patch
+    from api.dependencies import get_current_user
+    from api.models import User
+    from api.main import app
+
+    user_with_profile = User(
+        google_id="failopen-user",
+        email="failopen@example.com",
+        profile="adult",
+        goal="Build muscle",
+    )
+    db_session.add(user_with_profile)
+    db_session.commit()
+    db_session.refresh(user_with_profile)
+
+    app.dependency_overrides[get_current_user] = lambda: user_with_profile
+
+    try:
+        with patch(
+            "api.services.channel_validator.validate_channel_fitness",
+            side_effect=Exception("unexpected"),
+        ):
+            # validate_channel_fitness raising shouldn't bubble up — but actually
+            # the validator already catches exceptions internally and returns (True, None).
+            # This test patches the validator itself to raise to verify the router handles it.
+            # Since the validator wraps exceptions, we instead patch the Anthropic client.
+            pass
+
+        from unittest.mock import MagicMock
+        mock_client = MagicMock()
+        mock_client.messages.create.side_effect = Exception("API down")
+
+        with patch("api.services.channel_validator.anthropic.Anthropic", return_value=mock_client), \
+             patch.dict("os.environ", {"ANTHROPIC_API_KEY": "test-key"}):
+            resp = auth_client[0].post("/channels", json={
+                "name": "Fitness Channel",
+                "youtube_url": "https://youtube.com/@fitness",
+                "youtube_channel_id": "UCfitness",
+                "description": "Workouts and exercise",
+            })
+    finally:
+        app.dependency_overrides[get_current_user] = lambda: auth_client[1]
+
+    assert resp.status_code == 201

@@ -28,6 +28,8 @@ class User(Base):
     last_active_at = Column(DateTime(timezone=True), nullable=True)
     last_scan_error = Column(Text, nullable=True)  # set on pipeline failure, cleared on success
     email_notifications = Column(Boolean, nullable=False, default=True, server_default="true")
+    profile = Column(String, nullable=True)   # beginner | adult | senior | athlete
+    goal = Column(String, nullable=True)       # e.g. "Build muscle", "Stay active & healthy"
 
     user_channels = relationship("UserChannel", back_populates="user", cascade="all, delete-orphan")
     schedules = relationship("Schedule", back_populates="user", cascade="all, delete-orphan")
