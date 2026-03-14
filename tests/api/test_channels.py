@@ -406,17 +406,9 @@ def test_add_channel_validation_fails_open_on_error(auth_client, db_session):
 
     app.dependency_overrides[get_current_user] = lambda: user_with_profile
 
+    # The validator catches exceptions internally — patch the Anthropic client to raise
+    # so the internal try/except fires and returns (True, None), allowing the channel through.
     try:
-        with patch(
-            "api.services.channel_validator.validate_channel_fitness",
-            side_effect=Exception("unexpected"),
-        ):
-            # validate_channel_fitness raising shouldn't bubble up — but actually
-            # the validator already catches exceptions internally and returns (True, None).
-            # This test patches the validator itself to raise to verify the router handles it.
-            # Since the validator wraps exceptions, we instead patch the Anthropic client.
-            pass
-
         from unittest.mock import MagicMock
         mock_client = MagicMock()
         mock_client.messages.create.side_effect = Exception("API down")

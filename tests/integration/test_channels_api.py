@@ -8,8 +8,20 @@ What these add over unit tests:
 """
 
 from datetime import datetime, timezone
+from unittest.mock import MagicMock
 
 from api.models import Channel, Classification, UserChannel, Video
+
+
+def _make_anthropic_mock(reply: str) -> MagicMock:
+    """Return a mock Anthropic client whose messages.create returns the given reply text."""
+    content_block = MagicMock()
+    content_block.text = reply
+    response = MagicMock()
+    response.content = [content_block]
+    client = MagicMock()
+    client.messages.create.return_value = response
+    return client
 
 
 # ─── List ─────────────────────────────────────────────────────────────────────
@@ -212,20 +224,14 @@ def test_add_channel_validation_mismatch_not_saved(auth_client, db_session):
         display_name="Val User",
         profile="adult",
         goal="Build muscle",
-        created_at=__import__("datetime").datetime.now(__import__("datetime").timezone.utc),
+        created_at=datetime.now(timezone.utc),
     )
     db_session.add(user_with_profile)
     db_session.commit()
     db_session.refresh(user_with_profile)
 
     app.dependency_overrides[get_current_user] = lambda: user_with_profile
-
-    content_block = MagicMock()
-    content_block.text = "no: cooking channel"
-    mock_response = MagicMock()
-    mock_response.content = [content_block]
-    mock_client = MagicMock()
-    mock_client.messages.create.return_value = mock_response
+    mock_client = _make_anthropic_mock("no: cooking channel")
 
     try:
         with patch("api.services.channel_validator.anthropic.Anthropic", return_value=mock_client), \
@@ -264,20 +270,14 @@ def test_add_channel_validation_match_is_saved(auth_client, db_session):
         display_name="Val Match User",
         profile="adult",
         goal="Build muscle",
-        created_at=__import__("datetime").datetime.now(__import__("datetime").timezone.utc),
+        created_at=datetime.now(timezone.utc),
     )
     db_session.add(user_with_profile)
     db_session.commit()
     db_session.refresh(user_with_profile)
 
     app.dependency_overrides[get_current_user] = lambda: user_with_profile
-
-    content_block = MagicMock()
-    content_block.text = "yes"
-    mock_response = MagicMock()
-    mock_response.content = [content_block]
-    mock_client = MagicMock()
-    mock_client.messages.create.return_value = mock_response
+    mock_client = _make_anthropic_mock("yes")
 
     try:
         with patch("api.services.channel_validator.anthropic.Anthropic", return_value=mock_client), \
