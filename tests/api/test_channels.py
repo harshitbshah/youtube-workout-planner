@@ -318,7 +318,7 @@ def test_add_channel_blocked_when_mismatch(auth_client, db_session):
 
     assert resp.status_code == 422
     assert "cooking recipes" in resp.json()["detail"]
-    assert "Build muscle" in resp.json()["detail"]
+    assert "build muscle" in resp.json()["detail"]
 
     # Channel must NOT have been saved
     from api.models import Channel

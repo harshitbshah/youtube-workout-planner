@@ -88,7 +88,7 @@ def add_channel(
                 status_code=422,
                 detail=(
                     f"This looks like a {label} channel. "
-                    f"Your plan is focused on {current_user.goal}. "
+                    f"Your plan is focused on {current_user.goal.lower()}. "
                     f"Try adding a fitness channel instead."
                 ),
             )
