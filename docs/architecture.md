@@ -541,9 +541,14 @@ still handles the single original user independently.
 in both `/onboarding` and `/settings`. The onboarding page wraps them with step
 navigation; settings wraps them with save buttons.
 
-`ChannelManager` accepts an optional `suggestions` prop — an array of curated channel
-objects shown as clickable chips above the search box. Used in onboarding step 6 to
-surface profile-relevant channels.
+`ChannelManager` accepts optional `suggestions?: ChannelSearchResult[]` and
+`suggestionsLoading?: boolean` props. When provided, a 3-card grid of curated channels
+(thumbnail + name + one-click "+ Add") is shown above the search box. Cards are fetched
+from `GET /channels/suggestions?profile=<profile>` by the parent component — onboarding
+passes the profile-specific list, settings passes the general list. The backend caches
+results in the shared `channels` table (`thumbnail_url`, `description` columns added in
+migration 018) so the YouTube API is only called once per unique suggestion channel across
+all users and all time.
 
 `Badge` (`src/components/Badge.tsx`) — shared styled badge pill used in dashboard and
 library pages for workout type, body focus, and difficulty tags.

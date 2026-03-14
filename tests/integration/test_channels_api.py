@@ -141,6 +141,40 @@ def test_delete_channel_preserves_videos(auth_client, db_session):
     assert db_session.query(Classification).filter(Classification.video_id == "vid-preserve").first() is not None
 
 
+# ─── Suggestions ──────────────────────────────────────────────────────────────
+
+def test_suggestions_cache_hit_no_youtube_call(auth_client, db_session):
+    """All 3 cached channels for a profile are served from DB without hitting YouTube."""
+    from unittest.mock import AsyncMock, patch
+
+    client, user = auth_client
+
+    for name, channel_id, thumb in [
+        ("Athlean-X", "UCe0TLA0EsQbE-MjuHXevj2A", "https://example.com/athlean.jpg"),
+        ("Jeff Nippard", "UCnHoKuB-RfcBQqFTXaQP5vg", "https://example.com/jeff.jpg"),
+        ("Heather Robertson", "UCONtFkfpdUuL3RDdBMrx1_g", "https://example.com/heather.jpg"),
+    ]:
+        db_session.add(Channel(
+            name=name,
+            youtube_url=f"https://www.youtube.com/channel/{channel_id}",
+            youtube_channel_id=channel_id,
+            thumbnail_url=thumb,
+            description="Fitness channel",
+        ))
+    db_session.commit()
+
+    mock_http = AsyncMock()
+    with patch("api.routers.channels.YOUTUBE_API_KEY", "fake-key"), \
+         patch("httpx.AsyncClient.get", new=mock_http):
+        resp = client.get("/channels/suggestions?profile=adult")
+
+    assert resp.status_code == 200
+    data = resp.json()
+    assert len(data) == 3
+    assert any(d["name"] == "Athlean-X" for d in data)
+    mock_http.assert_not_called()
+
+
 def test_delete_other_users_channel_returns_404(auth_client, db_session):
     from api.models import User
     client, user = auth_client

@@ -29,7 +29,7 @@ Run before every commit:
 cd frontend && npm run test:run
 ```
 
-Current: **497/497 passing** (352 backend + 145 frontend)
+Current: **507/507 passing** (359 backend + 148 frontend)
 
 New test files added:
 - `tests/api/test_jobs.py` — `POST /jobs/scan` (202, 400 no channels, 503 no key, 401 unauth, channel count); `GET /jobs/status` (no pipeline, unauthenticated, reflects live state); scanner filters (upper duration cap, title blocklist); classifier (batch cap limits to 300, `on_progress` callback during polling, resume existing batch, batch ID cleared on completion)
@@ -47,6 +47,8 @@ New test files added:
 - `frontend/src/app/library/page.test.tsx` — 16 tests: video rendering, total count, empty state, filters, clear filters, no-match empty state, assign-to-day success/error, pagination
 - `frontend/src/components/FeedbackWidget.test.tsx` — 11 tests: floating button, modal open/close, state reset, category selection, submit disabled on empty/whitespace, submit calls API, success state, error state
 - `frontend/src/components/ScheduleEditor.test.tsx` — 11 tests: all 7 days render, Rest/Set-rest button counts, toggle rest clears fields, toggle active restores defaults, workout type select, body focus select, clear body focus, duration min/max inputs
+- `tests/api/test_channels.py` — 6 new suggestion tests: cache hit (all 3 served from DB, no YouTube call), cache miss (YouTube called + result stored), no API key returns only cached, no profile returns general list, unknown profile falls back to general, unauthenticated 401
+- `tests/integration/test_channels_api.py` — 1 new suggestion test: full cache-hit path against real PostgreSQL (all 3 pre-loaded, YouTube not called)
 
 ---
 
@@ -56,7 +58,7 @@ New test files added:
 cd frontend && npm run test:run
 ```
 
-145 tests covering:
+148 tests covering:
 - `scheduleTemplates.ts` — `buildSchedule()` logic for all life-stage/goal/days/duration combinations
 - `ChannelManager.tsx` — search, add, remove, suggestions chips, minimum-1-channel gate
 - Onboarding page steps — step rendering, auto-advance, schedule preview, scan progress
@@ -66,6 +68,7 @@ cd frontend && npm run test:run
 - `LibraryPage` — video rendering, filters, assign-to-day, pagination
 - `FeedbackWidget` — modal, category selection, submit, error/success states
 - `ScheduleEditor` — toggle rest/active, workout type/focus dropdowns, duration inputs
+- `ChannelManager` — suggestion card grid (thumbnail, + Add, ✓ Added, skeleton), one-click add calls API directly (no search), search flow unchanged
 
 ---
 

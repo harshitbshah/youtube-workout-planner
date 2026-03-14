@@ -26,6 +26,7 @@ vi.mock("@/lib/api", () => ({
   getMe: vi.fn(),
   getChannels: vi.fn(),
   getSchedule: vi.fn(),
+  getSuggestions: vi.fn(),
   patchMe: vi.fn(),
   deleteMe: vi.fn(),
   updateSchedule: vi.fn(),
@@ -74,6 +75,7 @@ beforeEach(() => {
   mockUpdateSchedule.mockResolvedValue(undefined);
   mockUpdateEmailNotifications.mockResolvedValue({ ...mockUser, email_notifications: false });
   mockLogout.mockResolvedValue(undefined);
+  (api.getSuggestions as ReturnType<typeof vi.fn>).mockResolvedValue([]);
 });
 
 describe("SettingsPage — initial render", () => {

@@ -232,6 +232,7 @@ cd frontend && npm run test:run
 | POST | `/channels` | Yes | Add channel |
 | DELETE | `/channels/{id}` | Yes | Unsubscribe user from channel (preserves channel + videos) |
 | GET | `/channels/search?q=` | Yes | Search YouTube channels |
+| GET | `/channels/suggestions?profile=` | Yes | Return 3 curated channel cards for the given profile (senior/beginner/adult/athlete); no profile = general list. Results served from DB cache (`channels.thumbnail_url`); YouTube API called once on cache miss then never again. |
 | GET | `/schedule` | Yes | Get weekly schedule |
 | PUT | `/schedule` | Yes | Update weekly schedule |
 | GET | `/plan/upcoming` | Yes | Latest generated plan |

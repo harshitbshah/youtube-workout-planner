@@ -1,10 +1,22 @@
 # Progress
 
 ## Status
-Phases 1–5 complete + admin console + charts + guide page + mobile UX complete. Phase A complete. Phase B complete. Phase C complete. Phase D F5+F6 complete. Backlog items T1+T2+S1 complete. M2 (swap video from dashboard) complete.
-**352 backend + 145 frontend = 497 tests passing**.
+Phases 1–5 complete + admin console + charts + guide page + mobile UX complete. Phase A complete. Phase B complete. Phase C complete. Phase D F5+F6 complete. Backlog items T1+T2+S1 complete. M2 (swap video from dashboard) complete. Channel suggestion card UI with DB caching complete.
+**359 backend + 148 frontend = 507 tests passing**.
 Both Railway (backend) and Vercel (frontend) live and functional on `main`.
 **Ready for first users** — Google OAuth sensitive scope review in progress (4–6 week wait). Users see "unverified app" warning until review completes.
+
+**Done this session (2026-03-14, continued):**
+- Channel suggestion card UI: replaced text chips with thumbnail card grid in both onboarding step 6 and settings ✅
+- Backend `GET /channels/suggestions?profile=` endpoint with DB caching: YouTube API called at most once per unique suggestion channel across all users; subsequent requests serve from shared `channels` table ✅
+- Migration 018: `channels.thumbnail_url` + `channels.description` columns ✅
+- 3 channels capped per profile; adult list trimmed (Yoga with Adriene removed) ✅
+- `ChannelManager` props updated: `suggestions?: ChannelSearchResult[]`, `suggestionsLoading?: boolean`; card grid with skeleton loading state ✅
+- Onboarding: `SUGGESTIONS` constant removed from frontend; fetches from backend on step 6 mount ✅
+- Settings: fetches general suggestions on mount; passes to ChannelManager ✅
+- 11 new backend tests (6 unit + 1 integration + schema 018) ✅
+- 3 new frontend tests (ChannelManager card UI, skeleton, one-click add); existing suggestion tests fully updated ✅
+- **507 total (359 backend + 148 frontend)** ✅
 
 **Done this session (2026-03-14):**
 - Re-activation banner: dismissible banner on dashboard when plan.week_start is from a previous week; inline "Generate a fresh plan →" link ✅

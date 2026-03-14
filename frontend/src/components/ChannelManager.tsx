@@ -12,10 +12,18 @@ import {
 interface Props {
   channels: ChannelResponse[];
   onChannelsChange: (channels: ChannelResponse[]) => void;
-  suggestions?: string[];
+  /** Pre-fetched suggestion cards from GET /channels/suggestions */
+  suggestions?: ChannelSearchResult[];
+  /** True while the parent is fetching suggestions — shows skeleton cards */
+  suggestionsLoading?: boolean;
 }
 
-export default function ChannelManager({ channels, onChannelsChange, suggestions }: Props) {
+export default function ChannelManager({
+  channels,
+  onChannelsChange,
+  suggestions,
+  suggestionsLoading,
+}: Props) {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<ChannelSearchResult[]>([]);
   const [searching, setSearching] = useState(false);
@@ -42,11 +50,6 @@ export default function ChannelManager({ channels, onChannelsChange, suggestions
   async function handleSearch() {
     if (!query.trim()) return;
     await performSearch(query.trim());
-  }
-
-  async function handleSuggestionClick(name: string) {
-    setQuery(name);
-    await performSearch(name);
   }
 
   async function handleAdd(result: ChannelSearchResult) {
@@ -81,28 +84,65 @@ export default function ChannelManager({ channels, onChannelsChange, suggestions
   }
 
   const addedIds = new Set(channels.map((c) => c.youtube_channel_id));
+  const showSuggestions = suggestionsLoading || (suggestions && suggestions.length > 0);
 
   return (
     <div>
       {/* Suggestions */}
-      {suggestions && suggestions.length > 0 && (
-        <div className="mb-4">
-          <p className="text-xs text-zinc-500 uppercase tracking-wide mb-2">Suggestions</p>
-          <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none">
-            {suggestions.map((name) => {
-              const alreadyAdded = channels.some((c) => c.name.toLowerCase() === name.toLowerCase());
-              return (
-                <button
-                  key={name}
-                  onClick={() => handleSuggestionClick(name)}
-                  disabled={alreadyAdded || searching}
-                  className="shrink-0 rounded-full border border-zinc-200 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-800 px-3 py-1.5 text-sm text-zinc-900 dark:text-white hover:bg-zinc-200 dark:hover:bg-zinc-700 disabled:opacity-40 transition"
+      {showSuggestions && (
+        <div className="mb-5">
+          <p className="text-xs text-zinc-500 uppercase tracking-wide mb-3">Suggestions</p>
+          {suggestionsLoading ? (
+            <div className="grid grid-cols-3 gap-3">
+              {[0, 1, 2].map((i) => (
+                <div
+                  key={i}
+                  className="flex flex-col items-center gap-2 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-900 p-3 animate-pulse"
                 >
-                  {alreadyAdded ? `${name} ✓` : name}
-                </button>
-              );
-            })}
-          </div>
+                  <div className="h-10 w-10 rounded-full bg-zinc-200 dark:bg-zinc-700" />
+                  <div className="h-3 w-3/4 bg-zinc-200 dark:bg-zinc-700 rounded" />
+                  <div className="h-2.5 w-1/2 bg-zinc-200 dark:bg-zinc-700 rounded" />
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="grid grid-cols-3 gap-3">
+              {suggestions!.map((ch) => {
+                const alreadyAdded = addedIds.has(ch.youtube_channel_id);
+                return (
+                  <div
+                    key={ch.youtube_channel_id}
+                    className="flex flex-col items-center text-center rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-900 p-3 gap-2"
+                  >
+                    {ch.thumbnail_url ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={ch.thumbnail_url}
+                        alt=""
+                        className="h-10 w-10 rounded-full object-cover"
+                      />
+                    ) : (
+                      <div className="h-10 w-10 rounded-full bg-zinc-200 dark:bg-zinc-700" />
+                    )}
+                    <p className="text-xs font-medium text-zinc-900 dark:text-white leading-tight line-clamp-2">
+                      {ch.name}
+                    </p>
+                    {alreadyAdded ? (
+                      <span className="text-xs text-zinc-500">✓ Added</span>
+                    ) : (
+                      <button
+                        onClick={() => handleAdd(ch)}
+                        disabled={adding === ch.youtube_channel_id}
+                        className="rounded-full border border-zinc-300 dark:border-zinc-600 px-3 py-1 text-xs text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-700 disabled:opacity-40 transition cursor-pointer"
+                      >
+                        {adding === ch.youtube_channel_id ? "Adding…" : "+ Add"}
+                      </button>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
       )}
 

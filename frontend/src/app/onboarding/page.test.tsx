@@ -16,6 +16,7 @@ vi.mock("@/lib/api", () => ({
   searchChannels: vi.fn(),
   addChannel: vi.fn(),
   deleteChannel: vi.fn(),
+  getSuggestions: vi.fn(),
 }));
 
 const mockUpdateSchedule = api.updateSchedule as ReturnType<typeof vi.fn>;
@@ -27,6 +28,11 @@ beforeEach(() => {
   mockTriggerScan.mockResolvedValue({});
   (api.getJobStatus as ReturnType<typeof vi.fn>).mockResolvedValue({ stage: null, total: null, done: null, error: null });
   (api.searchChannels as ReturnType<typeof vi.fn>).mockResolvedValue([]);
+  (api.getSuggestions as ReturnType<typeof vi.fn>).mockResolvedValue([
+    { youtube_channel_id: "UCabc", name: "Athlean-X", description: "Strength training", thumbnail_url: null },
+    { youtube_channel_id: "UCdef", name: "Jeff Nippard", description: "Science-based", thumbnail_url: null },
+    { youtube_channel_id: "UCghi", name: "Heather Robertson", description: "Workouts", thumbnail_url: null },
+  ]);
 });
 
 describe("OnboardingPage — Step 1 (Life Stage)", () => {
@@ -240,9 +246,10 @@ describe("OnboardingPage — Step 6 (Channels)", () => {
     expect(screen.getByRole("button", { name: /Continue/i })).toBeDisabled();
   });
 
-  it("shows adult suggestions", async () => {
+  it("shows adult suggestions as cards after fetch resolves", async () => {
     await goToStep6();
-    expect(screen.getByText("Athlean-X")).toBeInTheDocument();
+    await waitFor(() => expect(screen.getByText("Athlean-X")).toBeInTheDocument());
+    expect(api.getSuggestions).toHaveBeenCalledWith("adult");
   });
 
   it("shows senior subheading for senior profile", async () => {

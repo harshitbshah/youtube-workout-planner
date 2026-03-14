@@ -6,7 +6,9 @@ import {
   updateSchedule,
   triggerScan,
   getJobStatus,
+  getSuggestions,
   type ChannelResponse,
+  type ChannelSearchResult,
   type ScheduleSlot,
 } from "@/lib/api";
 import ChannelManager from "@/components/ChannelManager";
@@ -174,12 +176,6 @@ const SESSION_OPTIONS: { value: SessionLength; label: string; sublabel: string }
   { value: "any",    label: "No preference",  sublabel: "Let the video decide" },
 ];
 
-const SUGGESTIONS: Record<LifeStage, string[]> = {
-  senior:   ["Grow Young Fitness", "HASfit", "SilverSneakers"],
-  beginner: ["Sydney Cummings Houdyshell", "Heather Robertson", "MommaStrong"],
-  adult:    ["Athlean-X", "Heather Robertson", "Jeff Nippard", "Yoga with Adriene"],
-  athlete:  ["Athlean-X", "Jeff Nippard", "Renaissance Periodization"],
-};
 
 // ─── Main ─────────────────────────────────────────────────────────────────────
 
@@ -194,6 +190,8 @@ export default function OnboardingPage() {
   const [schedule, setSchedule] = useState<ScheduleSlot[]>([]);
   const [customising, setCustomising] = useState(false);
   const [channels, setChannels] = useState<ChannelResponse[]>([]);
+  const [suggestions, setSuggestions] = useState<ChannelSearchResult[]>([]);
+  const [suggestionsLoading, setSuggestionsLoading] = useState(false);
   const [savingSchedule, setSavingSchedule] = useState(false);
   const [error, setError] = useState("");
   const [scanStage, setScanStage] = useState<string | null>(null);
@@ -240,6 +238,16 @@ export default function OnboardingPage() {
       setSavingSchedule(false);
     }
   }
+
+  // Fetch curated suggestion cards when the user reaches the channels step
+  useEffect(() => {
+    if (step !== 6 || !profile) return;
+    setSuggestionsLoading(true);
+    getSuggestions(profile)
+      .then(setSuggestions)
+      .catch(() => {})
+      .finally(() => setSuggestionsLoading(false));
+  }, [step, profile]);
 
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -445,7 +453,8 @@ export default function OnboardingPage() {
             <ChannelManager
               channels={channels}
               onChannelsChange={setChannels}
-              suggestions={SUGGESTIONS[profile]}
+              suggestions={suggestions}
+              suggestionsLoading={suggestionsLoading}
             />
             <div className="flex gap-3 mt-6">
               <button onClick={() => setStep(5)} className="rounded-lg border border-zinc-200 dark:border-zinc-700 px-4 py-3 text-sm font-medium text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition">

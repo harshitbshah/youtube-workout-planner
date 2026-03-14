@@ -9,6 +9,7 @@ import {
   getMe,
   getChannels,
   getSchedule,
+  getSuggestions,
   patchMe,
   deleteMe,
   updateSchedule,
@@ -16,6 +17,7 @@ import {
   logout,
   type User,
   type ChannelResponse,
+  type ChannelSearchResult,
   type ScheduleSlot,
 } from "@/lib/api";
 import ChannelManager from "@/components/ChannelManager";
@@ -37,6 +39,8 @@ export default function SettingsPage() {
   const [channels, setChannels] = useState<ChannelResponse[]>([]);
   const [schedule, setSchedule] = useState<ScheduleSlot[]>([]);
   const [loading, setLoading] = useState(true);
+  const [channelSuggestions, setChannelSuggestions] = useState<ChannelSearchResult[]>([]);
+  const [suggestionsLoading, setSuggestionsLoading] = useState(true);
 
   // Profile
   const [displayName, setDisplayName] = useState("");
@@ -65,6 +69,13 @@ export default function SettingsPage() {
       .catch(() => router.replace("/"))
       .finally(() => setLoading(false));
   }, [router]);
+
+  useEffect(() => {
+    getSuggestions()
+      .then(setChannelSuggestions)
+      .catch(() => {})
+      .finally(() => setSuggestionsLoading(false));
+  }, []);
 
   async function handleSaveName() {
     setSavingName(true);
@@ -215,7 +226,12 @@ export default function SettingsPage() {
             <p className="text-xs text-zinc-500 mb-4">
               Add or remove YouTube fitness channels. Changes take effect on the next weekly scan.
             </p>
-            <ChannelManager channels={channels} onChannelsChange={setChannels} />
+            <ChannelManager
+              channels={channels}
+              onChannelsChange={setChannels}
+              suggestions={channelSuggestions}
+              suggestionsLoading={suggestionsLoading}
+            />
           </SectionCard>
 
           {/* Schedule */}

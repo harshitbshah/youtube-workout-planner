@@ -77,6 +77,11 @@ export const addChannel = (data: ChannelCreate) =>
 export const deleteChannel = (id: string) =>
   apiFetch<void>(`/channels/${id}`, { method: "DELETE" });
 
+export const getSuggestions = (profile?: string) => {
+  const q = profile ? `?profile=${encodeURIComponent(profile)}` : "";
+  return apiFetch<ChannelSearchResult[]>(`/channels/suggestions${q}`);
+};
+
 // ─── Schedule ────────────────────────────────────────────────────────────────
 
 export const getSchedule = () => apiFetch<ScheduleResponse>("/schedule");

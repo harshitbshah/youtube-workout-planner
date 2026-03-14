@@ -45,6 +45,8 @@ class Channel(Base):
     added_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
     first_scan_done = Column(Boolean, default=False, nullable=False, server_default="false")
     last_video_published_at = Column(DateTime(timezone=True), nullable=True)
+    thumbnail_url = Column(Text, nullable=True)
+    description = Column(Text, nullable=True)
 
     user_channels = relationship("UserChannel", back_populates="channel", cascade="all, delete-orphan")
     videos = relationship("Video", back_populates="channel", cascade="all, delete-orphan")
