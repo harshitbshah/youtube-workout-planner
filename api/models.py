@@ -102,7 +102,7 @@ class ProgramHistory(Base):
     id = Column(Integer, primary_key=True, autoincrement=True)
     user_id = Column(String(36), ForeignKey("users.id"), nullable=False)
     week_start = Column(Date, nullable=False)
-    video_id = Column(String, ForeignKey("videos.id"))
+    video_id = Column(String, ForeignKey("videos.id", ondelete="SET NULL"), nullable=True)
     assigned_day = Column(String, nullable=False)
     completed = Column(Boolean, default=False)
 
