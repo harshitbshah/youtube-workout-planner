@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 import {
   updateSchedule,
+  updateEmailNotifications,
   triggerScan,
   getJobStatus,
   getSuggestions,
@@ -20,7 +21,7 @@ import { DAY_LABELS } from "@/lib/utils";
 
 function StepIndicator({ internalStep }: { internalStep: number }) {
   const steps = ["Profile", "Channels", "Your Plan"];
-  const visibleStep = internalStep <= 5 ? 1 : internalStep === 6 ? 2 : 3;
+  const visibleStep = internalStep <= 6 ? 1 : internalStep === 7 ? 2 : 3;
   return (
     <div className="flex items-center gap-3 mb-8">
       {steps.map((label, i) => {
@@ -247,6 +248,8 @@ export default function OnboardingPage() {
   const [channels, setChannels] = useState<ChannelResponse[]>([]);
   const [suggestions, setSuggestions] = useState<ChannelSearchResult[]>([]);
   const [suggestionsLoading, setSuggestionsLoading] = useState(false);
+  const [emailNotifications, setEmailNotifications] = useState(true);
+  const [savingNotifications, setSavingNotifications] = useState(false);
   const [savingSchedule, setSavingSchedule] = useState(false);
   const [error, setError] = useState("");
   const [scanStage, setScanStage] = useState<string | null>(null);
@@ -294,9 +297,21 @@ export default function OnboardingPage() {
     }
   }
 
+  async function handleEmailNotificationsContinue() {
+    setSavingNotifications(true);
+    try {
+      await updateEmailNotifications(emailNotifications);
+    } catch {
+      // non-blocking — don't prevent user from continuing
+    } finally {
+      setSavingNotifications(false);
+    }
+    setStep(7);
+  }
+
   // Fetch curated suggestion cards when the user reaches the channels step
   useEffect(() => {
-    if (step !== 6 || !profile) return;
+    if (step !== 7 || !profile) return;
     setSuggestionsLoading(true);
     getSuggestions(profile)
       .then(setSuggestions)
@@ -319,7 +334,7 @@ export default function OnboardingPage() {
     setError("");
     const err = await executeScan();
     if (err) setError(err);
-    else setStep(7);
+    else setStep(8);
   }
 
   async function handleRetry() {
@@ -356,7 +371,7 @@ export default function OnboardingPage() {
   }, [router]);
 
   useEffect(() => {
-    if (step !== 7) return;
+    if (step !== 8) return;
     intervalRef.current = setInterval(pollStatus, 3000);
     return () => {
       if (intervalRef.current) {
@@ -506,8 +521,38 @@ export default function OnboardingPage() {
           </div>
         )}
 
-        {/* Step 6 — Channels */}
-        {step === 6 && profile && (
+        {/* Step 6 — Email Notifications */}
+        {step === 6 && (
+          <div className={contentClass}>
+            <h2 className="text-xl font-semibold text-zinc-900 dark:text-white mb-1">Get your weekly plan by email?</h2>
+            <p className="text-zinc-600 dark:text-zinc-400 text-sm mb-6">
+              We&apos;ll send you a fresh workout plan every Monday — easy to reference, even offline.
+            </p>
+            <div className="flex flex-col gap-3">
+              <OptionCard
+                label="Yes, email me my weekly plan"
+                sublabel="Arrives every Monday morning"
+                selected={emailNotifications}
+                onClick={() => setEmailNotifications(true)}
+              />
+              <OptionCard
+                label="No thanks"
+                sublabel="I'll check the app directly"
+                selected={!emailNotifications}
+                onClick={() => setEmailNotifications(false)}
+              />
+            </div>
+            <StepNav
+              onBack={() => setStep(5)}
+              onNext={handleEmailNotificationsContinue}
+              nextLabel={savingNotifications ? "Saving…" : "Next →"}
+              nextDisabled={savingNotifications}
+            />
+          </div>
+        )}
+
+        {/* Step 7 — Channels */}
+        {step === 7 && profile && (
           <div className="w-full max-w-lg">
             <h2 className="text-xl font-semibold text-zinc-900 dark:text-white mb-1">Add your favourite channels</h2>
             <p className="text-zinc-600 dark:text-zinc-400 text-sm mb-6">
@@ -524,7 +569,7 @@ export default function OnboardingPage() {
               suggestionsLoading={suggestionsLoading}
             />
             <div className="flex gap-3 mt-6">
-              <button onClick={() => setStep(5)} className="rounded-lg border border-zinc-200 dark:border-zinc-700 px-4 py-3 text-sm font-medium text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition">
+              <button onClick={() => setStep(6)} className="rounded-lg border border-zinc-200 dark:border-zinc-700 px-4 py-3 text-sm font-medium text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition">
                 ← Back
               </button>
               <button
@@ -538,8 +583,8 @@ export default function OnboardingPage() {
           </div>
         )}
 
-        {/* Step 7 — Live Progress */}
-        {step === 7 && (
+        {/* Step 8 — Live Progress */}
+        {step === 8 && (
           <div className="w-full max-w-md">
             <h2 className="text-xl font-semibold text-zinc-900 dark:text-white mb-2">Setting up your plan…</h2>
             <p className="text-zinc-600 dark:text-zinc-400 text-sm mb-8">

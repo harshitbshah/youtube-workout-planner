@@ -11,6 +11,7 @@ vi.mock("next/navigation", () => ({
 // Mock api calls
 vi.mock("@/lib/api", () => ({
   updateSchedule: vi.fn(),
+  updateEmailNotifications: vi.fn(),
   triggerScan: vi.fn(),
   getJobStatus: vi.fn(),
   searchChannels: vi.fn(),
@@ -20,11 +21,13 @@ vi.mock("@/lib/api", () => ({
 }));
 
 const mockUpdateSchedule = api.updateSchedule as ReturnType<typeof vi.fn>;
+const mockUpdateEmailNotifications = api.updateEmailNotifications as ReturnType<typeof vi.fn>;
 const mockTriggerScan = api.triggerScan as ReturnType<typeof vi.fn>;
 
 beforeEach(() => {
   vi.clearAllMocks();
   mockUpdateSchedule.mockResolvedValue(undefined);
+  mockUpdateEmailNotifications.mockResolvedValue({});
   mockTriggerScan.mockResolvedValue({});
   (api.getJobStatus as ReturnType<typeof vi.fn>).mockResolvedValue({ stage: null, total: null, done: null, error: null });
   (api.searchChannels as ReturnType<typeof vi.fn>).mockResolvedValue([]);
@@ -262,17 +265,17 @@ describe("OnboardingPage — Step 5 (Schedule Preview)", () => {
     expect(screen.getByText("monday")).toBeInTheDocument();
   });
 
-  it("'Looks good →' saves schedule and advances to step 6", async () => {
+  it("'Looks good →' saves schedule and advances to step 6 (email notifications)", async () => {
     goToStep5();
     fireEvent.click(screen.getByRole("button", { name: /Looks good/i }));
     await waitFor(() => {
       expect(mockUpdateSchedule).toHaveBeenCalledOnce();
-      expect(screen.getByText(/Add your favourite channels/i)).toBeInTheDocument();
+      expect(screen.getByText(/Get your weekly plan by email/i)).toBeInTheDocument();
     });
   });
 });
 
-describe("OnboardingPage — Step 6 (Channels)", () => {
+describe("OnboardingPage — Step 6 (Email Notifications)", () => {
   async function goToStep6(profile = "Active adult", goal = "Build muscle") {
     render(<OnboardingPage />);
     fireEvent.click(screen.getByText(profile));
@@ -284,21 +287,88 @@ describe("OnboardingPage — Step 6 (Channels)", () => {
     fireEvent.click(screen.getByText("25–35 min"));
     clickNext();
     fireEvent.click(screen.getByRole("button", { name: /Looks good/i }));
+    await waitFor(() => screen.getByText(/Get your weekly plan by email/i));
+  }
+
+  it("shows email notification heading", async () => {
+    await goToStep6();
+    expect(screen.getByText(/Get your weekly plan by email/i)).toBeInTheDocument();
+  });
+
+  it("'Yes' option is selected by default", async () => {
+    await goToStep6();
+    const yesCard = screen.getByText("Yes, email me my weekly plan").closest("button");
+    expect(yesCard?.className).toMatch(/border-zinc-900|border-white/);
+  });
+
+  it("clicking 'No thanks' selects it", async () => {
+    await goToStep6();
+    fireEvent.click(screen.getByText("No thanks"));
+    const noCard = screen.getByText("No thanks").closest("button");
+    expect(noCard?.className).toMatch(/border-zinc-900|border-white/);
+  });
+
+  it("clicking Next calls updateEmailNotifications with true (default)", async () => {
+    await goToStep6();
+    clickNext();
+    await waitFor(() => {
+      expect(mockUpdateEmailNotifications).toHaveBeenCalledWith(true);
+    });
+  });
+
+  it("opting out calls updateEmailNotifications with false", async () => {
+    await goToStep6();
+    fireEvent.click(screen.getByText("No thanks"));
+    clickNext();
+    await waitFor(() => {
+      expect(mockUpdateEmailNotifications).toHaveBeenCalledWith(false);
+    });
+  });
+
+  it("clicking Next advances to channels step", async () => {
+    await goToStep6();
+    clickNext();
+    await waitFor(() => {
+      expect(screen.getByText(/Add your favourite channels/i)).toBeInTheDocument();
+    });
+  });
+
+  it("Back button returns to schedule preview", async () => {
+    await goToStep6();
+    fireEvent.click(screen.getByRole("button", { name: /← Back/i }));
+    expect(screen.getByText(/Here's your personalised plan/i)).toBeInTheDocument();
+  });
+});
+
+describe("OnboardingPage — Step 7 (Channels)", () => {
+  async function goToStep7(profile = "Active adult", goal = "Build muscle") {
+    render(<OnboardingPage />);
+    fireEvent.click(screen.getByText(profile));
+    clickNext();
+    fireEvent.click(screen.getByText(goal));
+    clickNext();
+    fireEvent.click(screen.getByRole("button", { name: "4" }));
+    clickNext();
+    fireEvent.click(screen.getByText("25–35 min"));
+    clickNext();
+    fireEvent.click(screen.getByRole("button", { name: /Looks good/i }));
+    await waitFor(() => screen.getByText(/Get your weekly plan by email/i));
+    clickNext();
     await waitFor(() => screen.getByText(/Add your favourite channels/i));
   }
 
   it("shows channel manager heading", async () => {
-    await goToStep6();
+    await goToStep7();
     expect(screen.getByText(/Add your favourite channels/i)).toBeInTheDocument();
   });
 
   it("Continue button is disabled with 0 channels", async () => {
-    await goToStep6();
+    await goToStep7();
     expect(screen.getByRole("button", { name: /Continue/i })).toBeDisabled();
   });
 
   it("shows adult suggestions as cards after fetch resolves", async () => {
-    await goToStep6();
+    await goToStep7();
     await waitFor(() => expect(screen.getByText("Athlean-X")).toBeInTheDocument());
     expect(api.getSuggestions).toHaveBeenCalledWith("adult");
   });
@@ -314,13 +384,15 @@ describe("OnboardingPage — Step 6 (Channels)", () => {
     fireEvent.click(screen.getByText("15–20 min"));
     clickNext();
     fireEvent.click(screen.getByRole("button", { name: /Looks good/i }));
+    await waitFor(() => screen.getByText(/Get your weekly plan by email/i));
+    clickNext();
     await waitFor(() => screen.getByText(/Add your favourite channels/i));
     expect(screen.getByText(/gentle movement/i)).toBeInTheDocument();
   });
 });
 
-describe("OnboardingPage — Step 7 (Progress)", () => {
-  async function goToStep7() {
+describe("OnboardingPage — Step 8 (Progress)", () => {
+  async function goToStep8() {
     const mockAddChannel = api.addChannel as ReturnType<typeof vi.fn>;
     mockAddChannel.mockResolvedValue({
       id: "ch1", name: "Athlean-X", youtube_url: "https://youtube.com/channel/UCabc",
@@ -337,6 +409,9 @@ describe("OnboardingPage — Step 7 (Progress)", () => {
     fireEvent.click(screen.getByText("25–35 min"));
     clickNext();
     fireEvent.click(screen.getByRole("button", { name: /Looks good/i }));
+    await waitFor(() => screen.getByText(/Get your weekly plan by email/i));
+    // Accept default (Yes) and continue
+    clickNext();
     await waitFor(() => screen.getByText(/Add your favourite channels/i));
 
     // Add a channel via suggestion card then continue
@@ -347,8 +422,8 @@ describe("OnboardingPage — Step 7 (Progress)", () => {
     await waitFor(() => screen.getByText(/Setting up your plan/i));
   }
 
-  it("shows 'Go to dashboard' escape hatch on step 7", async () => {
-    await goToStep7();
+  it("shows 'Go to dashboard' escape hatch on step 8", async () => {
+    await goToStep8();
     expect(screen.getByRole("button", { name: /Go to dashboard/i })).toBeInTheDocument();
   });
 
@@ -358,7 +433,7 @@ describe("OnboardingPage — Step 7 (Progress)", () => {
       (api.getJobStatus as ReturnType<typeof vi.fn>).mockResolvedValue({
         stage: "classifying", total: 43, done: -40, error: null,
       });
-      await goToStep7();
+      await goToStep8();
       // Advance past the 3s poll interval so pollStatus fires
       await vi.advanceTimersByTimeAsync(3100);
       await waitFor(() =>
@@ -377,7 +452,7 @@ describe("OnboardingPage — Step Indicator", () => {
     expect(profileEl.className).toMatch(/text-white/);
   });
 
-  it("shows 'Channels' as active on step 6", async () => {
+  it("shows 'Channels' as active on step 7", async () => {
     render(<OnboardingPage />);
     fireEvent.click(screen.getByText("Active adult"));
     clickNext();
@@ -388,6 +463,8 @@ describe("OnboardingPage — Step Indicator", () => {
     fireEvent.click(screen.getByText("25–35 min"));
     clickNext();
     fireEvent.click(screen.getByRole("button", { name: /Looks good/i }));
+    await waitFor(() => screen.getByText(/Get your weekly plan by email/i));
+    clickNext();
     await waitFor(() => screen.getByText(/Add your favourite channels/i));
     const channelsEl = screen.getByText("Channels");
     expect(channelsEl.className).toMatch(/text-white/);
