@@ -6,6 +6,10 @@ Phases 1–5 complete + admin console + charts + guide page + mobile UX complete
 Both Railway (backend) and Vercel (frontend) live and functional on `main`.
 **Ready for first users** — Google OAuth sensitive scope review in progress (4–6 week wait). Users see "unverified app" warning until review completes.
 
+**Done this session (2026-03-13, part 5):**
+- Replaced default Next.js favicon (white triangle) with 💪 emoji (Twemoji, 16×32×48px ICO) ✅
+- Discussed "Get Started Free" vs "Sign In" UX — recommendation: add Google icon + rename to "Create free account", add "Already have an account? Sign in" below CTA (not yet implemented)
+
 **Done this session (2026-03-13, part 4):**
 - Bug fix: theme toggle hidden behind feedback pill — moved from `bottom-16` → `bottom-20` so it sits clearly above the feedback button ✅
 
