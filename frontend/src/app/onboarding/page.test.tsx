@@ -35,6 +35,11 @@ beforeEach(() => {
   ]);
 });
 
+// Helper: click "Next →" button (used across steps)
+function clickNext() {
+  fireEvent.click(screen.getByRole("button", { name: /Next →/i }));
+}
+
 describe("OnboardingPage — Step 1 (Life Stage)", () => {
   it("renders life stage heading", () => {
     render(<OnboardingPage />);
@@ -49,51 +54,70 @@ describe("OnboardingPage — Step 1 (Life Stage)", () => {
     expect(screen.getByText("Training seriously")).toBeInTheDocument();
   });
 
-  it("clicking a life stage advances to step 2", () => {
+  it("Next button is disabled until a life stage is selected", () => {
+    render(<OnboardingPage />);
+    expect(screen.getByRole("button", { name: /Next →/i })).toBeDisabled();
+  });
+
+  it("selecting a life stage then clicking Next advances to step 2", () => {
     render(<OnboardingPage />);
     fireEvent.click(screen.getByText("Active adult"));
+    clickNext();
     expect(screen.getByText(/What's your main goal/i)).toBeInTheDocument();
   });
 });
 
 describe("OnboardingPage — Step 2 (Goal)", () => {
-  it("shows adult goals after selecting 'Active adult'", () => {
+  it("shows adult goals after selecting 'Active adult' and clicking Next", () => {
     render(<OnboardingPage />);
     fireEvent.click(screen.getByText("Active adult"));
+    clickNext();
     expect(screen.getByText("Build muscle")).toBeInTheDocument();
     expect(screen.getByText("Lose fat")).toBeInTheDocument();
     expect(screen.getByText("Improve cardio")).toBeInTheDocument();
     expect(screen.getByText("Stay consistent")).toBeInTheDocument();
   });
 
-  it("shows senior goals after selecting '55 and thriving'", () => {
+  it("shows senior goals after selecting '55 and thriving' and clicking Next", () => {
     render(<OnboardingPage />);
     fireEvent.click(screen.getByText("55 and thriving"));
+    clickNext();
     expect(screen.getByText("Stay active & healthy")).toBeInTheDocument();
     expect(screen.getByText("Improve flexibility")).toBeInTheDocument();
     expect(screen.getByText("Build strength safely")).toBeInTheDocument();
   });
 
-  it("shows athlete goals after selecting 'Training seriously'", () => {
+  it("shows athlete goals after selecting 'Training seriously' and clicking Next", () => {
     render(<OnboardingPage />);
     fireEvent.click(screen.getByText("Training seriously"));
+    clickNext();
     expect(screen.getByText("Strength & hypertrophy")).toBeInTheDocument();
     expect(screen.getByText("Endurance")).toBeInTheDocument();
     expect(screen.getByText("Athletic performance")).toBeInTheDocument();
     expect(screen.getByText("Cut weight")).toBeInTheDocument();
   });
 
-  it("clicking a goal advances to step 3", () => {
+  it("Next button is disabled until a goal is selected", () => {
     render(<OnboardingPage />);
     fireEvent.click(screen.getByText("Active adult"));
+    clickNext();
+    expect(screen.getByRole("button", { name: /Next →/i })).toBeDisabled();
+  });
+
+  it("selecting a goal then clicking Next advances to step 3", () => {
+    render(<OnboardingPage />);
+    fireEvent.click(screen.getByText("Active adult"));
+    clickNext();
     fireEvent.click(screen.getByText("Build muscle"));
+    clickNext();
     expect(screen.getByText(/How many days a week can you train/i)).toBeInTheDocument();
   });
 
   it("Back button returns to step 1", () => {
     render(<OnboardingPage />);
     fireEvent.click(screen.getByText("Active adult"));
-    fireEvent.click(screen.getByText("← Back"));
+    clickNext();
+    fireEvent.click(screen.getByRole("button", { name: /← Back/i }));
     expect(screen.getByText(/First, tell us a bit about yourself/i)).toBeInTheDocument();
   });
 });
@@ -102,7 +126,9 @@ describe("OnboardingPage — Step 3 (Training Days)", () => {
   function goToStep3(profile = "Active adult", goal = "Build muscle") {
     render(<OnboardingPage />);
     fireEvent.click(screen.getByText(profile));
+    clickNext();
     fireEvent.click(screen.getByText(goal));
+    clickNext();
   }
 
   it("renders day buttons 2–6 for adult", () => {
@@ -115,18 +141,21 @@ describe("OnboardingPage — Step 3 (Training Days)", () => {
   it("senior profile shows max 5 day buttons (no 6)", () => {
     render(<OnboardingPage />);
     fireEvent.click(screen.getByText("55 and thriving"));
+    clickNext();
     fireEvent.click(screen.getByText("Stay active & healthy"));
+    clickNext();
     expect(screen.queryByRole("button", { name: "6" })).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "5" })).toBeInTheDocument();
   });
 
-  it("clicking a day button advances to step 4", () => {
+  it("clicking a day button then Next advances to step 4", () => {
     goToStep3();
     fireEvent.click(screen.getByRole("button", { name: "4" }));
+    clickNext();
     expect(screen.getByText(/How long per session/i)).toBeInTheDocument();
   });
 
-  it("adult default training days is 4", () => {
+  it("adult default training days is 4 (highlighted)", () => {
     goToStep3();
     const btn4 = screen.getByRole("button", { name: "4" });
     expect(btn4.className).toMatch(/bg-white/);
@@ -137,8 +166,11 @@ describe("OnboardingPage — Step 4 (Session Length)", () => {
   function goToStep4(profile = "Active adult", goal = "Build muscle", days = "4") {
     render(<OnboardingPage />);
     fireEvent.click(screen.getByText(profile));
+    clickNext();
     fireEvent.click(screen.getByText(goal));
+    clickNext();
     fireEvent.click(screen.getByRole("button", { name: days }));
+    clickNext();
   }
 
   it("renders all session length options", () => {
@@ -149,25 +181,32 @@ describe("OnboardingPage — Step 4 (Session Length)", () => {
     expect(screen.getByText("No preference")).toBeInTheDocument();
   });
 
-  it("selecting session length advances to step 5", () => {
+  it("selecting session length then clicking Next advances to step 5", () => {
     goToStep4();
     fireEvent.click(screen.getByText("25–35 min"));
+    clickNext();
     expect(screen.getByText(/Here's your personalised plan/i)).toBeInTheDocument();
   });
 
   it("shows affirming copy for senior profile", () => {
     render(<OnboardingPage />);
     fireEvent.click(screen.getByText("55 and thriving"));
+    clickNext();
     fireEvent.click(screen.getByText("Stay active & healthy"));
+    clickNext();
     fireEvent.click(screen.getByRole("button", { name: "3" }));
+    clickNext();
     expect(screen.getByText(/Short sessions are just as effective/i)).toBeInTheDocument();
   });
 
   it("shows affirming copy for beginner profile", () => {
     render(<OnboardingPage />);
     fireEvent.click(screen.getByText("Just starting out"));
+    clickNext();
     fireEvent.click(screen.getByText("Build a habit"));
+    clickNext();
     fireEvent.click(screen.getByRole("button", { name: "3" }));
+    clickNext();
     expect(screen.getByText(/Short sessions are just as effective/i)).toBeInTheDocument();
   });
 });
@@ -176,9 +215,13 @@ describe("OnboardingPage — Step 5 (Schedule Preview)", () => {
   function goToStep5(profile = "Active adult", goal = "Build muscle", days = "4", duration = "25–35 min") {
     render(<OnboardingPage />);
     fireEvent.click(screen.getByText(profile));
+    clickNext();
     fireEvent.click(screen.getByText(goal));
+    clickNext();
     fireEvent.click(screen.getByRole("button", { name: days }));
+    clickNext();
     fireEvent.click(screen.getByText(duration));
+    clickNext();
   }
 
   it("shows schedule preview heading", () => {
@@ -195,9 +238,13 @@ describe("OnboardingPage — Step 5 (Schedule Preview)", () => {
   it("senior profile shows 'Recovery day' not 'Rest day'", () => {
     render(<OnboardingPage />);
     fireEvent.click(screen.getByText("55 and thriving"));
+    clickNext();
     fireEvent.click(screen.getByText("Stay active & healthy"));
+    clickNext();
     fireEvent.click(screen.getByRole("button", { name: "3" }));
+    clickNext();
     fireEvent.click(screen.getByText("15–20 min"));
+    clickNext();
     expect(screen.getAllByText("Recovery day").length).toBeGreaterThan(0);
     expect(screen.queryByText("Rest day")).not.toBeInTheDocument();
   });
@@ -229,9 +276,13 @@ describe("OnboardingPage — Step 6 (Channels)", () => {
   async function goToStep6(profile = "Active adult", goal = "Build muscle") {
     render(<OnboardingPage />);
     fireEvent.click(screen.getByText(profile));
+    clickNext();
     fireEvent.click(screen.getByText(goal));
+    clickNext();
     fireEvent.click(screen.getByRole("button", { name: "4" }));
+    clickNext();
     fireEvent.click(screen.getByText("25–35 min"));
+    clickNext();
     fireEvent.click(screen.getByRole("button", { name: /Looks good/i }));
     await waitFor(() => screen.getByText(/Add your favourite channels/i));
   }
@@ -255,9 +306,13 @@ describe("OnboardingPage — Step 6 (Channels)", () => {
   it("shows senior subheading for senior profile", async () => {
     render(<OnboardingPage />);
     fireEvent.click(screen.getByText("55 and thriving"));
+    clickNext();
     fireEvent.click(screen.getByText("Stay active & healthy"));
+    clickNext();
     fireEvent.click(screen.getByRole("button", { name: "3" }));
+    clickNext();
     fireEvent.click(screen.getByText("15–20 min"));
+    clickNext();
     fireEvent.click(screen.getByRole("button", { name: /Looks good/i }));
     await waitFor(() => screen.getByText(/Add your favourite channels/i));
     expect(screen.getByText(/gentle movement/i)).toBeInTheDocument();
@@ -274,9 +329,13 @@ describe("OnboardingPage — Step Indicator", () => {
   it("shows 'Channels' as active on step 6", async () => {
     render(<OnboardingPage />);
     fireEvent.click(screen.getByText("Active adult"));
+    clickNext();
     fireEvent.click(screen.getByText("Build muscle"));
+    clickNext();
     fireEvent.click(screen.getByRole("button", { name: "4" }));
+    clickNext();
     fireEvent.click(screen.getByText("25–35 min"));
+    clickNext();
     fireEvent.click(screen.getByRole("button", { name: /Looks good/i }));
     await waitFor(() => screen.getByText(/Add your favourite channels/i));
     const channelsEl = screen.getByText("Channels");

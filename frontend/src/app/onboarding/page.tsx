@@ -49,15 +49,63 @@ function StepIndicator({ internalStep }: { internalStep: number }) {
 
 // ─── Card Button ──────────────────────────────────────────────────────────────
 
-function OptionCard({ label, sublabel, onClick }: { label: string; sublabel?: string; onClick: () => void }) {
+function OptionCard({
+  label,
+  sublabel,
+  onClick,
+  selected,
+}: {
+  label: string;
+  sublabel?: string;
+  onClick: () => void;
+  selected?: boolean;
+}) {
   return (
     <button
       onClick={onClick}
-      className="w-full text-left rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-900 px-5 py-4 hover:border-zinc-400 dark:hover:border-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition"
+      className={`w-full text-left rounded-xl border px-5 py-4 transition ${
+        selected
+          ? "border-zinc-900 dark:border-white bg-zinc-100 dark:bg-zinc-800"
+          : "border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-900 hover:border-zinc-400 dark:hover:border-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+      }`}
     >
       <p className="font-medium text-zinc-900 dark:text-white">{label}</p>
       {sublabel && <p className="text-sm text-zinc-600 dark:text-zinc-400 mt-0.5">{sublabel}</p>}
     </button>
+  );
+}
+
+// ─── Nav Buttons ──────────────────────────────────────────────────────────────
+
+function StepNav({
+  onBack,
+  onNext,
+  nextDisabled,
+  nextLabel = "Next →",
+}: {
+  onBack?: () => void;
+  onNext: () => void;
+  nextDisabled?: boolean;
+  nextLabel?: string;
+}) {
+  return (
+    <div className="flex items-center gap-3 mt-6">
+      {onBack && (
+        <button
+          onClick={onBack}
+          className="rounded-lg border border-zinc-200 dark:border-zinc-700 px-4 py-3 text-sm font-medium text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition"
+        >
+          ← Back
+        </button>
+      )}
+      <button
+        onClick={onNext}
+        disabled={nextDisabled}
+        className="flex-1 rounded-lg bg-white px-4 py-3 text-sm font-semibold text-zinc-900 hover:bg-zinc-100 disabled:opacity-30 transition"
+      >
+        {nextLabel}
+      </button>
+    </div>
   );
 }
 
@@ -200,27 +248,27 @@ export default function OnboardingPage() {
 
   const isSenior = profile === "senior";
 
+  // Step 1: select profile (highlight only — Next button advances)
   function handleProfileSelect(p: LifeStage) {
     setProfile(p);
     setTrainingDays(DEFAULT_DAYS[p]);
     setSessionLength(DEFAULT_DURATION[p]);
     setGoal(null);
-    setStep(2);
   }
 
+  // Step 2: select goal (highlight only — Next button advances)
   function handleGoalSelect(g: string) {
     setGoal(g);
-    setStep(3);
   }
 
-  function handleDaysSelect(d: number) {
-    setTrainingDays(d);
-    setStep(4);
-  }
-
+  // Step 4: select session length (highlight only — Next button advances)
   function handleSessionLengthSelect(sl: SessionLength) {
     setSessionLength(sl);
-    const generated = buildSchedule(profile!, goal!, trainingDays, sl);
+  }
+
+  // Step 4 → 5: build schedule then advance
+  function handleNextStep4() {
+    const generated = buildSchedule(profile!, goal!, trainingDays, sessionLength);
     setSchedule(generated);
     setCustomising(false);
     setStep(5);
@@ -331,9 +379,16 @@ export default function OnboardingPage() {
             <p className="text-zinc-600 dark:text-zinc-400 text-sm mb-6">We&apos;ll tailor your plan to fit.</p>
             <div className="flex flex-col gap-3">
               {LIFE_STAGES.map((ls) => (
-                <OptionCard key={ls.value} label={ls.label} sublabel={ls.sublabel} onClick={() => handleProfileSelect(ls.value)} />
+                <OptionCard
+                  key={ls.value}
+                  label={ls.label}
+                  sublabel={ls.sublabel}
+                  selected={profile === ls.value}
+                  onClick={() => handleProfileSelect(ls.value)}
+                />
               ))}
             </div>
+            <StepNav onNext={() => setStep(2)} nextDisabled={!profile} />
           </div>
         )}
 
@@ -344,12 +399,15 @@ export default function OnboardingPage() {
             <p className="text-zinc-600 dark:text-zinc-400 text-sm mb-6">Pick the one that feels most right.</p>
             <div className="flex flex-col gap-3">
               {GOALS[profile].map((g) => (
-                <OptionCard key={g} label={g} onClick={() => handleGoalSelect(g)} />
+                <OptionCard
+                  key={g}
+                  label={g}
+                  selected={goal === g}
+                  onClick={() => handleGoalSelect(g)}
+                />
               ))}
             </div>
-            <button onClick={() => setStep(1)} className="mt-4 text-sm text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 transition">
-              ← Back
-            </button>
+            <StepNav onBack={() => setStep(1)} onNext={() => setStep(3)} nextDisabled={!goal} />
           </div>
         )}
 
@@ -361,7 +419,7 @@ export default function OnboardingPage() {
               {(isSenior ? [2, 3, 4, 5] : [2, 3, 4, 5, 6]).map((d) => (
                 <button
                   key={d}
-                  onClick={() => handleDaysSelect(d)}
+                  onClick={() => setTrainingDays(d)}
                   className={`h-12 w-12 rounded-xl border text-sm font-bold transition
                     ${trainingDays === d ? "border-white bg-white text-zinc-900" : "border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-900 text-zinc-900 dark:text-white hover:border-zinc-400 dark:hover:border-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800"}`}
                 >
@@ -370,9 +428,7 @@ export default function OnboardingPage() {
               ))}
             </div>
             <p className="text-sm text-zinc-500">Even 2 days/week makes a real difference.</p>
-            <button onClick={() => setStep(2)} className="mt-4 text-sm text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 transition">
-              ← Back
-            </button>
+            <StepNav onBack={() => setStep(2)} onNext={() => setStep(4)} />
           </div>
         )}
 
@@ -385,12 +441,16 @@ export default function OnboardingPage() {
             )}
             <div className="flex flex-col gap-3 mt-4">
               {SESSION_OPTIONS.map((opt) => (
-                <OptionCard key={opt.value} label={opt.label} sublabel={opt.sublabel} onClick={() => handleSessionLengthSelect(opt.value)} />
+                <OptionCard
+                  key={opt.value}
+                  label={opt.label}
+                  sublabel={opt.sublabel}
+                  selected={sessionLength === opt.value}
+                  onClick={() => handleSessionLengthSelect(opt.value)}
+                />
               ))}
             </div>
-            <button onClick={() => setStep(3)} className="mt-4 text-sm text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 transition">
-              ← Back
-            </button>
+            <StepNav onBack={() => setStep(3)} onNext={handleNextStep4} />
           </div>
         )}
 
