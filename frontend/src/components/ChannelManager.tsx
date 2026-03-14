@@ -171,7 +171,7 @@ export default function ChannelManager({ channels, onChannelsChange, suggestions
                 <button
                   onClick={() => handleRemove(ch.id)}
                   disabled={deletingId === ch.id}
-                  className="text-zinc-500 hover:text-red-400 text-xs transition disabled:opacity-40"
+                  className="text-zinc-500 hover:text-red-400 text-xs transition disabled:opacity-40 cursor-pointer"
                   title="Remove channel"
                 >
                   {deletingId === ch.id ? "…" : "✕"}
