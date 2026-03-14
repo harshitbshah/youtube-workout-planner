@@ -29,7 +29,7 @@ Run before every commit:
 cd frontend && npm run test:run
 ```
 
-Current: **388/388 passing** (317 backend + 71 frontend)
+Current: **423/423 passing** (352 backend + 71 frontend)
 
 New test files added:
 - `tests/api/test_jobs.py` — `POST /jobs/scan` (202, 400 no channels, 503 no key, 401 unauth, channel count); `GET /jobs/status` (no pipeline, unauthenticated, reflects live state); scanner filters (upper duration cap, title blocklist); classifier (batch cap limits to 300, `on_progress` callback during polling, resume existing batch, batch ID cleared on completion)

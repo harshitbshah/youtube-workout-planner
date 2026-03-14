@@ -254,9 +254,13 @@ users
   id (uuid PK), google_id, email, display_name, created_at,
   last_scan_error (text, nullable) — set on pipeline failure, cleared on success
 
-channels
-  id (uuid PK), user_id (FK), name, youtube_url, youtube_channel_id, added_at,
+channels (global — shared across all users)
+  id (uuid PK), name, youtube_url, youtube_channel_id, added_at,
   first_scan_done (bool, default false), last_video_published_at (datetime, nullable)
+
+user_channels (join table — links users to channels they've subscribed to)
+  user_id (PK FK → users.id CASCADE), channel_id (PK FK → channels.id CASCADE), added_at
+  — deleting a user_channels row unsubscribes the user; channel + videos are preserved
 
 videos
   id (youtube video ID PK), channel_id (FK), title, description,

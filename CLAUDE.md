@@ -149,7 +149,7 @@ cd frontend && npm run test:run
 | File | Purpose |
 |---|---|
 | `api/main.py` | FastAPI app, CORS, middleware, router registration |
-| `api/models.py` | SQLAlchemy ORM models (User, Channel, Video, Classification, Schedule, ProgramHistory, UserCredentials, BatchUsageLog, Announcement, ScanLog, UserActivityLog) |
+| `api/models.py` | SQLAlchemy ORM models (User, Channel, UserChannel, Video, Classification, Schedule, ProgramHistory, UserCredentials, BatchUsageLog, Announcement, ScanLog, UserActivityLog) |
 | `api/schemas.py` | Pydantic request/response schemas |
 | `api/dependencies.py` | `get_db`, `get_current_user` (+ last_active_at throttled update) FastAPI dependencies |
 | `api/database.py` | SQLAlchemy engine + session factory |
@@ -209,7 +209,7 @@ cd frontend && npm run test:run
 | POST | `/auth/logout` | Yes | Clear session |
 | GET | `/channels` | Yes | List user's channels |
 | POST | `/channels` | Yes | Add channel |
-| DELETE | `/channels/{id}` | Yes | Remove channel |
+| DELETE | `/channels/{id}` | Yes | Unsubscribe user from channel (preserves channel + videos) |
 | GET | `/channels/search?q=` | Yes | Search YouTube channels |
 | GET | `/schedule` | Yes | Get weekly schedule |
 | PUT | `/schedule` | Yes | Update weekly schedule |

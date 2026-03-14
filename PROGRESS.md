@@ -2,9 +2,21 @@
 
 ## Status
 Phases 1–5 complete + admin console + charts + guide page + mobile UX complete. Phase A complete. Phase B complete. Phase C complete. Phase D F5+F6 complete. Backlog items T1+T2+S1 complete.
-**317 backend + 71 frontend = 388 tests passing**.
+**352 backend + 71 frontend = 423 tests passing**.
 Both Railway (backend) and Vercel (frontend) live and functional on `main`.
 **Ready for first users** — Google OAuth sensitive scope review in progress (4–6 week wait). Users see "unverified app" warning until review completes.
+
+**Done this session (2026-03-13, part 6 — checkpoint):**
+- Bug fix: delete channel silently swallowed errors — now shows error message + loading state ✅
+- Bug fix: feedback modal cut off left side on mobile — fixed with `left-4 right-4` on small screens ✅
+- Bug fix: feedback button SVG rendered as arrow on some mobile browsers — replaced with thumbs-up icon ✅
+- Bug fix: cursor-pointer missing on feedback category buttons and channel remove (✕) button ✅
+- Bug fix: channel delete was failing with FK constraint — `program_history.video_id` FK set to `ON DELETE SET NULL` (migration 016) ✅
+- **Architecture refactor: shared channels** — channels are now global, `user_channels` join table links users to channels; deleting a channel removes only the user's link — videos stay in library permanently ✅
+  - Migration 017: creates `user_channels`, populates from existing data, deduplicates by `youtube_channel_id`, drops `channels.user_id`
+  - All queries updated: `channels.py`, `library.py`, `plan.py`, `jobs.py`, `planner.py`, `classifier.py`, `scheduler.py`, `admin.py`
+  - All 29 test files updated — 423/423 tests passing
+- DB schema note: migrations 016 + 017 will run on next Railway redeploy ✅
 
 **Done this session (2026-03-13, part 5):**
 - Replaced default Next.js favicon (white triangle) with 💪 emoji (Twemoji, 16×32×48px ICO) ✅
