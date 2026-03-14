@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Footer } from "@/components/Footer";
@@ -30,19 +30,23 @@ function SwapPicker({
   day,
   workoutType,
   currentVideoId,
+  anchorRect,
   onSwap,
   onClose,
 }: {
   day: string;
   workoutType: string | null;
   currentVideoId: string;
+  anchorRect: DOMRect | null;
   onSwap: (video: VideoSummary) => Promise<void>;
   onClose: () => void;
 }) {
+  const pickerRef = useRef<HTMLDivElement>(null);
   const [videos, setVideos] = useState<VideoSummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [filterType, setFilterType] = useState<string | null>(workoutType);
   const [swapping, setSwapping] = useState<string | null>(null);
+  const isMobile = typeof window !== "undefined" && window.innerWidth < 640;
 
   useEffect(() => {
     setLoading(true);
@@ -52,38 +56,56 @@ function SwapPicker({
       .finally(() => setLoading(false));
   }, [filterType, currentVideoId]);
 
+  // Close on click outside (desktop popover only)
+  useEffect(() => {
+    if (isMobile) return;
+    function onMouseDown(e: MouseEvent) {
+      if (pickerRef.current && !pickerRef.current.contains(e.target as Node)) {
+        onClose();
+      }
+    }
+    document.addEventListener("mousedown", onMouseDown);
+    return () => document.removeEventListener("mousedown", onMouseDown);
+  }, [isMobile, onClose]);
+
   async function handleSelect(video: VideoSummary) {
     setSwapping(video.id);
     await onSwap(video);
     setSwapping(null);
   }
 
-  return (
-    <div className="mt-2 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 overflow-hidden" data-testid={`swap-picker-${day}`}>
+  // Popover position (desktop)
+  const popoverStyle = (() => {
+    if (!anchorRect) return {};
+    const width = 320;
+    const left = Math.min(anchorRect.left, window.innerWidth - width - 8);
+    const spaceBelow = window.innerHeight - anchorRect.bottom;
+    const top = spaceBelow > 420 ? anchorRect.bottom + 6 : anchorRect.top - 420;
+    return { top, left, width };
+  })();
+
+  // Shared video list content
+  const content = (
+    <>
       {/* Header */}
-      <div className="flex items-center justify-between px-3 py-2 border-b border-zinc-100 dark:border-zinc-800">
+      <div className="flex items-center justify-between px-4 py-3 border-b border-zinc-100 dark:border-zinc-800">
         <div className="flex items-center gap-2">
-          <span className="text-xs font-medium text-zinc-500">Pick a replacement</span>
+          <span className="text-xs font-semibold text-zinc-600 dark:text-zinc-400">Pick a replacement</span>
           {filterType && (
             <button
               onClick={() => setFilterType(null)}
-              className="text-xs text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 underline transition"
+              className="text-xs text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 underline transition cursor-pointer"
             >
               Show all types
             </button>
           )}
         </div>
-        <button
-          onClick={onClose}
-          className="text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 transition text-base leading-none"
-        >
-          ✕
-        </button>
+        <button onClick={onClose} className="text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 transition text-base leading-none cursor-pointer">✕</button>
       </div>
 
       {/* Active filter chip */}
       {filterType && (
-        <div className="px-3 py-1.5 border-b border-zinc-100 dark:border-zinc-800">
+        <div className="px-4 py-2 border-b border-zinc-100 dark:border-zinc-800">
           <span className="inline-flex items-center rounded-full bg-zinc-100 dark:bg-zinc-800 px-2 py-0.5 text-xs text-zinc-600 dark:text-zinc-400 capitalize">
             {filterType}
           </span>
@@ -92,11 +114,11 @@ function SwapPicker({
 
       {/* Video list */}
       {loading ? (
-        <div className="flex justify-center py-5">
+        <div className="flex justify-center py-6">
           <div className="h-4 w-4 animate-spin rounded-full border-2 border-zinc-300 border-t-zinc-600" />
         </div>
       ) : videos.length === 0 ? (
-        <p className="px-3 py-4 text-xs text-zinc-500 text-center">No videos found.</p>
+        <p className="px-4 py-5 text-xs text-zinc-500 text-center">No videos found.</p>
       ) : (
         <ul>
           {videos.map((v) => (
@@ -104,18 +126,12 @@ function SwapPicker({
               <button
                 onClick={() => handleSelect(v)}
                 disabled={swapping !== null}
-                className="w-full text-left px-3 py-2 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition disabled:opacity-50 flex items-center gap-3 cursor-pointer"
+                className="w-full text-left px-4 py-2.5 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition disabled:opacity-50 flex items-center gap-3 cursor-pointer"
               >
-                {/* Thumbnail */}
                 <div className="shrink-0 w-16 aspect-video rounded overflow-hidden bg-zinc-100 dark:bg-zinc-800">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={`https://i.ytimg.com/vi/${v.id}/mqdefault.jpg`}
-                    alt=""
-                    className="w-full h-full object-cover"
-                  />
+                  <img src={`https://i.ytimg.com/vi/${v.id}/mqdefault.jpg`} alt="" className="w-full h-full object-cover" />
                 </div>
-                {/* Text */}
                 <div className="min-w-0 flex-1">
                   <p className="text-xs font-medium text-zinc-900 dark:text-white line-clamp-2 leading-snug">{v.title}</p>
                   <p className="text-xs text-zinc-500 mt-0.5">
@@ -123,14 +139,44 @@ function SwapPicker({
                     {v.duration_sec && ` · ${formatDuration(Math.round(v.duration_sec / 60), Math.round(v.duration_sec / 60))}`}
                   </p>
                 </div>
-                <span className="shrink-0 text-xs text-zinc-400">
-                  {swapping === v.id ? "…" : ""}
-                </span>
+                {swapping === v.id && <span className="shrink-0 text-xs text-zinc-400">…</span>}
               </button>
             </li>
           ))}
         </ul>
       )}
+    </>
+  );
+
+  // Mobile: bottom sheet with backdrop
+  if (isMobile) {
+    return (
+      <>
+        <div className="fixed inset-0 z-40 bg-black/40" onClick={onClose} />
+        <div
+          ref={pickerRef}
+          data-testid={`swap-picker-${day}`}
+          className="fixed bottom-0 left-0 right-0 z-50 rounded-t-2xl bg-white dark:bg-zinc-900 border-t border-zinc-200 dark:border-zinc-700 max-h-[75vh] overflow-y-auto"
+        >
+          {/* Drag handle */}
+          <div className="flex justify-center pt-3 pb-1">
+            <div className="w-10 h-1 rounded-full bg-zinc-300 dark:bg-zinc-600" />
+          </div>
+          {content}
+        </div>
+      </>
+    );
+  }
+
+  // Desktop: floating popover
+  return (
+    <div
+      ref={pickerRef}
+      data-testid={`swap-picker-${day}`}
+      style={popoverStyle}
+      className="fixed z-50 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-xl overflow-hidden max-h-[420px] overflow-y-auto"
+    >
+      {content}
     </div>
   );
 }
@@ -191,6 +237,7 @@ export default function DashboardPage() {
   const [announcement, setAnnouncement] = useState<{ id: number; message: string } | null>(null);
   const [stalePlanDismissed, setStalePlanDismissed] = useState(false);
   const [openSwapDay, setOpenSwapDay] = useState<string | null>(null);
+  const [swapAnchorRect, setSwapAnchorRect] = useState<DOMRect | null>(null);
   const [error, setError] = useState("");
 
   useEffect(() => {
@@ -274,7 +321,7 @@ export default function DashboardPage() {
   useEffect(() => {
     if (!openSwapDay) return;
     function onKey(e: KeyboardEvent) {
-      if (e.key === "Escape") setOpenSwapDay(null);
+      if (e.key === "Escape") { setOpenSwapDay(null); setSwapAnchorRect(null); }
     }
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
@@ -286,6 +333,7 @@ export default function DashboardPage() {
       p ? { ...p, days: p.days.map((d) => (d.day === day ? { ...d, video } : d)) } : p
     );
     setOpenSwapDay(null);
+    setSwapAnchorRect(null);
   }
 
   async function handleGenerate() {
@@ -592,8 +640,16 @@ export default function DashboardPage() {
                 </p>
                 <VideoCard video={day.video!} />
                 <button
-                  onClick={() => setOpenSwapDay(openSwapDay === day.day ? null : day.day)}
-                  className="mt-1.5 w-full text-xs text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 transition py-1"
+                  onClick={(e) => {
+                    if (openSwapDay === day.day) {
+                      setOpenSwapDay(null);
+                      setSwapAnchorRect(null);
+                    } else {
+                      setSwapAnchorRect(e.currentTarget.getBoundingClientRect());
+                      setOpenSwapDay(day.day);
+                    }
+                  }}
+                  className="mt-1.5 w-full text-xs text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 transition py-1 cursor-pointer"
                 >
                   {openSwapDay === day.day ? "Cancel" : "Swap video"}
                 </button>
@@ -602,8 +658,9 @@ export default function DashboardPage() {
                     day={day.day}
                     workoutType={day.video!.workout_type}
                     currentVideoId={day.video!.id}
+                    anchorRect={swapAnchorRect}
                     onSwap={(video) => handleSwap(day.day, video)}
-                    onClose={() => setOpenSwapDay(null)}
+                    onClose={() => { setOpenSwapDay(null); setSwapAnchorRect(null); }}
                   />
                 )}
               </div>
