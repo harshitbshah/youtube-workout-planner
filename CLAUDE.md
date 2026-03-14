@@ -49,6 +49,21 @@ Run both suites before committing:
 .venv/bin/pytest tests/integration/ -q  # integration
 ```
 
+Every code change that adds or modifies **frontend** behaviour (pages, components, utilities)
+**must** include Vitest unit tests:
+
+- New page or component → `<file>.test.tsx` alongside the file.
+- New utility function → add cases to the relevant `*.test.ts`.
+- Skip tests only for: purely static pages (guide, privacy, terms), CSS-only components
+  (Tooltip), and trivial display-only components with no props logic (Badge, Footer).
+- What to cover: key render states, user interactions (click, input), conditional rendering,
+  and async flows (mock API calls with `vi.mock("@/lib/api", ...)`).
+
+Run before committing:
+```bash
+cd frontend && npm run test:run
+```
+
 All tests must pass (0 failures) before any commit. Never skip or defer tests to "add later".
 
 ## Maintaining Docs
