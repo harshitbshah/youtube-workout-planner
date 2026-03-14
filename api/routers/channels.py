@@ -45,6 +45,7 @@ def list_channels(
             name=ch.name,
             youtube_url=ch.youtube_url,
             youtube_channel_id=ch.youtube_channel_id,
+            thumbnail_url=ch.thumbnail_url,
             added_at=uc.added_at.isoformat() if uc.added_at else "",
         )
         for uc, ch in rows
@@ -100,6 +101,7 @@ def add_channel(
         name=channel.name,
         youtube_url=channel.youtube_url,
         youtube_channel_id=channel.youtube_channel_id,
+        thumbnail_url=channel.thumbnail_url,
         added_at=uc.added_at.isoformat() if uc.added_at else "",
     )
 

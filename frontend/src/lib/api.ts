@@ -160,6 +160,7 @@ export interface ChannelResponse {
   name: string;
   youtube_url: string;
   youtube_channel_id: string | null;
+  thumbnail_url: string | null;
   added_at: string;
 }
 

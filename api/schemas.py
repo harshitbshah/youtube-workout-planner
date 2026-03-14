@@ -24,6 +24,7 @@ class ChannelResponse(BaseModel):
     name: str
     youtube_url: str
     youtube_channel_id: Optional[str]
+    thumbnail_url: Optional[str] = None
     added_at: str
 
 

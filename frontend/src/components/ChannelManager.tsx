@@ -205,8 +205,14 @@ export default function ChannelManager({
             {channels.map((ch) => (
               <div
                 key={ch.id}
-                className="flex items-center gap-2 rounded-full bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 px-3 py-1.5"
+                className="flex items-center gap-2 rounded-full bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 pl-1.5 pr-3 py-1.5"
               >
+                {ch.thumbnail_url ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={ch.thumbnail_url} alt="" className="h-6 w-6 rounded-full object-cover shrink-0" />
+                ) : (
+                  <div className="h-6 w-6 rounded-full bg-zinc-300 dark:bg-zinc-600 shrink-0" />
+                )}
                 <span className="text-sm text-zinc-900 dark:text-white">{ch.name}</span>
                 <button
                   onClick={() => handleRemove(ch.id)}
