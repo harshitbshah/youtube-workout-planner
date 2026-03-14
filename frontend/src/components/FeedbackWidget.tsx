@@ -88,7 +88,7 @@ export default function FeedbackWidget() {
                     <button
                       key={c.value}
                       onClick={() => setCategory(c.value)}
-                      className={`flex-1 rounded-lg border px-2 py-2 text-xs font-medium transition ${
+                      className={`flex-1 rounded-lg border px-2 py-2 text-xs font-medium transition cursor-pointer ${
                         category === c.value
                           ? "border-white bg-white text-zinc-900"
                           : "border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-400 hover:border-zinc-400 dark:hover:border-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200"
