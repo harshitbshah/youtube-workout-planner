@@ -1,10 +1,22 @@
 # Progress
 
 ## Status
-Phases 1–5 complete + admin console + charts + guide page + mobile UX complete. Phase A complete. Phase B complete. Phase C complete. Phase D F5+F6 complete. Backlog items T1+T2+S1+M2 complete. Channel suggestions + onboarding UX complete. Channel fitness validation (migration 019) complete. Email notifications opt-in step in onboarding complete. Dark mode on all pages complete. Light mode button visibility fixed. Google sign-in color_scheme forwarding complete.
-**376 backend + 164 frontend = 540 tests passing**.
+Phases 1–5 complete + admin console + charts + guide page + mobile UX complete. Phase A complete. Phase B complete. Phase C complete. Phase D F5+F6+F9 complete. Backlog items T1+T2+S1+M2 complete. Channel suggestions + onboarding UX complete. Channel fitness validation (migration 019) complete. Email notifications opt-in step in onboarding complete. Dark mode all pages fixed. Light mode button visibility fixed. Lazy classification (plan-first) complete.
+**393 backend + 164 frontend = 557 tests passing**.
 Both Railway (backend) and Vercel (frontend) live and functional on `main`.
 **Ready for first users** — Google OAuth fully verified ✅. YouTube scope approved by Google Trust & Safety (2026-03-15). No more "unverified app" warning for any user.
+
+**Done this session (2026-03-15, checkpoint 3):**
+- Lazy classification — F9 complete ✅
+  - `can_fill_plan()` + `get_gap_types()` added to `planner.py`
+  - `rule_classify_for_user()` + `build_targeted_batch()` added to `classifier.py`
+  - `classify_for_user()` accepts `preselected_videos` parameter for targeted batches
+  - `_run_full_pipeline()` in `jobs.py` uses fast/slow path: rule-classify → check → skip Anthropic or targeted mini-batch → plan → background classify remainder
+  - `scheduler.py` uses same `can_fill_plan` gate — most weekly scans skip Anthropic entirely
+  - `background_classifying` field added to `/jobs/status` response
+  - 17 new unit tests — all pass
+- Notifications toggle light mode thumb fixed (`bg-white` when ON) ✅
+- Google OAuth YouTube scope verification approved by Trust & Safety (2026-03-15) ✅
 
 **Done this session (2026-03-15, checkpoint 2):**
 - Notifications toggle in settings: ON-state thumb was `bg-zinc-900` on `bg-zinc-900` track — invisible in light mode. Fixed to `bg-white` ✅

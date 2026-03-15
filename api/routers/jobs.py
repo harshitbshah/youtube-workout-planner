@@ -9,6 +9,7 @@ Routes:
 
 import logging
 import os
+import threading
 
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
 from sqlalchemy.orm import Session
@@ -63,17 +64,54 @@ def _run_scan_and_classify(channel_id: str, user_id: str, max_videos: int | None
         session.close()
 
 
+def _background_classify_task(user_id: str):
+    """
+    Classify remaining unclassified videos in the background after the plan is generated.
+    Runs in a daemon thread; does not block the user from seeing their plan.
+    Sets background_classifying=False in status when done.
+    """
+    from ..database import SessionLocal
+    from ..services.classifier import classify_for_user
+
+    session = SessionLocal()
+    try:
+        classified = classify_for_user(session, user_id)
+        logger.info(f"[bg_classify] user={user_id}: {classified} videos classified")
+    except Exception as e:
+        logger.error(f"[bg_classify] Failed for user {user_id}: {e}", exc_info=True)
+    finally:
+        if user_id in _pipeline_status:
+            _pipeline_status[user_id] = {
+                **_pipeline_status[user_id],
+                "background_classifying": False,
+            }
+        session.close()
+
+
 def _run_full_pipeline(user_id: str):
     """
     Scan all channels + classify + generate plan for a user.
     Runs in a background thread; creates its own DB session.
+
+    Uses lazy classification: rule-classify first (free), then check if the plan
+    can already be filled. If yes, generate the plan immediately and classify
+    remaining videos in the background. If not, submit a targeted mini-batch for
+    gap slots only, generate the plan, then background-classify the rest.
     """
     from datetime import datetime, timezone
 
     from ..database import SessionLocal
     from ..models import ScanLog
-    from ..services.classifier import classify_for_user
-    from ..services.planner import generate_weekly_plan_for_user
+    from ..services.classifier import (
+        build_targeted_batch,
+        classify_for_user,
+        rule_classify_for_user,
+    )
+    from ..services.planner import (
+        can_fill_plan,
+        generate_weekly_plan_for_user,
+        get_gap_types,
+    )
     from ..services.scanner import scan_channel
 
     session = SessionLocal()
@@ -86,7 +124,8 @@ def _run_full_pipeline(user_id: str):
         session.refresh(scan_log)
         scan_log_id = scan_log.id
 
-        _pipeline_status[user_id] = {"stage": "scanning", "total": None, "done": None}
+        # ── Stage 1: Scan ────────────────────────────────────────────────────
+        _pipeline_status[user_id] = {"stage": "scanning", "total": None, "done": None, "background_classifying": False}
         channels = (
             session.query(Channel)
             .join(UserChannel, UserChannel.channel_id == Channel.id)
@@ -97,34 +136,57 @@ def _run_full_pipeline(user_id: str):
         total_new = 0
         for channel in channels:
             try:
-                # User-triggered scan: never skip inactive channels
                 new_videos = scan_channel(session, channel, skip_if_inactive=False)
                 total_new += new_videos
                 logger.info(f"[scan] {channel.name}: {new_videos} new videos")
             except Exception as e:
                 logger.error(f"[scan] Failed for {channel.name}: {e}", exc_info=True)
 
-        # Always classify — there may be previously unclassified videos from a
-        # failed earlier run, even if this scan found no new videos (incremental).
-        _pipeline_status[user_id] = {"stage": "classifying", "total": None, "done": None}
+        # ── Stage 2: Rule-classify (free, instant) ───────────────────────────
+        _pipeline_status[user_id] = {"stage": "classifying", "total": None, "done": None, "background_classifying": False}
+        rule_classify_for_user(session, user_id)
 
-        def _on_classify_progress(total: int, done: int):
-            _pipeline_status[user_id] = {"stage": "classifying", "total": total, "done": done}
+        # ── Stage 3: Check if plan can be filled without Anthropic ───────────
+        if can_fill_plan(session, user_id):
+            logger.info(f"[pipeline] user={user_id}: plan fillable after rule-classify — skipping Anthropic batch")
+            _pipeline_status[user_id] = {"stage": "generating", "total": None, "done": None, "background_classifying": True}
+            try:
+                generate_weekly_plan_for_user(session, user_id)
+                logger.info(f"[plan] Generated plan for user {user_id}")
+            except Exception as e:
+                logger.error(f"[plan] Failed for user {user_id}: {e}", exc_info=True)
+            _pipeline_status[user_id] = {"stage": "done", "total": None, "done": None, "background_classifying": True}
+            threading.Thread(target=_background_classify_task, args=(user_id,), daemon=True).start()
 
-        try:
-            classified = classify_for_user(session, user_id, on_progress=_on_classify_progress)
-            logger.info(f"[classify] {classified} videos classified for user {user_id}")
-        except Exception as e:
-            logger.error(f"[classify] Failed for user {user_id}: {e}", exc_info=True)
+        else:
+            # ── Slow path: targeted mini-batch for gap slots only ────────────
+            gap_types = get_gap_types(session, user_id)
+            targeted, _remainder = build_targeted_batch(user_id, gap_types, session)
 
-        _pipeline_status[user_id] = {"stage": "generating", "total": None, "done": None}
-        try:
-            generate_weekly_plan_for_user(session, user_id)
-            logger.info(f"[plan] Generated plan for user {user_id}")
-        except Exception as e:
-            logger.error(f"[plan] Failed for user {user_id}: {e}", exc_info=True)
+            if targeted:
+                def _on_classify_progress(total: int, done: int):
+                    _pipeline_status[user_id] = {"stage": "classifying", "total": total, "done": done, "background_classifying": False}
 
-        _pipeline_status[user_id] = {"stage": "done", "total": None, "done": None}
+                try:
+                    classify_for_user(
+                        session, user_id,
+                        on_progress=_on_classify_progress,
+                        preselected_videos=targeted,
+                    )
+                    logger.info(f"[classify] Targeted batch done for user {user_id}")
+                except Exception as e:
+                    logger.error(f"[classify] Failed for user {user_id}: {e}", exc_info=True)
+            else:
+                logger.info(f"[classify] No targeted videos matched gap types — proceeding with current pool")
+
+            _pipeline_status[user_id] = {"stage": "generating", "total": None, "done": None, "background_classifying": True}
+            try:
+                generate_weekly_plan_for_user(session, user_id)
+                logger.info(f"[plan] Generated plan for user {user_id}")
+            except Exception as e:
+                logger.error(f"[plan] Failed for user {user_id}: {e}", exc_info=True)
+            _pipeline_status[user_id] = {"stage": "done", "total": None, "done": None, "background_classifying": True}
+            threading.Thread(target=_background_classify_task, args=(user_id,), daemon=True).start()
 
         # Clear any previous scan error on success
         user = session.get(User, user_id)
@@ -144,9 +206,8 @@ def _run_full_pipeline(user_id: str):
     except Exception as e:
         error_msg = str(e)
         logger.error(f"[pipeline] Unexpected failure for user {user_id}: {e}", exc_info=True)
-        _pipeline_status[user_id] = {"stage": "failed", "total": None, "done": None, "error": error_msg}
+        _pipeline_status[user_id] = {"stage": "failed", "total": None, "done": None, "background_classifying": False, "error": error_msg}
         try:
-            # Persist error so dashboard can show it even after server restart
             user = session.get(User, user_id)
             if user:
                 user.last_scan_error = error_msg

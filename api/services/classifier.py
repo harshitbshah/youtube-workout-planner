@@ -173,6 +173,69 @@ def _save_classification(session: Session, video_id: str, classification: dict):
 # picked up on the next scan (incremental runs classify newly added videos only).
 MAX_CLASSIFY_PER_RUN = 300
 
+# Keyword patterns for matching unclassified video titles against gap workout types.
+# Used by build_targeted_batch to prioritise videos most likely to fill plan gaps.
+TARGETED_BATCH_MULTIPLIER = int(os.getenv("TARGETED_BATCH_MULTIPLIER", "5"))
+
+_GAP_TYPE_PATTERNS: dict[str, re.Pattern] = {
+    "hiit":     re.compile(r"\b(hiit|interval|tabata)\b", re.I),
+    "strength": re.compile(r"\b(strength|weight|dumbbell|barbell|resistance|lifting)\b", re.I),
+    "cardio":   re.compile(r"\b(cardio|run(?:ning)?|cycling|bike|treadmill)\b", re.I),
+    "mobility": re.compile(r"\b(yoga|stretch(?:ing)?|mobility|flexibility|pilates)\b", re.I),
+}
+
+
+def rule_classify_for_user(session: Session, user_id: str) -> int:
+    """
+    Run rule-based classification on all unclassified videos for a user.
+    Free — no Anthropic API calls. Returns count of videos classified.
+    """
+    videos = _fetch_unclassified_for_user(session, user_id)
+    classified = 0
+    for video in videos:
+        result = title_classify(video["title"], video["duration_sec"])
+        if result:
+            _save_classification(session, video["id"], result)
+            classified += 1
+    if classified:
+        logger.info(f"[user={user_id}] {classified} videos rule-classified")
+    return classified
+
+
+def build_targeted_batch(
+    user_id: str,
+    gap_types: list[dict],
+    session: Session,
+) -> tuple[list[dict], list[dict]]:
+    """
+    Split unclassified videos into (targeted, remainder).
+    Targeted = videos whose titles match the missing workout types, capped at
+    max(len(gap_types) * TARGETED_BATCH_MULTIPLIER, 10).
+    Remainder = everything else, deferred to background classification.
+    """
+    unclassified = _fetch_unclassified_for_user(session, user_id)
+    gap_type_names = {g["workout_type"].lower() for g in gap_types}
+    cap = max(len(gap_types) * TARGETED_BATCH_MULTIPLIER, 10)
+
+    targeted: list[dict] = []
+    remainder: list[dict] = []
+    for video in unclassified:
+        title = video["title"]
+        matched = any(
+            t in gap_type_names and pattern.search(title)
+            for t, pattern in _GAP_TYPE_PATTERNS.items()
+        )
+        if matched and len(targeted) < cap:
+            targeted.append(video)
+        else:
+            remainder.append(video)
+
+    logger.info(
+        f"[user={user_id}] Targeted batch: {len(targeted)} for gaps {gap_type_names}, "
+        f"{len(remainder)} deferred to background"
+    )
+    return targeted, remainder
+
 
 def _get_or_create_credentials(session: Session, user_id: str):
     """Return UserCredentials for user, creating a blank row if none exists."""
@@ -220,13 +283,24 @@ def _save_results(session: Session, user_id: str, client, batch) -> tuple[int, i
     return classified, failed, input_tokens, output_tokens
 
 
-def classify_for_user(session: Session, user_id: str, api_key: str = "", on_progress=None) -> int:
+def classify_for_user(
+    session: Session,
+    user_id: str,
+    api_key: str = "",
+    on_progress=None,
+    preselected_videos: list[dict] | None = None,
+) -> int:
     """
     Classify unclassified videos for a user's channels using Anthropic Batch API.
 
     Resumable: if a batch was previously submitted (batch ID persisted in DB),
     resumes polling or retrieves results directly — no resubmission or double billing.
     Processes up to MAX_CLASSIFY_PER_RUN videos per call; remainder deferred to next run.
+
+    preselected_videos: if provided, classify only this specific list (targeted batch).
+      Caller is responsible for running rule_classify_for_user first. Rule-based step
+      is skipped. If None (default), fetches all unclassified videos and runs rule-based
+      pre-classification before submitting to Anthropic.
 
     Returns count of successfully classified videos.
     """
@@ -265,27 +339,36 @@ def classify_for_user(session: Session, user_id: str, api_key: str = "", on_prog
 
     if batch is None:
         # ── Phase 1: build batch requests ────────────────────────────────────
-        all_videos = _fetch_unclassified_for_user(session, user_id)
-        if not all_videos:
-            logger.info(f"[user={user_id}] No unclassified videos.")
-            return 0
+        if preselected_videos is None:
+            # Default path: fetch all unclassified + run rule-based pre-classifier
+            all_videos = _fetch_unclassified_for_user(session, user_id)
+            if not all_videos:
+                logger.info(f"[user={user_id}] No unclassified videos.")
+                return 0
 
-        # F6: rule-based pre-classification — saves AI calls for obvious titles
-        to_classify = []
-        for video in all_videos:
-            result = title_classify(video["title"], video["duration_sec"])
-            if result:
-                _save_classification(session, video["id"], result)
-                rule_classified += 1
-            else:
-                to_classify.append(video)
+            # F6: rule-based pre-classification — saves AI calls for obvious titles
+            to_classify = []
+            for video in all_videos:
+                result = title_classify(video["title"], video["duration_sec"])
+                if result:
+                    _save_classification(session, video["id"], result)
+                    rule_classified += 1
+                else:
+                    to_classify.append(video)
 
-        if rule_classified:
-            logger.info(f"[user={user_id}] {rule_classified} rule-classified, {len(to_classify)} sent to AI")
+            if rule_classified:
+                logger.info(f"[user={user_id}] {rule_classified} rule-classified, {len(to_classify)} sent to AI")
 
-        if not to_classify:
-            logger.info(f"[user={user_id}] All videos classified by rules — no AI batch needed")
-            return rule_classified
+            if not to_classify:
+                logger.info(f"[user={user_id}] All videos classified by rules — no AI batch needed")
+                return rule_classified
+        else:
+            # Targeted path: caller already ran rule_classify_for_user and selected
+            # only the videos needed to fill plan gaps. Skip fetch and rule-based step.
+            to_classify = preselected_videos
+            if not to_classify:
+                logger.info(f"[user={user_id}] No targeted videos to classify.")
+                return 0
 
         # Cap AI batch
         videos = to_classify[:MAX_CLASSIFY_PER_RUN]

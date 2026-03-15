@@ -6,6 +6,7 @@ All DB queries go through SQLAlchemy against PostgreSQL (or SQLite in tests).
 """
 
 import logging
+import os
 import random
 from datetime import datetime, timedelta, timezone
 
@@ -24,6 +25,56 @@ from src.planner import (
 from ..models import Channel, Classification, ProgramHistory, Schedule, UserChannel, Video
 
 logger = logging.getLogger(__name__)
+
+MIN_PLAN_CANDIDATES = int(os.getenv("MIN_PLAN_CANDIDATES", "3"))
+
+
+# ─── Lazy classification helpers ─────────────────────────────────────────────
+
+def get_gap_types(session: Session, user_id: str) -> list[dict]:
+    """
+    Return schedule slots with fewer than MIN_PLAN_CANDIDATES classified candidates.
+    Uses a Tier-4 style query: any body_focus, no history window.
+    Each item: {"workout_type": str, "duration_min": int, "duration_max": int}
+    """
+    slots = session.query(Schedule).filter(Schedule.user_id == user_id).all()
+    gaps = []
+    for slot in slots:
+        if not slot.workout_type:
+            continue
+        min_dur = (slot.duration_min or 0) * 60
+        max_dur = (slot.duration_max or 60) * 60
+        count = (
+            session.query(func.count(Classification.video_id))
+            .join(Video, Video.id == Classification.video_id)
+            .join(UserChannel, UserChannel.channel_id == Video.channel_id)
+            .filter(
+                UserChannel.user_id == user_id,
+                func.lower(Classification.workout_type) == slot.workout_type.lower(),
+                Video.duration_sec >= min_dur,
+                Video.duration_sec <= max_dur,
+            )
+            .scalar() or 0
+        )
+        if count < MIN_PLAN_CANDIDATES:
+            gaps.append({
+                "workout_type": slot.workout_type,
+                "duration_min": slot.duration_min or 0,
+                "duration_max": slot.duration_max or 60,
+            })
+    return gaps
+
+
+def can_fill_plan(session: Session, user_id: str) -> bool:
+    """
+    Returns True if every non-rest schedule slot has at least MIN_PLAN_CANDIDATES
+    classified videos matching its workout_type and duration range.
+    Returns True when the user has no workout days (trivially fillable).
+    """
+    slots = session.query(Schedule).filter(Schedule.user_id == user_id).all()
+    if not any(s.workout_type for s in slots):
+        return True
+    return len(get_gap_types(session, user_id)) == 0
 
 
 # ─── Candidate fetching ───────────────────────────────────────────────────────

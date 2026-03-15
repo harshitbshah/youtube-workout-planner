@@ -330,10 +330,11 @@ No DB migration needed. No schema changes.
 
 | Step | Status |
 |---|---|
-| `can_fill_plan()` | ⏳ Not started |
-| `get_gap_types()` | ⏳ Not started |
-| `build_targeted_batch()` | ⏳ Not started |
-| Modified pipeline in `jobs.py` | ⏳ Not started |
-| `background_classifying` status field | ⏳ Not started |
-| Scheduler integration | ⏳ Not started |
-| Library "building" banner (optional) | ⏳ Not started |
+| `can_fill_plan()` | ✅ Done (2026-03-15) |
+| `get_gap_types()` | ✅ Done (2026-03-15) |
+| `rule_classify_for_user()` | ✅ Done (2026-03-15) |
+| `build_targeted_batch()` | ✅ Done (2026-03-15) |
+| Modified pipeline in `jobs.py` | ✅ Done (2026-03-15) |
+| `background_classifying` status field | ✅ Done (2026-03-15) |
+| Scheduler integration | ✅ Done (2026-03-15) |
+| Library "building" banner (optional) | ⏳ Deferred |

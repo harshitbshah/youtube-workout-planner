@@ -41,9 +41,9 @@ def _weekly_pipeline_for_user(user_id: str):
     """Run the full weekly pipeline for one user. Creates its own DB session."""
     from .database import SessionLocal
     from .models import Channel, User, UserChannel
-    from .services.classifier import classify_for_user
+    from .services.classifier import classify_for_user, rule_classify_for_user
+    from .services.planner import can_fill_plan, generate_weekly_plan_for_user
     from .services.scanner import scan_channel
-    from .services.planner import generate_weekly_plan_for_user
 
     session = SessionLocal()
     try:
@@ -73,13 +73,18 @@ def _weekly_pipeline_for_user(user_id: str):
 
         logger.info(f"[weekly] user={user_id}: {total_new} new videos across {len(channels)} channels")
 
-        # Step 2: classify new videos
-        if total_new > 0:
+        # Step 2: rule-classify new videos (free)
+        rule_classify_for_user(session, user_id)
+
+        # Step 3: submit Anthropic batch only if plan can't be filled from current pool
+        if not can_fill_plan(session, user_id):
             try:
                 classified = classify_for_user(session, user_id)
                 logger.info(f"[weekly] user={user_id}: {classified} videos classified")
             except Exception as e:
                 logger.error(f"[weekly] Classification failed for user {user_id}: {e}")
+        else:
+            logger.info(f"[weekly] user={user_id}: plan fillable from existing pool — skipping Anthropic batch")
 
         # Step 3: generate next week's plan
         plan = None
