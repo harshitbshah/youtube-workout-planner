@@ -217,6 +217,7 @@ export default function DashboardPage() {
   const [alreadySetUpDismissed, setAlreadySetUpDismissed] = useState(false);
   const [showAlreadySetUp, setShowAlreadySetUp] = useState(false);
   const [openSwapDay, setOpenSwapDay] = useState<string | null>(null);
+  const [screenshotMode, setScreenshotMode] = useState(false);
   const [error, setError] = useState("");
 
   useEffect(() => {
@@ -224,6 +225,7 @@ export default function DashboardPage() {
     const params = new URLSearchParams(window.location.search);
     const scanJustTriggered = params.get("scanning") === "1";
     const fromOnboarding = params.get("from") === "onboarding";
+    if (params.get("screenshot") === "1") setScreenshotMode(true);
     if (scanJustTriggered) {
       setScanning(true);
     }
@@ -397,9 +399,9 @@ export default function DashboardPage() {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-8 gap-4">
           <div>
             <h1 className="text-2xl font-bold text-zinc-900 dark:text-white">
-              {user?.display_name ? `${user.display_name.split(" ")[0]}'s plan` : "Your plan"}
+              {screenshotMode ? "Your plan" : (user?.display_name ? `${user.display_name.split(" ")[0]}'s plan` : "Your plan")}
             </h1>
-            {weekLabel && (
+            {!screenshotMode && weekLabel && (
               <p className="text-zinc-500 text-sm mt-0.5">Week of {weekLabel}</p>
             )}
           </div>
