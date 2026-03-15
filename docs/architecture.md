@@ -397,7 +397,11 @@ instead of raw SQLite. The business logic lives in `src/`; services handle DB I/
 ```
 api/services/scanner.py          uses src/scanner.py      → scans YouTube channels
 api/services/classifier.py       uses src/classifier.py   → Anthropic Batch API classification
+                                                             + rule_classify_for_user() (free, regex-only)
+                                                             + build_targeted_batch() (gap-slot targeting)
 api/services/planner.py          uses src/planner.py      → weekly plan generation
+                                                             + can_fill_plan() (check if plan is fillable)
+                                                             + get_gap_types() (identify under-provisioned slots)
 api/services/email.py                                     → send_weekly_plan_email() + send_feedback_email()
 api/services/channel_validator.py                         → validate_channel_fitness() (Claude Haiku, fail-open)
 ```
@@ -443,6 +447,15 @@ Applied before fetching video details or sending to classifier:
 - **Skip inactive channels** (F4) — weekly cron skips channels where last published video is >60 days old and channel was added >60 days ago. User-triggered scans always run all channels. `last_video_published_at` updated after each scan.
 - **Rule-based pre-classifier — `title_classify()`** (F6) — before building the Anthropic batch, each video title is tested against regex rules for workout type (HIIT/Strength/Cardio/Mobility), body focus (upper/lower/full/core), difficulty (beginner/intermediate/advanced), and warmup/cooldown flags. If a type rule matches, the video is classified directly and never sent to the AI. Returns `None` for ambiguous titles (falls through to Anthropic). Estimated 30–40% reduction in batch submissions. Applied to all unclassified videos before the `MAX_CLASSIFY_PER_RUN` cap.
 - **Adaptive payload trimming — `_title_is_descriptive()`** (F5) — for videos that do reach the AI batch, titles containing fitness keywords (duration numbers, body part names, workout type words) are sent with a 300-char description and no transcript. Ambiguous titles use the full 800-char description + transcript. Saves ~20–30% of input tokens for obvious-title videos.
+- **Lazy classification — plan-first, classify-lazily** (F9) — the pipeline no longer classifies all unclassified videos before generating a plan. Instead:
+  1. `rule_classify_for_user(session, user_id)` runs first — free, no Anthropic calls.
+  2. `can_fill_plan(session, user_id)` checks whether every non-rest schedule slot has at least `MIN_PLAN_CANDIDATES` (default 3) classified candidates using a Tier-4 style query (any body_focus, no history window).
+  3. **Fast path** (can fill): generate plan immediately. Remaining unclassified videos are submitted to Anthropic in a background thread (`_background_classify_task`) — non-blocking relative to plan delivery.
+  4. **Slow path** (cannot fill): `get_gap_types()` identifies which slot types are under-provisioned; `build_targeted_batch()` selects only unclassified videos whose titles suggest those missing types (capped at `max(len(gaps) × TARGETED_BATCH_MULTIPLIER, 10)`). Only this small batch is submitted to Anthropic before plan generation. The remainder goes to background.
+  - **`MIN_PLAN_CANDIDATES`** env var (default 3): min classified videos per slot to consider the plan fillable.
+  - **`TARGETED_BATCH_MULTIPLIER`** env var (default 5): candidates per gap slot in the targeted mini-batch.
+  - **Impact**: onboarding with descriptive titles → 0 Anthropic calls; weekly scans on an established library → almost always 0 Anthropic calls; vague-title onboarding → 5–15 calls instead of 75+.
+  - `background_classifying: bool` added to `GET /jobs/status` response — `true` while background thread is running. Library page shows an amber "Your library is still building" banner when this is true.
 
 ---
 
@@ -462,6 +475,22 @@ engagement surface.
 All meaningful user-intent signals (plan views, video swaps, schedule changes,
 publish clicks) are captured within the web app. YouTube is a read-only output;
 no feedback flows back from it.
+
+### Lazy classification in the weekly cron
+
+The scheduler applies the same lazy classification logic as the manual pipeline:
+
+```
+Incremental scan (new videos only)
+  ↓
+rule_classify_for_user() — free, no Anthropic
+  ↓
+can_fill_plan()?
+  ├── YES → generate plan immediately, skip Anthropic entirely (most weeks)
+  └── NO  → classify_for_user() for all unclassified, then generate plan
+```
+
+Most weekly scans produce 0 Anthropic calls because the library is already rich from previous weeks. Anthropic is only called when a new channel was recently added that covers a slot type with a thin pool.
 
 ### Active-user gate
 
@@ -531,6 +560,9 @@ still handles the single original user independently.
               Filters: workout type, body focus, difficulty, channel
               Cards: thumbnail, duration, badges, "Assign to day" select
               Pagination: 24 per page
+              Amber banner: "Your library is still building — more videos are being classified
+                in the background." shown when GET /jobs/status returns background_classifying=true.
+                Dismissible via ✕ button. Shown once on mount (not polled).
 
 /settings ─── Profile (display name, email)
               Channels (ChannelManager)

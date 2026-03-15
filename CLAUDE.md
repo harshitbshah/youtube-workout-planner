@@ -19,7 +19,7 @@ When the user says "let's checkpoint" or "take a checkpoint", run the following 
 
 2. **`docs/architecture.md`** — update if any routes, pages, components, or DB schema changed.
 
-3. **`docs/backlog.md`** — append any new ideas or deferred work that surfaced this session.
+3. **`docs/backlog.md`** — append any new ideas or deferred work that surfaced this session. Create the file if it doesn't exist.
 
 4. **`docs/testing.md`** — update test count; add new test files and manual checklist items.
 
@@ -185,8 +185,8 @@ cd frontend && npm run test:run
 | `api/routers/admin.py` | Admin stats, user management, announcements (ADMIN_EMAIL gated) |
 | `api/routers/feedback.py` | `POST /feedback` — category validation, message trim, calls send_feedback_email |
 | `api/services/scanner.py` | YouTube channel scanning (uses `src/scanner.py` internals) |
-| `api/services/classifier.py` | Video classification via Anthropic Batch API; records BatchUsageLog |
-| `api/services/planner.py` | Weekly plan generation (uses `src/planner.py`) |
+| `api/services/classifier.py` | Video classification via Anthropic Batch API; records BatchUsageLog; `rule_classify_for_user()` (free regex classify); `build_targeted_batch()` (gap-slot targeted subset) |
+| `api/services/planner.py` | Weekly plan generation (uses `src/planner.py`); `can_fill_plan()` + `get_gap_types()` for lazy classification gate |
 | `api/services/email.py` | `send_weekly_plan_email()` + `send_feedback_email()` via Resend SDK |
 | `tests/api/helpers.py` | Shared `make_mock_user()` factory used by unit test files |
 | `alembic/` | Database migrations (currently at 004) |
@@ -241,7 +241,7 @@ cd frontend && npm run test:run
 | POST | `/plan/publish` | Yes | Publish plan to YouTube playlist |
 | GET | `/library` | Yes | Paginated/filtered video library |
 | POST | `/jobs/scan` | Yes | Trigger manual channel scan |
-| GET | `/jobs/status` | Yes | Pipeline stage + classify progress `{stage, total, done}` |
+| GET | `/jobs/status` | Yes | Pipeline stage + classify progress `{stage, total, done, error, background_classifying}`. `background_classifying=true` means plan is ready but background Anthropic classification is still running. |
 | GET | `/announcements/active` | Yes | Active announcement or null (any auth'd user) |
 | POST | `/feedback` | Yes | Submit feedback/help/bug (emails admin via Resend; 400 invalid category or blank; 503 on email failure) |
 | GET | `/admin/stats` | Admin | Aggregate stats + per-user rows |
@@ -319,6 +319,10 @@ vars to subprocesses, so uvicorn (a subprocess) won't see them.
 `ADMIN_EMAIL` env var on Railway identifies the single admin user.
 Read at request time inside `_require_admin()` (not at module import time) to allow
 test isolation via `monkeypatch.setenv`. On Railway: set `ADMIN_EMAIL=harshitspeaks@gmail.com`.
+
+### Lazy classification env vars
+- `MIN_PLAN_CANDIDATES` (default `3`) — minimum classified videos per schedule slot for `can_fill_plan()` to return True. Lower = faster plan delivery but less variety; higher = more Anthropic calls.
+- `TARGETED_BATCH_MULTIPLIER` (default `5`) — videos selected per gap slot type in the targeted mini-batch. Cap = `max(len(gaps) × multiplier, 10)`.
 
 ### Test isolation
 - Unit tests: SQLite in-memory, `StaticPool`, tables recreated per test

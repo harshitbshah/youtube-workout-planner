@@ -29,7 +29,7 @@ Run before every commit:
 cd frontend && npm run test:run
 ```
 
-Current: **540/540 passing** (376 backend + 164 frontend)
+Current: **577/577 passing** (409 backend + 168 frontend)
 
 New test files added:
 - `tests/api/test_jobs.py` — `POST /jobs/scan` (202, 400 no channels, 503 no key, 401 unauth, channel count); `GET /jobs/status` (no pipeline, unauthenticated, reflects live state); scanner filters (upper duration cap, title blocklist); classifier (batch cap limits to 300, `on_progress` callback during polling, resume existing batch, batch ID cleared on completion)
@@ -44,11 +44,19 @@ New test files added:
 - `frontend/src/test/ThemeToggle.test.tsx` — 3 tests: renders correctly, toggles on click, aria-label reflects current theme
 - `frontend/src/app/dashboard/page.test.tsx` — 19 tests: stale plan banner (show/hide/dismiss/generate), plan rendering, week label, announcement banner, swap picker (open, video list, type filter, show-all-types, cancel, swap call, post-swap close)
 - `frontend/src/app/settings/page.test.tsx` — 15 tests: initial render, display name save/error, schedule save/error, delete 2-step confirm/cancel/confirm-calls-API
-- `frontend/src/app/library/page.test.tsx` — 16 tests: video rendering, total count, empty state, filters, clear filters, no-match empty state, assign-to-day success/error, pagination
+- `frontend/src/app/library/page.test.tsx` — 20 tests: video rendering, total count, empty state, filters, clear filters, no-match empty state, assign-to-day success/error, pagination, background-classifying banner (show/hide/dismiss/API failure)
 - `frontend/src/components/FeedbackWidget.test.tsx` — 11 tests: floating button, modal open/close, state reset, category selection, submit disabled on empty/whitespace, submit calls API, success state, error state
 - `frontend/src/components/ScheduleEditor.test.tsx` — 11 tests: all 7 days render, Rest/Set-rest button counts, toggle rest clears fields, toggle active restores defaults, workout type select, body focus select, clear body focus, duration min/max inputs
 - `tests/api/test_channels.py` — 6 new suggestion tests: cache hit (all 3 served from DB, no YouTube call), cache miss (YouTube called + result stored), no API key returns only cached, no profile returns general list, unknown profile falls back to general, unauthenticated 401
 - `tests/integration/test_channels_api.py` — 1 new suggestion test: full cache-hit path against real PostgreSQL (all 3 pre-loaded, YouTube not called)
+- `tests/api/test_lazy_classification.py` — 33 tests for the lazy classification pipeline (F9):
+  - `can_fill_plan()`: all slots satisfied → True; any slot below threshold → False; all-rest schedule → True (edge case); case-insensitive workout_type matching; NULL duration defaults
+  - `get_gap_types()`: returns only slots below MIN_PLAN_CANDIDATES; empty schedule; duplicate slot types counted correctly
+  - `rule_classify_for_user()`: classifies matching titles, skips non-matching, idempotent on re-run
+  - `build_targeted_batch()`: targeted vs remainder split; cap scaling with multiple gap types; unknown gap type "Other" → remainder; NULL title guard (no crash); multi-pattern dedup (video matching multiple patterns counted once); user isolation (only sees own unclassified videos)
+  - `classify_for_user()` with `preselected_videos`: uses provided list instead of DB fetch; MAX_CLASSIFY_PER_RUN cap still applied; empty preselected list returns 0
+  - Pipeline fast path: `can_fill_plan=True` → Anthropic batch not submitted, background task started, `background_classifying=True` in status
+  - Pipeline slow path: `can_fill_plan=False` → targeted batch submitted, plan generated, remainder sent to background
 
 ---
 
@@ -58,7 +66,7 @@ New test files added:
 cd frontend && npm run test:run
 ```
 
-148 tests covering:
+168 tests covering:
 - `scheduleTemplates.ts` — `buildSchedule()` logic for all life-stage/goal/days/duration combinations
 - `ChannelManager.tsx` — search, add, remove, suggestions chips, minimum-1-channel gate
 - Onboarding page steps — step rendering, auto-advance, schedule preview, scan progress
