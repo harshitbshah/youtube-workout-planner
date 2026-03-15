@@ -105,7 +105,10 @@ export const swapPlanDay = (day: string, videoId: string) =>
   });
 
 export const publishPlan = () =>
-  apiFetch<PublishResponse>("/plan/publish", { method: "POST" });
+  apiFetch<{ message: string }>("/plan/publish", { method: "POST" });
+
+export const getPublishStatus = () =>
+  apiFetch<PublishStatus>("/plan/publish/status");
 
 // ─── Library ─────────────────────────────────────────────────────────────────
 
@@ -221,6 +224,13 @@ export interface JobResponse {
 export interface PublishResponse {
   playlist_url: string;
   video_count: number;
+}
+
+export interface PublishStatus {
+  status: "idle" | "publishing" | "done" | "failed";
+  playlist_url?: string | null;
+  video_count?: number | null;
+  error?: string | null;
 }
 
 // ─── Admin charts ─────────────────────────────────────────────────────────────

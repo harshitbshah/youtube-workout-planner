@@ -11,6 +11,7 @@ import {
   getUpcomingPlan,
   generatePlan,
   publishPlan,
+  getPublishStatus,
   triggerScan,
   getJobStatus,
   getActiveAnnouncement,
@@ -21,7 +22,7 @@ import {
   type PlanResponse,
   type PlanDay,
   type VideoSummary,
-  type PublishResponse,
+  type PublishStatus,
 } from "@/lib/api";
 import { DAY_LABELS, formatDuration } from "@/lib/utils";
 import Badge from "@/components/Badge";
@@ -210,8 +211,8 @@ export default function DashboardPage() {
   const [classifyProgress, setClassifyProgress] = useState<{ total: number; done: number } | null>(null);
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState(false);
-  const [publishing, setPublishing] = useState(false);
-  const [publishResult, setPublishResult] = useState<PublishResponse | null>(null);
+  const [publishStatus, setPublishStatus] = useState<PublishStatus | null>(null);
+  const publishPollRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const [announcement, setAnnouncement] = useState<{ id: number; message: string } | null>(null);
   const [stalePlanDismissed, setStalePlanDismissed] = useState(false);
   const [alreadySetUpDismissed, setAlreadySetUpDismissed] = useState(false);
@@ -315,6 +316,13 @@ export default function DashboardPage() {
     return () => window.removeEventListener("keydown", onKey);
   }, [openSwapDay]);
 
+  // Cleanup publish poll on unmount
+  useEffect(() => {
+    return () => {
+      if (publishPollRef.current) clearInterval(publishPollRef.current);
+    };
+  }, []);
+
   async function handleSwap(day: string, video: VideoSummary) {
     await swapPlanDay(day, video.id);
     setPlan((p) =>
@@ -337,24 +345,37 @@ export default function DashboardPage() {
   }
 
   async function handlePublish() {
-    setPublishing(true);
+    setPublishStatus({ status: "publishing" });
     setError("");
-    setPublishResult(null);
     try {
-      const result = await publishPlan();
-      setPublishResult(result);
-      // If we get here, credentials are valid - ensure user state reflects that
-      setUser((u) => u ? { ...u, credentials_valid: true } : u);
+      await publishPlan();
     } catch (e: unknown) {
-      const msg = e instanceof Error ? e.message : "Failed to publish plan";
-      setError(msg);
-      // If revoked, mark locally so banner appears without a full reload
-      if (msg.includes("revoked")) {
-        setUser((u) => u ? { ...u, credentials_valid: false } : u);
-      }
-    } finally {
-      setPublishing(false);
+      const msg = e instanceof Error ? e.message : "Failed to start publish";
+      setPublishStatus({ status: "failed", error: msg });
+      return;
     }
+
+    // Poll for completion
+    publishPollRef.current = setInterval(async () => {
+      try {
+        const s = await getPublishStatus();
+        setPublishStatus(s);
+        if (s.status === "done" || s.status === "failed") {
+          if (publishPollRef.current) {
+            clearInterval(publishPollRef.current);
+            publishPollRef.current = null;
+          }
+          if (s.status === "done") {
+            setUser((u) => u ? { ...u, credentials_valid: true } : u);
+          }
+          if (s.status === "failed" && s.error === "revoked") {
+            setUser((u) => u ? { ...u, credentials_valid: false } : u);
+          }
+        }
+      } catch {
+        // ignore poll errors
+      }
+    }, 2000);
   }
 
   async function handleLogout() {
@@ -447,10 +468,10 @@ export default function DashboardPage() {
             {user?.youtube_connected && user?.credentials_valid && plan ? (
               <button
                 onClick={handlePublish}
-                disabled={publishing}
+                disabled={publishStatus?.status === "publishing"}
                 className="rounded-lg border border-red-600 bg-red-600/10 px-3 py-2 text-sm font-medium text-red-400 hover:bg-red-600/20 disabled:opacity-40 cursor-pointer transition"
               >
-                {publishing ? "Publishing…" : "Publish to YouTube"}
+                {publishStatus?.status === "publishing" ? "Publishing…" : "Publish to YouTube"}
               </button>
             ) : (
               <button
@@ -592,14 +613,28 @@ export default function DashboardPage() {
           </div>
         )}
 
+        {/* Publishing in progress banner */}
+        {publishStatus?.status === "publishing" && (
+          <div className="mb-6 rounded-lg border border-zinc-700 bg-zinc-800/50 px-4 py-3 text-sm text-zinc-300">
+            Publishing your plan to YouTube...
+          </div>
+        )}
+
+        {/* Publish failed banner */}
+        {publishStatus?.status === "failed" && publishStatus.error !== "revoked" && (
+          <div className="mb-6 rounded-lg border border-red-800 bg-red-900/30 px-4 py-3 text-sm text-red-400">
+            {publishStatus.error ?? "Failed to publish plan"}
+          </div>
+        )}
+
         {/* Publish success banner */}
-        {publishResult && (
+        {publishStatus?.status === "done" && (
           <div className="mb-6 rounded-lg border border-green-800 bg-green-900/20 px-4 py-3 text-sm text-green-400 flex items-center justify-between">
             <span>
-              Plan published - {publishResult.video_count} video{publishResult.video_count !== 1 ? "s" : ""} added to your playlist.
+              Plan published - {publishStatus.video_count!} video{publishStatus.video_count !== 1 ? "s" : ""} added to your playlist.
             </span>
             <a
-              href={publishResult.playlist_url}
+              href={publishStatus.playlist_url!}
               target="_blank"
               rel="noopener noreferrer"
               className="ml-4 underline hover:text-green-300 whitespace-nowrap"

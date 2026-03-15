@@ -77,12 +77,11 @@ def test_publish_no_plan(auth_client):
     assert resp.status_code == 404
 
 
-def test_publish_no_youtube_credentials(auth_client, db_session):
+def test_publish_returns_202(auth_client, db_session):
+    """POST /plan/publish returns 202 immediately (async publish)."""
     client, user = auth_client
     _make_user_with_plan(db_session)
 
-    # Override get_current_user to return our user (already done by auth_client fixture
-    # but we need to use the user that has the plan)
     from api.dependencies import get_current_user
     from api.main import app
     from api.models import User
@@ -90,58 +89,106 @@ def test_publish_no_youtube_credentials(auth_client, db_session):
     plan_user = db_session.query(User).filter(User.google_id == "g-publish").first()
     app.dependency_overrides[get_current_user] = lambda: plan_user
 
-    with patch("api.routers.plan.publish_plan_for_user") as mock_pub:
-        mock_pub.side_effect = YouTubeNotConnectedError("No YouTube credentials")
+    with patch("api.routers.plan._run_publish"):
         resp = client.post("/plan/publish")
 
     app.dependency_overrides.pop(get_current_user, None)
-    assert resp.status_code == 400
-    assert "credentials" in resp.json()["detail"].lower()
+    assert resp.status_code == 202
+    assert "message" in resp.json()
 
 
-def test_publish_success(auth_client, db_session):
+def test_publish_sets_publishing_status(auth_client, db_session):
+    """POST /plan/publish sets in-memory status to publishing for the user."""
     client, user = auth_client
     _make_user_with_plan(db_session)
 
     from api.dependencies import get_current_user
     from api.main import app
     from api.models import User
+    from api.routers.plan import _publish_status
 
     plan_user = db_session.query(User).filter(User.google_id == "g-publish").first()
     app.dependency_overrides[get_current_user] = lambda: plan_user
+
+    with patch("api.routers.plan._run_publish"):
+        client.post("/plan/publish")
+
+    app.dependency_overrides.pop(get_current_user, None)
+    # Status should be "publishing" (background task blocked by mock)
+    assert _publish_status.get(str(plan_user.id), {}).get("status") == "publishing"
+    # cleanup
+    _publish_status.pop(str(plan_user.id), None)
+
+
+def test_run_publish_sets_done_status(db_session):
+    """_run_publish sets status to done after successful publish."""
+    from api.routers.plan import _run_publish, _publish_status
+
+    user = _make_user_with_plan(db_session)
+    from src.planner import get_upcoming_monday
+    week_start = get_upcoming_monday()
 
     with patch("api.routers.plan.publish_plan_for_user") as mock_pub:
         mock_pub.return_value = {
             "playlist_url": "https://www.youtube.com/playlist?list=PLtest123",
             "video_count": 1,
         }
-        resp = client.post("/plan/publish")
+        with patch("api.database.SessionLocal", return_value=db_session):
+            # Prevent session.close() from breaking the test session
+            db_session.close = lambda: None
+            _run_publish(str(user.id), week_start)
 
-    app.dependency_overrides.pop(get_current_user, None)
-    assert resp.status_code == 200
-    body = resp.json()
-    assert body["playlist_url"] == "https://www.youtube.com/playlist?list=PLtest123"
-    assert body["video_count"] == 1
+    status = _publish_status.get(str(user.id))
+    assert status is not None
+    assert status["status"] == "done"
+    assert status["playlist_url"] == "https://www.youtube.com/playlist?list=PLtest123"
+    assert status["video_count"] == 1
+    # cleanup
+    _publish_status.pop(str(user.id), None)
 
 
-def test_publish_revoked_returns_403(auth_client, db_session):
-    client, user = auth_client
-    _make_user_with_plan(db_session)
+def test_run_publish_sets_failed_on_not_connected(db_session):
+    """_run_publish sets status to failed with error when YouTube not connected."""
+    from api.routers.plan import _run_publish, _publish_status
 
-    from api.dependencies import get_current_user
-    from api.main import app
-    from api.models import User
+    user = _make_user_with_plan(db_session)
+    from src.planner import get_upcoming_monday
+    week_start = get_upcoming_monday()
 
-    plan_user = db_session.query(User).filter(User.google_id == "g-publish").first()
-    app.dependency_overrides[get_current_user] = lambda: plan_user
+    with patch("api.routers.plan.publish_plan_for_user") as mock_pub:
+        mock_pub.side_effect = YouTubeNotConnectedError("No YouTube credentials")
+        with patch("api.database.SessionLocal", return_value=db_session):
+            db_session.close = lambda: None
+            _run_publish(str(user.id), week_start)
+
+    status = _publish_status.get(str(user.id))
+    assert status is not None
+    assert status["status"] == "failed"
+    assert "credentials" in status["error"].lower()
+    # cleanup
+    _publish_status.pop(str(user.id), None)
+
+
+def test_run_publish_sets_revoked_error(db_session):
+    """_run_publish sets error='revoked' on YouTubeAccessRevokedError."""
+    from api.routers.plan import _run_publish, _publish_status
+
+    user = _make_user_with_plan(db_session)
+    from src.planner import get_upcoming_monday
+    week_start = get_upcoming_monday()
 
     with patch("api.routers.plan.publish_plan_for_user") as mock_pub:
         mock_pub.side_effect = YouTubeAccessRevokedError("Token revoked")
-        resp = client.post("/plan/publish")
+        with patch("api.database.SessionLocal", return_value=db_session):
+            db_session.close = lambda: None
+            _run_publish(str(user.id), week_start)
 
-    app.dependency_overrides.pop(get_current_user, None)
-    assert resp.status_code == 403
-    assert "revoked" in resp.json()["detail"].lower()
+    status = _publish_status.get(str(user.id))
+    assert status is not None
+    assert status["status"] == "failed"
+    assert status["error"] == "revoked"
+    # cleanup
+    _publish_status.pop(str(user.id), None)
 
 
 # ─── GET /auth/me includes youtube fields ─────────────────────────────────────

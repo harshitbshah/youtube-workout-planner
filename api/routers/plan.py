@@ -9,13 +9,15 @@ Routes:
 
 from datetime import date, timedelta
 
-from fastapi import APIRouter, Depends, HTTPException
+import threading
+
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from ..dependencies import get_current_user, get_db
 from ..models import Channel, Classification, ProgramHistory, Schedule, User, UserChannel, Video
-from ..schemas import PatchDayRequest, PlanDay, PlanResponse, PublishResponse, VideoSummary
+from ..schemas import PatchDayRequest, PlanDay, PlanResponse, PublishResponse, PublishStatus, VideoSummary
 from ..services.planner import generate_weekly_plan_for_user, pick_video_for_slot_for_user
 from ..services.publisher import (
     YouTubeAccessRevokedError,
@@ -25,6 +27,10 @@ from ..services.publisher import (
 from src.planner import HISTORY_WINDOW_WEEKS, get_upcoming_monday
 
 router = APIRouter(prefix="/plan", tags=["plan"])
+
+# In-memory publish status per user. Lost on restart (acceptable).
+# status values: "idle" | "publishing" | "done" | "failed"
+_publish_status: dict[str, dict] = {}
 
 DAYS_OF_WEEK = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"]
 
@@ -152,12 +158,35 @@ def generate_plan(
 
 # ─── Publish ──────────────────────────────────────────────────────────────────
 
-@router.post("/publish", response_model=PublishResponse)
+def _run_publish(user_id: str, week_start):
+    """Publish plan to YouTube in a background thread. Creates its own DB session."""
+    from ..database import SessionLocal
+    session = SessionLocal()
+    try:
+        result = publish_plan_for_user(session, user_id, week_start)
+        _publish_status[user_id] = {
+            "status": "done",
+            "playlist_url": result["playlist_url"],
+            "video_count": result["video_count"],
+            "error": None,
+        }
+    except YouTubeNotConnectedError as exc:
+        _publish_status[user_id] = {"status": "failed", "playlist_url": None, "video_count": None, "error": str(exc)}
+    except YouTubeAccessRevokedError as exc:
+        _publish_status[user_id] = {"status": "failed", "playlist_url": None, "video_count": None, "error": "revoked"}
+    except Exception as exc:
+        _publish_status[user_id] = {"status": "failed", "playlist_url": None, "video_count": None, "error": str(exc)}
+    finally:
+        session.close()
+
+
+@router.post("/publish", status_code=202)
 def publish_plan(
+    background_tasks: BackgroundTasks,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    """Publish the current week's plan to the user's YouTube playlist."""
+    """Start publishing the current week's plan to YouTube. Returns 202 immediately."""
     latest_week = (
         db.query(func.max(ProgramHistory.week_start))
         .filter(ProgramHistory.user_id == current_user.id)
@@ -166,19 +195,20 @@ def publish_plan(
     if not latest_week:
         raise HTTPException(status_code=404, detail="No plan generated yet")
 
-    try:
-        result = publish_plan_for_user(db, current_user.id, latest_week)
-    except YouTubeNotConnectedError as exc:
-        raise HTTPException(status_code=400, detail=str(exc)) from exc
-    except YouTubeAccessRevokedError:
-        raise HTTPException(
-            status_code=403,
-            detail="YouTube access has been revoked. Please sign in again to reconnect.",
-        )
-    except ValueError as exc:
-        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    _publish_status[str(current_user.id)] = {"status": "publishing", "playlist_url": None, "video_count": None, "error": None}
+    background_tasks.add_task(_run_publish, str(current_user.id), latest_week)
+    return {"message": "Publishing started"}
 
-    return PublishResponse(**result)
+
+@router.get("/publish/status", response_model=PublishStatus)
+def get_publish_status(
+    current_user: User = Depends(get_current_user),
+):
+    """Return the current publish status for the authenticated user."""
+    status = _publish_status.get(str(current_user.id))
+    if not status:
+        return PublishStatus(status="idle")
+    return PublishStatus(**status)
 
 
 # ─── Patch day ────────────────────────────────────────────────────────────────

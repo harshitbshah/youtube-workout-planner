@@ -119,6 +119,13 @@ class PublishResponse(BaseModel):
     video_count: int
 
 
+class PublishStatus(BaseModel):
+    status: str  # "idle" | "publishing" | "done" | "failed"
+    playlist_url: Optional[str] = None
+    video_count: Optional[int] = None
+    error: Optional[str] = None
+
+
 # ─── Library ───────────────────────────────────────────────────────────────────
 
 class LibraryResponse(BaseModel):

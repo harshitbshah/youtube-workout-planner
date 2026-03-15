@@ -100,7 +100,21 @@ def plan_client(db_session, plan_user):
 
 # ─── Tests ────────────────────────────────────────────────────────────────────
 
-def test_publish_success(plan_client, db_session):
+def test_publish_returns_202(plan_client):
+    """POST /plan/publish returns 202 immediately (async)."""
+    client, user, week_start = plan_client
+
+    with patch("api.routers.plan._run_publish"):
+        resp = client.post("/plan/publish")
+
+    assert resp.status_code == 202
+    assert "message" in resp.json()
+
+
+def test_publish_background_success_sets_done_and_persists(plan_client, plan_user, db_session):
+    """_run_publish (background) sets status done and persists the playlist ID."""
+    from api.routers.plan import _run_publish, _publish_status
+
     client, user, week_start = plan_client
 
     mock_youtube = MagicMock()
@@ -115,34 +129,50 @@ def test_publish_success(plan_client, db_session):
     mock_youtube.playlists.return_value.update.return_value.execute.return_value = {}
 
     with patch("api.services.publisher.build_oauth_client", return_value=mock_youtube):
-        resp = client.post("/plan/publish")
+        with patch("api.database.SessionLocal", return_value=db_session):
+            db_session.close = lambda: None
+            _run_publish(str(user.id), week_start)
 
-    assert resp.status_code == 200
-    body = resp.json()
-    assert "PLintegration123" in body["playlist_url"]
-    assert body["video_count"] == 1
+    status = _publish_status.get(str(user.id))
+    assert status is not None
+    assert status["status"] == "done"
+    assert "PLintegration123" in status["playlist_url"]
+    assert status["video_count"] == 1
 
     # Playlist ID must be persisted so the next publish reuses the same playlist
     db_session.expire_all()
     creds = db_session.query(UserCredentials).filter(UserCredentials.user_id == user.id).first()
     assert creds.youtube_playlist_id == "PLintegration123"
 
+    # cleanup
+    _publish_status.pop(str(user.id), None)
 
-def test_publish_revoked_marks_invalid(plan_client, db_session):
-    client, user, _ = plan_client
+
+def test_publish_background_revoked_sets_failed_and_marks_invalid(plan_client, plan_user, db_session):
+    """_run_publish sets status failed with error=revoked and marks credentials invalid."""
+    from api.routers.plan import _run_publish, _publish_status
+
+    client, user, week_start = plan_client
 
     with patch(
         "api.services.publisher.build_oauth_client",
         side_effect=google.auth.exceptions.RefreshError("Token revoked"),
     ):
-        resp = client.post("/plan/publish")
+        with patch("api.database.SessionLocal", return_value=db_session):
+            db_session.close = lambda: None
+            _run_publish(str(user.id), week_start)
 
-    assert resp.status_code == 403
-    assert "revoked" in resp.json()["detail"].lower()
+    status = _publish_status.get(str(user.id))
+    assert status is not None
+    assert status["status"] == "failed"
+    assert status["error"] == "revoked"
 
     db_session.expire_all()
     creds = db_session.query(UserCredentials).filter(UserCredentials.user_id == user.id).first()
     assert creds.credentials_valid is False
+
+    # cleanup
+    _publish_status.pop(str(user.id), None)
 
 
 def test_publish_no_plan_returns_404(db_session):

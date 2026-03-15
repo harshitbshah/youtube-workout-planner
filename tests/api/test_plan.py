@@ -187,3 +187,98 @@ def test_patch_day_video_not_in_library(auth_client, db_session):
 def test_patch_day_unauthenticated(client):
     resp = client.patch("/plan/monday", json={"video_id": "vid1"})
     assert resp.status_code == 401
+
+
+# ─── Publish (async) ─────────────────────────────────────────────────────────
+
+def test_publish_returns_202_and_sets_publishing_status(auth_client, db_session):
+    """POST /plan/publish returns 202 immediately and sets status to publishing."""
+    client, user = auth_client
+    ch = _seed_channel(db_session, user)
+    video = _seed_video(db_session, ch.id)
+    _seed_history(db_session, user, video.id, "monday")
+
+    with patch("api.routers.plan._run_publish") as mock_run:
+        # Prevent the background task from actually running during this test
+        resp = client.post("/plan/publish")
+
+    assert resp.status_code == 202
+    data = resp.json()
+    assert "message" in data
+
+
+def test_publish_no_plan_returns_404(auth_client):
+    """POST /plan/publish with no plan returns 404."""
+    client, user = auth_client
+    resp = client.post("/plan/publish")
+    assert resp.status_code == 404
+
+
+def test_publish_unauthenticated(client):
+    resp = client.post("/plan/publish")
+    assert resp.status_code == 401
+
+
+def test_get_publish_status_idle_when_no_publish(auth_client):
+    """GET /plan/publish/status returns idle when no publish has been started."""
+    client, user = auth_client
+    # Clear any leftover state from other tests
+    from api.routers.plan import _publish_status
+    _publish_status.pop(str(user.id), None)
+
+    resp = client.get("/plan/publish/status")
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["status"] == "idle"
+    assert data["playlist_url"] is None
+    assert data["video_count"] is None
+    assert data["error"] is None
+
+
+def test_get_publish_status_reflects_in_memory_state(auth_client):
+    """GET /plan/publish/status returns the current in-memory status."""
+    client, user = auth_client
+    from api.routers.plan import _publish_status
+    _publish_status[str(user.id)] = {
+        "status": "done",
+        "playlist_url": "https://youtube.com/playlist?list=abc123",
+        "video_count": 5,
+        "error": None,
+    }
+
+    resp = client.get("/plan/publish/status")
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["status"] == "done"
+    assert data["playlist_url"] == "https://youtube.com/playlist?list=abc123"
+    assert data["video_count"] == 5
+    assert data["error"] is None
+
+    # cleanup
+    _publish_status.pop(str(user.id), None)
+
+
+def test_get_publish_status_failed_state(auth_client):
+    """GET /plan/publish/status returns failed state with error message."""
+    client, user = auth_client
+    from api.routers.plan import _publish_status
+    _publish_status[str(user.id)] = {
+        "status": "failed",
+        "playlist_url": None,
+        "video_count": None,
+        "error": "YouTube not connected",
+    }
+
+    resp = client.get("/plan/publish/status")
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["status"] == "failed"
+    assert data["error"] == "YouTube not connected"
+
+    # cleanup
+    _publish_status.pop(str(user.id), None)
+
+
+def test_get_publish_status_unauthenticated(client):
+    resp = client.get("/plan/publish/status")
+    assert resp.status_code == 401

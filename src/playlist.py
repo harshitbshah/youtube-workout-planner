@@ -99,7 +99,7 @@ def clear_playlist(youtube, playlist_id: str):
     for item_id in item_ids:
         try:
             youtube.playlistItems().delete(id=item_id).execute()
-            time.sleep(0.3)
+            time.sleep(0.05)
         except HttpError as e:
             logger.warning(f"Failed to delete playlist item {item_id}: {e}")
 
@@ -130,7 +130,7 @@ def populate_playlist(youtube, playlist_id: str, video_ids: list[str]):
                 },
             ).execute()
             logger.info(f"  [{position + 1}/{len(video_ids)}] Added video {video_id}")
-            time.sleep(0.3)
+            time.sleep(0.05)
         except HttpError as e:
             logger.error(f"Failed to add video {video_id} at position {position}: {e}")
 

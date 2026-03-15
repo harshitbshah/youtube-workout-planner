@@ -26,6 +26,7 @@ vi.mock("@/lib/api", () => ({
   getUpcomingPlan: vi.fn(),
   generatePlan: vi.fn(),
   publishPlan: vi.fn(),
+  getPublishStatus: vi.fn(),
   triggerScan: vi.fn(),
   getJobStatus: vi.fn(),
   getActiveAnnouncement: vi.fn(),
@@ -38,6 +39,8 @@ const mockGetMe = api.getMe as ReturnType<typeof vi.fn>;
 const mockGetChannels = api.getChannels as ReturnType<typeof vi.fn>;
 const mockGetUpcomingPlan = api.getUpcomingPlan as ReturnType<typeof vi.fn>;
 const mockGeneratePlan = api.generatePlan as ReturnType<typeof vi.fn>;
+const mockPublishPlan = api.publishPlan as ReturnType<typeof vi.fn>;
+const mockGetPublishStatus = api.getPublishStatus as ReturnType<typeof vi.fn>;
 const mockGetJobStatus = api.getJobStatus as ReturnType<typeof vi.fn>;
 const mockGetActiveAnnouncement = api.getActiveAnnouncement as ReturnType<typeof vi.fn>;
 const mockGetLibrary = api.getLibrary as ReturnType<typeof vi.fn>;
@@ -95,6 +98,8 @@ beforeEach(() => {
   mockGetJobStatus.mockResolvedValue({ stage: null, total: null, done: null });
   mockGetActiveAnnouncement.mockResolvedValue(null);
   mockGeneratePlan.mockResolvedValue(makePlan(getCurrentMondayISO()));
+  mockPublishPlan.mockResolvedValue({ message: "Publishing started" });
+  mockGetPublishStatus.mockResolvedValue({ status: "idle" });
   mockGetLibrary.mockResolvedValue({
     videos: [
       {
@@ -384,5 +389,91 @@ describe("DashboardPage - already set up banner", () => {
       value: { ...window.location, search: "" },
       writable: true,
     });
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Publish flow
+// ---------------------------------------------------------------------------
+
+const mockUserWithYouTube = {
+  ...mockUser,
+  youtube_connected: true,
+  credentials_valid: true,
+};
+
+describe("DashboardPage - publish flow", () => {
+  it("shows 'Publishing...' on button while publishing", async () => {
+    mockGetMe.mockResolvedValue(mockUserWithYouTube);
+    mockGetUpcomingPlan.mockResolvedValue(makePlan(getCurrentMondayISO()));
+    // publishPlan resolves but getPublishStatus stays publishing
+    mockPublishPlan.mockResolvedValue({ message: "Publishing started" });
+    mockGetPublishStatus.mockResolvedValue({ status: "publishing" });
+
+    render(<DashboardPage />);
+    await waitFor(() => screen.getByText("Publish to YouTube"));
+    fireEvent.click(screen.getByText("Publish to YouTube"));
+    await waitFor(() =>
+      expect(screen.getByText("Publishing…")).toBeInTheDocument()
+    );
+  });
+
+  it("shows publishing in progress banner while status is publishing", async () => {
+    mockGetMe.mockResolvedValue(mockUserWithYouTube);
+    mockGetUpcomingPlan.mockResolvedValue(makePlan(getCurrentMondayISO()));
+    mockPublishPlan.mockResolvedValue({ message: "Publishing started" });
+    mockGetPublishStatus.mockResolvedValue({ status: "publishing" });
+
+    render(<DashboardPage />);
+    await waitFor(() => screen.getByText("Publish to YouTube"));
+    fireEvent.click(screen.getByText("Publish to YouTube"));
+    await waitFor(() =>
+      expect(screen.getByText(/Publishing your plan to YouTube/i)).toBeInTheDocument()
+    );
+  });
+
+  it("shows success banner when publish completes", async () => {
+    mockGetMe.mockResolvedValue(mockUserWithYouTube);
+    mockGetUpcomingPlan.mockResolvedValue(makePlan(getCurrentMondayISO()));
+    mockPublishPlan.mockResolvedValue({ message: "Publishing started" });
+    // Poll returns done immediately when called
+    mockGetPublishStatus.mockResolvedValue({
+      status: "done",
+      playlist_url: "https://youtube.com/playlist?list=abc",
+      video_count: 4,
+      error: null,
+    });
+
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    render(<DashboardPage />);
+
+    // Wait for page to load with real-timer resolution
+    vi.useRealTimers();
+    await waitFor(() => screen.getByText("Publish to YouTube"));
+    fireEvent.click(screen.getByText("Publish to YouTube"));
+
+    // setInterval fires at 2000ms - wait for the poll to be called
+    await waitFor(() =>
+      expect(mockGetPublishStatus).toHaveBeenCalled()
+    , { timeout: 4000 });
+
+    await waitFor(() =>
+      expect(screen.getByText(/Plan published/i)).toBeInTheDocument()
+    , { timeout: 4000 });
+    expect(screen.getByText(/Open playlist/i)).toBeInTheDocument();
+  }, 10000);
+
+  it("shows error banner when publishPlan itself fails", async () => {
+    mockGetMe.mockResolvedValue(mockUserWithYouTube);
+    mockGetUpcomingPlan.mockResolvedValue(makePlan(getCurrentMondayISO()));
+    mockPublishPlan.mockRejectedValue(new Error("No plan generated yet"));
+
+    render(<DashboardPage />);
+    await waitFor(() => screen.getByText("Publish to YouTube"));
+    fireEvent.click(screen.getByText("Publish to YouTube"));
+    // Error is shown via publishStatus failed banner
+    await waitFor(() =>
+      expect(screen.getByText("No plan generated yet")).toBeInTheDocument()
+    , { timeout: 3000 });
   });
 });
