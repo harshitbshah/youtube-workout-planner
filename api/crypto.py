@@ -1,8 +1,8 @@
 """
-crypto.py — Symmetric encryption for sensitive credential fields.
+crypto.py - Symmetric encryption for sensitive credential fields.
 
 Uses Fernet (AES-128-CBC + HMAC-SHA256 via the `cryptography` library).
-The encryption key lives in the ENCRYPTION_KEY environment variable — never in the DB.
+The encryption key lives in the ENCRYPTION_KEY environment variable - never in the DB.
 
 Key management:
   Generate:  python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"
@@ -17,7 +17,7 @@ Attack surface:
 
 import os
 
-from cryptography.fernet import Fernet, InvalidToken  # noqa: F401 — re-exported for callers
+from cryptography.fernet import Fernet, InvalidToken  # noqa: F401 - re-exported for callers
 
 
 def _get_fernet() -> Fernet:

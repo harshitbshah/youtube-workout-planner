@@ -7,7 +7,7 @@ before the pre-classification filters were added to scanner.py.
 Filters applied (mirrors api/services/scanner.py):
   1. Title keyword blocklist
   2. Duration > 2 hours (7200 sec)
-  3. Duration < 3 minutes (180 sec) — already excluded from classification
+  3. Duration < 3 minutes (180 sec) - already excluded from classification
      but still clutters the videos table
 
 Run with:
@@ -115,7 +115,7 @@ def main():
     ids_to_delete = [r[0] for r in all_to_delete]
 
     with engine.begin() as conn:
-        # Classifications reference videos via FK — delete them first
+        # Classifications reference videos via FK - delete them first
         conn.execute(
             text("DELETE FROM classifications WHERE video_id = ANY(:ids)"),
             {"ids": ids_to_delete},

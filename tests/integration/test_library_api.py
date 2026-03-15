@@ -2,7 +2,7 @@
 Integration tests for GET /library against real PostgreSQL.
 
 What these add over unit tests:
-  - Real FK constraints — channel_id / video_id must exist
+  - Real FK constraints - channel_id / video_id must exist
   - Real inner-join behaviour for Classification
   - User isolation enforced at DB level
   - Pagination counts verified on real data volumes

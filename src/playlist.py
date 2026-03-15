@@ -1,19 +1,19 @@
 """
-playlist.py — Manage the weekly YouTube playlist via the Data API.
+playlist.py - Manage the weekly YouTube playlist via the Data API.
 
 Requires OAuth 2.0 credentials (not just an API key) because writing
 to a playlist requires user account access.
 
 In GitHub Actions, credentials are passed as environment variables
 (secrets). The refresh token is used to get a fresh access token
-each run — no browser interaction needed.
+each run - no browser interaction needed.
 
 Quota costs per weekly refresh (~6 videos):
   playlistItems.list    1 unit  (listing existing items)
   playlistItems.delete  50 units × N  (clearing old videos)
   playlistItems.insert  50 units × 6  (adding new videos)
   playlists.update      50 units  (updating description)
-  Total ≈ 650 units — well within the 10,000/day free quota.
+  Total ≈ 650 units - well within the 10,000/day free quota.
 """
 
 import logging
@@ -35,7 +35,7 @@ def build_oauth_client(client_id: str, client_secret: str, refresh_token: str):
     """
     Build an authenticated YouTube client using a stored refresh token.
 
-    Works headlessly (no browser) — suitable for GitHub Actions.
+    Works headlessly (no browser) - suitable for GitHub Actions.
     The refresh token never expires unless explicitly revoked.
     """
     creds = Credentials(
@@ -85,7 +85,7 @@ def clear_playlist(youtube, playlist_id: str):
     """
     Remove every video from the playlist.
 
-    Deletes items one by one — the API does not support bulk delete.
+    Deletes items one by one - the API does not support bulk delete.
     Adds a small delay between calls to stay within rate limits.
     """
     item_ids = _list_playlist_item_ids(youtube, playlist_id)
@@ -179,7 +179,7 @@ def refresh_playlist(youtube, playlist_id: str,
     ]
 
     if not video_ids:
-        logger.error("Plan contains no videos — playlist not updated.")
+        logger.error("Plan contains no videos - playlist not updated.")
         return
 
     clear_playlist(youtube, playlist_id)

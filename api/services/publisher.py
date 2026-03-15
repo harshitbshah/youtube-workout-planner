@@ -1,5 +1,5 @@
 """
-publisher.py — Publish a user's weekly plan to their YouTube playlist.
+publisher.py - Publish a user's weekly plan to their YouTube playlist.
 
 Flow:
   1. Decrypt the stored YouTube refresh token
@@ -14,7 +14,7 @@ Quota cost per publish (~6 videos):
   playlistItems.insert  50 × 6 = 300 units
   playlists.update      50 units
   playlists.insert      50 units  (first publish only)
-  Total ≈ 400–650 units — well within the 10,000/day free quota.
+  Total ≈ 400–650 units - well within the 10,000/day free quota.
 """
 
 import logging
@@ -77,10 +77,10 @@ def publish_plan_for_user(db: Session, user_id: str, week_start) -> dict:
     Returns {"playlist_url": str, "video_count": int}.
 
     Raises:
-      YouTubeNotConnectedError  — no refresh token stored
-      YouTubeAccessRevokedError — token revoked; credentials_valid set to False in DB
-      ValueError                — no videos in the plan
-      HttpError                 — unexpected YouTube API error
+      YouTubeNotConnectedError  - no refresh token stored
+      YouTubeAccessRevokedError - token revoked; credentials_valid set to False in DB
+      ValueError                - no videos in the plan
+      HttpError                 - unexpected YouTube API error
     """
     creds = db.query(UserCredentials).filter(UserCredentials.user_id == user_id).first()
     if not creds or not creds.youtube_refresh_token:
@@ -91,7 +91,7 @@ def publish_plan_for_user(db: Session, user_id: str, week_start) -> dict:
     except Exception as exc:
         raise YouTubeNotConnectedError(f"Failed to decrypt YouTube credentials: {exc}") from exc
 
-    # Build OAuth client — raises RefreshError if token is revoked
+    # Build OAuth client - raises RefreshError if token is revoked
     try:
         youtube = build_oauth_client(
             client_id=GOOGLE_CLIENT_ID,
@@ -119,7 +119,7 @@ def publish_plan_for_user(db: Session, user_id: str, week_start) -> dict:
     ]
 
     if not video_ids:
-        raise ValueError("No videos in the current plan — nothing to publish")
+        raise ValueError("No videos in the current plan - nothing to publish")
 
     # Publish
     try:
@@ -135,7 +135,7 @@ def publish_plan_for_user(db: Session, user_id: str, week_start) -> dict:
         else:
             playlist_id = creds.youtube_playlist_id
 
-        # Only clear existing playlists — a newly created one is empty and
+        # Only clear existing playlists - a newly created one is empty and
         # YouTube's API may 404 on playlistItems.list immediately after creation.
         if not is_new_playlist:
             clear_playlist(youtube, playlist_id)
@@ -144,7 +144,7 @@ def publish_plan_for_user(db: Session, user_id: str, week_start) -> dict:
             youtube,
             playlist_id,
             title="Weekly Workout Plan",
-            description=f"Week of {week_start} — {len(video_ids)} workout{'s' if len(video_ids) != 1 else ''}",
+            description=f"Week of {week_start} - {len(video_ids)} workout{'s' if len(video_ids) != 1 else ''}",
         )
 
     except HttpError as exc:

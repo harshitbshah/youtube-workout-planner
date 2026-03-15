@@ -1,11 +1,11 @@
 """
-channels.py — Manage a user's YouTube channels and search for new ones.
+channels.py - Manage a user's YouTube channels and search for new ones.
 
 Routes:
-  GET    /channels          — list user's channels
-  POST   /channels          — add channel (creates global Channel if needed, then links user)
-  DELETE /channels/{id}     — unlink channel from user (channel + videos are preserved)
-  GET    /channels/search?q= — search YouTube channels by name
+  GET    /channels          - list user's channels
+  POST   /channels          - add channel (creates global Channel if needed, then links user)
+  DELETE /channels/{id}     - unlink channel from user (channel + videos are preserved)
+  GET    /channels/search?q= - search YouTube channels by name
 """
 
 import os
@@ -207,7 +207,7 @@ async def get_suggestions(
                 )
                 continue
 
-            # Cache miss — fetch from YouTube and store
+            # Cache miss - fetch from YouTube and store
             if not YOUTUBE_API_KEY:
                 continue  # no key: skip this suggestion silently
 
@@ -277,7 +277,7 @@ async def get_suggestions(
                 )
 
             except Exception:
-                continue  # network / parse error — skip this suggestion
+                continue  # network / parse error - skip this suggestion
 
     return results
 

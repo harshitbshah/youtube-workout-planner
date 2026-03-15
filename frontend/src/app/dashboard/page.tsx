@@ -240,7 +240,7 @@ export default function DashboardPage() {
         setAnnouncement(ann);
         const activeStages = ["scanning", "classifying", "generating"];
         if (status.stage && activeStages.includes(status.stage)) {
-          // Pipeline is actively running — show scanning state regardless of
+          // Pipeline is actively running - show scanning state regardless of
           // whether a stale plan already exists in the DB
           setScanning(true);
           setPipelineStage(status.stage);
@@ -266,7 +266,7 @@ export default function DashboardPage() {
         } else {
           setClassifyProgress(null);
         }
-        // Pipeline finished — fetch fresh plan and stop polling
+        // Pipeline finished - fetch fresh plan and stop polling
         if (!stage || stage === "done" || stage === "failed") {
           setScanning(false);
           setPipelineStage(null);
@@ -275,7 +275,7 @@ export default function DashboardPage() {
           if (p) setPlan(p);
         }
       } catch {
-        // network blip — keep polling
+        // network blip - keep polling
       }
     }, 5_000);
     return () => clearInterval(interval);
@@ -332,7 +332,7 @@ export default function DashboardPage() {
     try {
       const result = await publishPlan();
       setPublishResult(result);
-      // If we get here, credentials are valid — ensure user state reflects that
+      // If we get here, credentials are valid - ensure user state reflects that
       setUser((u) => u ? { ...u, credentials_valid: true } : u);
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : "Failed to publish plan";
@@ -448,7 +448,7 @@ export default function DashboardPage() {
                   !user?.youtube_connected
                     ? "Sign in with Google to connect YouTube"
                     : !user?.credentials_valid
-                    ? "YouTube access revoked — sign out and sign in again to reconnect"
+                    ? "YouTube access revoked - sign out and sign in again to reconnect"
                     : "Generate a plan first"
                 }
                 className="rounded-lg border border-zinc-200 dark:border-zinc-700 px-3 py-2 text-sm text-zinc-500 dark:text-zinc-600 opacity-50 cursor-not-allowed transition"
@@ -505,7 +505,7 @@ export default function DashboardPage() {
               <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
               <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"/>
             </svg>
-            <span>Generating your plan — picking the best videos for each day…</span>
+            <span>Generating your plan - picking the best videos for each day…</span>
           </div>
         )}
 
@@ -522,13 +522,13 @@ export default function DashboardPage() {
                 {pipelineStage === "classifying" && (
                   classifyProgress
                     ? classifyProgress.done < 0
-                      ? `Preparing batch — fetching transcripts (${Math.abs(classifyProgress.done).toLocaleString()} / ${classifyProgress.total.toLocaleString()})`
-                      : `Classifying videos with AI — ${classifyProgress.done.toLocaleString()} / ${classifyProgress.total.toLocaleString()} done`
-                    : "Classifying videos with AI — preparing batch…"
+                      ? `Preparing batch - fetching transcripts (${Math.abs(classifyProgress.done).toLocaleString()} / ${classifyProgress.total.toLocaleString()})`
+                      : `Classifying videos with AI - ${classifyProgress.done.toLocaleString()} / ${classifyProgress.total.toLocaleString()} done`
+                    : "Classifying videos with AI - preparing batch…"
                 )}
-                {pipelineStage === "generating" && "Almost done — generating your weekly plan…"}
+                {pipelineStage === "generating" && "Almost done - generating your weekly plan…"}
                 {pipelineStage === "failed" && "Something went wrong. Try rescanning from the button above."}
-                {(!pipelineStage || pipelineStage === "done") && "Starting pipeline — your plan will appear automatically when ready."}
+                {(!pipelineStage || pipelineStage === "done") && "Starting pipeline - your plan will appear automatically when ready."}
               </span>
             </div>
             {pipelineStage === "classifying" && classifyProgress && (
@@ -559,7 +559,7 @@ export default function DashboardPage() {
         {publishResult && (
           <div className="mb-6 rounded-lg border border-green-800 bg-green-900/20 px-4 py-3 text-sm text-green-400 flex items-center justify-between">
             <span>
-              Plan published — {publishResult.video_count} video{publishResult.video_count !== 1 ? "s" : ""} added to your playlist.
+              Plan published - {publishResult.video_count} video{publishResult.video_count !== 1 ? "s" : ""} added to your playlist.
             </span>
             <a
               href={publishResult.playlist_url}
@@ -588,7 +588,7 @@ export default function DashboardPage() {
                 </Link>
               </>
             ) : scanning ? (
-              <p className="text-zinc-500 text-sm">Hang tight — building your plan in the background…</p>
+              <p className="text-zinc-500 text-sm">Hang tight - building your plan in the background…</p>
             ) : (
               <>
                 <p className="text-zinc-600 dark:text-zinc-400 text-sm mb-4">No plan generated yet.</p>

@@ -92,7 +92,7 @@ function StatCard({ label, value, sub, tooltip }: { label: string; value: string
 }
 
 function StagePill({ stage }: { stage: string | null }) {
-  if (!stage) return <span className="text-zinc-500 dark:text-zinc-600 text-xs">—</span>;
+  if (!stage) return <span className="text-zinc-500 dark:text-zinc-600 text-xs">-</span>;
   const colours: Record<string, string> = {
     scanning: "bg-blue-900/40 text-blue-400 border-blue-800",
     classifying: "bg-purple-900/40 text-purple-400 border-purple-800",
@@ -108,12 +108,12 @@ function StagePill({ stage }: { stage: string | null }) {
 }
 
 function formatDate(iso: string | null) {
-  if (!iso) return "—";
+  if (!iso) return "-";
   return new Date(iso).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
 }
 
 function formatRelative(iso: string | null) {
-  if (!iso) return "—";
+  if (!iso) return "-";
   const diff = Date.now() - new Date(iso).getTime();
   const mins = Math.floor(diff / 60_000);
   if (mins < 1) return "just now";
@@ -196,8 +196,8 @@ function UsageBlock({ label, data }: { label: string; data: UsagePeriod }) {
       <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-sm">
         <MetricRow label="Batches" value={data.batches} tooltip="Number of Anthropic Batch API calls made in this period" />
         <MetricRow label="Videos classified" value={data.videos_classified.toLocaleString()} tooltip="Total videos successfully tagged with workout type, body focus, and difficulty" />
-        <MetricRow label="Input tokens" value={data.input_tokens.toLocaleString()} tooltip="Tokens sent to Claude — includes video title, description, tags, and transcript" />
-        <MetricRow label="Output tokens" value={data.output_tokens.toLocaleString()} tooltip="Tokens returned by Claude — short JSON classification responses" />
+        <MetricRow label="Input tokens" value={data.input_tokens.toLocaleString()} tooltip="Tokens sent to Claude - includes video title, description, tags, and transcript" />
+        <MetricRow label="Output tokens" value={data.output_tokens.toLocaleString()} tooltip="Tokens returned by Claude - short JSON classification responses" />
         <MetricRow label="Est. cost" value={`$${data.est_cost_usd.toFixed(4)}`} tooltip="Estimated cost using Batch API pricing: $0.40/MTok input, $2.00/MTok output (50% off standard rates)" />
       </div>
     </div>
@@ -350,7 +350,7 @@ export default function AdminPage() {
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
             <StatCard label="Total users" value={stats.users.total} tooltip="All registered accounts" />
             <StatCard label="New (7 days)" value={stats.users.new_7d} sub={`${stats.users.new_30d} in last 30 days`} tooltip="Accounts created in the last 7 days" />
-            <StatCard label="YouTube connected" value={stats.users.youtube_connected} sub={`of ${stats.users.total} users`} tooltip="Users with a valid YouTube OAuth token — they can publish plans to a YouTube playlist" />
+            <StatCard label="YouTube connected" value={stats.users.youtube_connected} sub={`of ${stats.users.total} users`} tooltip="Users with a valid YouTube OAuth token - they can publish plans to a YouTube playlist" />
             <StatCard label="Plans this week" value={stats.plans.users_with_plan_this_week} sub={`of ${stats.users.total} users`} tooltip="Distinct users who have a plan generated for the current week (Mon–Sun)" />
           </div>
         </section>
@@ -361,7 +361,7 @@ export default function AdminPage() {
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
             <StatCard label="Total videos" value={stats.library.total_videos.toLocaleString()} tooltip="All videos scanned across every user's channels" />
             <StatCard label="Classified" value={`${stats.library.classification_pct}%`} sub={`${stats.library.classified.toLocaleString()} videos`} tooltip="Videos analysed by AI and tagged with workout type, body focus, and difficulty" />
-            <StatCard label="Unclassified" value={stats.library.unclassified.toLocaleString()} tooltip="Videos scanned but not yet classified — will be processed on the next pipeline run" />
+            <StatCard label="Unclassified" value={stats.library.unclassified.toLocaleString()} tooltip="Videos scanned but not yet classified - will be processed on the next pipeline run" />
             <StatCard label="Channels" value={stats.channels.total} sub={`avg ${stats.channels.avg_per_user} per user`} tooltip="Total YouTube channels added across all users" />
           </div>
         </section>
@@ -380,7 +380,7 @@ export default function AdminPage() {
         {charts && (
           <section>
             <h2 className="text-xs font-semibold text-zinc-500 uppercase tracking-widest mb-3">
-              Trends — last 30 days
+              Trends - last 30 days
             </h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <MiniChart
@@ -444,7 +444,7 @@ export default function AdminPage() {
               placeholder="New announcement message…"
               className="flex-1 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-900 px-3 py-2 text-sm text-zinc-900 dark:text-white placeholder-zinc-500 dark:placeholder-zinc-600 focus:outline-none focus:border-zinc-500"
             />
-            <Tooltip text="Post this announcement — it will appear as a banner on all users' dashboards immediately">
+            <Tooltip text="Post this announcement - it will appear as a banner on all users' dashboards immediately">
               <button
                 type="submit"
                 className="rounded-lg bg-zinc-900 dark:bg-white px-4 py-2 text-sm font-semibold text-white dark:text-zinc-900 hover:bg-zinc-700 dark:hover:bg-zinc-100 transition"
@@ -508,7 +508,7 @@ export default function AdminPage() {
                   <th className="px-4 py-3 text-xs font-semibold text-zinc-500 uppercase tracking-wide">User</th>
                   <th className="px-4 py-3 text-xs font-semibold text-zinc-500 uppercase tracking-wide">Joined</th>
                   <th className="px-4 py-3 text-xs font-semibold text-zinc-500 uppercase tracking-wide">
-                    <Tooltip text="Last time this user made an API request — updated at most once every 5 minutes" position="bottom">
+                    <Tooltip text="Last time this user made an API request - updated at most once every 5 minutes" position="bottom">
                       <span className="cursor-default">Last active</span>
                     </Tooltip>
                   </th>
@@ -544,7 +544,7 @@ export default function AdminPage() {
                 {stats.user_rows.map((u) => (
                   <tr key={u.id} className="border-b border-zinc-200 dark:border-zinc-800 last:border-0 hover:bg-zinc-50/60 dark:hover:bg-zinc-900/60">
                     <td className="px-4 py-3">
-                      <p className="text-zinc-900 dark:text-white font-medium">{u.display_name ?? "—"}</p>
+                      <p className="text-zinc-900 dark:text-white font-medium">{u.display_name ?? "-"}</p>
                       <p className="text-zinc-500 text-xs">{u.email}</p>
                     </td>
                     <td className="px-4 py-3 text-zinc-600 dark:text-zinc-400 text-xs whitespace-nowrap">{formatDate(u.created_at)}</td>
@@ -554,9 +554,9 @@ export default function AdminPage() {
                     <td className="px-4 py-3">
                       {u.youtube_connected
                         ? <span className="text-green-400 text-xs">Connected</span>
-                        : <span className="text-zinc-500 dark:text-zinc-600 text-xs">—</span>}
+                        : <span className="text-zinc-500 dark:text-zinc-600 text-xs">-</span>}
                     </td>
-                    <td className="px-4 py-3 text-zinc-600 dark:text-zinc-400 text-xs whitespace-nowrap">{u.last_plan ?? "—"}</td>
+                    <td className="px-4 py-3 text-zinc-600 dark:text-zinc-400 text-xs whitespace-nowrap">{u.last_plan ?? "-"}</td>
                     <td className="px-4 py-3"><StagePill stage={u.pipeline_stage} /></td>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2">
@@ -569,7 +569,7 @@ export default function AdminPage() {
                             {retryingUser === u.id ? "Starting…" : "↺ Scan"}
                           </button>
                         </Tooltip>
-                        <Tooltip text="Permanently delete this user and all their data — channels, videos, plan history, and credentials">
+                        <Tooltip text="Permanently delete this user and all their data - channels, videos, plan history, and credentials">
                           <button
                             onClick={() => handleDeleteUser(u.id, u.email)}
                             disabled={deletingUser === u.id}
@@ -591,7 +591,7 @@ export default function AdminPage() {
         <details className="mt-8 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-zinc-50/40 dark:bg-zinc-900/40 group">
           <summary className="flex items-center justify-between px-5 py-4 cursor-pointer list-none select-none">
             <span className="text-sm font-semibold text-zinc-600 dark:text-zinc-400 group-open:text-zinc-900 dark:group-open:text-white transition">
-              Runbook — common operational issues
+              Runbook - common operational issues
             </span>
             <span className="text-zinc-500 dark:text-zinc-600 text-xs group-open:rotate-180 transition-transform">▼</span>
           </summary>
@@ -608,7 +608,7 @@ export default function AdminPage() {
                 {([
                   [
                     'Pipeline stuck on "classifying" forever',
-                    "Anthropic batch timed out or server restarted mid-batch — stale classifier_batch_id in DB",
+                    "Anthropic batch timed out or server restarted mid-batch - stale classifier_batch_id in DB",
                     "Railway shell: UPDATE user_credentials SET classifier_batch_id = NULL WHERE user_id = '<id>'; then hit Scan",
                   ],
                   [
@@ -618,13 +618,13 @@ export default function AdminPage() {
                   ],
                   [
                     "User's plan is all Rest days",
-                    "Planner found no matching videos — library too small or schedule too restrictive",
+                    "Planner found no matching videos - library too small or schedule too restrictive",
                     "Try Scan to classify more videos; check user's schedule settings in DB.",
                   ],
                   [
                     '"Unclassified" count keeps growing',
                     "New videos scanned faster than Anthropic batches process them, or 300/run batch cap hit",
-                    "Normal — clears on next Sunday scan. Trigger Scan manually to accelerate.",
+                    "Normal - clears on next Sunday scan. Trigger Scan manually to accelerate.",
                   ],
                   [
                     'YouTube "credentials invalid" for a user',
@@ -634,7 +634,7 @@ export default function AdminPage() {
                   [
                     "Admin stats show 0 AI usage despite classifications",
                     "Migration 005 not yet applied (batch_usage_log table missing)",
-                    "Trigger a Railway redeploy — Dockerfile runs alembic upgrade head automatically.",
+                    "Trigger a Railway redeploy - Dockerfile runs alembic upgrade head automatically.",
                   ],
                 ] as [string, string, string][]).map(([symptom, cause, fix]) => (
                   <tr key={symptom} className="align-top">

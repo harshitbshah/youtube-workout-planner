@@ -1,5 +1,5 @@
 """
-schemas.py — Pydantic request/response models for the Phase 2 API.
+schemas.py - Pydantic request/response models for the Phase 2 API.
 """
 
 from __future__ import annotations

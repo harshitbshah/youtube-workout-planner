@@ -1,5 +1,5 @@
 """
-models.py — SQLAlchemy ORM models for the multi-user web app.
+models.py - SQLAlchemy ORM models for the multi-user web app.
 
 All UUID primary keys are stored as String(36) for SQLite compatibility in tests.
 """
@@ -132,7 +132,7 @@ class UserCredentials(Base):
     anthropic_key = Column(Text)
     credentials_valid = Column(Boolean, default=True, nullable=False)
     youtube_playlist_id = Column(String)
-    classifier_batch_id = Column(String)   # active Anthropic batch ID — cleared when done
+    classifier_batch_id = Column(String)   # active Anthropic batch ID - cleared when done
     updated_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
 
     user = relationship("User", back_populates="credentials")

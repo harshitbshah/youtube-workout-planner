@@ -58,7 +58,7 @@ function AssignButton({ videoId }: { videoId: string }) {
     );
   }
   if (status === "err") {
-    return <span className="text-xs text-red-400">Failed — generate a plan first</span>;
+    return <span className="text-xs text-red-400">Failed - generate a plan first</span>;
   }
 
   return (
@@ -233,7 +233,7 @@ export default function LibraryPage() {
         {/* Background classification banner */}
         {backgroundClassifying && !bannerDismissed && (
           <div className="flex items-center justify-between gap-3 mb-6 rounded-lg border border-amber-700/50 bg-amber-900/20 px-4 py-3 text-sm text-amber-300">
-            <span>Your library is still building — more videos are being classified in the background.</span>
+            <span>Your library is still building - more videos are being classified in the background.</span>
             <button
               onClick={() => setBannerDismissed(true)}
               className="shrink-0 text-amber-400 hover:text-amber-200 transition"

@@ -1,5 +1,5 @@
 """
-feedback.py — User feedback submission endpoint.
+feedback.py - User feedback submission endpoint.
 """
 import logging
 

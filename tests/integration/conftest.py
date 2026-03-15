@@ -1,5 +1,5 @@
 """
-Integration test fixtures — run against a real PostgreSQL database.
+Integration test fixtures - run against a real PostgreSQL database.
 
 What makes these different from unit tests:
   - Real PostgreSQL (not SQLite in-memory)
@@ -66,7 +66,7 @@ def pg_engine():
     engine = create_engine(INTEGRATION_DB_URL, poolclass=NullPool)
     yield engine
 
-    # Teardown — drop all tables so next run starts clean
+    # Teardown - drop all tables so next run starts clean
     command.downgrade(alembic_cfg, "base")
     engine.dispose()
 
@@ -100,7 +100,7 @@ def db_session(pg_engine):
 
 @pytest.fixture
 def make_user(db_session):
-    """Factory fixture — creates and returns a persisted User."""
+    """Factory fixture - creates and returns a persisted User."""
     from api.models import User
 
     def _make(google_id=None, email="test@example.com", display_name="Test User"):
@@ -160,7 +160,7 @@ def auth_client(db_session):
 
 @pytest.fixture
 def make_channel(db_session):
-    """Factory fixture — creates and returns a persisted Channel with a UserChannel join row."""
+    """Factory fixture - creates and returns a persisted Channel with a UserChannel join row."""
     from api.models import Channel, UserChannel
 
     def _make(user_id, name="TestChannel", youtube_url="https://youtube.com/@test"):

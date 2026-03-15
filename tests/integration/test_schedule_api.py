@@ -2,7 +2,7 @@
 Integration tests for GET/PUT /schedule against real PostgreSQL.
 
 What these add over unit tests:
-  - Full replace is atomic — no stale rows survive in real Postgres
+  - Full replace is atomic - no stale rows survive in real Postgres
   - User isolation at DB level
 """
 
@@ -63,7 +63,7 @@ def test_put_schedule_persists_to_postgres(auth_client, db_session):
 
 
 def test_put_schedule_fully_replaces_existing_rows(auth_client, db_session):
-    """Old rows must be completely gone after PUT — no stale data."""
+    """Old rows must be completely gone after PUT - no stale data."""
     client, user = auth_client
 
     # Seed initial schedule

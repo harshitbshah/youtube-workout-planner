@@ -11,11 +11,11 @@
 | F2 | 18-month video cutoff | ✅ Done (2026-03-10) | Phase A |
 | F3 | First-scan channel cap (75 videos) | ✅ Done (2026-03-10) | Phase A, migration 006 |
 | F4 | Skip inactive channels | ✅ Done (2026-03-10) | Phase A, migration 007 |
-| F5 | Adaptive payload trimming | ✅ Done (2026-03-11) | Phase D — `_title_is_descriptive()` |
-| F6 | Rule-based title pre-classifier | ✅ Done (2026-03-11) | Phase D — `title_classify()`, ~30–40% fewer AI calls |
+| F5 | Adaptive payload trimming | ✅ Done (2026-03-11) | Phase D - `_title_is_descriptive()` |
+| F6 | Rule-based title pre-classifier | ✅ Done (2026-03-11) | Phase D - `title_classify()`, ~30–40% fewer AI calls |
 | F7 | Per-user monthly budget cap | ⏳ Deferred | Low priority until real users |
 | F8 | Global classification cache | ⏳ Deferred | High impact at scale; schema decision needed |
-| F9 | Lazy classification — plan-first | ⏳ Not started | See [lazy-classification.md](lazy-classification.md) — biggest UX + cost win |
+| F9 | Lazy classification - plan-first | ⏳ Not started | See [lazy-classification.md](lazy-classification.md) - biggest UX + cost win |
 
 ---
 
@@ -66,7 +66,7 @@ None.
 
 ## Feature 2: 18-Month Video Cutoff
 
-**Problem:** Old videos get classified but `src/planner.py` uses recency bias — videos >18 months old are almost never selected.
+**Problem:** Old videos get classified but `src/planner.py` uses recency bias - videos >18 months old are almost never selected.
 
 ### Files changed
 - `api/services/classifier.py`
@@ -84,7 +84,7 @@ None.
 4. Place this filter after the existing `duration_sec >= 180` filter.
 
 ### Tests
-- Unit: insert two videos — one 6 months old, one 24 months old. Assert only the recent one is fetched.
+- Unit: insert two videos - one 6 months old, one 24 months old. Assert only the recent one is fetched.
 - Unit: set `CLASSIFY_MAX_AGE_MONTHS=1`, assert only 1-month-old videos are fetched.
 
 ### Frontend
@@ -97,13 +97,13 @@ None.
 **Problem:** Adding a channel with 500 videos immediately queues all 500 for classification.
 
 ### Files changed
-- `api/models.py` — add `Channel.first_scan_done`
-- `api/services/scanner.py` — cap YouTube API fetch on first scan
-- `alembic/versions/006_add_channel_first_scan_done.py` — migration
+- `api/models.py` - add `Channel.first_scan_done`
+- `api/services/scanner.py` - cap YouTube API fetch on first scan
+- `alembic/versions/006_add_channel_first_scan_done.py` - migration
 
 ### Schema change
 ```python
-# Channel model — add:
+# Channel model - add:
 first_scan_done = Column(Boolean, default=False, nullable=False, server_default="false")
 ```
 
@@ -121,10 +121,10 @@ def downgrade():
 1. Add `FIRST_SCAN_VIDEO_LIMIT = 75` constant in `scanner.py` (or read from `os.getenv("FIRST_SCAN_LIMIT", "75")`).
 2. In `scan_channel(session, channel, ...)`:
    - Check `channel.first_scan_done`.
-   - If `False`: pass `max_results=FIRST_SCAN_VIDEO_LIMIT` to the YouTube `playlistItems.list` pagination loop — stop fetching after N videos.
+   - If `False`: pass `max_results=FIRST_SCAN_VIDEO_LIMIT` to the YouTube `playlistItems.list` pagination loop - stop fetching after N videos.
    - After saving videos, set `channel.first_scan_done = True` and commit.
    - If `True`: run existing full incremental scan (no cap).
-3. The YouTube pagination loop already has a `while page_token` structure — add a `videos_fetched` counter and break when it hits the cap.
+3. The YouTube pagination loop already has a `while page_token` structure - add a `videos_fetched` counter and break when it hits the cap.
 
 ### Tests
 - Unit: mock YouTube API returning 200 videos. Assert only 75 video rows saved when `first_scan_done=False`.
@@ -142,14 +142,14 @@ None (cap is transparent to user).
 **Problem:** Weekly cron calls YouTube API for every user's every channel, even if a channel hasn't posted in months.
 
 ### Files changed
-- `api/models.py` — add `Channel.last_video_published_at`
-- `api/services/scanner.py` — skip logic
-- `api/scheduler.py` — pass `skip_inactive=True` for cron runs
+- `api/models.py` - add `Channel.last_video_published_at`
+- `api/services/scanner.py` - skip logic
+- `api/scheduler.py` - pass `skip_inactive=True` for cron runs
 - `alembic/versions/007_add_channel_last_video_published_at.py`
 
 ### Schema change
 ```python
-# Channel model — add:
+# Channel model - add:
 last_video_published_at = Column(DateTime(timezone=True), nullable=True)
 ```
 
@@ -169,7 +169,7 @@ def downgrade():
      → log `"Skipping inactive channel {channel.name}"` and return `0`.
 2. After saving new videos, update `channel.last_video_published_at` to the `max(published_at)` of videos just saved (or the most recent video in DB for this channel if no new videos found).
 3. In `api/scheduler.py` weekly cron: call `scan_channel(..., skip_if_inactive=True)`.
-4. In `api/routers/jobs.py` user-triggered scan: call `scan_channel(..., skip_if_inactive=False)` — always scan when user explicitly requests it.
+4. In `api/routers/jobs.py` user-triggered scan: call `scan_channel(..., skip_if_inactive=False)` - always scan when user explicitly requests it.
 
 ### Tests
 - Unit: channel with `last_video_published_at` = 90 days ago, `added_at` = 60 days ago, `skip_if_inactive=True` → returns 0, no YouTube API call.
@@ -224,11 +224,11 @@ None.
 
 ## Feature 6: Rule-Based Title Pre-Classifier
 
-**Problem:** Many videos have titles that make their classification unambiguous — no AI needed.
+**Problem:** Many videos have titles that make their classification unambiguous - no AI needed.
 
 ### Files changed
-- `api/services/classifier.py` — add `title_classify()`, call before batch building
-- `tests/api/test_classifier.py` — new test cases
+- `api/services/classifier.py` - add `title_classify()`, call before batch building
+- `tests/api/test_classifier.py` - new test cases
 
 ### Implementation
 1. Add `title_classify(title: str, duration_sec: int) -> dict | None` in `classifier.py`:
@@ -270,10 +270,10 @@ None.
 - Unit: `title_classify("Beginner Yoga Flow", 2400)` → workout_type=Mobility, difficulty=beginner.
 - Unit: `title_classify("Upper Body Strength", 1800)` → body_focus=upper body.
 - Unit: `title_classify("My Vlog", 300)` → None.
-- Unit: end-to-end — insert 3 videos (2 obvious, 1 ambiguous). Assert 2 classifications created without API call, 1 submitted to batch.
+- Unit: end-to-end - insert 3 videos (2 obvious, 1 ambiguous). Assert 2 classifications created without API call, 1 submitted to batch.
 
 ### Frontend
-None. (Could later show "X classified by rules, Y by AI" in admin stats — defer to backlog.)
+None. (Could later show "X classified by rules, Y by AI" in admin stats - defer to backlog.)
 
 ---
 
@@ -282,15 +282,15 @@ None. (Could later show "X classified by rules, Y by AI" in admin stats — defe
 **Problem:** Users could trigger many manual scans, racking up large API bills.
 
 ### Files changed
-- `api/models.py` — add `User.monthly_classify_budget`
-- `api/services/classifier.py` — check budget before submitting
-- `api/routers/jobs.py` — surface 429 response
-- `api/routers/admin.py` — allow admin to update budget
+- `api/models.py` - add `User.monthly_classify_budget`
+- `api/services/classifier.py` - check budget before submitting
+- `api/routers/jobs.py` - surface 429 response
+- `api/routers/admin.py` - allow admin to update budget
 - `alembic/versions/013_add_monthly_classify_budget.py`
 
 ### Schema change
 ```python
-# User model — add:
+# User model - add:
 monthly_classify_budget = Column(Integer, default=500, nullable=False, server_default="500")
 # 0 = unlimited (admin override)
 ```
@@ -349,7 +349,7 @@ def downgrade():
 
 ## Feature 8: Global Classification Cache (Cross-User Sharing)
 
-**Problem:** The same YouTube video is classified multiple times when multiple users add the same channel. Additionally, `Video.id` is the YouTube video ID (global PK), so if User B adds a channel already scanned by User A, User B's scan skips insertion (video exists with User A's `channel_id`) — User B gets no videos at all.
+**Problem:** The same YouTube video is classified multiple times when multiple users add the same channel. Additionally, `Video.id` is the YouTube video ID (global PK), so if User B adds a channel already scanned by User A, User B's scan skips insertion (video exists with User A's `channel_id`) - User B gets no videos at all.
 
 ### Root cause & fix scope
 This requires two changes:
@@ -357,12 +357,12 @@ This requires two changes:
 2. Share classifications across users (don't re-classify same YouTube video)
 
 ### Files changed
-- `api/models.py` — new `GlobalClassificationCache` table
-- `api/services/scanner.py` — fix dedup logic for shared channels
-- `api/services/classifier.py` — check cache before batch, write cache after
+- `api/models.py` - new `GlobalClassificationCache` table
+- `api/services/scanner.py` - fix dedup logic for shared channels
+- `api/services/classifier.py` - check cache before batch, write cache after
 - `alembic/versions/014_add_global_classification_cache.py`
 
-### Schema change — new table
+### Schema change - new table
 ```python
 class GlobalClassificationCache(Base):
     __tablename__ = "global_classification_cache"
@@ -427,7 +427,7 @@ In `api/services/scanner.py`, when processing a video whose ID already exists in
    for video in videos:
        cached = session.get(GlobalClassificationCache, video["id"])
        if cached:
-           # Write Classification row from cache — no API call
+           # Write Classification row from cache - no API call
            session.merge(Classification(
                video_id=video["id"],
                workout_type=cached.workout_type,
@@ -459,7 +459,7 @@ In `api/services/scanner.py`, when processing a video whose ID already exists in
 - Integration: two users add same YouTube channel. Scan user A → classifications saved + cache populated. Scan user B → cache hits, no Anthropic batch submitted.
 
 ### Frontend
-None directly. Admin stats page could show "Cache hit rate: X%" — defer to backlog.
+None directly. Admin stats page could show "Cache hit rate: X%" - defer to backlog.
 
 ---
 
@@ -488,7 +488,7 @@ Run `alembic upgrade head` after adding migrations.
 # 2. Run integration tests
 .venv/bin/pytest tests/integration/ -q
 
-# 3. Manual smoke test — start app, add a channel with obvious-title videos,
+# 3. Manual smoke test - start app, add a channel with obvious-title videos,
 #    trigger scan, check admin stats for AI token usage vs pre-classified count.
 
 # 4. Check BatchUsageLog table to confirm token counts are lower:
@@ -500,7 +500,7 @@ Run `alembic upgrade head` after adding migrations.
 
 ## Docs to Update After Implementation
 
-- `PROGRESS.md` — update phase and task checklist
-- `docs/architecture.md` — add `GlobalClassificationCache` table, `UserMonthlyUsage` logic, new Channel columns
-- `docs/backlog.md` — add "long-term Video schema fix (UserChannelVideo join table)", "admin cache hit rate stat"
-- `CLAUDE.md` — add new env vars (`CLASSIFY_MAX_AGE_MONTHS`, `FIRST_SCAN_LIMIT`), update API routes table for new admin endpoint
+- `PROGRESS.md` - update phase and task checklist
+- `docs/architecture.md` - add `GlobalClassificationCache` table, `UserMonthlyUsage` logic, new Channel columns
+- `docs/backlog.md` - add "long-term Video schema fix (UserChannelVideo join table)", "admin cache hit rate stat"
+- `CLAUDE.md` - add new env vars (`CLASSIFY_MAX_AGE_MONTHS`, `FIRST_SCAN_LIMIT`), update API routes table for new admin endpoint

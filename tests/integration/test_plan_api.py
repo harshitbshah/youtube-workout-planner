@@ -102,7 +102,7 @@ def test_upcoming_does_not_show_other_users_plan(auth_client, db_session):
     _seed_video(db_session, ch.id, "other-vid", "Other Video")
     _seed_history(db_session, other, "other-vid", "monday")
 
-    # Current user has no plan — should 404, not return other user's plan
+    # Current user has no plan - should 404, not return other user's plan
     resp = client.get("/plan/upcoming")
     assert resp.status_code == 404
 
@@ -120,7 +120,7 @@ def _seed_schedule(db_session, user, day="monday", workout_type="strength", body
 
 
 def test_generate_writes_history_to_postgres(auth_client, db_session):
-    """Run the real planner against Postgres — verify history row types and content."""
+    """Run the real planner against Postgres - verify history row types and content."""
     client, user = auth_client
     ch = _seed_channel(db_session, user)
     _seed_video(db_session, ch.id, "vid1", "Push Day")
@@ -138,7 +138,7 @@ def test_generate_writes_history_to_postgres(auth_client, db_session):
 
 
 def test_generate_replaces_existing_week_plan(auth_client, db_session):
-    """Re-generating clears the old plan for that week — no duplicate rows."""
+    """Re-generating clears the old plan for that week - no duplicate rows."""
     client, user = auth_client
     ch = _seed_channel(db_session, user)
     _seed_video(db_session, ch.id, "vid1", "Push Day")
@@ -146,7 +146,7 @@ def test_generate_replaces_existing_week_plan(auth_client, db_session):
 
     # First generation
     client.post("/plan/generate")
-    # Second generation — should clear and replace
+    # Second generation - should clear and replace
     resp = client.post("/plan/generate")
     assert resp.status_code == 201
 

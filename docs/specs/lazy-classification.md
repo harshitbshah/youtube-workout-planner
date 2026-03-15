@@ -1,4 +1,4 @@
-# Spec: Lazy Classification — Plan-First, Classify-Lazily
+# Spec: Lazy Classification - Plan-First, Classify-Lazily
 
 **Last updated:** 2026-03-15
 **Goal:** Minimise time to first plan and Anthropic API spend by classifying only what is needed to generate the plan, and deferring everything else to the background.
@@ -13,7 +13,7 @@ Today's pipeline always classifies **all** unclassified videos before generating
 Scan (75 videos/channel) → Classify ALL → Generate plan
 ```
 
-The user is blocked on the Anthropic Batch API — which can take minutes — even though the planner only needs a handful of classified videos per schedule slot. The bottleneck is unnecessary.
+The user is blocked on the Anthropic Batch API - which can take minutes - even though the planner only needs a handful of classified videos per schedule slot. The bottleneck is unnecessary.
 
 ---
 
@@ -44,9 +44,9 @@ can_fill_plan?
 
 Queries the classified pool against the user's schedule. Returns `True` if every schedule slot has at least `min_candidates` matching videos.
 
-"Matching" uses the same logic as the planner's Tier 4 query (any body focus, no history window, no channel limit) — the loosest meaningful filter.
+"Matching" uses the same logic as the planner's Tier 4 query (any body focus, no history window, no channel limit) - the loosest meaningful filter.
 
-**`min_candidates = 3`** — gives the planner enough choice to avoid same-video repeats across weeks. Configurable via env var `MIN_PLAN_CANDIDATES` (default `3`).
+**`min_candidates = 3`** - gives the planner enough choice to avoid same-video repeats across weeks. Configurable via env var `MIN_PLAN_CANDIDATES` (default `3`).
 
 ### Targeted mini-batch
 
@@ -54,19 +54,19 @@ When some slots have zero or too few candidates:
 
 1. Identify the **gap slot types** (workout_types with < `min_candidates` candidates).
 2. From the pool of unclassified videos, select only those whose titles suggest the missing type using the existing `_title_is_descriptive()` / keyword heuristics.
-3. Cap the mini-batch at `max(gap_count × 5, 10)` — enough to fill gaps with margin, not the full library.
+3. Cap the mini-batch at `max(gap_count × 5, 10)` - enough to fill gaps with margin, not the full library.
 4. Submit this small batch to Anthropic, wait for results, then generate plan.
 5. Remaining unclassified videos go to background.
 
 ### Background classification
 
-After the plan is generated, remaining unclassified videos are submitted to Anthropic as a standard batch — same as today, but non-blocking relative to plan generation. The library fills in over the next few minutes while the user is already viewing their plan.
+After the plan is generated, remaining unclassified videos are submitted to Anthropic as a standard batch - same as today, but non-blocking relative to plan generation. The library fills in over the next few minutes while the user is already viewing their plan.
 
 ---
 
 ## Weekly Scan Behaviour
 
-On the weekly cron, the same logic applies but the threshold is even easier to meet — the library is already rich from previous weeks. Most weeks:
+On the weekly cron, the same logic applies but the threshold is even easier to meet - the library is already rich from previous weeks. Most weeks:
 
 ```
 Incremental scan (only new videos since last scan)
@@ -86,10 +86,10 @@ Anthropic is only called on weekly scans when the user's schedule has a workout 
 
 | Scenario | Today | After |
 |---|---|---|
-| Onboarding — titles descriptive (common) | Classify 75+ videos | 0 Anthropic calls |
-| Onboarding — titles vague | Classify 75+ videos | Classify 5–15 (targeted) |
-| Weekly scan — 3 new videos | 3 Anthropic calls | 0 (rule-based sufficient) |
-| Weekly scan — new channel added | Up to 75 new calls | 5–15 (targeted) |
+| Onboarding - titles descriptive (common) | Classify 75+ videos | 0 Anthropic calls |
+| Onboarding - titles vague | Classify 75+ videos | Classify 5–15 (targeted) |
+| Weekly scan - 3 new videos | 3 Anthropic calls | 0 (rule-based sufficient) |
+| Weekly scan - new channel added | Up to 75 new calls | 5–15 (targeted) |
 
 Time to first plan: drops from "wait for full batch (minutes)" to "rule classify + check (seconds)".
 
@@ -97,7 +97,7 @@ Time to first plan: drops from "wait for full batch (minutes)" to "rule classify
 
 ## Implementation Plan
 
-### Step 1 — `can_fill_plan()` in `planner.py`
+### Step 1 - `can_fill_plan()` in `planner.py`
 
 ```python
 MIN_PLAN_CANDIDATES = int(os.getenv("MIN_PLAN_CANDIDATES", "3"))
@@ -129,7 +129,7 @@ def can_fill_plan(user_id: str, session: Session) -> bool:
     return True
 ```
 
-### Step 2 — `get_gap_types()` in `planner.py`
+### Step 2 - `get_gap_types()` in `planner.py`
 
 ```python
 def get_gap_types(user_id: str, session: Session) -> list[dict]:
@@ -152,7 +152,7 @@ def get_gap_types(user_id: str, session: Session) -> list[dict]:
     return gaps
 ```
 
-### Step 3 — `build_targeted_batch()` in `classifier.py`
+### Step 3 - `build_targeted_batch()` in `classifier.py`
 
 ```python
 TARGETED_BATCH_MULTIPLIER = 5  # candidates per gap slot
@@ -171,7 +171,7 @@ def build_targeted_batch(
     cap = max(len(gap_types) * TARGETED_BATCH_MULTIPLIER, 10)
     gap_type_names = {g["workout_type"].lower() for g in gap_types}
 
-    # Keyword map — same patterns as rule-based pre-classifier
+    # Keyword map - same patterns as rule-based pre-classifier
     TYPE_KEYWORDS = {
         "hiit":      re.compile(r"\b(hiit|interval|tabata)\b", re.I),
         "strength":  re.compile(r"\b(strength|weight|dumbbell|barbell|resistance|lifting)\b", re.I),
@@ -194,7 +194,7 @@ def build_targeted_batch(
     return targeted, remainder
 ```
 
-### Step 4 — Modify pipeline in `jobs.py`
+### Step 4 - Modify pipeline in `jobs.py`
 
 Replace the current linear `scan → classify_all → generate` with:
 
@@ -204,12 +204,12 @@ async def _run_full_pipeline(user_id, db):
     update_status(user_id, stage="scanning")
     await scan_all_channels(user_id, db)
 
-    # Stage 2: Rule-classify (free, instant — part of classifier.py already)
+    # Stage 2: Rule-classify (free, instant - part of classifier.py already)
     # Rule-based hits are saved to Classification immediately during _fetch_unclassified_for_user
 
     # Stage 3: Check if plan can be filled
     if can_fill_plan(user_id, db):
-        # Fast path — skip Anthropic entirely for now
+        # Fast path - skip Anthropic entirely for now
         update_status(user_id, stage="generating")
         await generate_plan(user_id, db)
         update_status(user_id, stage="done")
@@ -217,7 +217,7 @@ async def _run_full_pipeline(user_id, db):
         background_tasks.add_task(_background_classify, user_id)
         return
 
-    # Slow path — targeted mini-batch for gap slots
+    # Slow path - targeted mini-batch for gap slots
     gap_types = get_gap_types(user_id, db)
     targeted, remainder = build_targeted_batch(user_id, gap_types, db)
 
@@ -233,9 +233,9 @@ async def _run_full_pipeline(user_id, db):
     background_tasks.add_task(_background_classify_videos, user_id, remainder)
 ```
 
-### Step 5 — `_background_classify` task
+### Step 5 - `_background_classify` task
 
-A lightweight background task that calls the existing `classify_for_user()` with the remainder list. Runs after the user already sees their plan. No status update — the user is already on the dashboard.
+A lightweight background task that calls the existing `classify_for_user()` with the remainder list. Runs after the user already sees their plan. No status update - the user is already on the dashboard.
 
 ---
 
@@ -248,9 +248,9 @@ Today the "classifying" stage shows `done / total` and can sit at a large number
 - **Fast path:** "classifying" stage may not appear at all (skipped). Progress goes scan → generating → done in seconds.
 - **Slow path (targeted batch):** "classifying" appears briefly with a small total (5–15 videos).
 
-No frontend code changes needed for the happy path — the existing stage polling already handles `"generating"` and `"done"`. But consider:
+No frontend code changes needed for the happy path - the existing stage polling already handles `"generating"` and `"done"`. But consider:
 
-- **Library page:** Add a subtle banner `"Your library is still building — more videos are being classified in the background."` while background classification is running. This requires a new field in `GET /jobs/status`: `background_classifying: bool`.
+- **Library page:** Add a subtle banner `"Your library is still building - more videos are being classified in the background."` while background classification is running. This requires a new field in `GET /jobs/status`: `background_classifying: bool`.
 
 ### New field in `/jobs/status` response
 
@@ -318,11 +318,11 @@ No DB migration needed. No schema changes.
 
 ## Docs to Update After Implementation
 
-- `PROGRESS.md` — add to status + checkpoint entry
-- `docs/architecture.md` — update pipeline description, note fast/slow path
-- `docs/specs/ai-cost-reduction.md` — add F9 entry referencing this spec
-- `CLAUDE.md` — add new env vars, update jobs.py pipeline description
-- Memory — update status
+- `PROGRESS.md` - add to status + checkpoint entry
+- `docs/architecture.md` - update pipeline description, note fast/slow path
+- `docs/specs/ai-cost-reduction.md` - add F9 entry referencing this spec
+- `CLAUDE.md` - add new env vars, update jobs.py pipeline description
+- Memory - update status
 
 ---
 

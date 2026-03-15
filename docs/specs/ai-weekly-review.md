@@ -2,29 +2,29 @@
 
 **Created:** 2026-03-11
 **Status:** Ready for implementation
-**Depends on:** Phase O2 ([ai-coach-chat.md](ai-coach-chat.md)) — uses the coach router and `video_feedback` signals from Phase R3
-**Migration:** 009 — `weekly_review_cache` and `weekly_review_generated_at` are included in the Phase O1 migration (see [migrations-roadmap.md](migrations-roadmap.md))
+**Depends on:** Phase O2 ([ai-coach-chat.md](ai-coach-chat.md)) - uses the coach router and `video_feedback` signals from Phase R3
+**Migration:** 009 - `weekly_review_cache` and `weekly_review_generated_at` are included in the Phase O1 migration (see [migrations-roadmap.md](migrations-roadmap.md))
 
 **Related specs:**
-- [ai-profile-enrichment.md](ai-profile-enrichment.md) — Phase O1: migration 009 that includes O3 schema
-- [ai-coach-chat.md](ai-coach-chat.md) — Phase O2: coach router where `GET /coach/weekly-review` lives
+- [ai-profile-enrichment.md](ai-profile-enrichment.md) - Phase O1: migration 009 that includes O3 schema
+- [ai-coach-chat.md](ai-coach-chat.md) - Phase O2: coach router where `GET /coach/weekly-review` lives
 
 ---
 
 ## What it shows
 
-A lightweight read-only AI summary shown on the dashboard Monday mornings — one Claude
+A lightweight read-only AI summary shown on the dashboard Monday mornings - one Claude
 Haiku call that generates a brief weekly recap, cached for the week.
 
 ```
 ┌──────────────────────────────────────────────────────────┐
-│  Last week — quick take                                   │
+│  Last week - quick take                                   │
 │                                                           │
 │  You completed 3 of 4 sessions. Strength was your        │
-│  strongest category — you've done it consistently for    │
+│  strongest category - you've done it consistently for    │
 │  3 weeks. You skipped both cardio sessions this month.   │
 │  This week I've swapped Friday's HIIT for a dance        │
-│  session — might be easier to stick to.                  │
+│  session - might be easier to stick to.                  │
 │                                                           │
 │  [Open Coach →]                                          │
 └──────────────────────────────────────────────────────────┘
@@ -46,23 +46,23 @@ Returns: `{ "review": "string" }` or `{ "review": null }` if not enough history 
 
 Backend logic:
 1. Load last 2 weeks of `program_history` for the user
-2. Load `video_feedback` rows (completion signals) for those weeks — from Phase R3 (`video_feedback` table, migration 012). If Phase R3 is not yet implemented, skip feedback signals gracefully.
+2. Load `video_feedback` rows (completion signals) for those weeks - from Phase R3 (`video_feedback` table, migration 012). If Phase R3 is not yet implemented, skip feedback signals gracefully.
 3. Build a compact prompt: what was planned, what was completed, what was swapped
-4. Single Claude Haiku call (no tools needed — read-only, text generation only)
+4. Single Claude Haiku call (no tools needed - read-only, text generation only)
 5. Cache result in `users.weekly_review_cache` (text, nullable) + `users.weekly_review_generated_at`
-   (DateTime) — regenerate once per week (on Monday), return cached otherwise
+   (DateTime) - regenerate once per week (on Monday), return cached otherwise
 
 **Router file:** `api/routers/coach.py` (add to existing file alongside `POST /coach/chat`)
 
 ---
 
-## DB changes — included in migration 009
+## DB changes - included in migration 009
 
 These columns are bundled with the Phase O1 migration to avoid two back-to-back `users`
 table alterations:
 
 ```python
-# In api/models.py — User class (added in migration 009)
+# In api/models.py - User class (added in migration 009)
 weekly_review_cache          = Column(Text, nullable=True)
 weekly_review_generated_at   = Column(DateTime(timezone=True), nullable=True)
 ```
@@ -91,7 +91,7 @@ if (isMonday) {
 
 ## Files to create
 
-None — endpoint goes in `api/routers/coach.py` (already created for Phase O2).
+None - endpoint goes in `api/routers/coach.py` (already created for Phase O2).
 
 ## Files to modify
 
@@ -108,9 +108,9 @@ None — endpoint goes in `api/routers/coach.py` (already created for Phase O2).
 
 ### Unit tests (add to `tests/api/test_coach.py`)
 
-1. `test_weekly_review_generates_on_monday` — Monday + no cache → Haiku called, result cached
-2. `test_weekly_review_cached_within_week` — cache hit (same week) → Haiku not called
-3. `test_weekly_review_null_insufficient_history` — fewer than 2 weeks of data → `review: null`
+1. `test_weekly_review_generates_on_monday` - Monday + no cache → Haiku called, result cached
+2. `test_weekly_review_cached_within_week` - cache hit (same week) → Haiku not called
+3. `test_weekly_review_null_insufficient_history` - fewer than 2 weeks of data → `review: null`
 4. `test_weekly_review_unauthenticated` → 401
 
 ---
@@ -119,6 +119,6 @@ None — endpoint goes in `api/routers/coach.py` (already created for Phase O2).
 
 1. Confirm migration 009 is deployed (includes `weekly_review_cache` + `weekly_review_generated_at`)
 2. Add `GET /coach/weekly-review` endpoint to `api/routers/coach.py`
-3. Unit tests 1–4 — all passing
+3. Unit tests 1–4 - all passing
 4. Frontend: weekly review card on dashboard (Monday only, dismissible)
 5. Ship O3

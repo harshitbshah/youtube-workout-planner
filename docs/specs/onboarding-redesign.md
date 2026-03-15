@@ -1,12 +1,12 @@
-# Onboarding Redesign — Design Spec
+# Onboarding Redesign - Design Spec
 
 **Status:** ✅ Implemented (2026-03-11)
 **Replaces:** `frontend/src/app/onboarding/page.tsx` (current 3-step wizard)
 **Last updated:** 2026-03-13
 
 > **Subsequent specs that affect this flow:**
-> - [ai-profile-enrichment.md](ai-profile-enrichment.md) — Phase O1 inserts a new **step 6 ("Anything else?")** between schedule preview and channels, making the total **8 steps** (not 7). O1 also persists `life_stage` and `goal` to the DB via `PATCH /auth/me`.
-> - [channel-recommendations.md](channel-recommendations.md) — Phase R1 replaces the hardcoded channel suggestion chips in step 6/7 with a dynamic `GET /channels/curated` card grid. The `suggestions?: string[]` prop on `ChannelManager` becomes `showCurated / profile / goal / scheduleTypes` props.
+> - [ai-profile-enrichment.md](ai-profile-enrichment.md) - Phase O1 inserts a new **step 6 ("Anything else?")** between schedule preview and channels, making the total **8 steps** (not 7). O1 also persists `life_stage` and `goal` to the DB via `PATCH /auth/me`.
+> - [channel-recommendations.md](channel-recommendations.md) - Phase R1 replaces the hardcoded channel suggestion chips in step 6/7 with a dynamic `GET /channels/curated` card grid. The `suggestions?: string[]` prop on `ChannelManager` becomes `showCurated / profile / goal / scheduleTypes` props.
 
 ---
 
@@ -14,13 +14,13 @@
 
 The current onboarding (Channels → Schedule → Done) has two problems:
 
-1. Users are handed a raw `ScheduleEditor` grid with no context — most just click through
+1. Users are handed a raw `ScheduleEditor` grid with no context - most just click through
    the default without understanding it.
 2. Step 3 is a dead-end confirmation screen. The user presses "Generate my first plan"
    and gets redirected to a dashboard with a spinner and no sense of progress.
 
 The redesign collects the user's *goal* and *life stage* first, then uses those answers
-to pre-build a tailored schedule. The user confirms or tweaks — they never stare at a
+to pre-build a tailored schedule. The user confirms or tweaks - they never stare at a
 blank grid.
 
 ---
@@ -28,24 +28,24 @@ blank grid.
 ## Flow Overview
 
 ```
-Step 1 — Life stage     (4 cards)
-Step 2 — Goal           (3–4 options, varies by life stage)
-Step 3 — Training days  (2–6 visual toggle)
-Step 4 — Session length (4 options)
+Step 1 - Life stage     (4 cards)
+Step 2 - Goal           (3–4 options, varies by life stage)
+Step 3 - Training days  (2–6 visual toggle)
+Step 4 - Session length (4 options)
      ↓
   [auto-generate schedule from answers]
      ↓
-Step 5 — Schedule preview  (human-readable, confirm or customise)
-Step 6 — Add channels      (curated suggestions + free search)
-Step 7 — Live scan progress (polls /jobs/status, auto-navigates to /dashboard)
+Step 5 - Schedule preview  (human-readable, confirm or customise)
+Step 6 - Add channels      (curated suggestions + free search)
+Step 7 - Live scan progress (polls /jobs/status, auto-navigates to /dashboard)
 ```
 
-Total steps: 7 (but steps 1–4 are fast single-click screens — feels lighter than 3
+Total steps: 7 (but steps 1–4 are fast single-click screens - feels lighter than 3
 slow steps).
 
 ---
 
-## Step 1 — Life Stage
+## Step 1 - Life Stage
 
 **Heading:** "First, tell us a bit about yourself"
 **Sub-heading:** "We'll tailor your plan to fit."
@@ -60,13 +60,13 @@ Four large tap-friendly cards (not a dropdown):
 | `athlete` | Training seriously | Structured programming, performance goals |
 
 **UX notes:**
-- Cards, not a dropdown — one tap, no confirmation needed, advance automatically.
+- Cards, not a dropdown - one tap, no confirmation needed, advance automatically.
 - For `senior` profile: increase base font size (add `text-lg` to step content wrapper),
   use plain language throughout (no jargon), cap options to 3 per screen.
 
 ---
 
-## Step 2 — Goal
+## Step 2 - Goal
 
 **Heading:** "What's your main goal?"
 
@@ -83,7 +83,7 @@ Same card UI as step 1. Advance automatically on tap.
 
 ---
 
-## Step 3 — Training Days per Week
+## Step 3 - Training Days per Week
 
 **Heading:** "How many days a week can you train?"
 **Sub-copy (below selection):** "Even 2 days/week makes a real difference."
@@ -100,7 +100,7 @@ Advance on tap (no Continue button needed for single-choice screens).
 
 ---
 
-## Step 4 — Session Length
+## Step 4 - Session Length
 
 **Heading:** "How long per session?"
 
@@ -121,7 +121,7 @@ Rules:
 ## Schedule Generation Logic
 
 After step 4, generate a `ScheduleSlot[]` array from the four answers before showing
-step 5. No API call needed — pure frontend logic.
+step 5. No API call needed - pure frontend logic.
 
 The mapping lives in a new file: `frontend/src/lib/scheduleTemplates.ts`
 
@@ -152,14 +152,14 @@ const DIFFICULTY_MAP = {
 The templates define *slot types* for each active day. Rest days fill remaining days
 (prefer Wed/Sun as rest if 5 days; prefer Tue/Thu/Sun if 3 days).
 
-**`senior` — any goal**
+**`senior` - any goal**
 ```
 Priority order: mobility → cardio → strength
 Day slots (3-day example): mobility/full, cardio/full, strength/full
 Difficulty: beginner
 ```
 
-**`beginner` — any goal**
+**`beginner` - any goal**
 ```
 Priority order: cardio → strength → mobility
 Day slots (3-day example): cardio/full, strength/full, mobility/full
@@ -198,7 +198,7 @@ to `ScheduleEditor` and eventually to `PUT /schedule`.
 
 ---
 
-## Step 5 — Schedule Preview
+## Step 5 - Schedule Preview
 
 **Heading:** "Here's your personalised plan"
 **Sub-heading:** "Based on your goals. Tweak anything you like."
@@ -221,11 +221,11 @@ Sun  · Recovery day
   not "mobility".
 - Two buttons: **"Looks good →"** (primary) and **"Customise"** (secondary/ghost).
 - "Customise" expands the full `ScheduleEditor` component inline (same component as
-  `frontend/src/components/ScheduleEditor.tsx`) — no separate step needed.
+  `frontend/src/components/ScheduleEditor.tsx`) - no separate step needed.
 
 ---
 
-## Step 6 — Add Channels
+## Step 6 - Add Channels
 
 **Heading:** "Add your favourite channels"
 **Sub-heading:** Varies by profile:
@@ -242,7 +242,7 @@ Sun  · Recovery day
 These are hardcoded display names + channel IDs. Show as horizontal scrollable chips
 that add the channel on tap (same as clicking search result). Filter by profile:
 
-| Profile | Suggested channels (display only — user still needs to search to find their own) |
+| Profile | Suggested channels (display only - user still needs to search to find their own) |
 |---|---|
 | `senior` | "Grow Young Fitness", "HASfit (senior)", "SilverSneakers" |
 | `beginner` | "Sydney Cummings Houdyshell", "Heather Robertson", "MommaStrong" |
@@ -256,7 +256,7 @@ Minimum 1 channel required to continue (same as current flow).
 
 ---
 
-## Step 7 — Live Scan Progress
+## Step 7 - Live Scan Progress
 
 Replace the current dead-end "Done" screen with a live progress tracker.
 
@@ -282,7 +282,7 @@ Stage → checklist item mapping:
 "done"        → all done → auto-navigate to /dashboard after 800ms delay
 ```
 
-When done, navigate to `/dashboard` automatically — no button needed.
+When done, navigate to `/dashboard` automatically - no button needed.
 If an error occurs, show a red banner with a "Try again" button that re-calls
 `POST /jobs/scan`.
 
@@ -292,17 +292,17 @@ If an error occurs, show a red banner with a "Try again" button that re-calls
 
 | File | Change |
 |---|---|
-| `frontend/src/app/onboarding/page.tsx` | Full rewrite — new 7-step wizard |
-| `frontend/src/lib/scheduleTemplates.ts` | New file — `buildSchedule()` function + templates |
+| `frontend/src/app/onboarding/page.tsx` | Full rewrite - new 7-step wizard |
+| `frontend/src/lib/scheduleTemplates.ts` | New file - `buildSchedule()` function + templates |
 | `frontend/src/components/ChannelManager.tsx` | Add optional `suggestions` prop (array of channel name strings) |
 | `frontend/src/components/ScheduleEditor.tsx` | No change needed |
-| `frontend/src/lib/api.ts` | No change needed — all required endpoints already exist |
+| `frontend/src/lib/api.ts` | No change needed - all required endpoints already exist |
 
 Backend: **no changes needed.** All required endpoints exist:
-- `PUT /schedule` — save generated schedule
-- `POST /channels` — add a channel
-- `POST /jobs/scan` — trigger pipeline
-- `GET /jobs/status` — poll progress
+- `PUT /schedule` - save generated schedule
+- `POST /channels` - add a channel
+- `POST /jobs/scan` - trigger pipeline
+- `GET /jobs/status` - poll progress
 
 ---
 
@@ -310,11 +310,11 @@ Backend: **no changes needed.** All required endpoints exist:
 
 Current indicator: `Channels → Schedule → Done`
 New indicator: `Profile → Goal → Availability → Channels → Done`
-(Steps 3 + 4 are single-tap, so they don't need to be shown in the indicator —
+(Steps 3 + 4 are single-tap, so they don't need to be shown in the indicator -
 fold them into "Profile" visually.)
 
 Suggested labels: `Profile · Channels · Your Plan`
-(3 visible steps even though there are 7 internal steps — keeps the progress bar
+(3 visible steps even though there are 7 internal steps - keeps the progress bar
 from feeling overwhelming.)
 
 ---
@@ -324,14 +324,14 @@ from feeling overwhelming.)
 - The `ScheduleEditor` and `ChannelManager` components are reused as-is.
 - The backend API is unchanged.
 - The routing logic (`new user → /onboarding`, returning user → /dashboard`) is unchanged
-  — it lives in `api/routers/auth.py` and the landing page `useEffect`.
+  - it lives in `api/routers/auth.py` and the landing page `useEffect`.
 
 > **Superseded by Phase O1:** `life_stage` and `goal` are now persisted to the DB
 > via migration 009 and `PATCH /auth/me`. The claim below is no longer accurate
 > once Phase O1 is implemented.
 
 - ~~No new DB columns needed. Life stage and goal are onboarding-only UI state; they
-  don't need to be persisted.~~ — **Superseded by Phase O1.** See
+  don't need to be persisted.~~ - **Superseded by Phase O1.** See
   [ai-profile-enrichment.md](ai-profile-enrichment.md).
 
 ---
@@ -340,8 +340,8 @@ from feeling overwhelming.)
 
 After implementation, add to `docs/testing.md` manual checklist:
 
-- [ ] Complete onboarding as `senior` profile — verify schedule defaults to beginner/short
-- [ ] Complete onboarding as `athlete` profile — verify schedule defaults to advanced/long
+- [ ] Complete onboarding as `senior` profile - verify schedule defaults to beginner/short
+- [ ] Complete onboarding as `athlete` profile - verify schedule defaults to advanced/long
 - [ ] Verify "Customise" on step 5 shows `ScheduleEditor` and changes persist
 - [ ] Verify step 7 progress bar advances through all 4 stages and auto-navigates
 - [ ] Verify minimum-1-channel gate on step 6 still blocks the Continue button

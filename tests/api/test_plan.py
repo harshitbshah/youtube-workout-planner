@@ -125,7 +125,7 @@ def test_generate_plan_replaces_existing(auth_client, db_session):
     video = _seed_video(db_session, ch.id)
     _seed_history(db_session, user, video.id, "monday")
 
-    # History for this week exists — generate should clear and replace it
+    # History for this week exists - generate should clear and replace it
     with patch("api.routers.plan.generate_weekly_plan_for_user", return_value=MOCK_PLAN):
         resp = client.post("/plan/generate")
 

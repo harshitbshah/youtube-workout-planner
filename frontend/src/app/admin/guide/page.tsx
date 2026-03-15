@@ -157,7 +157,7 @@ export default function AdminGuidePage() {
           <div className="mb-10">
             <h1 className="text-3xl font-bold text-zinc-900 dark:text-white mb-2">Admin Guide</h1>
             <p className="text-zinc-600 dark:text-zinc-400">
-              Everything you need to run Plan My Workout in production — monitoring users,
+              Everything you need to run Plan My Workout in production - monitoring users,
               managing the pipeline, posting announcements, and fixing issues when they come up.
             </p>
           </div>
@@ -178,8 +178,8 @@ export default function AdminGuidePage() {
                 ["YouTube connected", "Users with a valid YouTube OAuth token who can publish plans to a playlist"],
                 ["Plans this week", "Users who have a generated plan for the current Mon–Sun week"],
                 ["Total videos", "All videos scanned across every user's channels"],
-                ["Classified", "Videos tagged by AI with workout type, body focus, and difficulty — shown as a percentage"],
-                ["Unclassified", "Videos scanned but not yet sent to the classifier — clears on the next pipeline run"],
+                ["Classified", "Videos tagged by AI with workout type, body focus, and difficulty - shown as a percentage"],
+                ["Unclassified", "Videos scanned but not yet sent to the classifier - clears on the next pipeline run"],
                 ["Channels", "Total YouTube channels added across all users, with an average per user"],
                 ["AI usage (7 days)", "Anthropic Batch API input + output tokens and estimated cost for the past week"],
                 ["AI usage (all-time)", "Cumulative token usage and cost since the platform launched"],
@@ -201,7 +201,7 @@ export default function AdminGuidePage() {
             />
             <Note>
               Charts use Haiku 4.5 Batch API pricing: $0.40 / 1M input tokens, $2.00 / 1M output tokens.
-              Days with no activity appear as zero bars — not gaps.
+              Days with no activity appear as zero bars - not gaps.
             </Note>
 
             <H3>Active pipelines</H3>
@@ -209,7 +209,7 @@ export default function AdminGuidePage() {
               Below the charts, the per-user table shows the current pipeline stage for each user.
               Stages update in real time as the pipeline progresses. A user stuck on{" "}
               <code className="text-zinc-700 dark:text-zinc-300 bg-zinc-100 dark:bg-zinc-800 px-1 rounded">classifying</code> for more than
-              30 minutes likely has a stale batch ID — see <a href="#troubleshooting" className="text-zinc-700 dark:text-zinc-300 underline">Troubleshooting</a>.
+              30 minutes likely has a stale batch ID - see <a href="#troubleshooting" className="text-zinc-700 dark:text-zinc-300 underline">Troubleshooting</a>.
             </p>
           </Section>
 
@@ -229,7 +229,7 @@ export default function AdminGuidePage() {
                 ["Videos", "Total videos scanned across their channels"],
                 ["YouTube", "Whether they have a connected and valid YouTube OAuth token"],
                 ["Last plan", "When their most recent plan was generated"],
-                ["Pipeline", "Current pipeline stage — blank means idle"],
+                ["Pipeline", "Current pipeline stage - blank means idle"],
               ]}
             />
 
@@ -241,7 +241,7 @@ export default function AdminGuidePage() {
               is stuck or they haven't logged in.
             </p>
             <Note>
-              If a user has no channels, the scan button returns an error — that's expected. Ask them
+              If a user has no channels, the scan button returns an error - that's expected. Ask them
               to add channels first via their settings page.
             </Note>
 
@@ -269,11 +269,11 @@ export default function AdminGuidePage() {
             <p>
               Type your message in the text area at the bottom of the admin console and click{" "}
               <strong className="text-zinc-900 dark:text-white">Post announcement</strong>. The banner goes live
-              immediately for all users — no deploy needed.
+              immediately for all users - no deploy needed.
             </p>
             <Note>
               Only one announcement should be active at a time. If a previous one is still active,
-              deactivate it before posting a new one — otherwise users see only the most recent one anyway.
+              deactivate it before posting a new one - otherwise users see only the most recent one anyway.
             </Note>
 
             <H3>Deactivating vs deleting</H3>
@@ -288,7 +288,7 @@ export default function AdminGuidePage() {
             <H3>How users see it</H3>
             <p>
               The banner appears at the top of <code className="text-zinc-700 dark:text-zinc-300 bg-zinc-100 dark:bg-zinc-800 px-1 rounded">/dashboard</code> for
-              all logged-in users. Users can dismiss it for their session — it reappears on the next
+              all logged-in users. Users can dismiss it for their session - it reappears on the next
               page load until the announcement is deactivated or deleted.
             </p>
           </Section>
@@ -305,10 +305,10 @@ export default function AdminGuidePage() {
               headers={["Stage", "What's happening"]}
               rows={[
                 ["scanning", "Fetching new videos from each of the user's YouTube channels"],
-                ["classifying", "Sending unclassified videos to Anthropic Batch API (Haiku) — this is the slowest stage"],
+                ["classifying", "Sending unclassified videos to Anthropic Batch API (Haiku) - this is the slowest stage"],
                 ["generating", "Picking the best video per schedule slot and saving the weekly plan"],
-                ["done", "Pipeline finished — plan is visible on the user's dashboard"],
-                ["failed", "An unexpected error stopped the pipeline — check last_scan_error in the user table"],
+                ["done", "Pipeline finished - plan is visible on the user's dashboard"],
+                ["failed", "An unexpected error stopped the pipeline - check last_scan_error in the user table"],
               ]}
             />
 
@@ -347,7 +347,7 @@ export default function AdminGuidePage() {
               rows={[
                 [
                   "User's pipeline is stuck on \"classifying\" forever",
-                  "Anthropic batch timed out or server restarted mid-batch — stale batch ID in DB",
+                  "Anthropic batch timed out or server restarted mid-batch - stale batch ID in DB",
                   "Railway shell: UPDATE user_credentials SET classifier_batch_id = NULL WHERE user_id = '<id>'; then hit ↺ Scan from admin",
                 ],
                 [
@@ -363,7 +363,7 @@ export default function AdminGuidePage() {
                 [
                   "\"Unclassified\" count keeps growing",
                   "New videos scanned faster than Anthropic batches can process, or batch cap (300/run) hit",
-                  "Normal — clears on next Sunday scan. Or trigger ↺ Scan manually from admin.",
+                  "Normal - clears on next Sunday scan. Or trigger ↺ Scan manually from admin.",
                 ],
                 [
                   "YouTube \"credentials invalid\" for a user",
@@ -372,18 +372,18 @@ export default function AdminGuidePage() {
                 ],
                 [
                   "Admin stats show 0 AI usage despite classifications",
-                  "batch_usage_log table missing — migration not yet applied",
-                  "Trigger a Railway redeploy — the Dockerfile runs alembic upgrade head automatically.",
+                  "batch_usage_log table missing - migration not yet applied",
+                  "Trigger a Railway redeploy - the Dockerfile runs alembic upgrade head automatically.",
                 ],
                 [
                   "Channel scan shows 0 new videos but channel is active",
                   "Channel's last video is >60 days old so the Sunday cron skipped it",
-                  "Trigger a manual scan from the admin console — user-triggered scans bypass the inactive skip.",
+                  "Trigger a manual scan from the admin console - user-triggered scans bypass the inactive skip.",
                 ],
                 [
                   "User's error banner won't clear",
                   "Pipeline is failing on every run for this user",
-                  "Check Railway logs for that user's ID. Fix root cause, then trigger ↺ Scan — success clears the error.",
+                  "Check Railway logs for that user's ID. Fix root cause, then trigger ↺ Scan - success clears the error.",
                 ],
               ]}
             />
@@ -432,7 +432,7 @@ WHERE user_id = '<user_id>';`}</Code>
               headers={["Var", "Must match"]}
               rows={[
                 ["FRONTEND_ORIGINS", "The Vercel deployment URL (comma-separated if multiple)"],
-                ["GOOGLE_REDIRECT_URI", "The Railway callback URL — must also be registered in Google Cloud Console"],
+                ["GOOGLE_REDIRECT_URI", "The Railway callback URL - must also be registered in Google Cloud Console"],
                 ["FRONTEND_URL", "Used in OAuth token handoff redirect"],
               ]}
             />
@@ -449,7 +449,7 @@ WHERE user_id = '<user_id>';`}</Code>
             <Table
               headers={["Migration", "Adds"]}
               rows={[
-                ["001", "Initial schema — users, channels, videos, classifications, schedules, program_history, user_credentials"],
+                ["001", "Initial schema - users, channels, videos, classifications, schedules, program_history, user_credentials"],
                 ["002", "user_credentials.credentials_valid + youtube_playlist_id"],
                 ["003", "user_credentials.classifier_batch_id"],
                 ["004", "users.last_active_at, batch_usage_log, announcements"],
@@ -504,17 +504,17 @@ WHERE last_scan_error IS NOT NULL;`}</Code>
             <Table
               headers={["Var", "Example", "Notes"]}
               rows={[
-                ["ANTHROPIC_API_KEY", "sk-ant-...", "Required — Haiku classifier"],
-                ["YOUTUBE_API_KEY", "AIza...", "Required — channel scanning"],
+                ["ANTHROPIC_API_KEY", "sk-ant-...", "Required - Haiku classifier"],
+                ["YOUTUBE_API_KEY", "AIza...", "Required - channel scanning"],
                 ["GOOGLE_CLIENT_ID", "xxx.apps.googleusercontent.com", "OAuth"],
                 ["GOOGLE_CLIENT_SECRET", "GOCSPX-...", "OAuth"],
                 ["GOOGLE_REDIRECT_URI", "https://planmyworkout-api.up.railway.app/auth/google/callback", "Must match Google Cloud Console"],
                 ["FRONTEND_URL", "https://planmyworkout.vercel.app", "OAuth token handoff redirect target"],
-                ["FRONTEND_ORIGINS", "https://planmyworkout.vercel.app", "CORS — comma-separated"],
+                ["FRONTEND_ORIGINS", "https://planmyworkout.vercel.app", "CORS - comma-separated"],
                 ["ENCRYPTION_KEY", "base64...", "Fernet key for YouTube refresh tokens at rest"],
                 ["SECRET_KEY", "random-string", "Starlette session middleware signing"],
-                ["ADMIN_EMAIL", "harshitspeaks@gmail.com", "Single admin — read at request time"],
-                ["DATABASE_URL", "postgresql://...", "Managed by Railway — set automatically"],
+                ["ADMIN_EMAIL", "harshitspeaks@gmail.com", "Single admin - read at request time"],
+                ["DATABASE_URL", "postgresql://...", "Managed by Railway - set automatically"],
                 ["CLASSIFY_MAX_AGE_MONTHS", "18", "Videos older than this are skipped by the classifier (default: 18)"],
                 ["FIRST_SCAN_LIMIT", "75", "Max videos fetched on a channel's first scan (default: 75)"],
               ]}
@@ -528,17 +528,17 @@ WHERE last_scan_error IS NOT NULL;`}</Code>
               rows={[
                 [
                   "Cross-user channel dedup bug",
-                  "If two users add the same YouTube channel, the second user's scan creates a PK conflict on videos.id — their channel effectively gets no videos",
+                  "If two users add the same YouTube channel, the second user's scan creates a PK conflict on videos.id - their channel effectively gets no videos",
                   "GlobalClassificationCache + UserChannelVideo join table (backlog)",
                 ],
                 [
                   "Error banner not shown on dashboard",
                   "users.last_scan_error is persisted and returned by GET /jobs/status but the frontend doesn't render it as a banner yet",
-                  "Add error banner to dashboard — in backlog",
+                  "Add error banner to dashboard - in backlog",
                 ],
                 [
                   "WebSockets not implemented",
-                  "Dashboard polls GET /jobs/status every 5s — works fine at current scale but adds latency",
+                  "Dashboard polls GET /jobs/status every 5s - works fine at current scale but adds latency",
                   "Deferred until polling becomes a user complaint",
                 ],
                 [
@@ -561,7 +561,7 @@ WHERE last_scan_error IS NOT NULL;`}</Code>
               Cost and performance optimizations applied across the codebase, organised by layer.
             </p>
 
-            <H3>Backend optimizations (Phase A + D — AI cost reduction)</H3>
+            <H3>Backend optimizations (Phase A + D - AI cost reduction)</H3>
             <Table
               headers={["Optimization", "Where", "Detail"]}
               rows={[
@@ -573,7 +573,7 @@ WHERE last_scan_error IS NOT NULL;`}</Code>
                 [
                   "18-month video cutoff",
                   "CLASSIFY_MAX_AGE_MONTHS env var",
-                  "Videos older than 18 months are excluded from classification before the Anthropic batch is built. Configurable — set a lower value to reduce cost further.",
+                  "Videos older than 18 months are excluded from classification before the Anthropic batch is built. Configurable - set a lower value to reduce cost further.",
                 ],
                 [
                   "First-scan channel cap (75 videos)",
@@ -592,12 +592,12 @@ WHERE last_scan_error IS NOT NULL;`}</Code>
                 ],
                 [
                   "Rule-based title pre-classifier (F6)",
-                  "api/services/classifier.py — title_classify()",
-                  "Before building the Anthropic batch, each video title is checked against regex rules for workout type (HIIT/Strength/Cardio/Mobility), body focus, and difficulty. If a type rule matches, the video is classified directly — no AI call. Estimated 30–40% reduction in Anthropic batch submissions. Ambiguous titles fall through to AI unchanged.",
+                  "api/services/classifier.py - title_classify()",
+                  "Before building the Anthropic batch, each video title is checked against regex rules for workout type (HIIT/Strength/Cardio/Mobility), body focus, and difficulty. If a type rule matches, the video is classified directly - no AI call. Estimated 30–40% reduction in Anthropic batch submissions. Ambiguous titles fall through to AI unchanged.",
                 ],
                 [
                   "Adaptive payload trimming (F5)",
-                  "api/services/classifier.py — _title_is_descriptive()",
+                  "api/services/classifier.py - _title_is_descriptive()",
                   "Videos that do reach the AI batch but have obviously descriptive titles (e.g. '30 Min HIIT') skip the transcript fetch entirely and use a 300-char description instead of 800. Ambiguous titles still get the full transcript + 800-char description. Saves ~20–30% input tokens for obvious-title videos.",
                 ],
               ]}
@@ -625,7 +625,7 @@ WHERE last_scan_error IS NOT NULL;`}</Code>
                 [
                   "Interval ref cleanup",
                   "app/onboarding/page.tsx (step 7)",
-                  "A useRef tracks the polling interval, allowing it to be cleared immediately when the pipeline finishes — not waiting for the next effect cleanup cycle.",
+                  "A useRef tracks the polling interval, allowing it to be cleared immediately when the pipeline finishes - not waiting for the next effect cleanup cycle.",
                 ],
                 [
                   "Extracted search helper",
@@ -654,13 +654,13 @@ WHERE last_scan_error IS NOT NULL;`}</Code>
               headers={["Feature", "What it does", "When to activate"]}
               rows={[
                 [
-                  "F7 — Per-user monthly budget cap",
+                  "F7 - Per-user monthly budget cap",
                   "Adds users.monthly_classify_budget (default 500). classify_for_user raises BudgetExceededError when hit; dashboard shows warning banner. Admin can override per user via PATCH /admin/users/{id}/budget.",
                   "When you have users who trigger many manual scans and AI cost spikes become visible in admin charts.",
                 ],
                 [
-                  "F8 — Global classification cache",
-                  "New global_classification_cache table (PK = YouTube video ID). When a video has been classified by any user, the result is cached and reused for all other users who add the same channel — no second AI call. Also fixes a latent cross-user video dedup bug (User B currently gets no videos from a channel already scanned by User A).",
+                  "F8 - Global classification cache",
+                  "New global_classification_cache table (PK = YouTube video ID). When a video has been classified by any user, the result is cached and reused for all other users who add the same channel - no second AI call. Also fixes a latent cross-user video dedup bug (User B currently gets no videos from a channel already scanned by User A).",
                   "When you have 10+ users sharing popular channels (Heather Robertson, Sydney Cummings, etc.). At that point cache hit rate could exceed 80%, near-eliminating AI costs for new users.",
                 ],
               ]}
@@ -675,9 +675,9 @@ WHERE last_scan_error IS NOT NULL;`}</Code>
               rows={[
                 ["API", "FastAPI (Python 3.12)", "Hosted on Railway"],
                 ["Database", "PostgreSQL + Alembic", "Managed by Railway"],
-                ["Auth", "Google OAuth 2.0", "Bearer token handoff — no cross-domain cookies"],
+                ["Auth", "Google OAuth 2.0", "Bearer token handoff - no cross-domain cookies"],
                 ["Encryption", "Fernet", "YouTube refresh tokens encrypted at rest; ENCRYPTION_KEY validated at startup"],
-                ["Scheduler", "APScheduler (in-process)", "Weekly cron, Sunday 18:00 UTC — no Redis/Celery needed at current scale"],
+                ["Scheduler", "APScheduler (in-process)", "Weekly cron, Sunday 18:00 UTC - no Redis/Celery needed at current scale"],
                 ["Frontend", "Next.js 16 + Tailwind CSS v4", "Hosted on Vercel"],
                 ["AI classification", "Claude Haiku 4.5 via Batch API", "50% cheaper than standard API; ~$1–2 per user ever for initial scan"],
               ]}
@@ -702,14 +702,14 @@ WHERE last_scan_error IS NOT NULL;`}</Code>
             <Note>
               Tokens expire after 30 days. <code className="text-zinc-700 dark:text-zinc-300 bg-zinc-100 dark:bg-zinc-800 px-1 rounded">get_current_user</code> checks{" "}
               <code className="text-zinc-700 dark:text-zinc-300 bg-zinc-100 dark:bg-zinc-800 px-1 rounded">Authorization: Bearer</code> first, falls back to session cookie.
-              The token is signed — forgery is not possible without <code className="text-zinc-700 dark:text-zinc-300 bg-zinc-100 dark:bg-zinc-800 px-1 rounded">SECRET_KEY</code>.
+              The token is signed - forgery is not possible without <code className="text-zinc-700 dark:text-zinc-300 bg-zinc-100 dark:bg-zinc-800 px-1 rounded">SECRET_KEY</code>.
             </Note>
 
             <H3>Pipeline stages</H3>
             <p>
               The scan → classify → plan pipeline runs for each user independently.
               The services layer (<code className="text-zinc-700 dark:text-zinc-300 bg-zinc-100 dark:bg-zinc-800 px-1 rounded">api/services/</code>) are thin adapters
-              that reuse the original CLI logic from <code className="text-zinc-700 dark:text-zinc-300 bg-zinc-100 dark:bg-zinc-800 px-1 rounded">src/</code> —
+              that reuse the original CLI logic from <code className="text-zinc-700 dark:text-zinc-300 bg-zinc-100 dark:bg-zinc-800 px-1 rounded">src/</code> -
               only the DB I/O layer changes (SQLAlchemy instead of raw SQLite).
             </p>
             <Table
@@ -717,7 +717,7 @@ WHERE last_scan_error IS NOT NULL;`}</Code>
               rows={[
                 ["Scanning", "api/services/scanner.py", "Fetches new videos from YouTube for each user channel. Applies pre-classification filters: title keyword blocklist, shorts filter (<3 min), duration cap (>2h), livestream filter. First-scan cap: 75 videos per new channel."],
                 ["Classifying", "api/services/classifier.py", "Submits unclassified videos to Anthropic Batch API (cap: 300/run). Persists batch_id immediately for resumability. Polls until complete. Writes to classifications table + batch_usage_log."],
-                ["Planning", "api/services/planner.py", "Picks one video per schedule slot using scoring (recency, channel variety, jitter). 5 fallback tiers relax constraints progressively — a plan is always produced."],
+                ["Planning", "api/services/planner.py", "Picks one video per schedule slot using scoring (recency, channel variety, jitter). 5 fallback tiers relax constraints progressively - a plan is always produced."],
               ]}
             />
 
@@ -727,10 +727,10 @@ WHERE last_scan_error IS NOT NULL;`}</Code>
               rows={[
                 ["Services reuse src/ logic", "The core scanner/classifier/planner code is unchanged from the CLI tool. Services are thin adapters that swap raw SQLite for SQLAlchemy. ~2,000 lines of tested business logic reused as-is."],
                 ["APScheduler over Celery", "Zero extra infrastructure. At current user counts, sequential per-user weekly runs complete in seconds. Migration path to Celery is straightforward when scale demands it."],
-                ["Fernet encryption for credentials", "YouTube refresh tokens encrypted at rest. ENCRYPTION_KEY validated at startup — server refuses to start without it to prevent silent unencrypted storage."],
-                ["Resumable Anthropic batches", "classifier_batch_id persisted to user_credentials immediately after batch submission. On server restart mid-pipeline, the next scan resumes the existing batch — no double billing."],
+                ["Fernet encryption for credentials", "YouTube refresh tokens encrypted at rest. ENCRYPTION_KEY validated at startup - server refuses to start without it to prevent silent unencrypted storage."],
+                ["Resumable Anthropic batches", "classifier_batch_id persisted to user_credentials immediately after batch submission. On server restart mid-pipeline, the next scan resumes the existing batch - no double billing."],
                 ["Case-insensitive library filters", "The classifier returns mixed-case workout_type values (e.g. 'HIIT', 'Strength'). GET /library uses func.lower() on both column and query param rather than normalising at write time."],
-                ["Manual publish as engagement gate", "No automatic playlist publishing. User must click 'Publish to YouTube' weekly. This is the intent signal — no login = no publish = no new plan = no Anthropic cost. See Scaling & decisions section."],
+                ["Manual publish as engagement gate", "No automatic playlist publishing. User must click 'Publish to YouTube' weekly. This is the intent signal - no login = no publish = no new plan = no Anthropic cost. See Scaling & decisions section."],
               ]}
             />
           </Section>
@@ -741,7 +741,7 @@ WHERE last_scan_error IS NOT NULL;`}</Code>
             <Code>{`# Unit tests (SQLite in-memory, no external deps, fast)
 .venv/bin/pytest tests/api/ tests/test_*.py -v
 
-# Integration tests (real PostgreSQL — requires workout_planner_test DB)
+# Integration tests (real PostgreSQL - requires workout_planner_test DB)
 .venv/bin/pytest tests/integration/ -v
 
 # All backend tests
@@ -750,7 +750,7 @@ WHERE last_scan_error IS NOT NULL;`}</Code>
 # Frontend tests (Vitest + React Testing Library)
 cd frontend && npm run test:run`}</Code>
 
-            <Note>Current: <strong className="text-zinc-900 dark:text-white">346/346 passing</strong> — 284 backend + 62 frontend.</Note>
+            <Note>Current: <strong className="text-zinc-900 dark:text-white">346/346 passing</strong> - 284 backend + 62 frontend.</Note>
 
             <H3>Test philosophy</H3>
             <Table
@@ -758,8 +758,8 @@ cd frontend && npm run test:run`}</Code>
               rows={[
                 ["Unit (backend)", "tests/api/", "Fast, SQLite in-memory. Mocks YouTube + Anthropic. Happy path + 401 + key error cases. Must pass before every commit."],
                 ["Integration (backend)", "tests/integration/", "Real PostgreSQL (workout_planner_test DB). Verifies FK constraints, correct rows written, user isolation. Tables truncated between tests."],
-                ["Unit (frontend)", "frontend/src/lib/*.test.ts", "Pure logic — scheduleTemplates.ts buildSchedule() for all profile/goal/days/duration combinations."],
-                ["Component (frontend)", "frontend/src/components/*.test.tsx", "React Testing Library — ChannelManager search, suggestions prop, add/remove."],
+                ["Unit (frontend)", "frontend/src/lib/*.test.ts", "Pure logic - scheduleTemplates.ts buildSchedule() for all profile/goal/days/duration combinations."],
+                ["Component (frontend)", "frontend/src/components/*.test.tsx", "React Testing Library - ChannelManager search, suggestions prop, add/remove."],
                 ["Page (frontend)", "frontend/src/app/**/page.test.tsx", "Onboarding page: all 7 steps, auto-advance, schedule preview, min-channel gate, step indicator."],
               ]}
             />
@@ -773,7 +773,7 @@ createdb workout_planner_test
             <H3>What is NOT tested (intentionally)</H3>
             <p>
               Live YouTube API calls, live Anthropic batch submissions, and Google OAuth flows are not
-              tested in automated suites — they are mocked. E2E testing against the live deployment
+              tested in automated suites - they are mocked. E2E testing against the live deployment
               uses the manual checklist in <code className="text-zinc-700 dark:text-zinc-300 bg-zinc-100 dark:bg-zinc-800 px-1 rounded">docs/testing.md</code>.
             </p>
           </Section>
@@ -798,8 +798,8 @@ createdb workout_planner_test
               rows={[
                 ["502 on all external traffic", "Proxy port in Railway dashboard doesn't match PORT env var (Railway injects 8080; app defaults to 8000)", "Change proxy port to 8080 in Railway dashboard → Settings → Networking"],
                 ["NoSuchModuleError on startup", "Railway emits DATABASE_URL with postgres:// scheme; SQLAlchemy 2.x dropped support for this alias", "Rewrite before create_engine: DATABASE_URL.replace('postgres://', 'postgresql://', 1)"],
-                ["Session cookie blocked (cross-domain)", "Vercel (frontend) and Railway (backend) are different origins; SameSite=lax blocks cross-origin fetch", "Use URL token handoff (Bearer header in localStorage) — already implemented"],
-                ["Health check passes but 502 externally", "Railway health probes (100.64.x.x) bypass the public proxy — a misconfigured proxy appears healthy internally", "Always test public accessibility from outside Railway's network after config changes"],
+                ["Session cookie blocked (cross-domain)", "Vercel (frontend) and Railway (backend) are different origins; SameSite=lax blocks cross-origin fetch", "Use URL token handoff (Bearer header in localStorage) - already implemented"],
+                ["Health check passes but 502 externally", "Railway health probes (100.64.x.x) bypass the public proxy - a misconfigured proxy appears healthy internally", "Always test public accessibility from outside Railway's network after config changes"],
                 ["OAuth callback rejected by Google", "GOOGLE_REDIRECT_URI in Railway doesn't match the URI registered in Google Cloud Console", "Update both Railway env var AND Google Cloud Console OAuth config simultaneously"],
               ]}
             />
@@ -818,10 +818,10 @@ railway ssh -- <cmd>           # exec into running container`}</Code>
             <Table
               headers={["Trigger", "Migration target"]}
               rows={[
-                ["Stable paying user base (predictable load)", "Render — fixed billing, autoscaling, zero-downtime deploys"],
+                ["Stable paying user base (predictable load)", "Render - fixed billing, autoscaling, zero-downtime deploys"],
                 ["Weekly pipeline >30s per user or needs retries", "Add Celery + Redis (can stay on Railway or Render)"],
                 ["YouTube quota exhausted (>14 concurrent users)", "Apply for quota increase or implement per-user API keys"],
-                ["Global low-latency requirements", "Fly.io — edge deployments, managed Postgres from $34/mo"],
+                ["Global low-latency requirements", "Fly.io - edge deployments, managed Postgres from $34/mo"],
               ]}
             />
           </Section>
@@ -848,7 +848,7 @@ railway ssh -- <cmd>           # exec into running container`}</Code>
             />
             <Note>
               The trade-off: removes &quot;set and forget&quot; automation. Users who find the weekly login too much
-              friction self-select out — this is intentional. The app targets motivated, consistent trainers.
+              friction self-select out - this is intentional. The app targets motivated, consistent trainers.
             </Note>
 
             <H3>Engagement &amp; cost model</H3>
@@ -860,9 +860,9 @@ railway ssh -- <cmd>           # exec into running container`}</Code>
             <Table
               headers={["Signal considered", "Why it was rejected"]}
               rows={[
-                ["last_active_at (app logins)", "Wrong proxy — faithful users work out from YouTube and never open the app"],
+                ["last_active_at (app logins)", "Wrong proxy - faithful users work out from YouTube and never open the app"],
                 ["ProgramHistory.completed (marks done)", "Self-reported, unreliable, requires app interaction"],
-                ["OAuth token still valid", "Only means they haven't disconnected — says nothing about whether they're training"],
+                ["OAuth token still valid", "Only means they haven't disconnected - says nothing about whether they're training"],
                 ["Weekly check-in email", "Email ignore rates are high; self-reporting is unreliable"],
               ]}
             />
@@ -874,7 +874,7 @@ railway ssh -- <cmd>           # exec into running container`}</Code>
                 ["Full channel init (~2,000 videos)", "~$1–2 via Batch API (one-time per user)"],
                 ["Weekly incremental run (10–30 new videos)", "A few cents"],
                 ["max_tokens cap (80 vs 150)", "~47% cost reduction per video vs baseline"],
-                ["18-month video cutoff", "Skips old videos before batch — reduces batch size"],
+                ["18-month video cutoff", "Skips old videos before batch - reduces batch size"],
                 ["First-scan cap (75 videos)", "Keeps initial pipeline fast and cheap"],
               ]}
             />
@@ -883,7 +883,7 @@ railway ssh -- <cmd>           # exec into running container`}</Code>
             <Table
               headers={["Model", "When to consider"]}
               rows={[
-                ["Platform-pays (current)", "v1 — friends. Absorb cost to maximise feedback and remove signup friction."],
+                ["Platform-pays (current)", "v1 - friends. Absorb cost to maximise feedback and remove signup friction."],
                 ["Platform-pays + subscription (~$5–8/mo)", "When scaling to non-technical fitness enthusiasts who won't supply API keys."],
                 ["BYOK (user supplies Anthropic key)", "For technical power users who want unlimited scans. DB schema already supports it."],
                 ["Channel count gate", "Natural paywall: more channels = more init cost. Free tier = 2 channels; paid = unlimited."],
@@ -897,7 +897,7 @@ railway ssh -- <cmd>           # exec into running container`}</Code>
                 ["YouTube API quota", "~14 concurrent weekly users (10,000 units / ~670 per user)", "Apply for quota increase (Google grants readily) or per-user API keys"],
                 ["APScheduler (sequential)", "Fine for <50 users; weekly runs complete in seconds per user", "Migrate to Celery + Redis when weekly job exceeds 30s per user"],
                 ["Cross-user channel dedup bug", "If two users add the same YouTube channel, the second user's scan creates a PK conflict on videos.id", "GlobalClassificationCache + UserChannelVideo join table (in backlog)"],
-                ["Monthly classification budget cap", "Not implemented — power users could run many manual scans", "Per-user budget cap + admin override (Phase D, in backlog)"],
+                ["Monthly classification budget cap", "Not implemented - power users could run many manual scans", "Per-user budget cap + admin override (Phase D, in backlog)"],
               ]}
             />
           </Section>

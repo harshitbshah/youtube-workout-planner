@@ -1,5 +1,5 @@
 """
-channel_validator.py — Validate a YouTube channel fits the user's fitness profile.
+channel_validator.py - Validate a YouTube channel fits the user's fitness profile.
 
 Uses claude-haiku-4-5-20251001 for a lightweight classification.
 Always fails open: unexpected results or errors allow the channel through.
@@ -23,13 +23,13 @@ def validate_channel_fitness(
     Check whether a channel suits the user's fitness profile and goal.
 
     Returns:
-        (True, None)       — channel is suitable, allow through
-        (False, "label")   — channel doesn't fit; label is what it actually is
-        (True, None)       — on any error, unsure, or missing API key, fail open
+        (True, None)       - channel is suitable, allow through
+        (False, "label")   - channel doesn't fit; label is what it actually is
+        (True, None)       - on any error, unsure, or missing API key, fail open
     """
     api_key = os.getenv("ANTHROPIC_API_KEY", "")
     if not api_key:
-        logger.warning("[channel_validator] ANTHROPIC_API_KEY not set — skipping validation")
+        logger.warning("[channel_validator] ANTHROPIC_API_KEY not set - skipping validation")
         return True, None
 
     prompt = (
@@ -61,9 +61,9 @@ def validate_channel_fitness(
             label = text[3:].strip()
             return False, label if label else "unrelated content"
         else:
-            # "unsure" or anything unexpected — fail open
+            # "unsure" or anything unexpected - fail open
             return True, None
 
     except Exception as e:
-        logger.warning(f"[channel_validator] Claude call failed — failing open: {e}")
+        logger.warning(f"[channel_validator] Claude call failed - failing open: {e}")
         return True, None

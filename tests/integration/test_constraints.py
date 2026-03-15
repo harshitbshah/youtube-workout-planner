@@ -1,8 +1,8 @@
 """
-test_constraints.py — FK constraints, UNIQUE constraints, and CASCADE deletes.
+test_constraints.py - FK constraints, UNIQUE constraints, and CASCADE deletes.
 
 SQLite doesn't enforce FK constraints by default, so these tests only pass
-against real PostgreSQL — exactly why integration tests exist.
+against real PostgreSQL - exactly why integration tests exist.
 """
 
 import uuid
@@ -27,7 +27,7 @@ def test_user_channel_without_valid_user_raises(db_session):
     db_session.flush()
 
     uc = UserChannel(
-        user_id=str(uuid.uuid4()),  # random UUID — no such user in DB
+        user_id=str(uuid.uuid4()),  # random UUID - no such user in DB
         channel_id=ch.id,
     )
     db_session.add(uc)

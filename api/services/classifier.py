@@ -1,5 +1,5 @@
 """
-api/services/classifier.py — Classify unclassified videos using Anthropic Batch API.
+api/services/classifier.py - Classify unclassified videos using Anthropic Batch API.
 
 Reuses pure functions from src/classifier.py (prompt building, response parsing,
 transcript fetching). Only the DB layer is rewritten to use SQLAlchemy.
@@ -128,7 +128,7 @@ def _fetch_unclassified_for_user(session: Session, user_id: str) -> list[dict]:
         .filter(
             Classification.video_id.is_(None),
             Video.duration_sec >= 180,
-            # Include videos with NULL published_at (unknown age — better to classify than skip)
+            # Include videos with NULL published_at (unknown age - better to classify than skip)
             or_(Video.published_at.is_(None), Video.published_at >= cutoff_str),
         )
         .order_by(Video.published_at.desc())
@@ -190,7 +190,7 @@ _GAP_TYPE_PATTERNS: dict[str, re.Pattern] = {
 def rule_classify_for_user(session: Session, user_id: str) -> int:
     """
     Run rule-based classification on all unclassified videos for a user.
-    Free — no Anthropic API calls. Returns count of videos classified.
+    Free - no Anthropic API calls. Returns count of videos classified.
     """
     videos = _fetch_unclassified_for_user(session, user_id)
     classified = 0
@@ -267,7 +267,7 @@ def _save_results(session: Session, user_id: str, client, batch) -> tuple[int, i
         if result.result.type == "succeeded":
             # Skip if the video was deleted after the batch was submitted
             if not session.get(Video, result.custom_id):
-                logger.info(f"[user={user_id}] Skipping {result.custom_id} — video no longer in DB")
+                logger.info(f"[user={user_id}] Skipping {result.custom_id} - video no longer in DB")
                 continue
             raw = result.result.message.content[0].text
             clf = _parse_classification(raw)
@@ -280,7 +280,7 @@ def _save_results(session: Session, user_id: str, client, batch) -> tuple[int, i
             else:
                 failed += 1
         else:
-            logger.warning(f"[user={user_id}] Failed: {result.custom_id} — {result.result.type}")
+            logger.warning(f"[user={user_id}] Failed: {result.custom_id} - {result.result.type}")
             failed += 1
     return classified, failed, input_tokens, output_tokens
 
@@ -296,7 +296,7 @@ def classify_for_user(
     Classify unclassified videos for a user's channels using Anthropic Batch API.
 
     Resumable: if a batch was previously submitted (batch ID persisted in DB),
-    resumes polling or retrieves results directly — no resubmission or double billing.
+    resumes polling or retrieves results directly - no resubmission or double billing.
     Processes up to MAX_CLASSIFY_PER_RUN videos per call; remainder deferred to next run.
 
     preselected_videos: if provided, classify only this specific list (targeted batch).
@@ -320,18 +320,18 @@ def classify_for_user(
     creds = _get_or_create_credentials(session, user_id)
     if creds.classifier_batch_id:
         batch_id = creds.classifier_batch_id
-        logger.info(f"[user={user_id}] Found existing batch {batch_id} — checking status...")
+        logger.info(f"[user={user_id}] Found existing batch {batch_id} - checking status...")
         try:
             batch = client.messages.batches.retrieve(batch_id)
             counts = batch.request_counts
             total = counts.succeeded + counts.errored + counts.canceled + counts.expired + counts.processing
             if batch.processing_status != "ended":
-                logger.info(f"[user={user_id}] Batch still processing — resuming poll")
+                logger.info(f"[user={user_id}] Batch still processing - resuming poll")
             else:
-                logger.info(f"[user={user_id}] Batch already ended — retrieving results directly")
+                logger.info(f"[user={user_id}] Batch already ended - retrieving results directly")
             # Fall through to Phase 3 (poll/retrieve results)
         except Exception as e:
-            logger.warning(f"[user={user_id}] Could not retrieve batch {batch_id}: {e} — submitting new batch")
+            logger.warning(f"[user={user_id}] Could not retrieve batch {batch_id}: {e} - submitting new batch")
             _save_batch_id(session, user_id, None)
             batch = None
             total = 0
@@ -348,7 +348,7 @@ def classify_for_user(
                 logger.info(f"[user={user_id}] No unclassified videos.")
                 return 0
 
-            # F6: rule-based pre-classification — saves AI calls for obvious titles
+            # F6: rule-based pre-classification - saves AI calls for obvious titles
             to_classify = []
             for video in all_videos:
                 result = title_classify(video["title"], video["duration_sec"])
@@ -362,7 +362,7 @@ def classify_for_user(
                 logger.info(f"[user={user_id}] {rule_classified} rule-classified, {len(to_classify)} sent to AI")
 
             if not to_classify:
-                logger.info(f"[user={user_id}] All videos classified by rules — no AI batch needed")
+                logger.info(f"[user={user_id}] All videos classified by rules - no AI batch needed")
                 return rule_classified
         else:
             # Targeted path: caller already ran rule_classify_for_user and selected
@@ -377,7 +377,7 @@ def classify_for_user(
         total = len(videos)
         deferred = len(to_classify) - total
         if deferred:
-            logger.info(f"[user={user_id}] {len(to_classify)} for AI — processing first {total}, {deferred} deferred")
+            logger.info(f"[user={user_id}] {len(to_classify)} for AI - processing first {total}, {deferred} deferred")
 
         logger.info(f"[user={user_id}] Building {total} classification requests...")
         requests = []
@@ -407,7 +407,7 @@ def classify_for_user(
         logger.info(f"[user={user_id}] Submitting batch of {total} to Anthropic...")
         batch = client.messages.batches.create(requests=requests)
         _save_batch_id(session, user_id, batch.id)
-        logger.info(f"[user={user_id}] Batch submitted — ID: {batch.id}")
+        logger.info(f"[user={user_id}] Batch submitted - ID: {batch.id}")
 
     # ── Phase 3: poll until complete ──────────────────────────────────────────
     while batch.processing_status != "ended":

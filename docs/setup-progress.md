@@ -10,13 +10,13 @@ Check boxes off directly on GitHub (click the checkbox) or edit locally (`[ ]` �
 - [x] Python 3.10+ confirmed (`python3 --version`)
 - [x] Dependencies installed (`pip install -r requirements.txt`)
 
-## Google Cloud — API Key (read access)
+## Google Cloud - API Key (read access)
 
 - [x] Google Cloud project created (`workout-planner`)
 - [x] YouTube Data API v3 enabled
 - [x] API key created and saved
 
-## Google Cloud — OAuth (playlist write access)
+## Google Cloud - OAuth (playlist write access)
 
 - [x] OAuth consent screen configured (External, test user added)
 - [x] OAuth client ID created (Desktop app)

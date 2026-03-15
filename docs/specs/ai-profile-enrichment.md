@@ -3,40 +3,40 @@
 **Created:** 2026-03-11
 **Status:** Ready for implementation
 **Depends on:** Current 8-step onboarding wizard (Phase B + O1 step insertion)
-**Migration:** 009 (shared with Phase O3 — see [migrations-roadmap.md](migrations-roadmap.md))
+**Migration:** 009 (shared with Phase O3 - see [migrations-roadmap.md](migrations-roadmap.md))
 
 **Related specs:**
-- [ai-coach-chat.md](ai-coach-chat.md) — Phase O2: coach chat (builds on enrichment data)
-- [ai-weekly-review.md](ai-weekly-review.md) — Phase O3: weekly review card
-- [channel-recommendations.md](channel-recommendations.md) — Phase R1 curated channels uses `preferred_types` from enrichment
+- [ai-coach-chat.md](ai-coach-chat.md) - Phase O2: coach chat (builds on enrichment data)
+- [ai-weekly-review.md](ai-weekly-review.md) - Phase O3: weekly review card
+- [channel-recommendations.md](channel-recommendations.md) - Phase R1 curated channels uses `preferred_types` from enrichment
 
 ---
 
-## App design — how users actually interact
+## App design - how users actually interact
 
 The web app is the primary interface. Users log in, view their auto-generated plan,
-optionally swap videos, and click "Publish to YouTube" — all within the app. The
-YouTube playlist is a **convenience output only** — it lets users play their week's
+optionally swap videos, and click "Publish to YouTube" - all within the app. The
+YouTube playlist is a **convenience output only** - it lets users play their week's
 videos directly from the YouTube app without signing in to the web app each time.
 
 No feedback flows back from YouTube. All meaningful user-intent signals are captured
 in the web app: plan views, video swaps, schedule changes, and the Publish click itself.
 
 **Activity tracking:** Any authenticated request updates `user.last_active_at`. The
-Sunday cron only runs for users active within the last 14 days — users who haven't
+Sunday cron only runs for users active within the last 14 days - users who haven't
 opened the app (including clicking Publish) are skipped.
 
 **Implicit feedback from the Publish button:**
 The plan auto-generates every Sunday. The user's only required action is the Publish
 click (if they want the YouTube playlist updated). The gap between the AI-generated
-video and the final published video is the feedback signal — if a user swapped Thursday's
+video and the final published video is the feedback signal - if a user swapped Thursday's
 video before publishing, the original AI pick was rejected. No manual "mark as done"
 checkboxes are needed.
 
 This requires two small additions to `ProgramHistory`:
-- `original_video_id` — written at generation time, never overwritten. Lets us detect
+- `original_video_id` - written at generation time, never overwritten. Lets us detect
   swaps: `original_video_id != video_id` at publish time = rejection signal.
-- `published_at` — written when `POST /plan/publish` is called. Records engagement.
+- `published_at` - written when `POST /plan/publish` is called. Records engagement.
 
 These are added in migration 009 alongside the O1 profile fields.
 
@@ -44,17 +44,17 @@ These are added in migration 009 alongside the O1 profile fields.
 
 ## The core insight
 
-The onboarding wizard's strength is scaffolding — it tells users exactly what decisions to
-make. Its weakness is rigidity — it can't capture nuance: bad knees, a recent pregnancy,
+The onboarding wizard's strength is scaffolding - it tells users exactly what decisions to
+make. Its weakness is rigidity - it can't capture nuance: bad knees, a recent pregnancy,
 "I love dancing but hate running", travelling two weeks a month. These are the details that
 would make a real trainer say "oh, that changes everything."
 
-A blank "tell me about yourself" chat box would be worse, not better — users don't know
+A blank "tell me about yourself" chat box would be worse, not better - users don't know
 what's relevant to type. The right answer is: keep the wizard as the structural backbone
 and add one targeted freeform field where nuance matters most. Then let an LLM extract
 structured data from it silently.
 
-The coach chat lives elsewhere entirely — not in onboarding, but on the dashboard, where
+The coach chat lives elsewhere entirely - not in onboarding, but on the dashboard, where
 users already have context (a plan in front of them, a specific day, a specific constraint)
 and know exactly what they want to change.
 
@@ -71,7 +71,7 @@ This placement is intentional: the enrichment is processed before the channels s
 curated channel recommendations in step 7 can be personalized using the enrichment output
 (e.g. surface postpartum channels, dance channels, bodyweight-only channels).
 
-### The new step — "Anything else?"
+### The new step - "Anything else?"
 
 ```
 ┌──────────────────────────────────────────────────────────────────┐
@@ -94,12 +94,12 @@ curated channel recommendations in step 7 can be personalized using the enrichme
 
 Design notes:
 - Textarea, 3 rows, auto-grows up to 6
-- Placeholder text carries the full cognitive load — users don't need to think about format
-- "Skip" is prominent (same visual weight as "Continue") — this step must never feel mandatory
+- Placeholder text carries the full cognitive load - users don't need to think about format
+- "Skip" is prominent (same visual weight as "Continue") - this step must never feel mandatory
 - "Continue →" is disabled while the enrichment API call is in-flight; shows spinner
 - If the user clicks Skip: advance to step 7 immediately, no API call
 - On "Continue →": POST to `/auth/me/enrich`, await response, advance to step 7
-- If the API call fails: log the error silently, advance to step 7 anyway — enrichment
+- If the API call fails: log the error silently, advance to step 7 anyway - enrichment
   failure must never block onboarding
 
 ---
@@ -163,23 +163,23 @@ return all empty arrays and empty strings. Never invent constraints not mentione
 Return only valid JSON.
 ```
 
-Model: `claude-haiku-4-5-20251001` — this is a simple extraction task, latency matters
+Model: `claude-haiku-4-5-20251001` - this is a simple extraction task, latency matters
 (user is waiting), Haiku is ideal.
 
 ---
 
-## DB changes — migration 009
+## DB changes - migration 009
 
 Add four columns to the `users` table, plus two `program_history` columns:
 
 ```python
-# In api/models.py — User class
+# In api/models.py - User class
 life_stage          = Column(String, nullable=True)    # "beginner"|"adult"|"senior"|"athlete"
 goal                = Column(String, nullable=True)    # e.g. "Build muscle"
 profile_notes       = Column(Text, nullable=True)      # raw freeform text from step 6
-profile_enrichment  = Column(Text, nullable=True)      # JSON string — parsed extraction
+profile_enrichment  = Column(Text, nullable=True)      # JSON string - parsed extraction
 
-# Also in migration 009 — ProgramHistory:
+# Also in migration 009 - ProgramHistory:
 original_video_id   = Column(String, ForeignKey("videos.id"), nullable=True)
 published_at        = Column(DateTime(timezone=True), nullable=True)
 ```
@@ -219,9 +219,9 @@ Content-Type: application/json
 ```
 
 **Errors:**
-- `401` — not authenticated
-- `503` — Anthropic API unavailable (frontend handles gracefully: skip ahead)
-- `400` — notes field too long (cap at 500 chars, validate on both frontend and backend)
+- `401` - not authenticated
+- `503` - Anthropic API unavailable (frontend handles gracefully: skip ahead)
+- `400` - notes field too long (cap at 500 chars, validate on both frontend and backend)
 
 **Backend location:** `api/routers/auth.py` (add to existing file)
 
@@ -266,7 +266,7 @@ class PatchMeRequest(BaseModel):
 ```
 
 Called from onboarding after schedule save (step 5) to persist the profile selections.
-No separate API call needed — piggybacks on the existing flow.
+No separate API call needed - piggybacks on the existing flow.
 
 ---
 
@@ -285,7 +285,7 @@ No separate API call needed — piggybacks on the existing flow.
      try {
        await enrichProfile(profileNotes);  // POST /auth/me/enrich
      } catch {
-       // silent fail — never block onboarding
+       // silent fail - never block onboarding
      } finally {
        setEnriching(false);
        setStep(7);
@@ -309,7 +309,7 @@ export interface ProfileEnrichment {
 export async function enrichProfile(notes: string): Promise<ProfileEnrichment>
 ```
 
-**Settings page — "About you" section:**
+**Settings page - "About you" section:**
 
 Add a new section to `app/settings/page.tsx` after the profile name field:
 
@@ -319,7 +319,7 @@ About you (optional)
 ┌──────────────────────────────────────────────────┐
 │  bad knees, love dancing, just had a baby...     │
 └──────────────────────────────────────────────────┘
-  [Save]  — re-runs the enrichment on save
+  [Save]  - re-runs the enrichment on save
 ```
 
 Allows users to update their constraints/preferences post-onboarding. Calls the same
@@ -338,7 +338,7 @@ Once stored, `profile_enrichment` is read by:
 3. **Coach chat** (Phase O2): included in the system prompt as user context
 4. **Weekly review** (Phase O3): referenced when generating advice
 
-**Planner integration — `api/services/planner.py`:**
+**Planner integration - `api/services/planner.py`:**
 
 `pick_video_for_slot_for_user()` currently filters by workout_type + body_focus + difficulty.
 Add an `avoid_workout_types` parameter derived from `user.profile_enrichment`:
@@ -353,7 +353,7 @@ if "heavy_lifting" in avoid_types:
     avoid_workout_types.append("Strength")
 ```
 
-This is the highest-value downstream use of enrichment — the plan immediately respects
+This is the highest-value downstream use of enrichment - the plan immediately respects
 the user's physical constraints without any manual intervention.
 
 ---
@@ -362,7 +362,7 @@ the user's physical constraints without any manual intervention.
 
 | File | Purpose |
 |---|---|
-| `api/services/enrichment.py` | `enrich_profile()` — calls Claude Haiku for extraction |
+| `api/services/enrichment.py` | `enrich_profile()` - calls Claude Haiku for extraction |
 | `alembic/versions/009_add_user_profile_fields.py` | Migration 009: profile columns on `users` + O3 review cache + `program_history` additions |
 | `tests/api/test_enrichment.py` | Unit tests for extraction + endpoint |
 
@@ -385,25 +385,25 @@ the user's physical constraints without any manual intervention.
 
 ## Tests
 
-### Unit tests — `tests/api/test_enrichment.py`
+### Unit tests - `tests/api/test_enrichment.py`
 
-1. `test_enrich_profile_extracts_constraint` — "bad knees" → `constraints: ["knee_injury"]`
-2. `test_enrich_profile_extracts_preference` — "love dancing" → `preferred_types: ["dance"]`
-3. `test_enrich_profile_empty_input` — empty string → all empty arrays, no crash
-4. `test_enrich_profile_irrelevant_input` — "I like pizza" → all empty arrays
-5. `test_enrich_endpoint_saves_to_db` — POST → `profile_notes` + `profile_enrichment` written
+1. `test_enrich_profile_extracts_constraint` - "bad knees" → `constraints: ["knee_injury"]`
+2. `test_enrich_profile_extracts_preference` - "love dancing" → `preferred_types: ["dance"]`
+3. `test_enrich_profile_empty_input` - empty string → all empty arrays, no crash
+4. `test_enrich_profile_irrelevant_input` - "I like pizza" → all empty arrays
+5. `test_enrich_endpoint_saves_to_db` - POST → `profile_notes` + `profile_enrichment` written
 6. `test_enrich_endpoint_unauthenticated` → 401
-7. `test_enrich_endpoint_too_long` — 501-char input → 400
-8. `test_enrich_endpoint_anthropic_failure` — mock Anthropic error → 503
+7. `test_enrich_endpoint_too_long` - 501-char input → 400
+8. `test_enrich_endpoint_anthropic_failure` - mock Anthropic error → 503
 
-### Unit tests — planner integration
+### Unit tests - planner integration
 
-9.  `test_planner_respects_avoid_types` — user with `avoid_types: ["high_impact"]` → no HIIT in generated plan
-10. `test_planner_no_enrichment` — user with null `profile_enrichment` → plan generates normally
+9.  `test_planner_respects_avoid_types` - user with `avoid_types: ["high_impact"]` → no HIIT in generated plan
+10. `test_planner_no_enrichment` - user with null `profile_enrichment` → plan generates normally
 
-### Integration tests — `tests/integration/test_enrichment_integration.py`
+### Integration tests - `tests/integration/test_enrichment_integration.py`
 
-11. `test_full_enrich_and_plan_flow` — POST enrich → plan generated → no avoided types present
+11. `test_full_enrich_and_plan_flow` - POST enrich → plan generated → no avoided types present
 
 ---
 
@@ -412,9 +412,9 @@ the user's physical constraints without any manual intervention.
 1. Migration 009 (all profile fields + O3 review cache fields + ProgramHistory additions)
 2. `api/services/enrichment.py` + `POST /auth/me/enrich` endpoint
 3. Extend `PATCH /auth/me` to accept `life_stage` + `goal`
-4. Unit tests 1–8 — all passing
+4. Unit tests 1–8 - all passing
 5. Planner: read `profile_enrichment` for `avoid_workout_types`
-6. Unit tests 9–10 — all passing
+6. Unit tests 9–10 - all passing
 7. Frontend: onboarding step 6; settings "About you" section
 8. Ship O1
 
@@ -425,8 +425,8 @@ the user's physical constraints without any manual intervention.
 | Decision | Rationale |
 |---|---|
 | Step 6 inserted before channels (not after) | Enrichment output (`preferred_types`) feeds curated channel recommendations in step 7 |
-| Skip is prominent, failure is silent | Enrichment must never block onboarding — it's additive, not required |
+| Skip is prominent, failure is silent | Enrichment must never block onboarding - it's additive, not required |
 | Haiku for enrichment | Simple extraction task; latency matters (user is waiting) |
-| `avoid_workout_types` in planner | The most immediate user value from enrichment — plan immediately respects physical constraints |
+| `avoid_workout_types` in planner | The most immediate user value from enrichment - plan immediately respects physical constraints |
 | `life_stage` + `goal` persisted to DB | Required by Phase R3 for collaborative filtering; used in coach system prompt |
 | O1 + O3 user fields in one migration | Both add columns to `users`; bundling avoids two consecutive user-table alterations |

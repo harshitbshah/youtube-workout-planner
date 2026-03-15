@@ -1,5 +1,5 @@
 """
-test_schema.py — Verify Alembic migrations produce the correct schema.
+test_schema.py - Verify Alembic migrations produce the correct schema.
 
 These tests catch migration bugs that SQLite unit tests never would:
   - Missing tables or columns
@@ -41,7 +41,7 @@ def test_users_google_id_unique_constraint(pg_engine):
     inspector = inspect(pg_engine)
     unique_constraints = inspector.get_unique_constraints("users")
     unique_cols = [col for uc in unique_constraints for col in uc["column_names"]]
-    # google_id must be unique — enforced at DB level
+    # google_id must be unique - enforced at DB level
     assert "google_id" in unique_cols
 
 
@@ -69,7 +69,7 @@ def test_classifications_foreign_key_to_videos(pg_engine):
 
 
 def test_program_history_has_date_column(pg_engine):
-    """week_start must be DATE type in PostgreSQL — not a string."""
+    """week_start must be DATE type in PostgreSQL - not a string."""
     inspector = inspect(pg_engine)
     columns = {c["name"]: c for c in inspector.get_columns("program_history")}
     assert "week_start" in columns

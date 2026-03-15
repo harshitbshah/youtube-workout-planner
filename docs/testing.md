@@ -19,7 +19,7 @@ Run before every commit:
 # Unit tests (SQLite in-memory, no external deps)
 .venv/bin/pytest tests/api/ tests/test_*.py -v
 
-# Integration tests (real PostgreSQL — requires workout_planner_test DB)
+# Integration tests (real PostgreSQL - requires workout_planner_test DB)
 .venv/bin/pytest tests/integration/ -v
 
 # All backend tests
@@ -32,24 +32,24 @@ cd frontend && npm run test:run
 Current: **577/577 passing** (409 backend + 168 frontend)
 
 New test files added:
-- `tests/api/test_jobs.py` — `POST /jobs/scan` (202, 400 no channels, 503 no key, 401 unauth, channel count); `GET /jobs/status` (no pipeline, unauthenticated, reflects live state); scanner filters (upper duration cap, title blocklist); classifier (batch cap limits to 300, `on_progress` callback during polling, resume existing batch, batch ID cleared on completion)
-- `tests/api/test_admin.py` — 21 tests: stats shape, user/library counts, last_active_at, AI usage aggregation (7d + all-time), 403 for non-admin, 403 with no ADMIN_EMAIL set, delete user, cannot delete self, 404 nonexistent, retry scan (no channels → 400, with channels → 202), create/list/delete/deactivate announcements, active announcement for regular user, null when none active, inactive not returned
-- `tests/integration/test_jobs_api.py` — 5 integration cases for `POST /jobs/scan` against real Postgres (user isolation, FK constraints, channel count)
-- `tests/integration/test_schema.py` — updated to expect Alembic version "003" (update to "004" after next migration run)
-- `tests/api/test_email.py` — 9 tests for `send_weekly_plan_email`: subject line, HTML content (video titles + URLs), recipient address, missing API key error, display name fallback, FROM_EMAIL env var, all-rest plan, rest days excluded from output
-- `tests/api/test_feedback.py` — 13 unit tests for `POST /feedback` router (happy path, all categories, invalid category, blank message, unauthenticated, trim, 503 on email failure) and `send_feedback_email` service (to=admin, reply_to=user, subject label, HTML body, missing API key, display_name fallback)
-- `tests/integration/test_feedback_api.py` — 5 integration tests for `POST /feedback` against real PostgreSQL
-- `tests/api/helpers.py` — shared `make_mock_user()` factory used by test_email.py and test_feedback.py
-- `frontend/src/test/ThemeProvider.test.tsx` — 6 tests: system-dark default, system-light default, explicit dark/light override, toggle persists, system change respects explicit choice
-- `frontend/src/test/ThemeToggle.test.tsx` — 3 tests: renders correctly, toggles on click, aria-label reflects current theme
-- `frontend/src/app/dashboard/page.test.tsx` — 19 tests: stale plan banner (show/hide/dismiss/generate), plan rendering, week label, announcement banner, swap picker (open, video list, type filter, show-all-types, cancel, swap call, post-swap close)
-- `frontend/src/app/settings/page.test.tsx` — 15 tests: initial render, display name save/error, schedule save/error, delete 2-step confirm/cancel/confirm-calls-API
-- `frontend/src/app/library/page.test.tsx` — 20 tests: video rendering, total count, empty state, filters, clear filters, no-match empty state, assign-to-day success/error, pagination, background-classifying banner (show/hide/dismiss/API failure)
-- `frontend/src/components/FeedbackWidget.test.tsx` — 11 tests: floating button, modal open/close, state reset, category selection, submit disabled on empty/whitespace, submit calls API, success state, error state
-- `frontend/src/components/ScheduleEditor.test.tsx` — 11 tests: all 7 days render, Rest/Set-rest button counts, toggle rest clears fields, toggle active restores defaults, workout type select, body focus select, clear body focus, duration min/max inputs
-- `tests/api/test_channels.py` — 6 new suggestion tests: cache hit (all 3 served from DB, no YouTube call), cache miss (YouTube called + result stored), no API key returns only cached, no profile returns general list, unknown profile falls back to general, unauthenticated 401
-- `tests/integration/test_channels_api.py` — 1 new suggestion test: full cache-hit path against real PostgreSQL (all 3 pre-loaded, YouTube not called)
-- `tests/api/test_lazy_classification.py` — 33 tests for the lazy classification pipeline (F9):
+- `tests/api/test_jobs.py` - `POST /jobs/scan` (202, 400 no channels, 503 no key, 401 unauth, channel count); `GET /jobs/status` (no pipeline, unauthenticated, reflects live state); scanner filters (upper duration cap, title blocklist); classifier (batch cap limits to 300, `on_progress` callback during polling, resume existing batch, batch ID cleared on completion)
+- `tests/api/test_admin.py` - 21 tests: stats shape, user/library counts, last_active_at, AI usage aggregation (7d + all-time), 403 for non-admin, 403 with no ADMIN_EMAIL set, delete user, cannot delete self, 404 nonexistent, retry scan (no channels → 400, with channels → 202), create/list/delete/deactivate announcements, active announcement for regular user, null when none active, inactive not returned
+- `tests/integration/test_jobs_api.py` - 5 integration cases for `POST /jobs/scan` against real Postgres (user isolation, FK constraints, channel count)
+- `tests/integration/test_schema.py` - updated to expect Alembic version "003" (update to "004" after next migration run)
+- `tests/api/test_email.py` - 9 tests for `send_weekly_plan_email`: subject line, HTML content (video titles + URLs), recipient address, missing API key error, display name fallback, FROM_EMAIL env var, all-rest plan, rest days excluded from output
+- `tests/api/test_feedback.py` - 13 unit tests for `POST /feedback` router (happy path, all categories, invalid category, blank message, unauthenticated, trim, 503 on email failure) and `send_feedback_email` service (to=admin, reply_to=user, subject label, HTML body, missing API key, display_name fallback)
+- `tests/integration/test_feedback_api.py` - 5 integration tests for `POST /feedback` against real PostgreSQL
+- `tests/api/helpers.py` - shared `make_mock_user()` factory used by test_email.py and test_feedback.py
+- `frontend/src/test/ThemeProvider.test.tsx` - 6 tests: system-dark default, system-light default, explicit dark/light override, toggle persists, system change respects explicit choice
+- `frontend/src/test/ThemeToggle.test.tsx` - 3 tests: renders correctly, toggles on click, aria-label reflects current theme
+- `frontend/src/app/dashboard/page.test.tsx` - 19 tests: stale plan banner (show/hide/dismiss/generate), plan rendering, week label, announcement banner, swap picker (open, video list, type filter, show-all-types, cancel, swap call, post-swap close)
+- `frontend/src/app/settings/page.test.tsx` - 15 tests: initial render, display name save/error, schedule save/error, delete 2-step confirm/cancel/confirm-calls-API
+- `frontend/src/app/library/page.test.tsx` - 20 tests: video rendering, total count, empty state, filters, clear filters, no-match empty state, assign-to-day success/error, pagination, background-classifying banner (show/hide/dismiss/API failure)
+- `frontend/src/components/FeedbackWidget.test.tsx` - 11 tests: floating button, modal open/close, state reset, category selection, submit disabled on empty/whitespace, submit calls API, success state, error state
+- `frontend/src/components/ScheduleEditor.test.tsx` - 11 tests: all 7 days render, Rest/Set-rest button counts, toggle rest clears fields, toggle active restores defaults, workout type select, body focus select, clear body focus, duration min/max inputs
+- `tests/api/test_channels.py` - 6 new suggestion tests: cache hit (all 3 served from DB, no YouTube call), cache miss (YouTube called + result stored), no API key returns only cached, no profile returns general list, unknown profile falls back to general, unauthenticated 401
+- `tests/integration/test_channels_api.py` - 1 new suggestion test: full cache-hit path against real PostgreSQL (all 3 pre-loaded, YouTube not called)
+- `tests/api/test_lazy_classification.py` - 33 tests for the lazy classification pipeline (F9):
   - `can_fill_plan()`: all slots satisfied → True; any slot below threshold → False; all-rest schedule → True (edge case); case-insensitive workout_type matching; NULL duration defaults
   - `get_gap_types()`: returns only slots below MIN_PLAN_CANDIDATES; empty schedule; duplicate slot types counted correctly
   - `rule_classify_for_user()`: classifies matching titles, skips non-matching, idempotent on re-run
@@ -67,20 +67,20 @@ cd frontend && npm run test:run
 ```
 
 168 tests covering:
-- `scheduleTemplates.ts` — `buildSchedule()` logic for all life-stage/goal/days/duration combinations
-- `ChannelManager.tsx` — search, add, remove, suggestions chips, minimum-1-channel gate
-- Onboarding page steps — step rendering, auto-advance, schedule preview, scan progress
-- `ThemeProvider.tsx` + `ThemeToggle.tsx` — theme context, localStorage, system preference
-- `DashboardPage` — stale banner, plan rendering, announcements, swap picker
-- `SettingsPage` — display name, schedule save, delete account flow
-- `LibraryPage` — video rendering, filters, assign-to-day, pagination
-- `FeedbackWidget` — modal, category selection, submit, error/success states
-- `ScheduleEditor` — toggle rest/active, workout type/focus dropdowns, duration inputs
-- `ChannelManager` — suggestion card grid (thumbnail, + Add, ✓ Added, skeleton), one-click add calls API directly (no search), search flow unchanged
+- `scheduleTemplates.ts` - `buildSchedule()` logic for all life-stage/goal/days/duration combinations
+- `ChannelManager.tsx` - search, add, remove, suggestions chips, minimum-1-channel gate
+- Onboarding page steps - step rendering, auto-advance, schedule preview, scan progress
+- `ThemeProvider.tsx` + `ThemeToggle.tsx` - theme context, localStorage, system preference
+- `DashboardPage` - stale banner, plan rendering, announcements, swap picker
+- `SettingsPage` - display name, schedule save, delete account flow
+- `LibraryPage` - video rendering, filters, assign-to-day, pagination
+- `FeedbackWidget` - modal, category selection, submit, error/success states
+- `ScheduleEditor` - toggle rest/active, workout type/focus dropdowns, duration inputs
+- `ChannelManager` - suggestion card grid (thumbnail, + Add, ✓ Added, skeleton), one-click add calls API directly (no search), search flow unchanged
 
 ---
 
-## Manual E2E — Phase B (onboarding redesign)
+## Manual E2E - Phase B (onboarding redesign)
 
 Can be run against local dev servers or the live deployment.
 
@@ -93,18 +93,18 @@ Can be run against local dev servers or the live deployment.
 
 ---
 
-## Manual E2E — Phase 4 + 5
+## Manual E2E - Phase 4 + 5
 
 Can be run against either local servers or the live deployment.
 
 **Local:**
 ```bash
-# Terminal 1 — backend
+# Terminal 1 - backend
 cd ~/Projects/youtube-workout-planner
 set -a && source .env && set +a
 .venv/bin/uvicorn api.main:app --reload
 
-# Terminal 2 — frontend
+# Terminal 2 - frontend
 cd ~/Projects/youtube-workout-planner/frontend
 npm run dev
 ```
@@ -118,7 +118,7 @@ Delete checklist items as you verify them; delete the whole group when all ticke
 
 ---
 
-### Group 1 — Landing page
+### Group 1 - Landing page
 
 - [ ] Logo "Workout Planner" left, "Sign in" right
 - [ ] Hero: headline, sub-headline, "Get started free →" CTA, "Free · No credit card" badge
@@ -130,24 +130,24 @@ Delete checklist items as you verify them; delete the whole group when all ticke
 
 ---
 
-### Group 2 — Sign-in & onboarding (new user)
+### Group 2 - Sign-in & onboarding (new user)
 
 Sign out first (or use incognito) so you hit onboarding as a new user.
 
 - [ ] "Get started free" → Google OAuth consent screen → redirected back to `localhost:3000`
 - [ ] New user lands on `/onboarding` (not dashboard)
-- [ ] **Step 1 — Channels:** search returns results with thumbnails + descriptions
+- [ ] **Step 1 - Channels:** search returns results with thumbnails + descriptions
 - [ ] Adding a channel shows it in the list below; "Continue" enabled only after ≥1 added
-- [ ] **Step 2 — Schedule:** grid pre-filled with default split (Mon=Strength/Upper, Sun=Rest, etc.)
+- [ ] **Step 2 - Schedule:** grid pre-filled with default split (Mon=Strength/Upper, Sun=Rest, etc.)
 - [ ] Can toggle any day to rest; can change workout type / body focus / difficulty / duration
 - [ ] "Continue" navigates to Step 3
-- [ ] **Step 3 — Generate:** "Generate my first plan now" shows spinner, redirects to `/dashboard?scanning=1`
+- [ ] **Step 3 - Generate:** "Generate my first plan now" shows spinner, redirects to `/dashboard?scanning=1`
 - [ ] Dashboard shows "Scanning your channels…" banner; plan grid appears automatically when scan finishes (polls every 15s)
-- [ ] Returning user (already has channels) goes directly to `/dashboard` — onboarding skipped
+- [ ] Returning user (already has channels) goes directly to `/dashboard` - onboarding skipped
 
 ---
 
-### Group 3 — Dashboard
+### Group 3 - Dashboard
 
 - [ ] Header: user first name shown (e.g. "Harshit's plan"), week-of label beneath
 - [ ] Nav buttons present: Library | Settings | Regenerate | Publish to YouTube | Sign out
@@ -156,24 +156,24 @@ Sign out first (or use incognito) so you hit onboarding as a new user.
 - [ ] Each card shows title (2-line clamp), channel name, workout/body/difficulty badges
 - [ ] Clicking a video card opens YouTube in a new tab
 - [ ] Sunday shows "Rest day" placeholder card
-- [ ] "Regenerate" (when plan exists) triggers a new plan synchronously — "Generating…" banner shows briefly, grid updates
-- [ ] "Generate plan" (when no plan) starts full scan+classify+generate pipeline — scanning banner shows, plan appears when done
+- [ ] "Regenerate" (when plan exists) triggers a new plan synchronously - "Generating…" banner shows briefly, grid updates
+- [ ] "Generate plan" (when no plan) starts full scan+classify+generate pipeline - scanning banner shows, plan appears when done
 - [ ] No plan + no channels: empty state shows "Set up my plan →" link to onboarding (not the scan button)
 - [ ] Sign out clears session → redirected to `/`; back button does not restore dashboard
 
 **Publish to YouTube (Phase 5)**
 - [ ] "Publish to YouTube" button is active (red border), cursor is pointer
 - [ ] Clicking "Publish to YouTube" shows "Publishing…" while in flight
-- [ ] On success: green banner appears — "{N} videos added to your playlist" + "Open playlist →" link
+- [ ] On success: green banner appears - "{N} videos added to your playlist" + "Open playlist →" link
 - [ ] "Open playlist →" opens the correct YouTube playlist in a new tab
 - [ ] Playlist in YouTube contains the correct videos in Mon→Sat order
-- [ ] Publishing a second time (after regenerating) updates the same playlist — no duplicate playlist created
-- [ ] If YouTube access is revoked: amber banner — "Your YouTube access has been revoked…"
+- [ ] Publishing a second time (after regenerating) updates the same playlist - no duplicate playlist created
+- [ ] If YouTube access is revoked: amber banner - "Your YouTube access has been revoked…"
 - [ ] Revoked state: Publish button is greyed out with `cursor-not-allowed`; tooltip explains the issue
 
 ---
 
-### Group 4 — Library
+### Group 4 - Library
 
 - [ ] "← Back" returns to `/dashboard`
 - [ ] Total video count shown (e.g. "243 videos")
@@ -185,14 +185,14 @@ Sign out first (or use incognito) so you hit onboarding as a new user.
 - [ ] "Clear filters" resets all dropdowns and restores the full library
 - [ ] Channel dropdown hidden when user has only 1 channel
 - [ ] "Assign to day" dropdown → success shows "✓ Assigned to Mon" inline for ~2s, then resets
-- [ ] Assign when no plan exists → shows "Failed — generate a plan first" error
-- [ ] After assigning, navigate to dashboard — the newly assigned video appears on that day
+- [ ] Assign when no plan exists → shows "Failed - generate a plan first" error
+- [ ] After assigning, navigate to dashboard - the newly assigned video appears on that day
 - [ ] Pagination: Previous disabled on page 1; Next disabled on last page; no overlapping videos across pages
 - [ ] Applying a filter while on page >1 resets to page 1
 
 ---
 
-### Group 5 — Settings
+### Group 5 - Settings
 
 - [ ] "← Dashboard" link returns to `/dashboard`
 - [ ] **Profile:** display name editable; "Save" disabled when name is unchanged
@@ -211,7 +211,7 @@ Sign out first (or use incognito) so you hit onboarding as a new user.
 
 ---
 
-### Group 6 — API sanity (Swagger at `http://localhost:8000/docs`)
+### Group 6 - API sanity (Swagger at `http://localhost:8000/docs`)
 
 Authenticate via browser first (session cookie), then use Swagger:
 
@@ -225,7 +225,7 @@ Authenticate via browser first (session cookie), then use Swagger:
 
 ---
 
-### Group 7 — Mobile (resize browser to ~390px wide)
+### Group 7 - Mobile (resize browser to ~390px wide)
 
 - [ ] Landing page: single column, CTA button full-width
 - [ ] Dashboard grid: 1 column (mobile) → 2 columns (sm) → 4 columns (lg)
@@ -236,7 +236,7 @@ Authenticate via browser first (session cookie), then use Swagger:
 
 ---
 
-### Group 8 — Theme toggle (all pages)
+### Group 8 - Theme toggle (all pages)
 
 - [ ] On first visit (no localStorage), page renders in system-preferred theme (light or dark)
 - [ ] Floating sun/moon button visible bottom-right on all pages (dashboard, library, settings, guide)
@@ -247,7 +247,7 @@ Authenticate via browser first (session cookie), then use Swagger:
 
 ---
 
-### Group 9 — Feedback widget
+### Group 9 - Feedback widget
 
 - [ ] Floating "Feedback" pill visible bottom-right on dashboard, library, and settings pages
 - [ ] Clicking opens a modal with category dropdown (Feedback / Help / Bug report) and a textarea
@@ -257,7 +257,7 @@ Authenticate via browser first (session cookie), then use Swagger:
 
 ---
 
-### Group 10 — Guide page (`/guide`)
+### Group 10 - Guide page (`/guide`)
 
 - [ ] Page loads at `https://planmyworkout.vercel.app/guide`
 - [ ] Sticky sidebar nav visible on desktop (≥ lg breakpoint)
@@ -269,7 +269,7 @@ Authenticate via browser first (session cookie), then use Swagger:
 
 ---
 
-### Group 11 — Admin console (`/admin`)
+### Group 11 - Admin console (`/admin`)
 
 - [ ] Non-admin user hitting `/admin` sees "Access denied" (or redirect)
 - [ ] Admin user sees stat cards: Total users, Library size, AI usage (7d), AI usage (all-time)

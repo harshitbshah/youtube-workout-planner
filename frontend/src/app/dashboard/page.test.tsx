@@ -129,7 +129,7 @@ beforeEach(() => {
 // Stale plan banner
 // ---------------------------------------------------------------------------
 
-describe("DashboardPage — stale plan banner", () => {
+describe("DashboardPage - stale plan banner", () => {
   it("shows banner when week_start is from a past week", async () => {
     mockGetUpcomingPlan.mockResolvedValue(makePlan("2000-01-03"));
     render(<DashboardPage />);
@@ -181,7 +181,7 @@ describe("DashboardPage — stale plan banner", () => {
 // Plan rendering
 // ---------------------------------------------------------------------------
 
-describe("DashboardPage — plan display", () => {
+describe("DashboardPage - plan display", () => {
   it("renders video title from the plan", async () => {
     mockGetUpcomingPlan.mockResolvedValue(makePlan(getCurrentMondayISO()));
     render(<DashboardPage />);
@@ -219,7 +219,7 @@ describe("DashboardPage — plan display", () => {
 // Announcement banner
 // ---------------------------------------------------------------------------
 
-describe("DashboardPage — announcement banner", () => {
+describe("DashboardPage - announcement banner", () => {
   it("shows announcement when active announcement exists", async () => {
     mockGetUpcomingPlan.mockResolvedValue(null);
     mockGetActiveAnnouncement.mockResolvedValue({
@@ -253,7 +253,7 @@ describe("DashboardPage — announcement banner", () => {
 // Swap picker
 // ---------------------------------------------------------------------------
 
-describe("DashboardPage — swap picker", () => {
+describe("DashboardPage - swap picker", () => {
   it("shows 'Swap video' button for each plan day", async () => {
     mockGetUpcomingPlan.mockResolvedValue(makePlan(getCurrentMondayISO()));
     render(<DashboardPage />);

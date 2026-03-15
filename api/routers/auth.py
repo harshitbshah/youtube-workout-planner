@@ -1,5 +1,5 @@
 """
-auth.py — Google OAuth 2.0 login/logout routes.
+auth.py - Google OAuth 2.0 login/logout routes.
 
 Flow:
   1. GET /auth/google         → redirect to Google consent screen
@@ -98,7 +98,7 @@ async def google_callback(
 ):
     """Exchange OAuth code for tokens, upsert user, and set session."""
     if state != request.session.get("oauth_state"):
-        raise HTTPException(status_code=400, detail="Invalid OAuth state — possible CSRF")
+        raise HTTPException(status_code=400, detail="Invalid OAuth state - possible CSRF")
 
     tokens = await _exchange_code_for_tokens(code)
     userinfo = await _get_google_userinfo(tokens["access_token"])

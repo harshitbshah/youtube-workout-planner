@@ -1,4 +1,4 @@
-"""Initial schema — users, channels, videos, classifications, schedules, history, credentials
+"""Initial schema - users, channels, videos, classifications, schedules, history, credentials
 
 Revision ID: 001
 Revises:

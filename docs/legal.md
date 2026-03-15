@@ -3,18 +3,18 @@
 ## V0 Launch (must-have)
 
 ### Legal Documents
-- **Privacy Policy** — required by Google API ToS (no exceptions)
-- **Terms of Service** — covers liability limits, acceptable use, account termination, IP ownership
+- **Privacy Policy** - required by Google API ToS (no exceptions)
+- **Terms of Service** - covers liability limits, acceptable use, account termination, IP ownership
 - Generate both using Termly or GetTerms for v0; lawyer review before any paid tier
 - Host at `/privacy` and `/terms`, linked in footer on every page
 
 ### Onboarding Consent
-1. Account creation: checkbox — *"I agree to the Terms of Service and Privacy Policy"*
+1. Account creation: checkbox - *"I agree to the Terms of Service and Privacy Policy"*
 2. Before first plan is generated: health disclaimer acknowledgment (one-time checkbox, never shown again)
 
 ### Footer (all pages)
 - Links to Privacy Policy and Terms of Service
-- *"This product uses the YouTube API Services"* — link to [YouTube ToS](https://www.youtube.com/t/terms) and [Google Privacy Policy](https://policies.google.com/privacy) (required by YouTube API ToS)
+- *"This product uses the YouTube API Services"* - link to [YouTube ToS](https://www.youtube.com/t/terms) and [Google Privacy Policy](https://policies.google.com/privacy) (required by YouTube API ToS)
 - *"Not affiliated with YouTube, Google, or any featured channels"*
 
 ### Data Deletion
@@ -45,6 +45,6 @@
 ---
 
 ## Notes
-- Platform-pays model means Anthropic API costs are on us — no need for billing disclaimers at v0
+- Platform-pays model means Anthropic API costs are on us - no need for billing disclaimers at v0
 - YouTube OAuth scopes: only request minimum needed; display clearly what access is requested on the consent screen
-- Channel creators could object to being featured — ToS should include a clause covering this
+- Channel creators could object to being featured - ToS should include a clause covering this

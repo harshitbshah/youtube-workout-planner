@@ -1,5 +1,5 @@
 """
-main.py — FastAPI application entry point.
+main.py - FastAPI application entry point.
 
 Run locally:
     cd ~/Projects/youtube-workout-planner

@@ -1,10 +1,10 @@
 """
-jobs.py — Background job endpoints.
+jobs.py - Background job endpoints.
 
 Routes:
-  POST /jobs/scan                        — full pipeline: scan all channels → classify → generate plan
-  POST /jobs/classify                    — classify unclassified videos only
-  POST /jobs/channels/{channel_id}/scan  — scan a single channel for new videos then classify them
+  POST /jobs/scan                        - full pipeline: scan all channels → classify → generate plan
+  POST /jobs/classify                    - classify unclassified videos only
+  POST /jobs/channels/{channel_id}/scan  - scan a single channel for new videos then classify them
 """
 
 import logging
@@ -23,7 +23,7 @@ router = APIRouter(prefix="/jobs", tags=["jobs"])
 
 YOUTUBE_API_KEY = os.getenv("YOUTUBE_API_KEY", "")
 
-# In-memory pipeline status per user. Lost on restart (acceptable — if the server
+# In-memory pipeline status per user. Lost on restart (acceptable - if the server
 # restarts mid-scan the background task is killed anyway).
 # Shape: {"stage": str, "total": int | None, "done": int | None}
 # stage values: "scanning" | "classifying" | "generating" | "done" | "failed"
@@ -148,7 +148,7 @@ def _run_full_pipeline(user_id: str):
 
         # ── Stage 3: Check if plan can be filled without Anthropic ───────────
         if can_fill_plan(session, user_id):
-            logger.info(f"[pipeline] user={user_id}: plan fillable after rule-classify — skipping Anthropic batch")
+            logger.info(f"[pipeline] user={user_id}: plan fillable after rule-classify - skipping Anthropic batch")
             _pipeline_status[user_id] = {"stage": "generating", "total": None, "done": None, "background_classifying": True}
             try:
                 generate_weekly_plan_for_user(session, user_id)
@@ -177,7 +177,7 @@ def _run_full_pipeline(user_id: str):
                 except Exception as e:
                     logger.error(f"[classify] Failed for user {user_id}: {e}", exc_info=True)
             else:
-                logger.info(f"[classify] No targeted videos matched gap types — proceeding with current pool")
+                logger.info(f"[classify] No targeted videos matched gap types - proceeding with current pool")
 
             _pipeline_status[user_id] = {"stage": "generating", "total": None, "done": None, "background_classifying": True}
             try:

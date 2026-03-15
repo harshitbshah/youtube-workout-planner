@@ -1,9 +1,9 @@
 """
 Tests for jobs endpoints:
-  POST /jobs/scan                 — full pipeline (scan all channels → classify → generate plan)
-  POST /jobs/channels/{id}/scan   — per-channel scan
+  POST /jobs/scan                 - full pipeline (scan all channels → classify → generate plan)
+  POST /jobs/channels/{id}/scan   - per-channel scan
 
-YouTube API calls and the scan/classify pipeline are mocked — no real network calls.
+YouTube API calls and the scan/classify pipeline are mocked - no real network calls.
 """
 
 from unittest.mock import MagicMock, patch
@@ -24,7 +24,7 @@ def _add_channel(db_session, user):
     return ch
 
 
-# ─── POST /jobs/scan — full pipeline ──────────────────────────────────────────
+# ─── POST /jobs/scan - full pipeline ──────────────────────────────────────────
 
 def test_full_pipeline_scan_returns_202(auth_client, db_session):
     """Returns 202 and enqueues background task when user has channels."""
@@ -41,7 +41,7 @@ def test_full_pipeline_scan_returns_202(auth_client, db_session):
 
 
 def test_full_pipeline_scan_no_channels_returns_400(auth_client):
-    """Returns 400 when the user has no channels — nothing to scan."""
+    """Returns 400 when the user has no channels - nothing to scan."""
     client, user = auth_client
     with patch("api.routers.jobs.YOUTUBE_API_KEY", "fake-key"):
         resp = client.post("/jobs/scan")
@@ -78,7 +78,7 @@ def test_full_pipeline_scan_message_includes_channel_count(auth_client, db_sessi
     assert "2" in resp.json()["message"]
 
 
-# ─── POST /channels/{id}/scan — per-channel ───────────────────────────────────
+# ─── POST /channels/{id}/scan - per-channel ───────────────────────────────────
 
 def test_trigger_scan_returns_202(auth_client, db_session):
     client, user = auth_client
@@ -255,10 +255,10 @@ def test_upper_duration_cap():
 
     # Simulate the filter logic used in _scan_uploads
     videos = [
-        {"id": "ok", "duration_sec": 3600},       # 1 hour — keep
-        {"id": "too-long", "duration_sec": 7201},  # > 2 hours — drop
-        {"id": "too-short", "duration_sec": 60},   # < 3 min — drop
-        {"id": "none-dur", "duration_sec": None},  # unknown — drop
+        {"id": "ok", "duration_sec": 3600},       # 1 hour - keep
+        {"id": "too-long", "duration_sec": 7201},  # > 2 hours - drop
+        {"id": "too-short", "duration_sec": 60},   # < 3 min - drop
+        {"id": "none-dur", "duration_sec": None},  # unknown - drop
     ]
     kept = [v for v in videos if v.get("duration_sec") and 180 <= v["duration_sec"] <= _MAX_DURATION_SEC]
     assert [v["id"] for v in kept] == ["ok"]
@@ -363,7 +363,7 @@ def test_classify_cap_limits_batch(db_session):
     db_session.add(UserChannel(user_id=user.id, channel_id=ch.id))
     db_session.commit()
 
-    # Add MAX_CLASSIFY_PER_RUN + 10 videos — only the first batch should be classified
+    # Add MAX_CLASSIFY_PER_RUN + 10 videos - only the first batch should be classified
     for i in range(MAX_CLASSIFY_PER_RUN + 10):
         db_session.add(Video(
             id=f"cap-vid-{i}", channel_id=ch.id, title=f"Video {i}",
@@ -450,7 +450,7 @@ def test_is_blocked_title_rejects_non_workout():
     from api.services.scanner import _is_blocked_title
     assert _is_blocked_title("My Meal Prep for the Week") is True
     assert _is_blocked_title("Weekly Grocery Haul") is True
-    assert _is_blocked_title("Q&A — Your Questions Answered") is True
+    assert _is_blocked_title("Q&A - Your Questions Answered") is True
     assert _is_blocked_title("Vlog: Day In My Life") is True
     assert _is_blocked_title("Unboxing: New Home Gym Gear") is True
 
@@ -459,7 +459,7 @@ def test_is_blocked_title_allows_workout():
     from api.services.scanner import _is_blocked_title
     assert _is_blocked_title("30 Min Full Body Workout") is False
     assert _is_blocked_title("HIIT Cardio Beginner Training") is False
-    assert _is_blocked_title("Upper Body Strength — No Equipment") is False
+    assert _is_blocked_title("Upper Body Strength - No Equipment") is False
     assert _is_blocked_title("10 Min Core Workout for Beginners") is False
 
 

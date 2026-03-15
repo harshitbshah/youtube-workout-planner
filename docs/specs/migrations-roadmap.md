@@ -1,6 +1,6 @@
 # Migrations Roadmap
 
-Canonical list of all database migrations — live and planned — in sequence.
+Canonical list of all database migrations - live and planned - in sequence.
 Update this file whenever a new migration is added or a spec claims a migration number.
 
 **Live DB:** migrations 001–008 (Railway, as of 2026-03-13)
@@ -16,9 +16,9 @@ Update this file whenever a new migration is added or a spec claims a migration 
 | 003 | `003_add_classifier_batch_id.py` | `user_credentials.classifier_batch_id` | Pipeline reliability |
 | 004 | `004_add_last_active_batch_log_announcements.py` | `users.last_active_at`, `batch_usage_log`, `announcements` | Admin console |
 | 005 | `005_add_scan_log_user_activity_log.py` | `scan_log`, `user_activity_log` | Admin charts |
-| 006 | `006_add_channel_first_scan_done.py` | `channels.first_scan_done` | Phase A — F3 |
-| 007 | `007_add_channel_last_video_published_at.py` | `channels.last_video_published_at` | Phase A — F4 |
-| 008 | `008_add_user_last_scan_error.py` | `users.last_scan_error` | Phase A — graceful failure |
+| 006 | `006_add_channel_first_scan_done.py` | `channels.first_scan_done` | Phase A - F3 |
+| 007 | `007_add_channel_last_video_published_at.py` | `channels.last_video_published_at` | Phase A - F4 |
+| 008 | `008_add_user_last_scan_error.py` | `users.last_scan_error` | Phase A - graceful failure |
 
 ---
 
@@ -38,7 +38,7 @@ Update this file whenever a new migration is added or a spec claims a migration 
 
 ## Notes
 
-- Migration 009 consolidates all Phase O1 + O3 `users` columns and `program_history` additions into a single migration. `life_stage` and `goal` added here satisfy both Phase O1 and the prerequisite for Phase R3 — no separate migration needed for R3.
+- Migration 009 consolidates all Phase O1 + O3 `users` columns and `program_history` additions into a single migration. `life_stage` and `goal` added here satisfy both Phase O1 and the prerequisite for Phase R3 - no separate migration needed for R3.
 - Migrations 013 and 014 (F7, F8) are deferred until real users justify the cost controls.
 - Migration 015 (email) is deferred until Resend + custom domain are set up.
 - If features are implemented out of order, renumber accordingly. Always confirm the live state with `ls alembic/versions/` before writing a migration file.

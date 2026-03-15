@@ -14,7 +14,7 @@ interface Props {
   onChannelsChange: (channels: ChannelResponse[]) => void;
   /** Pre-fetched suggestion cards from GET /channels/suggestions */
   suggestions?: ChannelSearchResult[];
-  /** True while the parent is fetching suggestions — shows skeleton cards */
+  /** True while the parent is fetching suggestions - shows skeleton cards */
   suggestionsLoading?: boolean;
 }
 

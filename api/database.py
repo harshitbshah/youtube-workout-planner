@@ -1,5 +1,5 @@
 """
-database.py — SQLAlchemy engine and session factory.
+database.py - SQLAlchemy engine and session factory.
 
 DATABASE_URL is read from the environment. Default points to local PostgreSQL.
 Tests override this with a SQLite in-memory URL via dependency injection.

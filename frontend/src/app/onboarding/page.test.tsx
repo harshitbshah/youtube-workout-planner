@@ -43,7 +43,7 @@ function clickNext() {
   fireEvent.click(screen.getByRole("button", { name: /Next →/i }));
 }
 
-describe("OnboardingPage — Step 1 (Life Stage)", () => {
+describe("OnboardingPage - Step 1 (Life Stage)", () => {
   it("renders life stage heading", () => {
     render(<OnboardingPage />);
     expect(screen.getByText(/First, tell us a bit about yourself/i)).toBeInTheDocument();
@@ -70,7 +70,7 @@ describe("OnboardingPage — Step 1 (Life Stage)", () => {
   });
 });
 
-describe("OnboardingPage — Step 2 (Goal)", () => {
+describe("OnboardingPage - Step 2 (Goal)", () => {
   it("shows adult goals after selecting 'Active adult' and clicking Next", () => {
     render(<OnboardingPage />);
     fireEvent.click(screen.getByText("Active adult"));
@@ -125,7 +125,7 @@ describe("OnboardingPage — Step 2 (Goal)", () => {
   });
 });
 
-describe("OnboardingPage — Step 3 (Training Days)", () => {
+describe("OnboardingPage - Step 3 (Training Days)", () => {
   function goToStep3(profile = "Active adult", goal = "Build muscle") {
     render(<OnboardingPage />);
     fireEvent.click(screen.getByText(profile));
@@ -165,7 +165,7 @@ describe("OnboardingPage — Step 3 (Training Days)", () => {
   });
 });
 
-describe("OnboardingPage — Step 4 (Session Length)", () => {
+describe("OnboardingPage - Step 4 (Session Length)", () => {
   function goToStep4(profile = "Active adult", goal = "Build muscle", days = "4") {
     render(<OnboardingPage />);
     fireEvent.click(screen.getByText(profile));
@@ -214,7 +214,7 @@ describe("OnboardingPage — Step 4 (Session Length)", () => {
   });
 });
 
-describe("OnboardingPage — Step 5 (Schedule Preview)", () => {
+describe("OnboardingPage - Step 5 (Schedule Preview)", () => {
   function goToStep5(profile = "Active adult", goal = "Build muscle", days = "4", duration = "25–35 min") {
     render(<OnboardingPage />);
     fireEvent.click(screen.getByText(profile));
@@ -287,7 +287,7 @@ describe("OnboardingPage — Step 5 (Schedule Preview)", () => {
   });
 });
 
-describe("OnboardingPage — Step 6 (Email Notifications)", () => {
+describe("OnboardingPage - Step 6 (Email Notifications)", () => {
   async function goToStep6(profile = "Active adult", goal = "Build muscle") {
     render(<OnboardingPage />);
     fireEvent.click(screen.getByText(profile));
@@ -352,7 +352,7 @@ describe("OnboardingPage — Step 6 (Email Notifications)", () => {
   });
 });
 
-describe("OnboardingPage — Step 7 (Channels)", () => {
+describe("OnboardingPage - Step 7 (Channels)", () => {
   async function goToStep7(profile = "Active adult", goal = "Build muscle") {
     render(<OnboardingPage />);
     fireEvent.click(screen.getByText(profile));
@@ -403,7 +403,7 @@ describe("OnboardingPage — Step 7 (Channels)", () => {
   });
 });
 
-describe("OnboardingPage — Step 8 (Progress)", () => {
+describe("OnboardingPage - Step 8 (Progress)", () => {
   async function goToStep8() {
     const mockAddChannel = api.addChannel as ReturnType<typeof vi.fn>;
     mockAddChannel.mockResolvedValue({
@@ -457,7 +457,7 @@ describe("OnboardingPage — Step 8 (Progress)", () => {
   });
 });
 
-describe("OnboardingPage — Step Indicator", () => {
+describe("OnboardingPage - Step Indicator", () => {
   it("shows 'Profile' as active on step 1", () => {
     render(<OnboardingPage />);
     const profileEl = screen.getByText("Profile");

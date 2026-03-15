@@ -1,5 +1,5 @@
 """
-tests/api/test_email.py — Unit tests for api/services/email.py
+tests/api/test_email.py - Unit tests for api/services/email.py
 
 Mocks resend.Emails.send and src.planner.get_upcoming_monday so tests
 run with no network access and a deterministic week_start date.
@@ -87,7 +87,7 @@ def test_send_html_contains_youtube_urls():
 
 
 def test_send_html_excludes_rest_days():
-    """HTML body does not include rest days — only active workout days are shown."""
+    """HTML body does not include rest days - only active workout days are shown."""
     plan = _make_plan(active_days=3)
     with (
         patch.dict(os.environ, {"RESEND_API_KEY": "re_test123"}),

@@ -64,7 +64,7 @@ def test_put_schedule_replaces_all(auth_client, db_session):
     # Days not in the PUT body are returned as rest days
     assert schedule["thursday"]["workout_type"] is None
 
-    # Old cardio entry is gone — replaced by strength
+    # Old cardio entry is gone - replaced by strength
     rows = db_session.query(Schedule).filter(Schedule.user_id == user.id).all()
     by_day = {r.day: r for r in rows}
     assert by_day["monday"].workout_type == "strength"

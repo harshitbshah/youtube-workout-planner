@@ -1,7 +1,7 @@
 """
 Tests for Google OAuth routes.
 
-All HTTP calls to Google are mocked — no real network calls are made.
+All HTTP calls to Google are mocked - no real network calls are made.
 """
 
 from unittest.mock import AsyncMock, patch
@@ -67,7 +67,7 @@ def test_callback_creates_user_and_sets_session(client, db_session):
 
 
 def test_callback_updates_existing_user(client, db_session):
-    # First login — creates user
+    # First login - creates user
     login_resp = client.get("/auth/google", follow_redirects=False)
     state = login_resp.headers["location"].split("state=")[1].split("&")[0]
 
@@ -76,7 +76,7 @@ def test_callback_updates_existing_user(client, db_session):
          patch("api.routers.auth._get_google_userinfo", new=AsyncMock(return_value=mock_userinfo_resp.json())):
         client.get(f"/auth/google/callback?code=c&state={state}", follow_redirects=False)
 
-    # Second login — same google_id, updated name
+    # Second login - same google_id, updated name
     login_resp2 = client.get("/auth/google", follow_redirects=False)
     state2 = login_resp2.headers["location"].split("state=")[1].split("&")[0]
 

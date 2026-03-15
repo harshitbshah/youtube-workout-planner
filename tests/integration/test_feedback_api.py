@@ -1,5 +1,5 @@
 """
-tests/integration/test_feedback_api.py — Integration tests for POST /feedback.
+tests/integration/test_feedback_api.py - Integration tests for POST /feedback.
 
 Runs against real PostgreSQL. send_feedback_email is mocked (no Resend calls).
 """

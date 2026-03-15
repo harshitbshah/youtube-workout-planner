@@ -2,7 +2,7 @@ import src.db as db_module
 from src.scanner import _parse_duration, _save_videos
 
 
-# ─── Pure function tests — no DB needed ───────────────────────────────────────
+# ─── Pure function tests - no DB needed ───────────────────────────────────────
 
 def test_parse_duration_full():
     assert _parse_duration("PT1H2M3S") == 3723

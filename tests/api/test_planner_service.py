@@ -1,5 +1,5 @@
 """
-Tests for api/services/planner.py — plan generation against SQLAlchemy DB.
+Tests for api/services/planner.py - plan generation against SQLAlchemy DB.
 """
 
 import uuid

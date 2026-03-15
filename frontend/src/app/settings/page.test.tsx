@@ -78,7 +78,7 @@ beforeEach(() => {
   (api.getSuggestions as ReturnType<typeof vi.fn>).mockResolvedValue([]);
 });
 
-describe("SettingsPage — initial render", () => {
+describe("SettingsPage - initial render", () => {
   it("renders the Settings heading", async () => {
     render(<SettingsPage />);
     await waitFor(() => expect(screen.getByText("Settings")).toBeInTheDocument());
@@ -107,7 +107,7 @@ describe("SettingsPage — initial render", () => {
   });
 });
 
-describe("SettingsPage — display name", () => {
+describe("SettingsPage - display name", () => {
   it("Save button is disabled when name matches current value", async () => {
     render(<SettingsPage />);
     await waitFor(() => screen.getByDisplayValue("Harshit"));
@@ -144,7 +144,7 @@ describe("SettingsPage — display name", () => {
   });
 });
 
-describe("SettingsPage — schedule", () => {
+describe("SettingsPage - schedule", () => {
   it("calls updateSchedule when 'Save schedule' is clicked", async () => {
     render(<SettingsPage />);
     await waitFor(() => screen.getByRole("button", { name: /Save schedule/i }));
@@ -172,7 +172,7 @@ describe("SettingsPage — schedule", () => {
   });
 });
 
-describe("SettingsPage — delete account", () => {
+describe("SettingsPage - delete account", () => {
   it("shows 'Delete my account' button", async () => {
     render(<SettingsPage />);
     await waitFor(() =>

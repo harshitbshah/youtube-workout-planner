@@ -1,9 +1,9 @@
 """
-schedule.py — Get and update the user's weekly training schedule.
+schedule.py - Get and update the user's weekly training schedule.
 
 Routes:
-  GET /schedule     — return all 7 days (rest days have workout_type=None)
-  PUT /schedule     — replace the full schedule
+  GET /schedule     - return all 7 days (rest days have workout_type=None)
+  PUT /schedule     - replace the full schedule
 """
 
 from fastapi import APIRouter, Depends

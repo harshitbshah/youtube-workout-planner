@@ -6,7 +6,7 @@ Create Date: 2026-03-14
 
 Stores the user's onboarding profile (beginner/adult/senior/athlete) and goal
 (e.g. "Build muscle") so the channel validator can check fitness relevance.
-Both are nullable — users who completed onboarding before this migration are
+Both are nullable - users who completed onboarding before this migration are
 unaffected and simply skip validation.
 """
 

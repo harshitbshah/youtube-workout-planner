@@ -1,5 +1,5 @@
 """
-get_oauth_token.py — One-time local script to generate a YouTube OAuth refresh token.
+get_oauth_token.py - One-time local script to generate a YouTube OAuth refresh token.
 
 Run this ONCE on your local machine:
   python scripts/get_oauth_token.py
@@ -71,7 +71,7 @@ def main():
     creds = flow.run_local_server(port=0, prompt="consent")
 
     print("\n" + "=" * 60)
-    print("SUCCESS — copy these values into your GitHub Secrets:")
+    print("SUCCESS - copy these values into your GitHub Secrets:")
     print("=" * 60)
     print(f"\nYOUTUBE_CLIENT_ID\n  {creds.client_id}")
     print(f"\nYOUTUBE_CLIENT_SECRET\n  {creds.client_secret}")

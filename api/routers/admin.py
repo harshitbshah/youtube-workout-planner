@@ -1,5 +1,5 @@
 """
-admin.py — Admin-only stats and management endpoints.
+admin.py - Admin-only stats and management endpoints.
 
 Access to /admin/* is restricted to the email set in the ADMIN_EMAIL env var.
 GET /announcements/active is open to any authenticated user (dashboard banner).
@@ -48,7 +48,7 @@ def _require_admin(current_user: User = Depends(get_current_user)):
     return current_user
 
 
-# ─── Active announcement (for dashboard — any authenticated user) ──────────────
+# ─── Active announcement (for dashboard - any authenticated user) ──────────────
 
 @router.get("/announcements/active")
 def get_active_announcement(

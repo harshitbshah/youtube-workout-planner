@@ -261,7 +261,7 @@ export default function SettingsPage() {
           <div className="rounded-xl border border-red-900/50 bg-white dark:bg-zinc-900 p-6">
             <h2 className="text-sm font-semibold text-red-400 mb-2">Danger zone</h2>
             <p className="text-xs text-zinc-500 mb-5">
-              Permanently delete your account and all data — channels, schedule, plan history.
+              Permanently delete your account and all data - channels, schedule, plan history.
               This cannot be undone.
             </p>
 

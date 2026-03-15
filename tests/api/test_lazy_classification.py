@@ -1,5 +1,5 @@
 """
-Unit tests for lazy classification — plan-first, classify-lazily.
+Unit tests for lazy classification - plan-first, classify-lazily.
 
 Tests:
   - can_fill_plan / get_gap_types (planner.py)
@@ -123,7 +123,7 @@ def test_can_fill_plan_false_when_slot_has_too_few_candidates(db_session):
 
 def test_can_fill_plan_true_when_no_workout_slots(db_session):
     u = _user(db_session, "d")
-    # No schedule at all — trivially fillable
+    # No schedule at all - trivially fillable
     assert can_fill_plan(db_session, str(u.id)) is True
 
 
@@ -272,7 +272,7 @@ def test_build_targeted_batch_remainder_gets_non_matching(db_session):
     _unclassified_video(db_session, ch, title="Yoga Morning Flow", vid_id="yoga1")
     _unclassified_video(db_session, ch, title="Random Vlog", vid_id="vlog1")
 
-    # Gap is HIIT — neither video matches
+    # Gap is HIIT - neither video matches
     gap_types = [{"workout_type": "HIIT", "duration_min": 20, "duration_max": 45}]
     targeted, remainder = build_targeted_batch(str(u.id), gap_types, db_session)
 
@@ -307,12 +307,12 @@ def _fake_anthropic_client(results=None):
 
 
 def test_classify_for_user_preselected_skips_fetch_and_rule_classify(db_session):
-    """When preselected_videos provided, only those videos are submitted — no DB fetch."""
+    """When preselected_videos provided, only those videos are submitted - no DB fetch."""
     from api.services.classifier import classify_for_user
 
     u = _user(db_session, "q")
     ch = _channel(db_session, u, "q")
-    # Add an unclassified video in DB — should NOT be fetched when preselected used
+    # Add an unclassified video in DB - should NOT be fetched when preselected used
     _unclassified_video(db_session, ch, title="HIIT Blast", vid_id="db_vid")
 
     targeted = [{"id": "ext_vid", "title": "Strength Training", "description": "", "duration_sec": 1800, "tags": None}]
@@ -367,7 +367,7 @@ def test_classify_for_user_preselected_respects_max_classify_cap(db_session, mon
 # ─── Additional can_fill_plan / get_gap_types edge cases ──────────────────────
 
 def test_can_fill_plan_true_when_no_schedule_rows(db_session):
-    """User with zero Schedule rows — trivially fillable."""
+    """User with zero Schedule rows - trivially fillable."""
     u = _user(db_session, "t")
     assert can_fill_plan(db_session, str(u.id)) is True
 
@@ -434,17 +434,17 @@ def test_get_gap_types_duplicate_slots_same_workout_type(db_session):
     _schedule_slot(db_session, u, "monday", "HIIT", duration_min=20, duration_max=45)
     _schedule_slot(db_session, u, "wednesday", "HIIT", duration_min=20, duration_max=45)
 
-    # Add exactly MIN_PLAN_CANDIDATES videos — enough for each slot independently
+    # Add exactly MIN_PLAN_CANDIDATES videos - enough for each slot independently
     for _ in range(MIN_PLAN_CANDIDATES):
         _classified_video(db_session, ch, workout_type="HIIT", duration_sec=1800)
 
-    # Both slots share the same pool; each query finds MIN_PLAN_CANDIDATES — no gaps
+    # Both slots share the same pool; each query finds MIN_PLAN_CANDIDATES - no gaps
     gaps = get_gap_types(db_session, str(u.id))
     assert gaps == []
 
 
 def test_get_gap_types_multiple_identical_types_with_thin_pool(db_session):
-    """Two HIIT slots where pool has < MIN_PLAN_CANDIDATES — both slots reported as gaps."""
+    """Two HIIT slots where pool has < MIN_PLAN_CANDIDATES - both slots reported as gaps."""
     u = _user(db_session, "y")
     _schedule_slot(db_session, u, "monday", "HIIT", duration_min=20, duration_max=45)
     _schedule_slot(db_session, u, "wednesday", "HIIT", duration_min=20, duration_max=45)
@@ -471,7 +471,7 @@ def test_rule_classify_idempotent(db_session):
 
 
 def test_title_classify_null_title_returns_none():
-    """title_classify with None title returns None safely — no TypeError."""
+    """title_classify with None title returns None safely - no TypeError."""
     from api.services.classifier import title_classify
     assert title_classify(None, 1800) is None
     assert title_classify("", 1800) is None
@@ -482,7 +482,7 @@ def test_rule_classify_skips_old_videos(db_session, monkeypatch):
     monkeypatch.setenv("CLASSIFY_MAX_AGE_MONTHS", "1")
     u = _user(db_session, "z3")
     ch = _channel(db_session, u, "z3")
-    # Published 6 months ago — beyond 1-month cutoff
+    # Published 6 months ago - beyond 1-month cutoff
     _unclassified_video(db_session, ch, title="HIIT Blast",
                         vid_id="old_vid")
     # Manually set published_at to be old
@@ -543,7 +543,7 @@ def test_build_targeted_batch_cap_with_multiple_gap_types(db_session):
 
 
 def test_build_targeted_batch_unknown_gap_type_goes_to_remainder(db_session):
-    """Gap type 'Other' has no pattern — all unclassified go to remainder (silent miss)."""
+    """Gap type 'Other' has no pattern - all unclassified go to remainder (silent miss)."""
     u = _user(db_session, "z7")
     ch = _channel(db_session, u, "z7")
     _unclassified_video(db_session, ch, title="Fun Workout", vid_id="other_vid")

@@ -1,5 +1,5 @@
 """
-api/services/planner.py — Weekly plan generation scoped to a user.
+api/services/planner.py - Weekly plan generation scoped to a user.
 
 Reuses pure functions from src/planner.py (scoring, formatting, date helpers).
 All DB queries go through SQLAlchemy against PostgreSQL (or SQLite in tests).
@@ -100,7 +100,7 @@ def _fetch_candidates_for_user(
     cutoff = (datetime.now(timezone.utc) - timedelta(weeks=history_weeks)).date()
 
     # Subquery: video IDs used within the history window for this user.
-    # Must exclude NULL rows (Rest days) — NOT IN with a NULL in the list
+    # Must exclude NULL rows (Rest days) - NOT IN with a NULL in the list
     # makes the condition always false in SQL, excluding every video.
     recent_video_ids = (
         session.query(ProgramHistory.video_id)

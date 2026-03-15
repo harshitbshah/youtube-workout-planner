@@ -1,9 +1,9 @@
 """
-Phase D unit tests — AI Cost Reduction features 5 & 6.
+Phase D unit tests - AI Cost Reduction features 5 & 6.
 
-F5: Adaptive payload trimming — descriptive titles skip transcript fetch and use
+F5: Adaptive payload trimming - descriptive titles skip transcript fetch and use
     a shorter description limit before submitting to the AI batch.
-F6: Rule-based title pre-classifier — obvious titles are classified without any
+F6: Rule-based title pre-classifier - obvious titles are classified without any
     AI call; only ambiguous titles are sent to Anthropic.
 
 All tests use SQLite in-memory; no real network calls.
@@ -158,7 +158,7 @@ def test_f5_descriptive_title_uses_short_description(db_session):
     assert len(captured_videos[0]["description"]) == 300
 
 
-# ─── F6: title_classify — type detection ──────────────────────────────────────
+# ─── F6: title_classify - type detection ──────────────────────────────────────
 
 def test_f6_hiit_title():
     result = title_classify("30 Min HIIT Cardio Blast", 1800)
@@ -199,7 +199,7 @@ def test_f6_vlog_title_returns_none():
     assert result is None
 
 
-# ─── F6: title_classify — body focus detection ───────────────────────────────
+# ─── F6: title_classify - body focus detection ───────────────────────────────
 
 def test_f6_upper_body_focus():
     result = title_classify("Upper Body Strength Workout", 1800)
@@ -223,7 +223,7 @@ def test_f6_default_full_body_when_no_focus_keyword():
     assert result["body_focus"] == "full"
 
 
-# ─── F6: title_classify — difficulty detection ────────────────────────────────
+# ─── F6: title_classify - difficulty detection ────────────────────────────────
 
 def test_f6_beginner_difficulty():
     result = title_classify("Beginner Yoga Flow", 2400)
@@ -238,7 +238,7 @@ def test_f6_default_intermediate_difficulty():
     assert result["difficulty"] == "intermediate"
 
 
-# ─── F6: title_classify — warmup / cooldown flags ─────────────────────────────
+# ─── F6: title_classify - warmup / cooldown flags ─────────────────────────────
 
 def test_f6_warmup_detected():
     result = title_classify("HIIT Warm-Up and Full Body Workout", 1800)
@@ -254,7 +254,7 @@ def test_f6_no_warmup_cooldown_by_default():
     assert result["has_cooldown"] is False
 
 
-# ─── F6: end-to-end — rule-classified videos skip AI batch ────────────────────
+# ─── F6: end-to-end - rule-classified videos skip AI batch ────────────────────
 
 def test_f6_obvious_videos_skip_ai_batch(db_session):
     """Videos with obvious titles are classified without an AI call."""
@@ -270,7 +270,7 @@ def test_f6_obvious_videos_skip_ai_batch(db_session):
         from api.services.classifier import classify_for_user
         total = classify_for_user(db_session, user.id, api_key="fake-key")
 
-    # Both classified by rules — AI batch never submitted
+    # Both classified by rules - AI batch never submitted
     mock_client.messages.batches.create.assert_not_called()
     assert total == 2
 

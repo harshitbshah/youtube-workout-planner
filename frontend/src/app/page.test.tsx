@@ -31,7 +31,7 @@ beforeEach(() => {
   mockGetMe.mockRejectedValue(new Error("Unauthenticated"));
 });
 
-describe("LandingPage — unauthenticated", () => {
+describe("LandingPage - unauthenticated", () => {
   it("renders sign-in links after auth check fails", async () => {
     render(<LandingPage />);
     await waitFor(() =>
@@ -50,13 +50,13 @@ describe("LandingPage — unauthenticated", () => {
   });
 });
 
-describe("LandingPage — authenticated redirect", () => {
+describe("LandingPage - authenticated redirect", () => {
   it("redirects to dashboard when user has channels", async () => {
     const replace = vi.fn();
     vi.mocked(vi.fn()).mockReturnValue({ replace });
     mockGetMe.mockResolvedValue({ id: 1, email: "u@example.com" });
     mockGetChannels.mockResolvedValue([{ id: 1, name: "FitnessCh" }]);
-    // No assertion needed — just ensure no crash during redirect flow
+    // No assertion needed - just ensure no crash during redirect flow
     render(<LandingPage />);
     await waitFor(() => expect(mockGetMe).toHaveBeenCalled());
   });

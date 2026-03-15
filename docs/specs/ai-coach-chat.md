@@ -2,18 +2,18 @@
 
 **Created:** 2026-03-11
 **Status:** Ready for implementation
-**Depends on:** Phase O1 ([ai-profile-enrichment.md](ai-profile-enrichment.md)) — profile enrichment data is used in the coach system prompt
-**Migration:** None — all schema changes are in migration 009 (Phase O1)
+**Depends on:** Phase O1 ([ai-profile-enrichment.md](ai-profile-enrichment.md)) - profile enrichment data is used in the coach system prompt
+**Migration:** None - all schema changes are in migration 009 (Phase O1)
 
 **Related specs:**
-- [ai-profile-enrichment.md](ai-profile-enrichment.md) — Phase O1: enrichment data used in system prompt
-- [ai-weekly-review.md](ai-weekly-review.md) — Phase O3: weekly review card uses same coach router
+- [ai-profile-enrichment.md](ai-profile-enrichment.md) - Phase O1: enrichment data used in system prompt
+- [ai-weekly-review.md](ai-weekly-review.md) - Phase O3: weekly review card uses same coach router
 
 ---
 
 ## Where it lives
 
-The coach chat is a **floating panel on the dashboard** — not a new page, not inline.
+The coach chat is a **floating panel on the dashboard** - not a new page, not inline.
 
 - A "Coach" button in the dashboard header (between "Library" and "Settings" in the nav)
 - Clicking opens a slide-over panel from the right (400px wide on desktop, full-screen on mobile)
@@ -59,7 +59,7 @@ The coach chat is a **floating panel on the dashboard** — not a new page, not 
 Design notes:
 - Message bubbles: user messages right-aligned (white bg), coach left-aligned (zinc-800)
 - Typing indicator (three animated dots) while waiting for response
-- Video cards appear inline in the coach's reply — same `VideoCard` component from dashboard,
+- Video cards appear inline in the coach's reply - same `VideoCard` component from dashboard,
   but compact (horizontal layout: thumbnail left, info right, "Add to [day]" button)
 - "Plan updated ✓" confirmation chip appears after a successful plan update
 - When plan is updated, dashboard plan grid refreshes automatically via `onPlanChanged` prop
@@ -68,11 +68,11 @@ Design notes:
 
 ## Conversation state
 
-For v1: conversation history is **React state only** — an array of `Message` objects stored
+For v1: conversation history is **React state only** - an array of `Message` objects stored
 in the `CoachPanel` component. No DB persistence. History is lost on page refresh.
 
 The full message history is sent to the backend on every turn (same as the Anthropic API
-messages array). This is stateless on the backend — no session management needed.
+messages array). This is stateless on the backend - no session management needed.
 
 Why no DB persistence for v1:
 - Conversation history per user adds DB complexity and storage cost
@@ -110,11 +110,11 @@ Content-Type: application/json
 **Response 200:**
 ```json
 {
-  "reply": "Sure — here's a quick 15-min cardio from your library that fits well after yesterday's leg session.",
+  "reply": "Sure - here's a quick 15-min cardio from your library that fits well after yesterday's leg session.",
   "videos": [
     {
       "id": "abc123",
-      "title": "15 Min Full Body Cardio — No Equipment",
+      "title": "15 Min Full Body Cardio - No Equipment",
       "url": "https://youtube.com/watch?v=abc123",
       "channel_name": "Heather Robertson",
       "duration_sec": 900,
@@ -129,10 +129,10 @@ Content-Type: application/json
 ```
 
 **Errors:**
-- `401` — not authenticated
-- `503` — Anthropic API unavailable
-- `400` — message too long (cap 1000 chars)
-- `429` — rate limit (max 20 coach messages per user per hour; enforced in-memory with a
+- `401` - not authenticated
+- `503` - Anthropic API unavailable
+- `400` - message too long (cap 1000 chars)
+- `429` - rate limit (max 20 coach messages per user per hour; enforced in-memory with a
   per-user counter reset at the top of each hour)
 
 **Router file:** `api/routers/coach.py` (new file)
@@ -142,7 +142,7 @@ Content-Type: application/json
 
 ## System prompt construction
 
-Built dynamically at request time from the user's DB record + current plan. Never cached —
+Built dynamically at request time from the user's DB record + current plan. Never cached -
 always reflects current state.
 
 ```python
@@ -168,7 +168,7 @@ def build_coach_system_prompt(user: User, plan: PlanResponse, library_summary: d
 You help them get the most from their YouTube workout library.
 
 About them:
-- Profile: {user.life_stage or "not set"} — Goal: {user.goal or "not set"}
+- Profile: {user.life_stage or "not set"} - Goal: {user.goal or "not set"}
 - Training: {lib["schedule_days"]} days/week
 - Physical constraints: {constraints}
 - Workout preferences: {preferences}
@@ -191,11 +191,11 @@ Your role:
 - Update their plan directly using update_plan_day when asked
 - Give brief, practical coaching advice
 - If a constraint matters (e.g. knee injury mentioned), never suggest workouts that
-  would aggravate it — this is important
+  would aggravate it - this is important
 
 Rules:
-- Always use search_library before recommending a specific video — never invent titles
-- Be conversational but brief — lead with the recommendation, not the explanation
+- Always use search_library before recommending a specific video - never invent titles
+- Be conversational but brief - lead with the recommendation, not the explanation
 - If their library doesn't have what they need, say so honestly and suggest what kind of
   channel would fill the gap
 - Never make up video URLs or titles
@@ -301,7 +301,7 @@ async def run_coach_turn(
     plan_updated = False
     updated_day = None
 
-    # Agentic loop — handles multi-step tool use
+    # Agentic loop - handles multi-step tool use
     while True:
         response = client.messages.create(
             model="claude-sonnet-4-6",
@@ -353,7 +353,7 @@ async def run_coach_turn(
             ]
 ```
 
-Model: `claude-sonnet-4-6` — this is the core user-facing AI experience; quality matters.
+Model: `claude-sonnet-4-6` - this is the core user-facing AI experience; quality matters.
 
 ---
 
@@ -366,7 +366,7 @@ def build_library_summary(user: User, db: Session) -> dict:
     """Build a compact summary of the user's library for the system prompt."""
     # Total video count, breakdown by type, channel names, schedule days
     # Queries: classifications GROUP BY workout_type, channels, schedules
-    # Returns dict — not a DB model, just plain data for the prompt
+    # Returns dict - not a DB model, just plain data for the prompt
 ```
 
 ---
@@ -466,33 +466,33 @@ export async function sendCoachMessage(
 
 ## Tests
 
-### Unit tests — `tests/api/test_coach.py`
+### Unit tests - `tests/api/test_coach.py`
 
-1.  `test_coach_chat_simple_response` — message with no tool use → text reply returned
-2.  `test_coach_chat_search_library_called` — "give me 15 mins" → `search_library` tool executed
-3.  `test_coach_chat_search_respects_duration` — `max_duration_min` filter applied in DB query
-4.  `test_coach_chat_update_plan_day` — "update Thursday" → `update_plan_day` → history row updated
-5.  `test_coach_chat_update_plan_day_returns_flag` — `plan_updated: true`, `updated_day: "thursday"`
-6.  `test_coach_chat_excludes_this_week_videos` — search with `exclude_this_week=true` skips plan videos
-7.  `test_coach_chat_constraint_in_system_prompt` — enrichment with `knee_injury` → appears in prompt
+1.  `test_coach_chat_simple_response` - message with no tool use → text reply returned
+2.  `test_coach_chat_search_library_called` - "give me 15 mins" → `search_library` tool executed
+3.  `test_coach_chat_search_respects_duration` - `max_duration_min` filter applied in DB query
+4.  `test_coach_chat_update_plan_day` - "update Thursday" → `update_plan_day` → history row updated
+5.  `test_coach_chat_update_plan_day_returns_flag` - `plan_updated: true`, `updated_day: "thursday"`
+6.  `test_coach_chat_excludes_this_week_videos` - search with `exclude_this_week=true` skips plan videos
+7.  `test_coach_chat_constraint_in_system_prompt` - enrichment with `knee_injury` → appears in prompt
 8.  `test_coach_chat_unauthenticated` → 401
-9.  `test_coach_chat_rate_limit` — 21 messages in one hour → 429 on 21st
-10. `test_coach_chat_empty_library` — user with 0 videos → coach replies gracefully
+9.  `test_coach_chat_rate_limit` - 21 messages in one hour → 429 on 21st
+10. `test_coach_chat_empty_library` - user with 0 videos → coach replies gracefully
 
-### Integration tests — `tests/integration/test_coach_integration.py`
+### Integration tests - `tests/integration/test_coach_integration.py`
 
-11. `test_coach_update_persists_to_db` — coach updates Thursday → `program_history` row updated
+11. `test_coach_update_persists_to_db` - coach updates Thursday → `program_history` row updated
 
 ---
 
 ## Implementation order
 
-1. `api/services/coach.py` — system prompt builder + library summary
+1. `api/services/coach.py` - system prompt builder + library summary
 2. Tool definitions + `search_library` executor
 3. `update_plan_day` executor (reuse planner service layer)
-4. `POST /coach/chat` endpoint — agentic tool loop, no streaming
-5. Unit tests 1–10 — all passing
-6. Integration test 11 — all passing
+4. `POST /coach/chat` endpoint - agentic tool loop, no streaming
+5. Unit tests 1–10 - all passing
+6. Integration test 11 - all passing
 7. `CoachPanel.tsx` + `VideoRecommendationCard.tsx` frontend components
 8. Dashboard integration (Coach nav button, `onPlanChanged` callback)
 9. Ship O2

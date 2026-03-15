@@ -1,8 +1,8 @@
 """
-library.py — Video library browser endpoint.
+library.py - Video library browser endpoint.
 
 Routes:
-  GET /library  — list/filter classified videos from the user's channels
+  GET /library  - list/filter classified videos from the user's channels
 """
 
 from math import ceil

@@ -1,5 +1,5 @@
 """
-classifier.py — Classify workout videos using Claude API.
+classifier.py - Classify workout videos using Claude API.
 
 For each unclassified video:
   1. Build context: title + description snippet + transcript intro (first ~2 min)
@@ -7,7 +7,7 @@ For each unclassified video:
   3. Poll until the batch completes
   4. Parse JSON responses and store results in the classifications table
 
-Uses claude-haiku for cost efficiency — classification is a structured,
+Uses claude-haiku for cost efficiency - classification is a structured,
 well-defined task that doesn't need a larger model.
 
 Transcript note:
@@ -199,7 +199,7 @@ def classify_unclassified_batch(api_key: str) -> int:
     requests = []
     for i, video in enumerate(videos, 1):
         if i % 100 == 0 or i == 1:
-            logger.info(f"  [{i}/{total}] {video['channel_name']} — {video['title'][:60]}")
+            logger.info(f"  [{i}/{total}] {video['channel_name']} - {video['title'][:60]}")
 
         transcript_intro = _fetch_transcript_intro(video["id"])
         user_message = _build_user_message(video, transcript_intro)
@@ -217,7 +217,7 @@ def classify_unclassified_batch(api_key: str) -> int:
     # ── Phase 2: Submit batch ──────────────────────────────────────────────────
     logger.info(f"Phase 2/3: Submitting batch of {total} requests to Anthropic...")
     batch = client.messages.batches.create(requests=requests)
-    logger.info(f"Batch submitted — ID: {batch.id}")
+    logger.info(f"Batch submitted - ID: {batch.id}")
 
     # ── Phase 3: Poll until complete ───────────────────────────────────────────
     logger.info(f"Phase 3/3: Waiting for batch to complete (polling every {BATCH_POLL_INTERVAL}s)...")
@@ -225,7 +225,7 @@ def classify_unclassified_batch(api_key: str) -> int:
         batch = client.messages.batches.retrieve(batch.id)
         counts = batch.request_counts
         done = counts.succeeded + counts.errored + counts.canceled + counts.expired
-        logger.info(f"  Status: {batch.processing_status} — {done}/{total} done")
+        logger.info(f"  Status: {batch.processing_status} - {done}/{total} done")
         if batch.processing_status == "ended":
             break
         time.sleep(BATCH_POLL_INTERVAL)

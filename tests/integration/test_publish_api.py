@@ -1,7 +1,7 @@
 """
 Integration tests for POST /plan/publish against a real PostgreSQL DB.
 
-Google/YouTube API calls are mocked — we verify that:
+Google/YouTube API calls are mocked - we verify that:
   1. A successful publish returns playlist_url and video_count and persists the playlist ID
   2. A RefreshError marks credentials_valid=False in the DB
   3. A user with no plan gets 404
@@ -107,7 +107,7 @@ def test_publish_success(plan_client, db_session):
     mock_youtube.playlists.return_value.insert.return_value.execute.return_value = {
         "id": "PLintegration123"
     }
-    # playlistItems.list — empty playlist to clear
+    # playlistItems.list - empty playlist to clear
     mock_youtube.playlistItems.return_value.list.return_value.execute.return_value = {
         "items": []
     }

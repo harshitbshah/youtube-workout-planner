@@ -1,7 +1,7 @@
 """
 Unit tests for api/services/channel_validator.py
 
-All Anthropic API calls are mocked — no real network calls.
+All Anthropic API calls are mocked - no real network calls.
 """
 
 from unittest.mock import MagicMock, patch
@@ -107,7 +107,7 @@ def test_no_api_key_fails_open():
 # ─── Response text variations ─────────────────────────────────────────────────
 
 def test_yes_with_trailing_text_still_passes():
-    """Claude might say 'yes, this is a fitness channel' — still counts as yes."""
+    """Claude might say 'yes, this is a fitness channel' - still counts as yes."""
     mock_client = MagicMock()
     mock_client.messages.create.return_value = _make_claude_response("yes, definitely fitness")
 

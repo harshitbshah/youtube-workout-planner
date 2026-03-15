@@ -1,5 +1,5 @@
 """
-scanner.py — Fetch videos from YouTube channels and store in the database.
+scanner.py - Fetch videos from YouTube channels and store in the database.
 
 Two modes:
   full_scan()        Fetch ALL videos from a channel (run once per new channel)

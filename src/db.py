@@ -1,5 +1,5 @@
 """
-db.py — SQLite database setup and operations.
+db.py - SQLite database setup and operations.
 All video library, classification, and history data lives here.
 """
 

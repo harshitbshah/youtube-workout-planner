@@ -73,7 +73,7 @@ beforeEach(() => {
   mockSwapPlanDay.mockResolvedValue(undefined);
 });
 
-describe("LibraryPage — rendering", () => {
+describe("LibraryPage - rendering", () => {
   it("renders Video Library heading", async () => {
     render(<LibraryPage />);
     await waitFor(() =>
@@ -105,7 +105,7 @@ describe("LibraryPage — rendering", () => {
   });
 });
 
-describe("LibraryPage — filters", () => {
+describe("LibraryPage - filters", () => {
   it("renders workout type filter select", async () => {
     render(<LibraryPage />);
     await waitFor(() => screen.getByText("Video Library"));
@@ -160,7 +160,7 @@ describe("LibraryPage — filters", () => {
   });
 });
 
-describe("LibraryPage — assign to day", () => {
+describe("LibraryPage - assign to day", () => {
   it("renders 'Assign to day' dropdowns for each video", async () => {
     render(<LibraryPage />);
     await waitFor(() => screen.getByText("30 Min Full Body Strength"));
@@ -175,7 +175,7 @@ describe("LibraryPage — assign to day", () => {
   it("calls swapPlanDay when a day is selected", async () => {
     render(<LibraryPage />);
     await waitFor(() => screen.getByText("30 Min Full Body Strength"));
-    // Find the assign select for the first video — it contains "Assign to day…" as default
+    // Find the assign select for the first video - it contains "Assign to day…" as default
     const [firstAssignSelect] = screen.getAllByDisplayValue("Assign to day…");
     fireEvent.change(firstAssignSelect, { target: { value: "monday" } });
     await waitFor(() =>
@@ -200,12 +200,12 @@ describe("LibraryPage — assign to day", () => {
     const [firstAssignSelect] = screen.getAllByDisplayValue("Assign to day…");
     fireEvent.change(firstAssignSelect, { target: { value: "monday" } });
     await waitFor(() =>
-      expect(screen.getByText(/Failed — generate a plan first/i)).toBeInTheDocument()
+      expect(screen.getByText(/Failed - generate a plan first/i)).toBeInTheDocument()
     );
   });
 });
 
-describe("LibraryPage — background classifying banner", () => {
+describe("LibraryPage - background classifying banner", () => {
   it("shows banner when background_classifying is true", async () => {
     mockGetJobStatus.mockResolvedValue({ stage: "done", total: null, done: null, error: null, background_classifying: true });
     render(<LibraryPage />);
@@ -236,7 +236,7 @@ describe("LibraryPage — background classifying banner", () => {
   });
 });
 
-describe("LibraryPage — pagination", () => {
+describe("LibraryPage - pagination", () => {
   it("shows Previous/Next buttons when there are multiple pages", async () => {
     mockGetLibrary.mockResolvedValue(makeLibraryResponse({ pages: 3, total: 30 }));
     render(<LibraryPage />);

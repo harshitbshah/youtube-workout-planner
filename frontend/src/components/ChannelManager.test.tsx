@@ -42,7 +42,7 @@ beforeEach(() => {
   mockDelete.mockResolvedValue(undefined);
 });
 
-describe("ChannelManager — suggestions (card UI)", () => {
+describe("ChannelManager - suggestions (card UI)", () => {
   it("renders suggestion cards when suggestions prop provided", () => {
     render(
       <ChannelManager
@@ -135,12 +135,12 @@ describe("ChannelManager — suggestions (card UI)", () => {
         suggestions={[mockSuggestion2]}
       />
     );
-    // No img element — falls back to a div placeholder
+    // No img element - falls back to a div placeholder
     expect(container.querySelector("img")).toBeNull();
   });
 });
 
-describe("ChannelManager — search", () => {
+describe("ChannelManager - search", () => {
   it("search button is disabled when query is empty", () => {
     render(<ChannelManager channels={[]} onChannelsChange={() => {}} />);
     expect(screen.getByRole("button", { name: /Search/i })).toBeDisabled();

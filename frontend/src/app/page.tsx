@@ -10,12 +10,12 @@ const HOW_IT_WORKS = [
   {
     step: "01",
     title: "Add your channels",
-    body: "Pick the YouTube fitness creators you already follow. We pull from their libraries — not generic content.",
+    body: "Pick the YouTube fitness creators you already follow. We pull from their libraries - not generic content.",
   },
   {
     step: "02",
     title: "Set your split",
-    body: "Tell us your weekly training goals — strength, HIIT, cardio, rest days, duration. You're in control.",
+    body: "Tell us your weekly training goals - strength, HIIT, cardio, rest days, duration. You're in control.",
   },
   {
     step: "03",
@@ -101,7 +101,7 @@ export default function LandingPage() {
         </h1>
         <p className="text-zinc-600 dark:text-zinc-400 text-lg leading-relaxed mb-10 max-w-xl">
           Add your favourite fitness channels, set your weekly training split, and
-          get a fresh plan curated from content you already love — every Sunday.
+          get a fresh plan curated from content you already love - every Sunday.
         </p>
         <a
           href={loginUrl()}

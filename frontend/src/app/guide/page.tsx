@@ -64,7 +64,7 @@ export default function GuidePage() {
 
       <div className="max-w-5xl mx-auto px-6 py-12 flex gap-12">
 
-        {/* Sidebar — sticky on desktop */}
+        {/* Sidebar - sticky on desktop */}
         <aside className="hidden lg:block w-52 shrink-0">
           <div className="sticky top-8">
             <p className="text-xs font-semibold text-zinc-500 uppercase tracking-widest mb-4">Contents</p>
@@ -101,7 +101,7 @@ export default function GuidePage() {
             <h3 className="text-zinc-900 dark:text-white font-semibold text-base mt-6 mb-2">1. Sign up</h3>
             <p>
               Go to the homepage and click <strong className="text-zinc-900 dark:text-white">Get started free</strong>.
-              Sign in with your Google account — no password, no credit card required.
+              Sign in with your Google account - no password, no credit card required.
             </p>
 
             <h3 className="text-zinc-900 dark:text-white font-semibold text-base mt-6 mb-2">2. Tell us about yourself</h3>
@@ -111,13 +111,13 @@ export default function GuidePage() {
             <Table
               rows={[
                 ["Life stage", "Just starting out · Active adult · 55 and thriving · Training seriously"],
-                ["Your goal", "Options vary by life stage — e.g. Build muscle, Lose fat, Stay active & healthy"],
+                ["Your goal", "Options vary by life stage - e.g. Build muscle, Lose fat, Stay active & healthy"],
                 ["Training days", "How many days a week you can train (2–6)"],
                 ["Session length", "15–20 min · 25–35 min · 40–60 min · No preference"],
               ]}
             />
             <p>
-              Each screen advances automatically when you tap — no Continue button needed.
+              Each screen advances automatically when you tap - no Continue button needed.
             </p>
 
             <h3 className="text-zinc-900 dark:text-white font-semibold text-base mt-6 mb-2">3. Review your personalised schedule</h3>
@@ -130,7 +130,7 @@ export default function GuidePage() {
             <h3 className="text-zinc-900 dark:text-white font-semibold text-base mt-6 mb-2">4. Add your channels</h3>
             <p>
               Search for the YouTube fitness creators you follow and add them. The app shows curated
-              suggestions based on your profile — tap a chip to search instantly. You need at least one
+              suggestions based on your profile - tap a chip to search instantly. You need at least one
               channel to continue.
             </p>
 
@@ -139,12 +139,12 @@ export default function GuidePage() {
               Hit <strong className="text-zinc-900 dark:text-white">Continue</strong> and a live progress screen tracks each stage:
             </p>
             <ul className="list-disc list-inside space-y-1 pl-1">
-              <li><strong className="text-zinc-900 dark:text-white">Scanning</strong> — fetching your channels&apos; recent videos from YouTube</li>
-              <li><strong className="text-zinc-900 dark:text-white">Classifying</strong> — analysing videos with AI (shows a live progress count)</li>
-              <li><strong className="text-zinc-900 dark:text-white">Building your plan</strong> — picking the best video for each day</li>
+              <li><strong className="text-zinc-900 dark:text-white">Scanning</strong> - fetching your channels&apos; recent videos from YouTube</li>
+              <li><strong className="text-zinc-900 dark:text-white">Classifying</strong> - analysing videos with AI (shows a live progress count)</li>
+              <li><strong className="text-zinc-900 dark:text-white">Building your plan</strong> - picking the best video for each day</li>
             </ul>
             <p>
-              When it&apos;s done, you&apos;re taken straight to your dashboard — no button to click.
+              When it&apos;s done, you&apos;re taken straight to your dashboard - no button to click.
             </p>
             <Note>
               The first scan typically takes <strong className="text-zinc-900 dark:text-white">5–10 minutes</strong> because
@@ -154,7 +154,7 @@ export default function GuidePage() {
 
           <Section id="your-plan" title="Your weekly plan">
             <p>
-              The dashboard shows your current week — one video card per training day, with a
+              The dashboard shows your current week - one video card per training day, with a
               thumbnail, duration, channel name, and workout tags. Click any card to open the video
               directly on YouTube.
             </p>
@@ -162,14 +162,14 @@ export default function GuidePage() {
             <h3 className="text-zinc-900 dark:text-white font-semibold text-base mt-6 mb-2">Regenerate</h3>
             <p>
               Want a fresh set of picks? Hit <strong className="text-zinc-900 dark:text-white">Regenerate</strong> in the
-              header. The plan is rebuilt instantly from your existing video library — no new scan needed.
+              header. The plan is rebuilt instantly from your existing video library - no new scan needed.
               You'll see a brief spinner while it runs, then the grid updates.
             </p>
 
             <h3 className="text-zinc-900 dark:text-white font-semibold text-base mt-6 mb-2">Automatic weekly refresh</h3>
             <p>
               New plans are generated automatically every Sunday so your week is always ready by Monday
-              morning. You don't need to do anything — just open the app.
+              morning. You don't need to do anything - just open the app.
             </p>
           </Section>
 
@@ -182,10 +182,10 @@ export default function GuidePage() {
             <h3 className="text-zinc-900 dark:text-white font-semibold text-base mt-6 mb-2">Filters</h3>
             <p>Narrow down videos by:</p>
             <ul className="list-disc list-inside space-y-1 pl-1">
-              <li><strong className="text-zinc-900 dark:text-white">Workout type</strong> — Strength, HIIT, Cardio, Mobility</li>
-              <li><strong className="text-zinc-900 dark:text-white">Body focus</strong> — upper, lower, full body, core, and more</li>
-              <li><strong className="text-zinc-900 dark:text-white">Difficulty</strong> — beginner, intermediate, advanced</li>
-              <li><strong className="text-zinc-900 dark:text-white">Channel</strong> — filter to a specific creator</li>
+              <li><strong className="text-zinc-900 dark:text-white">Workout type</strong> - Strength, HIIT, Cardio, Mobility</li>
+              <li><strong className="text-zinc-900 dark:text-white">Body focus</strong> - upper, lower, full body, core, and more</li>
+              <li><strong className="text-zinc-900 dark:text-white">Difficulty</strong> - beginner, intermediate, advanced</li>
+              <li><strong className="text-zinc-900 dark:text-white">Channel</strong> - filter to a specific creator</li>
             </ul>
 
             <h3 className="text-zinc-900 dark:text-white font-semibold text-base mt-6 mb-2">Assign to a day</h3>
@@ -220,7 +220,7 @@ export default function GuidePage() {
             <p>
               Settings → scroll to <strong className="text-zinc-900 dark:text-white">Danger Zone</strong> →{" "}
               <strong className="text-zinc-900 dark:text-white">Delete my account</strong>. This permanently removes
-              everything — your channels, schedule, plan history, and credentials.
+              everything - your channels, schedule, plan history, and credentials.
             </p>
           </Section>
 
@@ -264,7 +264,7 @@ export default function GuidePage() {
             <Note>
               <strong className="text-zinc-900 dark:text-white">Button greyed out?</strong> Either you don't have a plan
               yet, or your YouTube access has been revoked. Look for the amber banner on your dashboard
-              — sign out and sign in again with Google to reconnect.
+              - sign out and sign in again with Google to reconnect.
             </Note>
           </Section>
 
@@ -272,12 +272,12 @@ export default function GuidePage() {
             <div className="space-y-6">
               {[
                 {
-                  q: "My plan hasn't updated yet — why?",
+                  q: "My plan hasn't updated yet - why?",
                   a: "Plans regenerate automatically every Sunday evening. If it's early in the week and you want a fresh one now, hit Regenerate on the dashboard.",
                 },
                 {
                   q: "Can I use channels that aren't fitness channels?",
-                  a: "The search is open — you can add any YouTube channel. The classifier will label non-workout videos as 'Other' and they'll be excluded from your plan automatically.",
+                  a: "The search is open - you can add any YouTube channel. The classifier will label non-workout videos as 'Other' and they'll be excluded from your plan automatically.",
                 },
                 {
                   q: "What if a video I want isn't in my plan?",
@@ -285,7 +285,7 @@ export default function GuidePage() {
                 },
                 {
                   q: "Can I change my schedule mid-week?",
-                  a: "Yes — update it in Settings anytime. It applies from the next generated plan onward; it won't change your current week retroactively.",
+                  a: "Yes - update it in Settings anytime. It applies from the next generated plan onward; it won't change your current week retroactively.",
                 },
                 {
                   q: "How do I remove a channel?",
@@ -293,7 +293,7 @@ export default function GuidePage() {
                 },
                 {
                   q: "How do I delete my account?",
-                  a: "Settings → scroll to Danger Zone → Delete my account. This permanently removes everything — your channels, schedule, plan history, and credentials.",
+                  a: "Settings → scroll to Danger Zone → Delete my account. This permanently removes everything - your channels, schedule, plan history, and credentials.",
                 },
                 {
                   q: "Is it really free?",

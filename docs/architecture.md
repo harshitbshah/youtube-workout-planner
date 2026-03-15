@@ -4,7 +4,7 @@
 
 YouTube Workout Planner is a scheduled Python pipeline that runs weekly on GitHub Actions. It scans YouTube channels you follow, classifies every video using Claude AI, selects one video per training day based on your schedule, and pushes the result directly into a YouTube playlist.
 
-The entire system is stateless between runs — all persistent state lives in a single SQLite file (`workout_library.db`) that gets committed back to the repo after each run.
+The entire system is stateless between runs - all persistent state lives in a single SQLite file (`workout_library.db`) that gets committed back to the repo after each run.
 
 ---
 
@@ -22,13 +22,13 @@ Every Sunday at 6pm UTC, the four stages run in sequence:
   via YouTube API     Batch API            from the library    via OAuth
 ```
 
-**Init mode** (`--init`) runs the same pipeline but does a full back-catalogue scan instead of an 8-day incremental one — used once when adding a new channel.
+**Init mode** (`--init`) runs the same pipeline but does a full back-catalogue scan instead of an 8-day incremental one - used once when adding a new channel.
 
 ---
 
 ## Components
 
-### `main.py` — Entry point
+### `main.py` - Entry point
 
 Parses CLI flags, loads `config.yaml`, and orchestrates the four stages. Four modes:
 
@@ -41,21 +41,21 @@ Parses CLI flags, loads `config.yaml`, and orchestrates the four stages. Four mo
 
 ---
 
-### `src/scanner.py` — Discover
+### `src/scanner.py` - Discover
 
 Resolves each channel URL to its uploads playlist ID, then paginates through it using `playlistItems.list`. Video details (duration, tags) are batch-fetched with `videos.list` (50 per API call).
 
 Two modes:
-- **Full scan** — fetches entire back-catalogue; used on `--init`
-- **Incremental scan** — fetches only videos newer than `since_date` (8 days); uploads playlist is newest-first so pagination stops early
+- **Full scan** - fetches entire back-catalogue; used on `--init`
+- **Incremental scan** - fetches only videos newer than `since_date` (8 days); uploads playlist is newest-first so pagination stops early
 
-Deleted/private videos are filtered. New videos are `INSERT OR IGNORE`d into the `videos` table — safe to re-run.
+Deleted/private videos are filtered. New videos are `INSERT OR IGNORE`d into the `videos` table - safe to re-run.
 
 **YouTube API quota:** ~20 units per 500 videos. Daily free quota is 10,000 units.
 
 ---
 
-### `src/classifier.py` — Understand
+### `src/classifier.py` - Understand
 
 Classifies every video in the `videos` table that has no corresponding row in `classifications`.
 
@@ -66,11 +66,11 @@ Classifies every video in the `videos` table that has no corresponding row in `c
 - First 800 chars of description
 - First ~2.5 minutes of auto-generated captions (fetched via `youtube-transcript-api`)
 
-The transcript intro is the key signal — it's where trainers explain what kind of workout you're about to do, at what difficulty, with what equipment.
+The transcript intro is the key signal - it's where trainers explain what kind of workout you're about to do, at what difficulty, with what equipment.
 
 **Batch API:** All unclassified videos are submitted in a single Anthropic Batch API call (50% cheaper than standard, processed in parallel). The code polls every 30 seconds until the batch completes, then writes results to the `classifications` table.
 
-**Model:** `claude-haiku-4-5-20251001` — sufficient for structured classification, very cheap.
+**Model:** `claude-haiku-4-5-20251001` - sufficient for structured classification, very cheap.
 
 **Output schema per video:**
 ```json
@@ -87,7 +87,7 @@ Videos under 3 minutes (Shorts, promos) are skipped.
 
 ---
 
-### `src/planner.py` — Plan
+### `src/planner.py` - Plan
 
 Picks one video per training day by querying the `videos + classifications` tables, applying scoring, and writing the result to `program_history`.
 
@@ -116,19 +116,19 @@ The plan is saved to `program_history` before returning so the same video won't 
 
 ---
 
-### `src/playlist.py` — Publish
+### `src/playlist.py` - Publish
 
-Authenticates to YouTube via OAuth (using a stored refresh token — no browser needed) and performs a full weekly refresh:
+Authenticates to YouTube via OAuth (using a stored refresh token - no browser needed) and performs a full weekly refresh:
 
 1. List all existing playlist items and delete them one by one (API has no bulk delete)
 2. Insert the new videos in Mon → Sun order (rest days skipped)
 3. Update the playlist description with the human-readable plan summary
 
-**YouTube API quota:** ~650 units per weekly refresh — well within the 10,000/day free limit.
+**YouTube API quota:** ~650 units per weekly refresh - well within the 10,000/day free limit.
 
 ---
 
-### `src/db.py` — Persistence
+### `src/db.py` - Persistence
 
 Three SQLite tables:
 
@@ -184,7 +184,7 @@ config.yaml
 
 | Secret | Used by | How |
 |---|---|---|
-| `YOUTUBE_API_KEY` | scanner.py | Read-only API key — scans channels and fetches video details |
+| `YOUTUBE_API_KEY` | scanner.py | Read-only API key - scans channels and fetches video details |
 | `ANTHROPIC_API_KEY` | classifier.py | Batch classification via Claude Haiku |
 | `YOUTUBE_CLIENT_ID` | playlist.py | OAuth for playlist write access |
 | `YOUTUBE_CLIENT_SECRET` | playlist.py | OAuth for playlist write access |
@@ -210,17 +210,17 @@ Can be triggered manually via `workflow_dispatch` for testing.
 
 ## Key Design Decisions
 
-**SQLite committed to the repo** — no external database needed. The DB is small (~a few MB for thousands of videos), and committing it after each run gives a built-in audit trail of every week's plan via git history.
+**SQLite committed to the repo** - no external database needed. The DB is small (~a few MB for thousands of videos), and committing it after each run gives a built-in audit trail of every week's plan via git history.
 
-**Anthropic Batch API** — submitting all videos in one batch instead of sequential calls cuts classification cost by 50% and avoids rate limits. An entire channel back-catalogue (~2,000 videos) costs ~$1–2 total. Weekly incremental runs cost a few cents.
+**Anthropic Batch API** - submitting all videos in one batch instead of sequential calls cuts classification cost by 50% and avoids rate limits. An entire channel back-catalogue (~2,000 videos) costs ~$1–2 total. Weekly incremental runs cost a few cents.
 
-**Transcript intro as the primary signal** — video titles are unreliable. The first ~2.5 minutes of captions capture the trainer's actual introduction where they describe the workout type, difficulty, and equipment. Falls back gracefully to title + description if captions are unavailable.
+**Transcript intro as the primary signal** - video titles are unreliable. The first ~2.5 minutes of captions capture the trainer's actual introduction where they describe the workout type, difficulty, and equipment. Falls back gracefully to title + description if captions are unavailable.
 
-**8-day incremental window** — not 7, to give a buffer for timezone differences and avoid videos published at the boundary slipping through.
+**8-day incremental window** - not 7, to give a buffer for timezone differences and avoid videos published at the boundary slipping through.
 
-**Tiered fallback in the planner** — constraints are relaxed progressively rather than failing hard. A plan is always produced even if the library is sparse for a given slot.
+**Tiered fallback in the planner** - constraints are relaxed progressively rather than failing hard. A plan is always produced even if the library is sparse for a given slot.
 
-**`INSERT OR IGNORE` everywhere** — scanning and classifying are idempotent. Safe to re-run `--init` after adding a new channel without duplicating existing data.
+**`INSERT OR IGNORE` everywhere** - scanning and classifying are idempotent. Safe to re-run `--init` after adding a new channel without duplicating existing data.
 
 ---
 
@@ -252,15 +252,15 @@ The web app is a multi-user version of the CLI pipeline, built as a FastAPI back
 ```
 users
   id (uuid PK), google_id, email, display_name, created_at,
-  last_scan_error (text, nullable) — set on pipeline failure, cleared on success
+  last_scan_error (text, nullable) - set on pipeline failure, cleared on success
 
-channels (global — shared across all users)
+channels (global - shared across all users)
   id (uuid PK), name, youtube_url, youtube_channel_id, added_at,
   first_scan_done (bool, default false), last_video_published_at (datetime, nullable)
 
-user_channels (join table — links users to channels they've subscribed to)
+user_channels (join table - links users to channels they've subscribed to)
   user_id (PK FK → users.id CASCADE), channel_id (PK FK → channels.id CASCADE), added_at
-  — deleting a user_channels row unsubscribes the user; channel + videos are preserved
+  - deleting a user_channels row unsubscribes the user; channel + videos are preserved
 
 videos
   id (youtube video ID PK), channel_id (FK), title, description,
@@ -269,9 +269,9 @@ videos
 classifications
   video_id (PK FK), workout_type, body_focus, difficulty,
   has_warmup, has_cooldown, classified_at
-  — workout_type values: "Strength" | "HIIT" | "Cardio" | "Mobility" | "Other"
-  — body_focus values: "upper" | "lower" | "full" | "core" | "any"
-  — difficulty values: "beginner" | "intermediate" | "advanced"
+  - workout_type values: "Strength" | "HIIT" | "Cardio" | "Mobility" | "Other"
+  - body_focus values: "upper" | "lower" | "full" | "core" | "any"
+  - difficulty values: "beginner" | "intermediate" | "advanced"
   NOTE: workout_type is mixed-case (classifier output). All filter comparisons
         use func.lower() on both sides for case-insensitive matching.
 
@@ -286,35 +286,35 @@ program_history
 user_credentials
   user_id (PK FK), youtube_refresh_token (Fernet-encrypted), anthropic_key, updated_at,
   credentials_valid (bool, default true), youtube_playlist_id (nullable),
-  classifier_batch_id (nullable — persisted Anthropic batch ID for resumable classification)
+  classifier_batch_id (nullable - persisted Anthropic batch ID for resumable classification)
 
 batch_usage_log
   id (int PK), user_id (FK), batch_id (text), videos_submitted, classified, failed,
   input_tokens, output_tokens, created_at
-  — written after each Anthropic batch completes; used by admin stats for cost tracking
+  - written after each Anthropic batch completes; used by admin stats for cost tracking
 
 announcements
   id (int PK), message (text), is_active (bool, default true), created_at
-  — admin-created site-wide banners; only one should be active at a time
+  - admin-created site-wide banners; only one should be active at a time
 
 scan_log
   id (int PK), user_id (FK), started_at, completed_at (nullable),
   status ("running" | "done" | "failed"), videos_scanned (nullable)
-  — one row per _run_full_pipeline invocation; powers "scans/day" chart
+  - one row per _run_full_pipeline invocation; powers "scans/day" chart
 
 user_activity_log
   id (int PK), user_id (FK), active_at
-  — one row per 5-min active window per user; powers "active users/day" chart
+  - one row per 5-min active window per user; powers "active users/day" chart
 
 Migration history:
-  001 — initial schema
-  002 — credentials_valid + youtube_playlist_id
-  003 — classifier_batch_id
-  004 — users.last_active_at + batch_usage_log + announcements
-  005 — scan_log + user_activity_log
-  006 — channels.first_scan_done
-  007 — channels.last_video_published_at
-  008 — users.last_scan_error
+  001 - initial schema
+  002 - credentials_valid + youtube_playlist_id
+  003 - classifier_batch_id
+  004 - users.last_active_at + batch_usage_log + announcements
+  005 - scan_log + user_activity_log
+  006 - channels.first_scan_done
+  007 - channels.last_video_published_at
+  008 - users.last_scan_error
 ```
 
 ---
@@ -358,7 +358,7 @@ works regardless of browser cookie policy.
 ### Data access pattern
 All user-facing endpoints depend on `get_current_user` which checks the Bearer token
 (or session cookie fallback) and returns the `User` ORM object, or raises 401.
-All queries filter by `user_id` — no cross-user data leakage is possible.
+All queries filter by `user_id` - no cross-user data leakage is possible.
 
 `get_current_user` also updates `user.last_active_at` at most once per 5 minutes
 (throttled to avoid a DB write on every request).
@@ -408,13 +408,13 @@ api/services/channel_validator.py                         → validate_channel_f
 
 ### Email service (`api/services/email.py`)
 
-`send_weekly_plan_email(user, plan)` — sends a formatted HTML email with the week's
+`send_weekly_plan_email(user, plan)` - sends a formatted HTML email with the week's
 workout plan via the Resend SDK. Uses `api/templates/weekly_plan_email.html` (Jinja2,
 table-based, inline CSS). Only sends if `user.email_notifications` is True. Called by
-APScheduler after each successful plan generation; errors are caught and logged — never
+APScheduler after each successful plan generation; errors are caught and logged - never
 break the pipeline.
 
-`send_feedback_email(user, category, message)` — sends admin-facing notification when a
+`send_feedback_email(user, category, message)` - sends admin-facing notification when a
 user submits feedback. `to` = `ADMIN_EMAIL`, `reply_to` = user's email (so admin can reply
 directly). Raises `RuntimeError` if `RESEND_API_KEY` is not set.
 
@@ -425,37 +425,37 @@ in weekly plan email CTA link).
 
 Applied before fetching video details or sending to classifier:
 
-1. **Title keyword blocklist** — skips videos with meal/recipe/vlog/Q&A/podcast/unboxing/
+1. **Title keyword blocklist** - skips videos with meal/recipe/vlog/Q&A/podcast/unboxing/
    giveaway/transformation etc. in the title (no extra API calls needed).
-2. **Livestream/premiere filter** — skips `liveBroadcastContent=live/upcoming` (free field
+2. **Livestream/premiere filter** - skips `liveBroadcastContent=live/upcoming` (free field
    returned by the playlist API).
-3. **Duration cap** — skips videos > 2 hours (livestreams/long-form podcasts that slipped through).
-4. **Shorts filter** (existing) — skips videos < 3 min or with `#shorts` hashtag.
+3. **Duration cap** - skips videos > 2 hours (livestreams/long-form podcasts that slipped through).
+4. **Shorts filter** (existing) - skips videos < 3 min or with `#shorts` hashtag.
 
-### Classifier — batch cap + resumable batches + Phase A cost controls
+### Classifier - batch cap + resumable batches + Phase A cost controls
 
-- **`MAX_CLASSIFY_PER_RUN = 300`** — caps each pipeline run to 300 videos. Keeps first-run
+- **`MAX_CLASSIFY_PER_RUN = 300`** - caps each pipeline run to 300 videos. Keeps first-run
   transcript fetch time to ~5 min instead of 30+ min for large channels. Remainder deferred
   to the next scan.
-- **Resumable batches** — `classifier_batch_id` is persisted to `user_credentials` immediately
+- **Resumable batches** - `classifier_batch_id` is persisted to `user_credentials` immediately
   after the Anthropic batch is submitted. On restart (e.g. Railway deploy mid-pipeline), the
-  next scan call resumes polling the existing batch instead of resubmitting — no double billing.
+  next scan call resumes polling the existing batch instead of resubmitting - no double billing.
   The batch ID is cleared when results are saved.
-- **`max_tokens = 80`** (F1) — reduced from 150. JSON response is ~50–70 tokens; 80 gives headroom without waste.
-- **`CLASSIFY_MAX_AGE_MONTHS` env var** (F2, default 18) — videos older than this are skipped before building the Anthropic batch.
-- **First-scan channel cap** (F3) — new channels are capped at 75 videos on first scan (`first_scan_done=False`); subsequent scans are uncapped incremental.
-- **Skip inactive channels** (F4) — weekly cron skips channels where last published video is >60 days old and channel was added >60 days ago. User-triggered scans always run all channels. `last_video_published_at` updated after each scan.
-- **Rule-based pre-classifier — `title_classify()`** (F6) — before building the Anthropic batch, each video title is tested against regex rules for workout type (HIIT/Strength/Cardio/Mobility), body focus (upper/lower/full/core), difficulty (beginner/intermediate/advanced), and warmup/cooldown flags. If a type rule matches, the video is classified directly and never sent to the AI. Returns `None` for ambiguous titles (falls through to Anthropic). Estimated 30–40% reduction in batch submissions. Applied to all unclassified videos before the `MAX_CLASSIFY_PER_RUN` cap.
-- **Adaptive payload trimming — `_title_is_descriptive()`** (F5) — for videos that do reach the AI batch, titles containing fitness keywords (duration numbers, body part names, workout type words) are sent with a 300-char description and no transcript. Ambiguous titles use the full 800-char description + transcript. Saves ~20–30% of input tokens for obvious-title videos.
-- **Lazy classification — plan-first, classify-lazily** (F9) — the pipeline no longer classifies all unclassified videos before generating a plan. Instead:
-  1. `rule_classify_for_user(session, user_id)` runs first — free, no Anthropic calls.
+- **`max_tokens = 80`** (F1) - reduced from 150. JSON response is ~50–70 tokens; 80 gives headroom without waste.
+- **`CLASSIFY_MAX_AGE_MONTHS` env var** (F2, default 18) - videos older than this are skipped before building the Anthropic batch.
+- **First-scan channel cap** (F3) - new channels are capped at 75 videos on first scan (`first_scan_done=False`); subsequent scans are uncapped incremental.
+- **Skip inactive channels** (F4) - weekly cron skips channels where last published video is >60 days old and channel was added >60 days ago. User-triggered scans always run all channels. `last_video_published_at` updated after each scan.
+- **Rule-based pre-classifier - `title_classify()`** (F6) - before building the Anthropic batch, each video title is tested against regex rules for workout type (HIIT/Strength/Cardio/Mobility), body focus (upper/lower/full/core), difficulty (beginner/intermediate/advanced), and warmup/cooldown flags. If a type rule matches, the video is classified directly and never sent to the AI. Returns `None` for ambiguous titles (falls through to Anthropic). Estimated 30–40% reduction in batch submissions. Applied to all unclassified videos before the `MAX_CLASSIFY_PER_RUN` cap.
+- **Adaptive payload trimming - `_title_is_descriptive()`** (F5) - for videos that do reach the AI batch, titles containing fitness keywords (duration numbers, body part names, workout type words) are sent with a 300-char description and no transcript. Ambiguous titles use the full 800-char description + transcript. Saves ~20–30% of input tokens for obvious-title videos.
+- **Lazy classification - plan-first, classify-lazily** (F9) - the pipeline no longer classifies all unclassified videos before generating a plan. Instead:
+  1. `rule_classify_for_user(session, user_id)` runs first - free, no Anthropic calls.
   2. `can_fill_plan(session, user_id)` checks whether every non-rest schedule slot has at least `MIN_PLAN_CANDIDATES` (default 3) classified candidates using a Tier-4 style query (any body_focus, no history window).
-  3. **Fast path** (can fill): generate plan immediately. Remaining unclassified videos are submitted to Anthropic in a background thread (`_background_classify_task`) — non-blocking relative to plan delivery.
+  3. **Fast path** (can fill): generate plan immediately. Remaining unclassified videos are submitted to Anthropic in a background thread (`_background_classify_task`) - non-blocking relative to plan delivery.
   4. **Slow path** (cannot fill): `get_gap_types()` identifies which slot types are under-provisioned; `build_targeted_batch()` selects only unclassified videos whose titles suggest those missing types (capped at `max(len(gaps) × TARGETED_BATCH_MULTIPLIER, 10)`). Only this small batch is submitted to Anthropic before plan generation. The remainder goes to background.
   - **`MIN_PLAN_CANDIDATES`** env var (default 3): min classified videos per slot to consider the plan fillable.
   - **`TARGETED_BATCH_MULTIPLIER`** env var (default 5): candidates per gap slot in the targeted mini-batch.
   - **Impact**: onboarding with descriptive titles → 0 Anthropic calls; weekly scans on an established library → almost always 0 Anthropic calls; vague-title onboarding → 5–15 calls instead of 75+.
-  - `background_classifying: bool` added to `GET /jobs/status` response — `true` while background thread is running. Library page shows an amber "Your library is still building" banner when this is true.
+  - `background_classifying: bool` added to `GET /jobs/status` response - `true` while background thread is running. Library page shows an amber "Your library is still building" banner when this is true.
 
 ---
 
@@ -465,10 +465,10 @@ APScheduler runs inside the FastAPI process. On startup it registers a cron job
 that fires every Sunday at 6pm UTC and runs the full scan → classify → plan
 pipeline for each **active** user.
 
-### YouTube publish — design intent
+### YouTube publish - design intent
 
 The web app is the primary interface. The YouTube playlist publish button is a
-convenience feature — it lets users play their week's videos directly from the
+convenience feature - it lets users play their week's videos directly from the
 YouTube app without having to open the web app each time. It is not the primary
 engagement surface.
 
@@ -483,7 +483,7 @@ The scheduler applies the same lazy classification logic as the manual pipeline:
 ```
 Incremental scan (new videos only)
   ↓
-rule_classify_for_user() — free, no Anthropic
+rule_classify_for_user() - free, no Anthropic
   ↓
 can_fill_plan()?
   ├── YES → generate plan immediately, skip Anthropic entirely (most weeks)
@@ -500,7 +500,7 @@ haven't opened the app in **14 days**, saving YouTube API quota and Anthropic
 credits. Users absent for 8–13 days (missed one week) still get a plan on the
 next Sunday; only users absent for two full weeks are skipped.
 
-The Publish button counts as activity — a user who only opens the app to publish
+The Publish button counts as activity - a user who only opens the app to publish
 once a week will always have `last_active_at` within 7 days and will never be
 skipped.
 
@@ -541,7 +541,7 @@ still handles the single original user independently.
                    | Admin (admin users only) | Sign out
               Announcement banner (dismissible) shown when active announcement exists
               Re-activation banner (dismissible) shown when plan.week_start < current Monday
-              Swap picker: "Swap video" button below each day card opens inline SwapPicker —
+              Swap picker: "Swap video" button below each day card opens inline SwapPicker -
                 fetches top 10 from GET /library filtered by day's workout_type; "Show all
                 types" clears filter; selecting calls PATCH /plan/{day}; updates in place
               - "Generate plan" (no plan): triggers POST /jobs/scan, shows scanning banner,
@@ -551,7 +551,7 @@ still handles the single original user independently.
               - "Rescan channels" button shown instead of Regenerate when plan has all null days
               - Scanning banner: stage-specific messages (scanning/classifying/generating/failed)
                 + progress bar + "X / N done" count during classification phase
-              - Building phase: "Preparing batch — fetching transcripts (X / N)" with progress bar
+              - Building phase: "Preparing batch - fetching transcripts (X / N)" with progress bar
               - Generating banner: spinner + "Generating your plan…" while fast generate runs
               - On mount: calls GET /jobs/status to auto-detect a running pipeline (handles
                 externally triggered scans or page refreshes mid-scan)
@@ -560,7 +560,7 @@ still handles the single original user independently.
               Filters: workout type, body focus, difficulty, channel
               Cards: thumbnail, duration, badges, "Assign to day" select
               Pagination: 24 per page
-              Amber banner: "Your library is still building — more videos are being classified
+              Amber banner: "Your library is still building - more videos are being classified
                 in the background." shown when GET /jobs/status returns background_classifying=true.
                 Dismissible via ✕ button. Shown once on mount (not polled).
 
@@ -578,52 +578,52 @@ navigation; settings wraps them with save buttons.
 `ChannelManager` accepts optional `suggestions?: ChannelSearchResult[]` and
 `suggestionsLoading?: boolean` props. When provided, a 3-card grid of curated channels
 (thumbnail + name + one-click "+ Add") is shown above the search box. Cards are fetched
-from `GET /channels/suggestions?profile=<profile>` by the parent component — onboarding
+from `GET /channels/suggestions?profile=<profile>` by the parent component - onboarding
 passes the profile-specific list, settings passes the general list. The backend caches
 results in the shared `channels` table (`thumbnail_url`, `description` columns added in
 migration 018) so the YouTube API is only called once per unique suggestion channel across
 all users and all time.
 
-**Channel fitness validation** — `POST /channels` calls `validate_channel_fitness()` (migration 019
+**Channel fitness validation** - `POST /channels` calls `validate_channel_fitness()` (migration 019
 added `users.profile` + `users.goal`; written by `PUT /schedule`). If the user has a profile+goal
 set, the channel name + description is sent to Claude Haiku (max_tokens=20). Response "yes" or
 "unsure" allows through; "no: <label>" raises 422 with a user-friendly message. Fails open on
-any error or missing API key — a sparse description never blocks a legitimate channel.
+any error or missing API key - a sparse description never blocks a legitimate channel.
 
-`Badge` (`src/components/Badge.tsx`) — shared styled badge pill used in dashboard and
+`Badge` (`src/components/Badge.tsx`) - shared styled badge pill used in dashboard and
 library pages for workout type, body focus, and difficulty tags.
 
-`Tooltip` (`src/components/Tooltip.tsx`) — CSS-only tooltip using Tailwind `group/tip`
+`Tooltip` (`src/components/Tooltip.tsx`) - CSS-only tooltip using Tailwind `group/tip`
 pattern. Props: `text`, `children`, `position?: "top" | "bottom"`. Used throughout
 the admin console. Hover delay is 300ms (`delay-300`) to reduce accidental triggers.
 
-`ThemeProvider` (`src/components/ThemeProvider.tsx`) — React context that reads system
+`ThemeProvider` (`src/components/ThemeProvider.tsx`) - React context that reads system
 preference (`prefers-color-scheme: dark`) on first load, persists user choice in
 `localStorage`, and toggles the `dark` class on `<html>`. Exposes `useTheme()` hook.
 Single `useEffect` merges system detection, localStorage read, and system-change listener.
 The system-change listener guards against overriding an explicit user choice (`localStorage` check inside the handler, not at registration time).
 
-`ThemeToggle` (`src/components/ThemeToggle.tsx`) — floating sun/moon button (bottom-right,
+`ThemeToggle` (`src/components/ThemeToggle.tsx`) - floating sun/moon button (bottom-right,
 `z-40`, `bg-zinc-100 dark:bg-zinc-800`). Mounted once in `layout.tsx`; not imported on
 individual pages.
 
-`FeedbackWidget` (`src/components/FeedbackWidget.tsx`) — floating "Feedback" pill button
+`FeedbackWidget` (`src/components/FeedbackWidget.tsx`) - floating "Feedback" pill button
 (bottom-right corner, above ThemeToggle). Opens a modal with category select (feedback /
 help / bug) and a free-text textarea. Calls `POST /feedback`; on success shows a toast
 and closes. Shown on all post-login pages (dashboard, library, settings).
 
 ### Shared utilities (`src/lib/`)
-`lib/utils.ts` — `DAY_LABELS` constant (Mon–Sun labels array) and `formatDuration(sec)`
+`lib/utils.ts` - `DAY_LABELS` constant (Mon–Sun labels array) and `formatDuration(sec)`
 helper. Previously duplicated in dashboard, library, and onboarding pages.
 
-`lib/scheduleTemplates.ts` — `buildSchedule()` function that generates a `ScheduleSlot[]`
+`lib/scheduleTemplates.ts` - `buildSchedule()` function that generates a `ScheduleSlot[]`
 from a life-stage profile, goal, number of training days, and session duration. Used in
 onboarding step 5 to produce a sensible default schedule before the user customises it.
 
 ### Frontend tests (`frontend/src/test/`)
-`test/setup.ts` — Vitest + `@testing-library/jest-dom` setup file.
+`test/setup.ts` - Vitest + `@testing-library/jest-dom` setup file.
 
-Run: `cd frontend && npm run test:run` — 71 tests covering `scheduleTemplates` logic,
+Run: `cd frontend && npm run test:run` - 71 tests covering `scheduleTemplates` logic,
 `ChannelManager` component behaviour, onboarding page step flows, ThemeProvider, and ThemeToggle.
 
 ### API client (`src/lib/api.ts`)
@@ -635,28 +635,28 @@ parsed `detail` from the FastAPI error response.
 
 ## Key Design Decisions (Web App)
 
-**Services reuse `src/` logic** — the core scanner/classifier/planner code is unchanged.
+**Services reuse `src/` logic** - the core scanner/classifier/planner code is unchanged.
 The web app API services are thin adapters that swap raw SQLite for SQLAlchemy sessions.
 This avoids duplicating ~2,000 lines of carefully tested business logic.
 
-**APScheduler over Celery** — at early user counts, sequential per-user weekly runs
+**APScheduler over Celery** - at early user counts, sequential per-user weekly runs
 complete in seconds. APScheduler adds zero infrastructure. Migration path to Celery is
 straightforward when scale demands it (see `docs/infra-research.md`).
 
-**Platform-pays for Anthropic classification** — channel init costs ~$1–2 per user
+**Platform-pays for Anthropic classification** - channel init costs ~$1–2 per user
 ever; weekly incremental runs cost a few cents. The `user_credentials.anthropic_key`
 field exists in the schema for future BYOK support but is unused in v1.
 
-**Fernet encryption for credentials** — YouTube refresh tokens are encrypted at rest.
+**Fernet encryption for credentials** - YouTube refresh tokens are encrypted at rest.
 The `ENCRYPTION_KEY` env var is validated at startup; the server refuses to start
 without it to prevent silent unencrypted storage.
 
-**Shared components for channel + schedule editing** — both onboarding and settings
+**Shared components for channel + schedule editing** - both onboarding and settings
 need channel management and schedule editing. Extracting `ChannelManager` and
 `ScheduleEditor` to `src/components/` keeps the logic in one place and keeps both
 pages consistent.
 
-**Case-insensitive library filters** — the classifier (a language model) returns mixed-case
+**Case-insensitive library filters** - the classifier (a language model) returns mixed-case
 `workout_type` values ("HIIT", "Strength"). Rather than normalising at write time (risky,
 would need a migration), `GET /library` uses `func.lower()` on both the column and the
 query param. Frontend filter dropdowns use an explicit label map for display.

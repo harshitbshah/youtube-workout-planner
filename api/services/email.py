@@ -1,5 +1,5 @@
 """
-email.py — Resend-powered transactional emails.
+email.py - Resend-powered transactional emails.
 """
 import logging
 import os
@@ -49,8 +49,8 @@ def send_weekly_plan_email(user, plan: list[dict]) -> None:
     """
     Send the weekly plan email to the user.
 
-    user  — SQLAlchemy User instance (needs .email, .display_name)
-    plan  — list of {"day": str, "video": dict | None} from generate_weekly_plan_for_user
+    user  - SQLAlchemy User instance (needs .email, .display_name)
+    plan  - list of {"day": str, "video": dict | None} from generate_weekly_plan_for_user
     """
     api_key = os.environ.get("RESEND_API_KEY")
     if not api_key:
@@ -126,9 +126,9 @@ def send_feedback_email(user, category: str, message: str) -> None:
     """
     Forward a user feedback submission to the admin inbox.
 
-    user     — SQLAlchemy User instance (needs .email, .display_name)
-    category — one of: feedback | help | bug
-    message  — free-text from the user
+    user     - SQLAlchemy User instance (needs .email, .display_name)
+    category - one of: feedback | help | bug
+    message  - free-text from the user
     """
     api_key = os.environ.get("RESEND_API_KEY")
     if not api_key:

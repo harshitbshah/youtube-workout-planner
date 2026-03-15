@@ -1,5 +1,5 @@
 """
-main.py — Entry point for the YouTube Workout Planner.
+main.py - Entry point for the YouTube Workout Planner.
 
 Usage:
   python main.py --init       First-time full scan + classify all channels
@@ -91,7 +91,7 @@ def cmd_init(config: dict):
     (duplicate videos and classifications are silently skipped).
     """
     logger.info("=" * 60)
-    logger.info("INIT — First-time setup")
+    logger.info("INIT - First-time setup")
     logger.info("=" * 60)
 
     init_db()
@@ -121,7 +121,7 @@ def cmd_classify_only():
     Useful after --init has completed the scan but classification was interrupted.
     """
     logger.info("=" * 60)
-    logger.info("CLASSIFY — Batch classification of scanned videos")
+    logger.info("CLASSIFY - Batch classification of scanned videos")
     logger.info("=" * 60)
 
     init_db()
@@ -138,7 +138,7 @@ def cmd_classify_only():
 def cmd_run(config: dict, dry_run: bool = False):
     """
     Weekly run (or dry-run):
-      1. Incremental scan — fetch videos published in the last 8 days
+      1. Incremental scan - fetch videos published in the last 8 days
       2. Classify any newly scanned videos
       3. Generate the weekly workout plan
       4. Refresh the YouTube playlist  (skipped on --dry-run)
@@ -175,7 +175,7 @@ def cmd_run(config: dict, dry_run: bool = False):
     week_start = get_upcoming_monday().isoformat()
     summary    = format_plan_summary(plan, week_start)
 
-    # Always print the plan — visible in GitHub Actions logs
+    # Always print the plan - visible in GitHub Actions logs
     print("\n" + summary + "\n")
 
     if dry_run:
@@ -187,7 +187,7 @@ def cmd_run(config: dict, dry_run: bool = False):
     if not playlist_id:
         logger.warning(
             "No playlist ID set in config.yaml (playlist.id). "
-            "Skipping playlist update — plan was printed above."
+            "Skipping playlist update - plan was printed above."
         )
         return
 
@@ -212,7 +212,7 @@ def main():
     setup_logging()
 
     parser = argparse.ArgumentParser(
-        description="YouTube Workout Planner — curate a weekly workout plan from your favourite channels.",
+        description="YouTube Workout Planner - curate a weekly workout plan from your favourite channels.",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 examples:

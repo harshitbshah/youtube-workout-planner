@@ -2,7 +2,7 @@
 
 You have favourite YouTube fitness creators. You know their style, you trust their programming. But every week you're manually hunting for the right video, second-guessing your split, and eventually just picking whatever feels right.
 
-This tool fixes that. Tell it which channels you follow and what your weekly training split looks like — and every Sunday it automatically builds your next week's workout plan from videos those creators actually published. Monday morning you open YouTube and your playlist is already there, in order, day by day.
+This tool fixes that. Tell it which channels you follow and what your weekly training split looks like - and every Sunday it automatically builds your next week's workout plan from videos those creators actually published. Monday morning you open YouTube and your playlist is already there, in order, day by day.
 
 No spreadsheets. No decision fatigue. Just train.
 
@@ -12,13 +12,13 @@ No spreadsheets. No decision fatigue. Just train.
 
 Every Sunday at 6pm UTC, a scheduled GitHub Actions job runs four steps:
 
-**1. Discover** — scans your configured channels for any videos published in the last 8 days, adding them to a local library.
+**1. Discover** - scans your configured channels for any videos published in the last 8 days, adding them to a local library.
 
-**2. Understand** — any newly discovered videos get classified by Claude AI: what type of workout is it (HIIT, strength, cardio, mobility)? Which part of the body? How hard? This isn't just reading the title — see [How Classification Works](#how-classification-works) below.
+**2. Understand** - any newly discovered videos get classified by Claude AI: what type of workout is it (HIIT, strength, cardio, mobility)? Which part of the body? How hard? This isn't just reading the title - see [How Classification Works](#how-classification-works) below.
 
-**3. Plan** — picks one video per training day based on your schedule, avoiding anything used in the last 8 weeks, spreading selections across channels, and favouring newer uploads.
+**3. Plan** - picks one video per training day based on your schedule, avoiding anything used in the last 8 weeks, spreading selections across channels, and favouring newer uploads.
 
-**4. Publish** — clears your YouTube playlist and repopulates it in Monday → Sunday order, with the playlist description updated to show the full weekly plan.
+**4. Publish** - clears your YouTube playlist and repopulates it in Monday → Sunday order, with the playlist description updated to show the full weekly plan.
 
 The first time you run it (`--init`), it scans the entire back-catalogue of each channel to build a rich library to plan from.
 
@@ -26,13 +26,13 @@ The first time you run it (`--init`), it scans the entire back-catalogue of each
 
 ## How Classification Works
 
-Titles lie. "30 Min Full Body Workout" could be anything — a sweaty HIIT session, a slow mobility flow, or a beginner bodyweight circuit. The only way to know is to actually listen to what the trainer says.
+Titles lie. "30 Min Full Body Workout" could be anything - a sweaty HIIT session, a slow mobility flow, or a beginner bodyweight circuit. The only way to know is to actually listen to what the trainer says.
 
 So that's what this tool does.
 
-It fetches the first ~2.5 minutes of auto-generated captions from each video — the intro, where trainers almost always explain what you're about to do:
+It fetches the first ~2.5 minutes of auto-generated captions from each video - the intro, where trainers almost always explain what you're about to do:
 
-> *"Grab your dumbbells, we're doing 4 heavy compound sets today — this is an intermediate to advanced session, no jumping, all strength..."*
+> *"Grab your dumbbells, we're doing 4 heavy compound sets today - this is an intermediate to advanced session, no jumping, all strength..."*
 
 That transcript, combined with the title, description, and tags, gets sent to Claude Haiku which returns a structured classification:
 
@@ -46,7 +46,7 @@ That transcript, combined with the title, description, and tags, gets sent to Cl
 
 If a video has no captions, it falls back gracefully to title and description only.
 
-**Cost-efficient by design:** rather than calling Claude once per video in sequence, all videos are submitted together via the [Anthropic Batch API](https://docs.anthropic.com/en/docs/build-with-claude/batch-processing) — 50% cheaper than standard API pricing and processed in parallel. Classifying an entire channel back-catalogue of ~2,000 videos costs around **$1–2 total**, and weekly incremental runs (10–30 new videos) cost just a few cents.
+**Cost-efficient by design:** rather than calling Claude once per video in sequence, all videos are submitted together via the [Anthropic Batch API](https://docs.anthropic.com/en/docs/build-with-claude/batch-processing) - 50% cheaper than standard API pricing and processed in parallel. Classifying an entire channel back-catalogue of ~2,000 videos costs around **$1–2 total**, and weekly incremental runs (10–30 new videos) cost just a few cents.
 
 ---
 
@@ -60,7 +60,7 @@ youtube-workout-planner/
 ├── workout_library.db             SQLite database (auto-committed by CI after each run)
 ├── .github/
 │   └── workflows/
-│       └── weekly_plan.yml        GitHub Actions — runs every Sunday
+│       └── weekly_plan.yml        GitHub Actions - runs every Sunday
 ├── scripts/
 │   └── get_oauth_token.py         One-time local helper to generate OAuth refresh token
 └── src/
@@ -93,7 +93,7 @@ source .venv/bin/activate
 pip install -r requirements.txt
 ```
 
-### 2. Google Cloud — YouTube API Key (read access)
+### 2. Google Cloud - YouTube API Key (read access)
 
 1. Go to [console.cloud.google.com](https://console.cloud.google.com)
 2. Project dropdown (top left) → **New Project** → name it `workout-planner` → **Create**
@@ -101,7 +101,7 @@ pip install -r requirements.txt
 4. Left menu → **APIs & Services** → **Credentials** → **+ Create Credentials** → **API Key**
 5. Copy the key and save it temporarily
 
-### 3. Google Cloud — OAuth Credentials (playlist write access)
+### 3. Google Cloud - OAuth Credentials (playlist write access)
 
 Still on the Credentials page:
 
@@ -122,7 +122,7 @@ python scripts/get_oauth_token.py
 ```
 
 Your browser opens → log in with your Google account → click **Allow**.
-The terminal prints three values — copy all of them:
+The terminal prints three values - copy all of them:
 
 ```
 YOUTUBE_CLIENT_ID       xxxxx.apps.googleusercontent.com
@@ -155,7 +155,7 @@ YOUTUBE_OAUTH_REFRESH_TOKEN   1//xxxxxxxxxxxxxxxxxx
 
 ### 7. Configure Your Channels and Schedule
 
-Edit `config.yaml` — the channels are already set to your three channels. Adjust the weekly schedule to match your training split:
+Edit `config.yaml` - the channels are already set to your three channels. Adjust the weekly schedule to match your training split:
 
 ```yaml
 schedule:
@@ -169,7 +169,7 @@ schedule:
 
 ### 8. Run the First-Time Scan
 
-Create a `.env` file in the project root (gitignored — never committed):
+Create a `.env` file in the project root (gitignored - never committed):
 
 ```bash
 YOUTUBE_API_KEY=your_api_key
@@ -187,7 +187,7 @@ python main.py --init
 ```
 
 This scans the full back-catalogue of all three channels and classifies every video.
-Expect **20–40 minutes** on first run — only ever done once per channel.
+Expect **20–40 minutes** on first run - only ever done once per channel.
 
 > **If classification is interrupted** (e.g. API credits ran out), you don't need to re-scan. Just run:
 > ```bash
@@ -233,7 +233,7 @@ Repo → **Settings** → **Secrets and variables** → **Actions** → **New re
 
 ### 12. Trigger a Test Run
 
-Don't wait for Sunday — trigger it manually:
+Don't wait for Sunday - trigger it manually:
 
 Repo → **Actions** → **Weekly Workout Plan** → **Run workflow** → **Run workflow**
 
@@ -248,7 +248,7 @@ Watch the logs. On success, open YouTube → your playlist → this week's video
 ☐ pip install -r requirements.txt
 ☐ YouTube API key created
 ☐ OAuth client ID + secret created
-☐ scripts/client_secret.json placed (gitignored — never committed)
+☐ scripts/client_secret.json placed (gitignored - never committed)
 ☐ get_oauth_token.py run → refresh token copied
 ☐ Anthropic API key created
 ☐ YouTube playlist created → ID added to config.yaml
@@ -326,7 +326,7 @@ Then run locally:
 ```bash
 python main.py --init
 ```
-`--init` is safe to re-run — existing videos are skipped, only the new channel is scanned.
+`--init` is safe to re-run - existing videos are skipped, only the new channel is scanned.
 
 **Remove a channel:**
 Delete the entry from `config.yaml`. Existing videos from that channel stay in the DB but won't be selected for future plans.
@@ -336,13 +336,13 @@ Delete the entry from `config.yaml`. Existing videos from that channel stay in t
 ## Ambitious Ideas for the Future
 
 ### 1. Adaptive Periodization
-Right now your weekly schedule is fixed forever — every Monday is always Strength/Upper. A more powerful version would automatically cycle through structured training blocks: a build phase (higher volume, moderate intensity), a peak phase (lower volume, higher intensity), and a deload week — then repeat. The system would adjust which workout types and difficulty levels it selects each week based on where you are in the cycle, implementing real progressive programming without you ever touching `config.yaml`.
+Right now your weekly schedule is fixed forever - every Monday is always Strength/Upper. A more powerful version would automatically cycle through structured training blocks: a build phase (higher volume, moderate intensity), a peak phase (lower volume, higher intensity), and a deload week - then repeat. The system would adjust which workout types and difficulty levels it selects each week based on where you are in the cycle, implementing real progressive programming without you ever touching `config.yaml`.
 
 ### 2. Preference Learning
-A feedback loop that makes the plan smarter over time. After each week, you rate your sessions — loved it, skipped it, it was fine. Those signals feed back into the scoring algorithm permanently: creators you consistently enjoy get a long-term score boost, video styles you skip get suppressed, and sessions you abandon mid-week get flagged for reconsideration. Over months, the planner stops being a generic curator and starts feeling like it actually knows you.
+A feedback loop that makes the plan smarter over time. After each week, you rate your sessions - loved it, skipped it, it was fine. Those signals feed back into the scoring algorithm permanently: creators you consistently enjoy get a long-term score boost, video styles you skip get suppressed, and sessions you abandon mid-week get flagged for reconsideration. Over months, the planner stops being a generic curator and starts feeling like it actually knows you.
 
 ### 3. Natural Language Rescheduling
-A Telegram or WhatsApp bot that lets you modify your week in plain English. Message it *"I'm too sore for legs today, swap Wednesday for something lighter"* or *"I'm travelling Thursday and Friday, make it a 3-day week"* and it re-generates the plan and updates your YouTube playlist automatically. No config files, no code — just a message from wherever you are.
+A Telegram or WhatsApp bot that lets you modify your week in plain English. Message it *"I'm too sore for legs today, swap Wednesday for something lighter"* or *"I'm travelling Thursday and Friday, make it a 3-day week"* and it re-generates the plan and updates your YouTube playlist automatically. No config files, no code - just a message from wherever you are.
 
 ---
 
@@ -350,10 +350,10 @@ A Telegram or WhatsApp bot that lets you modify your week in plain English. Mess
 
 | Doc | What's in it |
 |---|---|
-| [docs/architecture.md](./docs/architecture.md) | How the current pipeline works — components, data flow, design decisions |
-| [docs/scaling.md](./docs/scaling.md) | Web app vision — target architecture, data model, API surface, open questions |
-| [docs/infra-research.md](./docs/infra-research.md) | Infrastructure research — hosting, scheduler, frontend, Anthropic/YouTube API decisions |
-| [docs/setup-progress.md](./docs/setup-progress.md) | One-time setup checklist (personal — tracks completion of initial configuration steps) |
+| [docs/architecture.md](./docs/architecture.md) | How the current pipeline works - components, data flow, design decisions |
+| [docs/scaling.md](./docs/scaling.md) | Web app vision - target architecture, data model, API surface, open questions |
+| [docs/infra-research.md](./docs/infra-research.md) | Infrastructure research - hosting, scheduler, frontend, Anthropic/YouTube API decisions |
+| [docs/setup-progress.md](./docs/setup-progress.md) | One-time setup checklist (personal - tracks completion of initial configuration steps) |
 
 ---
 
@@ -361,11 +361,11 @@ A Telegram or WhatsApp bot that lets you modify your week in plain English. Mess
 
 | Issue | Fix |
 |-------|-----|
-| `Channel not found` error on init | Double-check the channel URL in `config.yaml` — use the `@handle` format |
+| `Channel not found` error on init | Double-check the channel URL in `config.yaml` - use the `@handle` format |
 | OAuth token expired | Re-run `python scripts/get_oauth_token.py` and update the `YOUTUBE_OAUTH_REFRESH_TOKEN` GitHub Secret |
 | YouTube API quota exceeded | Free quota (10,000 units/day) resets at midnight Pacific. Retry next day |
-| `No video found for [day]` warning | Your library may lack videos for that type/focus — check classifications or loosen the schedule |
+| `No video found for [day]` warning | Your library may lack videos for that type/focus - check classifications or loosen the schedule |
 | Video misclassified | LLM classification has edge cases. Open `workout_library.db` in [DB Browser for SQLite](https://sqlitebrowser.org) and edit the `classifications` table manually |
-| Classification interrupted mid-run | Run `python main.py --classify-only` — it skips already-classified videos and picks up from where it left off |
+| Classification interrupted mid-run | Run `python main.py --classify-only` - it skips already-classified videos and picks up from where it left off |
 | Anthropic API credits exhausted | Top up at [console.anthropic.com](https://console.anthropic.com) → Plans & Billing. Note: API credits are separate from Claude Pro |
-| GitHub Actions can't push the DB | Ensure the workflow has `contents: write` permission — check repo Settings → Actions → General |
+| GitHub Actions can't push the DB | Ensure the workflow has `contents: write` permission - check repo Settings → Actions → General |

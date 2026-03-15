@@ -108,7 +108,7 @@ export default function FeedbackWidget() {
                 />
 
                 {status === "err" && (
-                  <p className="text-xs text-red-400">Something went wrong — try again.</p>
+                  <p className="text-xs text-red-400">Something went wrong - try again.</p>
                 )}
 
                 <button

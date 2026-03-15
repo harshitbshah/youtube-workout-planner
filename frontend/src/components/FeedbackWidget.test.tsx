@@ -14,7 +14,7 @@ beforeEach(() => {
   mockSubmitFeedback.mockResolvedValue(undefined);
 });
 
-describe("FeedbackWidget — floating button", () => {
+describe("FeedbackWidget - floating button", () => {
   it("renders the Feedback button", () => {
     render(<FeedbackWidget />);
     expect(screen.getByRole("button", { name: /Feedback/i })).toBeInTheDocument();
@@ -26,7 +26,7 @@ describe("FeedbackWidget — floating button", () => {
   });
 });
 
-describe("FeedbackWidget — modal open/close", () => {
+describe("FeedbackWidget - modal open/close", () => {
   it("opens modal when Feedback button is clicked", () => {
     render(<FeedbackWidget />);
     fireEvent.click(screen.getByRole("button", { name: /Feedback/i }));
@@ -51,7 +51,7 @@ describe("FeedbackWidget — modal open/close", () => {
   });
 });
 
-describe("FeedbackWidget — category selection", () => {
+describe("FeedbackWidget - category selection", () => {
   it("renders all three category buttons", () => {
     render(<FeedbackWidget />);
     fireEvent.click(screen.getByRole("button", { name: /Feedback/i }));
@@ -69,7 +69,7 @@ describe("FeedbackWidget — category selection", () => {
   });
 });
 
-describe("FeedbackWidget — submit", () => {
+describe("FeedbackWidget - submit", () => {
   it("Send button is disabled when message is empty", () => {
     render(<FeedbackWidget />);
     fireEvent.click(screen.getByRole("button", { name: /Feedback/i }));

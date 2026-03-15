@@ -6,7 +6,7 @@ Create Date: 2026-03-13
 
 Channels become global (shared across users). A new user_channels join table
 links users to the channels they've added. Deleting a channel subscription
-removes only the user_channels row — the channel and its videos stay intact.
+removes only the user_channels row - the channel and its videos stay intact.
 
 Migration steps:
   1. Create user_channels table
@@ -101,7 +101,7 @@ def upgrade():
 
 
 def downgrade():
-    # Re-add user_id to channels (picks one arbitrary user per channel — lossy)
+    # Re-add user_id to channels (picks one arbitrary user per channel - lossy)
     op.add_column(
         "channels",
         sa.Column("user_id", sa.String(36), nullable=True),

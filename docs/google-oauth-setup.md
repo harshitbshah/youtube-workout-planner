@@ -14,7 +14,7 @@ sees this scary screen:
 Google Cloud OAuth apps start in **Testing** mode. Only explicitly added test
 users can sign in at all, and all of them see the warning.
 
-### Fix for friends — switch to Production (no review required)
+### Fix for friends - switch to Production (no review required)
 
 Because the app only requests basic, non-sensitive scopes (`openid`, `email`,
 `profile`), Google does **not** require a verification review to go to
@@ -25,19 +25,19 @@ Production. The warning disappears entirely.
 1. Go to [Google Cloud Console](https://console.cloud.google.com) → your project
 2. APIs & Services → **OAuth consent screen**
 3. Click **Publish App** (changes status from Testing → In production)
-4. Confirm the prompt — no form or review needed for basic scopes
+4. Confirm the prompt - no form or review needed for basic scopes
 
 After publishing, any Google account can sign in and the warning is gone.
 
 ### When full verification IS required
 
 Full Google verification (takes weeks, needs privacy policy URL) is only needed
-if you add sensitive or restricted scopes — e.g. `youtube.force-ssl` for
+if you add sensitive or restricted scopes - e.g. `youtube.force-ssl` for
 playlist writing (Phase 5). Plan for this before opening the app publicly.
 
 | Scope | Sensitivity | Verification needed? |
 |---|---|---|
-| `openid`, `email`, `profile` | Non-sensitive | No — just publish |
+| `openid`, `email`, `profile` | Non-sensitive | No - just publish |
 | `youtube.readonly` | Sensitive | Yes |
 | `youtube.force-ssl` | Restricted | Yes (full review) |
 
@@ -49,7 +49,7 @@ If you want to keep the app in Testing mode but let specific friends in:
 
 1. OAuth consent screen → **Test users** → Add users
 2. Add their Gmail addresses
-3. They can now sign in (but still see the warning — it just won't block them)
+3. They can now sign in (but still see the warning - it just won't block them)
 
 This is fine for 1–2 people during active development. Switch to Production
 when sharing more broadly.
@@ -71,7 +71,7 @@ Migrated frontend from `planmyworkout.vercel.app` → `planmyworkout.app` (purch
 
 **Domain ownership:** Verified via Google Search Console DNS TXT record on Hostinger.
 
-**Google OAuth verification:** ✅ **Approved 2026-03-15.** YouTube scope (`https://www.googleapis.com/auth/youtube`) verified by Google Trust & Safety. App is fully verified — no "unverified app" warning shown to any user.
+**Google OAuth verification:** ✅ **Approved 2026-03-15.** YouTube scope (`https://www.googleapis.com/auth/youtube`) verified by Google Trust & Safety. App is fully verified - no "unverified app" warning shown to any user.
 
 ---
 
@@ -81,7 +81,7 @@ Test this after any auth or redirect change:
 
 - [ ] `/` shows "Sign in with Google" button (not a spinner)
 - [ ] Clicking sign-in redirects to Google's OAuth consent screen
-- [ ] If in Testing mode: warning screen appears — click Advanced → Go to app
+- [ ] If in Testing mode: warning screen appears - click Advanced → Go to app
 - [x] If in Production mode: standard consent screen, no warning (verified ✅ 2026-03-15)
 - [ ] Select account and grant permissions
 - [ ] **New user (no channels):** redirected to `/onboarding`

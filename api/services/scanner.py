@@ -1,5 +1,5 @@
 """
-api/services/scanner.py — Scan YouTube channels and save videos to PostgreSQL.
+api/services/scanner.py - Scan YouTube channels and save videos to PostgreSQL.
 
 Reuses pure functions from src/scanner.py (YouTube API calls, duration parsing).
 Only the DB layer is rewritten to use SQLAlchemy scoped to a user's channel.
@@ -39,7 +39,7 @@ _INACTIVE_CHANNEL_DAYS = 60
 # ─── Pre-classification filters ───────────────────────────────────────────────
 
 # Titles containing any of these words are almost certainly not workout videos.
-# Checked before fetching video details — no extra API calls needed.
+# Checked before fetching video details - no extra API calls needed.
 _TITLE_BLOCKLIST = {
     # nutrition / food content
     "meal", "recipe", "nutrition", "grocery", "what i eat", "diet", "food",
@@ -188,7 +188,7 @@ def _scan_uploads(
             # Layer 4: skip by duration after fetching details.
             # - < 3 min: Shorts (including those without the #shorts hashtag)
             # - > 2 hrs: likely a livestream, podcast, or multi-hour challenge
-            # - None: unknown duration, can't verify — exclude to be safe
+            # - None: unknown duration, can't verify - exclude to be safe
             batch = [
                 v for v in batch
                 if v.get("duration_sec")
@@ -253,7 +253,7 @@ def scan_channel(
     # F4: skip inactive channels during cron runs
     if skip_if_inactive and channel.last_video_published_at is not None:
         cutoff = datetime.now(timezone.utc) - timedelta(days=_INACTIVE_CHANNEL_DAYS)
-        # Normalise to UTC-aware — SQLite returns naive datetimes; PostgreSQL returns aware
+        # Normalise to UTC-aware - SQLite returns naive datetimes; PostgreSQL returns aware
         last_pub = channel.last_video_published_at
         if last_pub.tzinfo is None:
             last_pub = last_pub.replace(tzinfo=timezone.utc)

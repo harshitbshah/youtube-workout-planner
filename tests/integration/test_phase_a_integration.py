@@ -1,5 +1,5 @@
 """
-Phase A integration tests — run against real PostgreSQL.
+Phase A integration tests - run against real PostgreSQL.
 
 Tests that DB-level behaviour is correct for migrations 006–008 and the
 scanner/classifier logic that touches the new columns.

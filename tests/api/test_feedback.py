@@ -1,5 +1,5 @@
 """
-tests/api/test_feedback.py — Unit tests for POST /feedback and send_feedback_email.
+tests/api/test_feedback.py - Unit tests for POST /feedback and send_feedback_email.
 
 Mocks resend.Emails.send so no real network calls are made.
 """
@@ -14,7 +14,7 @@ from tests.api.helpers import make_mock_user as _make_user
 _FEEDBACK_ENV = {"RESEND_API_KEY": "re_test123", "ADMIN_EMAIL": "admin@example.com"}
 
 
-# ─── POST /feedback — router tests ────────────────────────────────────────────
+# ─── POST /feedback - router tests ────────────────────────────────────────────
 
 def test_submit_feedback_happy_path(auth_client):
     """Returns 204 on valid category + message."""
@@ -77,7 +77,7 @@ def test_submit_feedback_email_failure_returns_503(auth_client):
     assert "unavailable" in resp.json()["detail"].lower()
 
 
-# ─── send_feedback_email — service tests ──────────────────────────────────────
+# ─── send_feedback_email - service tests ──────────────────────────────────────
 
 def test_feedback_email_sent_to_admin():
     """send_feedback_email sends to ADMIN_EMAIL, not the user."""

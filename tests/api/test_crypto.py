@@ -1,5 +1,5 @@
 """
-Tests for api/crypto.py — encryption/decryption of credential fields.
+Tests for api/crypto.py - encryption/decryption of credential fields.
 
 Covers:
   - Round-trip integrity
@@ -27,7 +27,7 @@ def test_encrypt_produces_non_plaintext():
 
 
 def test_two_encryptions_of_same_value_differ():
-    # Fernet uses a random IV — same plaintext should produce different ciphertexts
+    # Fernet uses a random IV - same plaintext should produce different ciphertexts
     value = "my-token"
     assert encrypt(value) != encrypt(value)
 

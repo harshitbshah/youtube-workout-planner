@@ -38,7 +38,7 @@ def test_full_scan_returns_202_with_channels(auth_client, db_session):
 
 
 def test_full_scan_400_when_no_channels(auth_client):
-    """400 returned when user has no channels — verified against real Postgres query."""
+    """400 returned when user has no channels - verified against real Postgres query."""
     client, user = auth_client
     with patch("api.routers.jobs.YOUTUBE_API_KEY", "fake-key"):
         resp = client.post("/jobs/scan")

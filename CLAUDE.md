@@ -1,4 +1,4 @@
-# YouTube Workout Planner — Claude Instructions
+# YouTube Workout Planner - Claude Instructions
 
 ## Session Start
 1. Read `PROGRESS.md` for current status and next steps
@@ -8,45 +8,45 @@
 ## Testing workflow
 The user does **not** test locally. All end-to-end testing happens on Vercel (frontend)
 and Railway (backend) after pushing to `main`. A change is not "done" until it is
-committed and pushed — not just working in a local dev server.
+committed and pushed - not just working in a local dev server.
 
-## Checkpoint — MANDATORY when user says "checkpoint"
+## Checkpoint - MANDATORY when user says "checkpoint"
 
 When the user says "let's checkpoint" or "take a checkpoint", run the following in order:
 
-1. **`PROGRESS.md`** — update status line, test count, and add a dated section summarising
+1. **`PROGRESS.md`** - update status line, test count, and add a dated section summarising
    everything built/fixed this session. Keep it factual and scannable (bullet points).
 
-2. **`docs/architecture.md`** — update if any routes, pages, components, or DB schema changed.
+2. **`docs/architecture.md`** - update if any routes, pages, components, or DB schema changed.
 
-3. **`docs/backlog.md`** — append any new ideas or deferred work that surfaced this session. Create the file if it doesn't exist.
+3. **`docs/backlog.md`** - append any new ideas or deferred work that surfaced this session. Create the file if it doesn't exist.
 
-4. **`docs/testing.md`** — update test count; add new test files and manual checklist items.
+4. **`docs/testing.md`** - update test count; add new test files and manual checklist items.
 
-5. **`docs/user-guide.md`** — update if any user-facing features were added or changed.
+5. **`docs/user-guide.md`** - update if any user-facing features were added or changed.
 
-6. **`frontend/src/app/admin/guide/page.tsx`** — update if any operationally significant
+6. **`frontend/src/app/admin/guide/page.tsx`** - update if any operationally significant
    changes were made (new Railway gotcha, new known limit, new admin flow). Skip for routine
-   UX additions — see "Docs ↔ Admin guide relationship" convention below.
+   UX additions - see "Docs ↔ Admin guide relationship" convention below.
 
-7. **`CLAUDE.md` itself** — update the API routes table and file map if new routes or files
+7. **`CLAUDE.md` itself** - update the API routes table and file map if new routes or files
    were added.
 
-8. **Claude's memory** (`~/.claude/projects/.../memory/MEMORY.md`) — update status line,
+8. **Claude's memory** (`~/.claude/projects/.../memory/MEMORY.md`) - update status line,
    test count, and any key architectural facts that changed.
 
-9. **Commit all doc changes** with message: `docs: checkpoint — <one-line summary> (<date>)`
+9. **Commit all doc changes** with message: `docs: checkpoint - <one-line summary> (<date>)`
 
 The goal: any future session (or a knowledge agent) can read these docs and fully understand
 the current state without needing conversation history.
 
-## Testing — MANDATORY
+## Testing - MANDATORY
 
 Every code change that adds or modifies backend behaviour **must** include:
 
-1. **Unit test** in `tests/api/` — fast, uses SQLite in-memory, mocks external calls.
+1. **Unit test** in `tests/api/` - fast, uses SQLite in-memory, mocks external calls.
    - Test happy path, auth failure (401), and key error cases (400/404/503).
-2. **Integration test** in `tests/integration/` — runs against real PostgreSQL.
+2. **Integration test** in `tests/integration/` - runs against real PostgreSQL.
    - Verify the DB-level behaviour (FK constraints, correct rows written, user isolation).
 
 Run both suites before committing:
@@ -74,27 +74,27 @@ All tests must pass (0 failures) before any commit. Never skip or defer tests to
 
 ## Maintaining Docs
 
-**PROGRESS.md** — update before every commit. Keep it lean (current state only, no history).
+**PROGRESS.md** - update before every commit. Keep it lean (current state only, no history).
 - Check off tasks as completed
 - When a phase is done, replace it with the next phase's tasks
 
-**docs/architecture.md** — update whenever routes, pages, components, or DB schema change.
+**docs/architecture.md** - update whenever routes, pages, components, or DB schema change.
 The web app section must stay in sync with the actual codebase.
 
-**docs/testing.md** — add new pages/features to the Phase manual checklist when built.
+**docs/testing.md** - add new pages/features to the Phase manual checklist when built.
 Delete checklist items as verified; delete the section when fully ticked.
 
-**docs/google-oauth-setup.md** — update if OAuth scopes or the publish flow changes.
+**docs/google-oauth-setup.md** - update if OAuth scopes or the publish flow changes.
 
-**docs/infra-research.md** — mark decisions as "made" when they are; add new decisions as they arise.
+**docs/infra-research.md** - mark decisions as "made" when they are; add new decisions as they arise.
 
-**docs/backlog.md** — append new ideas here mid-session whenever something worth
+**docs/backlog.md** - append new ideas here mid-session whenever something worth
 capturing surfaces. Review before starting a new phase.
 
-**docs/user-guide.md** — update when user-facing features are added or change behaviour.
+**docs/user-guide.md** - update when user-facing features are added or change behaviour.
 Covers current features only (no speculative content), written for a non-technical reader.
 
-**CLAUDE.md itself** — update the API routes table, file map, and user flows whenever
+**CLAUDE.md itself** - update the API routes table, file map, and user flows whenever
 new routes or pages are added.
 
 ### Docs ↔ Admin guide relationship
@@ -104,8 +104,8 @@ new routes or pages are added.
 in the web portal for quick in-app access.
 
 Convention:
-- `docs/` is always updated first — it is the canonical record.
-- The admin guide sections are summaries, not full copies — do not paste entire docs into the guide.
+- `docs/` is always updated first - it is the canonical record.
+- The admin guide sections are summaries, not full copies - do not paste entire docs into the guide.
 - Only update the admin guide section for a doc when the change is **operationally significant**
   (e.g. a new stack decision, a new Railway gotcha, a new known limit). Routine feature additions
   do not need an admin guide update.
@@ -123,13 +123,13 @@ Single-user Python script that runs on GitHub Actions every Sunday:
 scan channels → classify with Claude → generate plan → update YouTube playlist.
 This is **feature-complete and in production**. Do not touch unless explicitly asked.
 
-### 2. Web app — the active focus (`api/`, `frontend/`, `alembic/`, `tests/`)
+### 2. Web app - the active focus (`api/`, `frontend/`, `alembic/`, `tests/`)
 Multi-user FastAPI + Next.js web application. This is what we are building.
 See `docs/architecture.md` for full design.
 
 ---
 
-## Web App — Running Locally
+## Web App - Running Locally
 
 ```bash
 # Backend (from repo root)
@@ -146,13 +146,13 @@ npm run dev
 API: `http://localhost:8000` | Swagger: `http://localhost:8000/docs`
 Frontend: `http://localhost:3000`
 
-## Web App — Tests
+## Web App - Tests
 
 ```bash
 # Unit tests (SQLite in-memory, no external deps)
 .venv/bin/pytest tests/api/ tests/test_*.py -v
 
-# Integration tests (real PostgreSQL — requires workout_planner_test DB)
+# Integration tests (real PostgreSQL - requires workout_planner_test DB)
 .venv/bin/pytest tests/integration/ -v
 
 # All backend tests
@@ -164,7 +164,7 @@ cd frontend && npm run test:run
 
 ---
 
-## Web App — Key Files
+## Web App - Key Files
 
 ### Backend (`api/`)
 | File | Purpose |
@@ -180,10 +180,10 @@ cd frontend && npm run test:run
 | `api/routers/channels.py` | `GET/POST /channels`, `DELETE /channels/{id}`, `GET /channels/search` |
 | `api/routers/schedule.py` | `GET/PUT /schedule` |
 | `api/routers/plan.py` | `GET /plan/upcoming`, `POST /plan/generate`, `PATCH /plan/{day}`, `POST /plan/publish` |
-| `api/routers/library.py` | `GET /library` — paginated, filtered video browser |
+| `api/routers/library.py` | `GET /library` - paginated, filtered video browser |
 | `api/routers/jobs.py` | `POST /jobs/scan`, `GET /jobs/status`, `get_all_pipeline_statuses()` |
 | `api/routers/admin.py` | Admin stats, user management, announcements (ADMIN_EMAIL gated) |
-| `api/routers/feedback.py` | `POST /feedback` — category validation, message trim, calls send_feedback_email |
+| `api/routers/feedback.py` | `POST /feedback` - category validation, message trim, calls send_feedback_email |
 | `api/services/scanner.py` | YouTube channel scanning (uses `src/scanner.py` internals) |
 | `api/services/classifier.py` | Video classification via Anthropic Batch API; records BatchUsageLog; `rule_classify_for_user()` (free regex classify); `build_targeted_batch()` (gap-slot targeted subset) |
 | `api/services/planner.py` | Weekly plan generation (uses `src/planner.py`); `can_fill_plan()` + `get_gap_types()` for lazy classification gate |
@@ -203,20 +203,20 @@ cd frontend && npm run test:run
 | `app/admin/page.tsx` | Admin console: stats, user table, announcements (admin only) |
 | `app/admin/guide/page.tsx` | Admin operational guide: admin console, managing users, announcements, monitoring, troubleshooting, railway ops, DB reference, env vars, known issues |
 | `lib/api.ts` | All API calls + TypeScript types |
-| `lib/scheduleTemplates.ts` | `buildSchedule()` — generates ScheduleSlot[] from profile, goal, days, duration |
+| `lib/scheduleTemplates.ts` | `buildSchedule()` - generates ScheduleSlot[] from profile, goal, days, duration |
 | `lib/utils.ts` | Shared `DAY_LABELS` constant + `formatDuration()` utility |
 | `components/ChannelManager.tsx` | Reusable channel search/add/remove; optional `suggestions` prop for curated chips (used in onboarding + settings) |
 | `components/Badge.tsx` | Shared styled badge pill (used in dashboard + library) |
 | `components/ScheduleEditor.tsx` | Reusable weekly schedule grid (used in onboarding + settings) |
 | `components/Tooltip.tsx` | CSS-only tooltip component (`group/tip` pattern, `delay-300`) |
-| `components/Footer.tsx` | Shared footer with YouTube API attribution; accepts optional `isAdmin` prop — shows "Admin Guide" link beside "User Guide" on admin pages |
+| `components/Footer.tsx` | Shared footer with YouTube API attribution; accepts optional `isAdmin` prop - shows "Admin Guide" link beside "User Guide" on admin pages |
 | `components/ThemeProvider.tsx` | React context for light/dark theme; reads system pref, persists to localStorage, exposes `useTheme()` |
 | `components/ThemeToggle.tsx` | Floating sun/moon button (bottom-right); mounted once in `layout.tsx` |
 | `components/FeedbackWidget.tsx` | Floating "Feedback" pill + modal; calls `POST /feedback`; shown on dashboard/library/settings |
 
 ---
 
-## Web App — API Routes Summary
+## Web App - API Routes Summary
 
 | Method | Path | Auth | Purpose |
 |---|---|---|---|
@@ -255,7 +255,7 @@ cd frontend && npm run test:run
 
 ---
 
-## Web App — User Flows
+## Web App - User Flows
 
 ```
 / (landing page)
@@ -294,7 +294,14 @@ Google OAuth → /auth/google → Google → /auth/google/callback → /
 
 ---
 
-## Web App — Key Conventions
+## Writing Conventions
+
+### No em dashes
+Never use em dashes (—) anywhere in this project - in code comments, docs, UI strings, or commit messages. Use a plain hyphen (-) instead. Em dashes are an LLM writing tell and look unnatural in this codebase.
+
+---
+
+## Web App - Key Conventions
 
 ### Authentication
 - Session cookie via Starlette `SessionMiddleware`
@@ -312,7 +319,7 @@ Frontend filter values are lowercase; display labels are set explicitly in `WORK
 `ENCRYPTION_KEY` is checked at startup; the server refuses to start without it.
 
 ### Running .env
-Always use `set -a && source .env && set +a` — plain `source .env` does not export
+Always use `set -a && source .env && set +a` - plain `source .env` does not export
 vars to subprocesses, so uvicorn (a subprocess) won't see them.
 
 ### Admin gating
@@ -321,8 +328,8 @@ Read at request time inside `_require_admin()` (not at module import time) to al
 test isolation via `monkeypatch.setenv`. On Railway: set `ADMIN_EMAIL=harshitspeaks@gmail.com`.
 
 ### Lazy classification env vars
-- `MIN_PLAN_CANDIDATES` (default `3`) — minimum classified videos per schedule slot for `can_fill_plan()` to return True. Lower = faster plan delivery but less variety; higher = more Anthropic calls.
-- `TARGETED_BATCH_MULTIPLIER` (default `5`) — videos selected per gap slot type in the targeted mini-batch. Cap = `max(len(gaps) × multiplier, 10)`.
+- `MIN_PLAN_CANDIDATES` (default `3`) - minimum classified videos per schedule slot for `can_fill_plan()` to return True. Lower = faster plan delivery but less variety; higher = more Anthropic calls.
+- `TARGETED_BATCH_MULTIPLIER` (default `5`) - videos selected per gap slot type in the targeted mini-batch. Cap = `max(len(gaps) × multiplier, 10)`.
 
 ### Test isolation
 - Unit tests: SQLite in-memory, `StaticPool`, tables recreated per test
@@ -336,7 +343,7 @@ test isolation via `monkeypatch.setenv`. On Railway: set `ADMIN_EMAIL=harshitspe
 | Doc | Contents | Updated when |
 |---|---|---|
 | `PROGRESS.md` | Current phase status and next tasks | Every commit |
-| `docs/architecture.md` | Full system design — CLI pipeline + web app API + data model | Routes, pages, schema change |
+| `docs/architecture.md` | Full system design - CLI pipeline + web app API + data model | Routes, pages, schema change |
 | `docs/testing.md` | Test philosophy + phase manual checklist | New features built or verified |
 | `docs/user-guide.md` | Product readme for non-technical users | User-facing features added/changed |
 | `docs/backlog.md` | Running list of ideas and future features | Mid-session as ideas surface |

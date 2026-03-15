@@ -60,7 +60,7 @@ def test_get_since_date_scoped_to_channel(db_session, make_user, make_channel):
     ))
     db_session.commit()
 
-    # ch_a has no videos — should trigger full scan
+    # ch_a has no videos - should trigger full scan
     assert _get_since_date(db_session, ch_a) is None
 
 
@@ -116,7 +116,7 @@ def test_save_videos_links_to_channel_uuid(db_session, make_user, make_channel):
 
 def test_save_videos_different_channels_same_video_id(db_session, make_user, make_channel):
     """
-    YouTube video IDs are globally unique — a video can only belong to one channel.
+    YouTube video IDs are globally unique - a video can only belong to one channel.
     Saving the same video ID for a second channel skips it.
     """
     user = make_user()
@@ -197,7 +197,7 @@ def test_scan_excludes_shorts_by_hashtag(db_session, make_user, make_channel):
     channel = make_channel(user.id)
 
     items = [
-        _make_playlist_item("full-vid", "Full Workout — Push Day"),
+        _make_playlist_item("full-vid", "Full Workout - Push Day"),
         _make_playlist_item("short-vid", "Quick tip #shorts"),
         _make_playlist_item("short-vid2", "60s Stretch #Shorts"),
     ]
@@ -234,7 +234,7 @@ def test_scan_excludes_shorts_by_duration(db_session, make_user, make_channel):
     items = [
         _make_playlist_item("full-vid", "30 Minute Full Body Workout"),
         _make_playlist_item("borderline-vid", "2 Minute Stretch"),   # no hashtag, but < 180s
-        _make_playlist_item("exactly-3min", "3 Minute Core Blast"),  # exactly 180s — included
+        _make_playlist_item("exactly-3min", "3 Minute Core Blast"),  # exactly 180s - included
     ]
     details = {
         "full-vid": {"duration_sec": 1800},

@@ -1,4 +1,4 @@
-# Market Research — Competitive Landscape & PMF
+# Market Research - Competitive Landscape & PMF
 
 > Researched 2026-03-07. Revisit before any serious productization effort.
 
@@ -7,9 +7,9 @@
 ## TL;DR
 
 No product exists that does exactly what this project does. The specific
-combination — **multi-channel YouTube scanning + LLM classification by workout
+combination - **multi-channel YouTube scanning + LLM classification by workout
 type/body focus/difficulty + training-split-aware schedule generation +
-YouTube playlist write-back** — is a genuine gap. Several partial solutions
+YouTube playlist write-back** - is a genuine gap. Several partial solutions
 exist but each stops short in a key way.
 
 ---
@@ -23,7 +23,7 @@ The most direct overlap. Worth monitoring closely.
 **What it does well:**
 - Pulls from YouTube fitness channels you follow
 - Auto-categorizes videos by body part and workout type
-- "This Week" feature — auto-generates a weekly class schedule from your channels
+- "This Week" feature - auto-generates a weekly class schedule from your channels
 - Smart playlists that auto-update as new videos match your criteria
 - Apple Watch + HealthKit integration (workout auto-tracked when video plays)
 
@@ -41,7 +41,7 @@ launched 2024). Real users, real reviews. Validates the core demand.
 
 ---
 
-## Praxis — AI Assistant for YouTube Workouts
+## Praxis - AI Assistant for YouTube Workouts
 
 Appeared on Product Hunt (video exists on their Facebook page) but no live
 product was found. The name has since been reused by an unrelated SaaS
@@ -73,7 +73,7 @@ type a mood or vibe and get a playlist.
 - Music-oriented, general-purpose
 - No concept of training schedule logic, body focus, difficulty, or weekly progression
 - "Make me a chill playlist" ≠ "build me a push-pull-legs week from these 5 channels"
-- Won't build workout-specific scheduling logic — too niche for a platform product
+- Won't build workout-specific scheduling logic - too niche for a platform product
 
 **Indirect signal:** YouTube is investing in AI-driven playlist curation, which
 confirms the direction. Their move validates demand at the macro level.
@@ -86,9 +86,9 @@ Zero open-source projects found that combine the full loop:
 YouTube Data API → LLM classification → workout scheduling → playlist write-back.
 
 Closest individual pieces found:
-- `aabid0193/youtube-data-llm-pipeline` — YouTube ingest + LLM Q&A, no scheduling
-- `SMAPPNYU/youtube-data-api` — API client only, no classification
-- Various LLM summarizers — no YouTube Data API integration, no scheduling
+- `aabid0193/youtube-data-llm-pipeline` - YouTube ingest + LLM Q&A, no scheduling
+- `SMAPPNYU/youtube-data-api` - API client only, no classification
+- Various LLM summarizers - no YouTube Data API integration, no scheduling
 
 **This project is the only open-source implementation of the full pipeline.**
 
@@ -98,12 +98,12 @@ Closest individual pieces found:
 
 | Signal | Evidence |
 |---|---|
-| Real user pain | People manually build YouTube workout schedules weekly — documented friction on r/fitness, r/bodyweightfitness |
+| Real user pain | People manually build YouTube workout schedules weekly - documented friction on r/fitness, r/bodyweightfitness |
 | Proven demand | MzFit actively maintained with real users despite iOS-only limitation |
 | No direct competitor | Exact combo (own channels + LLM classification + training split + playlist write-back) doesn't exist |
 | Adjacent market is large | AI fitness apps are a top-funded category in 2025-26 |
 | YouTube's own move | Investing in AI playlists signals macro validation, won't build niche scheduling logic |
-| Failed prior attempt | Praxis tried and didn't ship — suggests execution, not idea, is the barrier |
+| Failed prior attempt | Praxis tried and didn't ship - suggests execution, not idea, is the barrier |
 | Open-source gap | No GitHub project covers the full loop |
 
 ---
@@ -112,17 +112,17 @@ Closest individual pieces found:
 
 The actual behaviour this replaces: **manually copy-pasting YouTube videos
 into a Notion table or spreadsheet every Sunday.** That is the real
-competition — a weekly manual chore that this project eliminates entirely.
+competition - a weekly manual chore that this project eliminates entirely.
 
 ---
 
 ## Differentiation if Productized
 
-1. **Bring-your-own channels** — user picks creators, not a curated catalog
-2. **Training split awareness** — LLM understands push/pull/legs, not just "workout"
-3. **YouTube playlist write-back** — output lives where the content already is
-4. **Automation** — zero weekly effort once configured
-5. **Cross-platform** — web app, not iOS-only
+1. **Bring-your-own channels** - user picks creators, not a curated catalog
+2. **Training split awareness** - LLM understands push/pull/legs, not just "workout"
+3. **YouTube playlist write-back** - output lives where the content already is
+4. **Automation** - zero weekly effort once configured
+5. **Cross-platform** - web app, not iOS-only
 
 ---
 
@@ -130,9 +130,9 @@ competition — a weekly manual chore that this project eliminates entirely.
 
 - [MzFit](https://mzfit.app/)
 - [MzFit on App Store](https://apps.apple.com/us/app/mzfit-youtube-fitness/id1544078193)
-- [YouTube AI Playlist Generator — TechCrunch](https://techcrunch.com/2026/02/10/youtube-rolls-out-an-ai-playlist-generator-for-premium-users/)
+- [YouTube AI Playlist Generator - TechCrunch](https://techcrunch.com/2026/02/10/youtube-rolls-out-an-ai-playlist-generator-for-premium-users/)
 - [Praxis on Product Hunt (Facebook video)](https://www.facebook.com/producthunt/videos/meet-praxis_-your-ai-assistant-for-youtube-workouts/3976550529134151/)
-- [Top 5 Free AI Workout Generators 2026 — Dr. Muscle](https://dr-muscle.com/ai-workout-plan-generator/)
+- [Top 5 Free AI Workout Generators 2026 - Dr. Muscle](https://dr-muscle.com/ai-workout-plan-generator/)
 - [WorkoutGen](https://workoutgen.app/)
 - [youtube-data-llm-pipeline on GitHub](https://github.com/aabid0193/youtube-data-llm-pipeline)
 - [SMAPPNYU/youtube-data-api on GitHub](https://github.com/SMAPPNYU/youtube-data-api)

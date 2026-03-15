@@ -1,10 +1,10 @@
 """
-plan.py — Weekly plan endpoints.
+plan.py - Weekly plan endpoints.
 
 Routes:
-  GET   /plan/upcoming      — return the most recently generated plan for the user
-  POST  /plan/generate      — generate (or re-generate) next week's plan
-  PATCH /plan/{day}         — swap the video assigned to one day
+  GET   /plan/upcoming      - return the most recently generated plan for the user
+  POST  /plan/generate      - generate (or re-generate) next week's plan
+  PATCH /plan/{day}         - swap the video assigned to one day
 """
 
 from datetime import date, timedelta

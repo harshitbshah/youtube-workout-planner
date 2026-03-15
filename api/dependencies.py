@@ -1,5 +1,5 @@
 """
-dependencies.py — FastAPI dependency functions shared across routers.
+dependencies.py - FastAPI dependency functions shared across routers.
 """
 
 import os

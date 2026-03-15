@@ -258,7 +258,7 @@ export default function OnboardingPage() {
 
   const isSenior = profile === "senior";
 
-  // Step 1: select profile (highlight only — Next button advances)
+  // Step 1: select profile (highlight only - Next button advances)
   function handleProfileSelect(p: LifeStage) {
     setProfile(p);
     setTrainingDays(DEFAULT_DAYS[p]);
@@ -266,12 +266,12 @@ export default function OnboardingPage() {
     setGoal(null);
   }
 
-  // Step 2: select goal (highlight only — Next button advances)
+  // Step 2: select goal (highlight only - Next button advances)
   function handleGoalSelect(g: string) {
     setGoal(g);
   }
 
-  // Step 4: select session length (highlight only — Next button advances)
+  // Step 4: select session length (highlight only - Next button advances)
   function handleSessionLengthSelect(sl: SessionLength) {
     setSessionLength(sl);
   }
@@ -302,7 +302,7 @@ export default function OnboardingPage() {
     try {
       await updateEmailNotifications(emailNotifications);
     } catch {
-      // non-blocking — don't prevent user from continuing
+      // non-blocking - don't prevent user from continuing
     } finally {
       setSavingNotifications(false);
     }
@@ -394,7 +394,7 @@ export default function OnboardingPage() {
           </div>
         )}
 
-        {/* Step 1 — Life Stage */}
+        {/* Step 1 - Life Stage */}
         {step === 1 && (
           <div className={contentClass}>
             <h2 className="text-xl font-semibold text-zinc-900 dark:text-white mb-1">First, tell us a bit about yourself</h2>
@@ -414,7 +414,7 @@ export default function OnboardingPage() {
           </div>
         )}
 
-        {/* Step 2 — Goal */}
+        {/* Step 2 - Goal */}
         {step === 2 && profile && (
           <div className={contentClass}>
             <h2 className="text-xl font-semibold text-zinc-900 dark:text-white mb-1">What&apos;s your main goal?</h2>
@@ -433,7 +433,7 @@ export default function OnboardingPage() {
           </div>
         )}
 
-        {/* Step 3 — Training Days */}
+        {/* Step 3 - Training Days */}
         {step === 3 && (
           <div className={contentClass}>
             <h2 className="text-xl font-semibold text-zinc-900 dark:text-white mb-1">How many days a week can you train?</h2>
@@ -454,7 +454,7 @@ export default function OnboardingPage() {
           </div>
         )}
 
-        {/* Step 4 — Session Length */}
+        {/* Step 4 - Session Length */}
         {step === 4 && (
           <div className={contentClass}>
             <h2 className="text-xl font-semibold text-zinc-900 dark:text-white mb-1">How long per session?</h2>
@@ -476,7 +476,7 @@ export default function OnboardingPage() {
           </div>
         )}
 
-        {/* Step 5 — Schedule Preview */}
+        {/* Step 5 - Schedule Preview */}
         {step === 5 && (
           <div className="w-full">
             <h2 className="text-xl font-semibold text-zinc-900 dark:text-white mb-1">Here&apos;s your personalised plan</h2>
@@ -521,12 +521,12 @@ export default function OnboardingPage() {
           </div>
         )}
 
-        {/* Step 6 — Email Notifications */}
+        {/* Step 6 - Email Notifications */}
         {step === 6 && (
           <div className={contentClass}>
             <h2 className="text-xl font-semibold text-zinc-900 dark:text-white mb-1">Get your weekly plan by email?</h2>
             <p className="text-zinc-600 dark:text-zinc-400 text-sm mb-6">
-              We&apos;ll send you a fresh workout plan every Monday — easy to reference, even offline.
+              We&apos;ll send you a fresh workout plan every Monday - easy to reference, even offline.
             </p>
             <div className="flex flex-col gap-3">
               <OptionCard
@@ -551,7 +551,7 @@ export default function OnboardingPage() {
           </div>
         )}
 
-        {/* Step 7 — Channels */}
+        {/* Step 7 - Channels */}
         {step === 7 && profile && (
           <div className="w-full max-w-lg">
             <h2 className="text-xl font-semibold text-zinc-900 dark:text-white mb-1">Add your favourite channels</h2>
@@ -583,13 +583,13 @@ export default function OnboardingPage() {
           </div>
         )}
 
-        {/* Step 8 — Live Progress */}
+        {/* Step 8 - Live Progress */}
         {step === 8 && (
           <div className="w-full max-w-md">
             <h2 className="text-xl font-semibold text-zinc-900 dark:text-white mb-2">Setting up your plan…</h2>
             <p className="text-zinc-600 dark:text-zinc-400 text-sm mb-8">
               We&apos;re scanning your channels and classifying videos with AI.
-              This takes 2–5 minutes on first setup — worth the wait.
+              This takes 2–5 minutes on first setup - worth the wait.
             </p>
             <ProgressTracker stage={scanStage} classifyProgress={classifyProgress} />
             {scanError && (
@@ -611,7 +611,7 @@ export default function OnboardingPage() {
               >
                 Go to dashboard
               </button>
-              {" "}— setup continues in the background.
+              {" "}- setup continues in the background.
             </p>
           </div>
         )}

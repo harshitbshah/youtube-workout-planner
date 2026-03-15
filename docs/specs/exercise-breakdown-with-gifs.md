@@ -3,7 +3,7 @@
 **Created:** 2026-03-11
 **Status:** Ready for implementation
 **Branch:** `claude/exercise-plan-with-gifs-b1bRg`
-**Linked issue:** harshitbshah/youtube-workout-planner — exercise-plan-with-gifs
+**Linked issue:** harshitbshah/youtube-workout-planner - exercise-plan-with-gifs
 
 ---
 
@@ -19,15 +19,15 @@ cached forever (the video doesn't change).
 ## User-facing behaviour
 
 1. Each day card on `/dashboard` gains an **"Exercises"** expand button (chevron icon).
-2. Clicking it opens an inline panel below the card (not a modal — keeps layout stable
+2. Clicking it opens an inline panel below the card (not a modal - keeps layout stable
    on mobile).
 3. The panel shows a loading skeleton while the extraction runs (first time only).
 4. Each exercise is rendered as a row: **GIF thumbnail | name | sets × reps / duration**.
 5. If no breakdown can be extracted (no description + no transcript), the panel shows:
    *"No exercise list found for this video."*
-6. GIF is omitted per exercise if no match is found in the GIF source — the text row
+6. GIF is omitted per exercise if no match is found in the GIF source - the text row
    is still shown.
-7. The breakdown is **read-only** — no editing in v1.
+7. The breakdown is **read-only** - no editing in v1.
 
 ---
 
@@ -36,12 +36,12 @@ cached forever (the video doesn't change).
 ### Tiered extraction (cost-first)
 
 ```
-Tier 1 — Parse description (FREE, ~0 extra tokens)
+Tier 1 - Parse description (FREE, ~0 extra tokens)
   ↓ description has ≥ 3 timestamp/exercise lines?
   ✅ send description to Claude for structuring (~300 tokens)
   ❌ fall through to Tier 2
 
-Tier 2 — Fetch full transcript (~4,000–9,000 tokens input)
+Tier 2 - Fetch full transcript (~4,000–9,000 tokens input)
   ↓ transcript available?
   ✅ send to Claude for exercise extraction
   ❌ store empty result, show "not found" message
@@ -60,7 +60,7 @@ Either way → cache result in `exercise_breakdowns` table forever
 
 Use the **ExerciseDB** dataset (open-source fork, no API key required):
 
-- Repo: `yuhonas/free-exercise-db` on GitHub — 800+ exercises with hosted GIF URLs
+- Repo: `yuhonas/free-exercise-db` on GitHub - 800+ exercises with hosted GIF URLs
   (`https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/<id>/0.gif`)
 - Download once and store as a local JSON lookup table at
   `api/data/exercise_db.json` (exercise name → gif_url + aliases)
@@ -68,7 +68,7 @@ Use the **ExerciseDB** dataset (open-source fork, no API key required):
 - No API key, no rate limits, no ongoing cost
 
 If no match is found in the local DB: omit the GIF for that exercise (graceful
-degradation). Do not call GIPHY/Tenor — too generic, unreliable quality, API key
+degradation). Do not call GIPHY/Tenor - too generic, unreliable quality, API key
 overhead for v1.
 
 ---
@@ -123,7 +123,7 @@ Rules:
 - `duration_sec` is an int for timed exercises (planks, wall sits), null for rep-based
 - `gif_url` is null if no match found in local exercise DB
 - `sets` is null for one-off exercises (warm-up circuits, flows)
-- Empty array (`[]`) stored when source is `"none"` — means we tried and found nothing
+- Empty array (`[]`) stored when source is `"none"` - means we tried and found nothing
 
 ---
 
@@ -140,7 +140,7 @@ Responsibilities:
    - Sends description to Claude Haiku with a structured extraction prompt
    - Returns parsed exercise list
 3. `_extract_from_transcript(video_id: str) -> list[dict]`
-   - Fetches FULL transcript (not just intro — exercises can be mid-video)
+   - Fetches FULL transcript (not just intro - exercises can be mid-video)
    - Reuses `YouTubeTranscriptApi` from `src/classifier.py`
    - Sends to Claude Haiku for extraction
    - Returns parsed exercise list; `[]` if transcript unavailable
@@ -149,7 +149,7 @@ Responsibilities:
    - For each exercise: fuzzy-matches name → appends `gif_url` or `null`
    - Returns updated list
 5. `get_or_create_breakdown(video: Video, db: Session) -> ExerciseBreakdown`
-   - Check DB cache first — return immediately if found
+   - Check DB cache first - return immediately if found
    - Otherwise: run tiered extraction → match GIFs → write to DB → return
 
 ### New file: `api/data/exercise_db.json`
@@ -213,7 +213,7 @@ Logic:
 
 **Router file:** `api/routers/exercises.py`
 **Registration:** add `app.include_router(exercises.router)` in `api/main.py`
-**Prefix:** `/plan` (keeps it consistent — it IS a plan sub-resource)
+**Prefix:** `/plan` (keeps it consistent - it IS a plan sub-resource)
 
 ### Claude prompt (exercise extraction)
 
@@ -228,9 +228,9 @@ Return a JSON array. Each element must have:
   - "notes": form cue or modification (string or null)
 
 Rules:
-  - Omit warm-up/cool-down headers — include their exercises as normal rows
+  - Omit warm-up/cool-down headers - include their exercises as normal rows
   - "Rest" periods are valid rows (sets=null, duration_sec=30)
-  - If a field is unknown, use null — never guess
+  - If a field is unknown, use null - never guess
   - Return ONLY valid JSON, no explanation
 
 Text:
@@ -238,7 +238,7 @@ Text:
 ```
 
 Use `claude-haiku-4-5-20251001`, `max_tokens=800` (exercise lists can be long).
-Do NOT use the Batch API — this is synchronous and user-facing.
+Do NOT use the Batch API - this is synchronous and user-facing.
 
 ---
 
@@ -314,41 +314,41 @@ export async function getPlanDayExercises(day: string): Promise<ExerciseBreakdow
 
 ### Unit tests (`tests/api/test_exercise_extractor.py`)
 
-1. `test_description_sufficient_with_timestamps` — description with 3+ timestamped lines → `_is_description_sufficient()` returns True
-2. `test_description_insufficient_short` — 2-line description → returns False
-3. `test_description_insufficient_no_exercises` — long prose description → returns False
-4. `test_extract_from_description_returns_list` — mock Claude response → parsed correctly
-5. `test_extract_from_description_handles_claude_error` — Claude raises exception → returns []
-6. `test_extract_from_transcript_no_transcript` — `TranscriptsDisabled` → returns []
-7. `test_match_gifs_exact_match` — "goblet squat" → gif_url populated
-8. `test_match_gifs_alias_match` — "rdl" → gif_url from Romanian deadlift alias
-9. `test_match_gifs_no_match` — "pulsing burpee variation" → gif_url null
-10. `test_get_or_create_breakdown_cache_hit` — pre-existing DB row → no Claude call
-11. `test_get_or_create_breakdown_tier1` — sufficient description → calls description path, not transcript
-12. `test_get_or_create_breakdown_tier2` — insufficient description → calls transcript path
-13. `test_get_or_create_breakdown_writes_db` — result stored in exercise_breakdowns table
+1. `test_description_sufficient_with_timestamps` - description with 3+ timestamped lines → `_is_description_sufficient()` returns True
+2. `test_description_insufficient_short` - 2-line description → returns False
+3. `test_description_insufficient_no_exercises` - long prose description → returns False
+4. `test_extract_from_description_returns_list` - mock Claude response → parsed correctly
+5. `test_extract_from_description_handles_claude_error` - Claude raises exception → returns []
+6. `test_extract_from_transcript_no_transcript` - `TranscriptsDisabled` → returns []
+7. `test_match_gifs_exact_match` - "goblet squat" → gif_url populated
+8. `test_match_gifs_alias_match` - "rdl" → gif_url from Romanian deadlift alias
+9. `test_match_gifs_no_match` - "pulsing burpee variation" → gif_url null
+10. `test_get_or_create_breakdown_cache_hit` - pre-existing DB row → no Claude call
+11. `test_get_or_create_breakdown_tier1` - sufficient description → calls description path, not transcript
+12. `test_get_or_create_breakdown_tier2` - insufficient description → calls transcript path
+13. `test_get_or_create_breakdown_writes_db` - result stored in exercise_breakdowns table
 
 ### Unit tests (`tests/api/test_exercises_api.py`)
 
-14. `test_get_exercises_rest_day` — rest day (null video_id) → 204
-15. `test_get_exercises_no_plan` — no plan generated yet → 404
-16. `test_get_exercises_cached` — cached breakdown → 200 with exercises
+14. `test_get_exercises_rest_day` - rest day (null video_id) → 204
+15. `test_get_exercises_no_plan` - no plan generated yet → 404
+16. `test_get_exercises_cached` - cached breakdown → 200 with exercises
 17. `test_get_exercises_unauthenticated` → 401
-18. `test_get_exercises_invalid_day` — "funday" → 422
+18. `test_get_exercises_invalid_day` - "funday" → 422
 
 ### Integration tests (`tests/integration/test_exercises_api.py`)
 
-19. `test_exercise_breakdown_persisted` — call endpoint twice; assert DB row written once
-20. `test_exercise_breakdown_user_isolation` — user A's plan day → cannot see user B's
-21. `test_exercise_breakdown_rest_day` — rest day in real DB → 204
+19. `test_exercise_breakdown_persisted` - call endpoint twice; assert DB row written once
+20. `test_exercise_breakdown_user_isolation` - user A's plan day → cannot see user B's
+21. `test_exercise_breakdown_rest_day` - rest day in real DB → 204
 
 ---
 
 ## Environment variables
 
 No new env vars required. The feature uses:
-- `ANTHROPIC_API_KEY` — already set
-- GIF source is static local file — no new keys
+- `ANTHROPIC_API_KEY` - already set
+- GIF source is static local file - no new keys
 
 ---
 
@@ -372,7 +372,7 @@ No new env vars required. The feature uses:
    exercise lists are front-loaded. Add `EXERCISE_TRANSCRIPT_MAX_TOKENS` env var if needed.
 3. **exercise_db.json size:** the full yuhonas dataset is ~800 exercises × ~5 fields =
    ~200 KB. Fine to commit. Only build/update it when the dataset is stale.
-4. **Fuzzy matching library:** `difflib.SequenceMatcher` from stdlib is sufficient —
+4. **Fuzzy matching library:** `difflib.SequenceMatcher` from stdlib is sufficient -
    no need to add a dependency. Use `cutoff=0.8` ratio.
 5. **Migration number:** **010**. Migration 009 is reserved for Phase O1 user
    profile fields. See [migrations-roadmap.md](migrations-roadmap.md) for the
@@ -386,6 +386,6 @@ No new env vars required. The feature uses:
 2. Migration 010 + `ExerciseBreakdown` model
 3. `api/services/exercise_extractor.py` (with full unit test suite)
 4. `api/routers/exercises.py` + schema + register in `main.py`
-5. Unit + integration tests — all passing
+5. Unit + integration tests - all passing
 6. Frontend: dashboard expand button + panel
 7. Checkpoint docs update

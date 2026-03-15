@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import { LegalSection as Section } from "@/components/LegalSection";
 
 export const metadata: Metadata = {
-  title: "Privacy Policy — Plan My Workout",
+  title: "Privacy Policy - Plan My Workout",
 };
 
 export default function PrivacyPage() {
@@ -31,7 +31,7 @@ export default function PrivacyPage() {
           <p>When you use the app, we also store:</p>
           <ul>
             <li>The YouTube channel URLs you add</li>
-            <li>Metadata about videos from those channels (title, description, duration, tags) — we do not store video files</li>
+            <li>Metadata about videos from those channels (title, description, duration, tags) - we do not store video files</li>
             <li>Your weekly workout schedule preferences</li>
             <li>Your generated workout plans</li>
             <li>Timestamps of your account activity</li>
@@ -80,10 +80,10 @@ export default function PrivacyPage() {
         <Section title="8. Third-party services">
           <p>We use the following third-party services to operate the app:</p>
           <ul>
-            <li><strong className="text-zinc-800 dark:text-zinc-200">Google OAuth</strong> — sign-in and YouTube access</li>
-            <li><strong className="text-zinc-800 dark:text-zinc-200">Anthropic Claude</strong> — AI video classification</li>
-            <li><strong className="text-zinc-800 dark:text-zinc-200">Railway</strong> — backend hosting and database</li>
-            <li><strong className="text-zinc-800 dark:text-zinc-200">Vercel</strong> — frontend hosting</li>
+            <li><strong className="text-zinc-800 dark:text-zinc-200">Google OAuth</strong> - sign-in and YouTube access</li>
+            <li><strong className="text-zinc-800 dark:text-zinc-200">Anthropic Claude</strong> - AI video classification</li>
+            <li><strong className="text-zinc-800 dark:text-zinc-200">Railway</strong> - backend hosting and database</li>
+            <li><strong className="text-zinc-800 dark:text-zinc-200">Vercel</strong> - frontend hosting</li>
           </ul>
         </Section>
 

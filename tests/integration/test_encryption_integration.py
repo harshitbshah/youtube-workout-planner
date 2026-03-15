@@ -1,5 +1,5 @@
 """
-test_encryption_integration.py — Encryption round-trip through real PostgreSQL.
+test_encryption_integration.py - Encryption round-trip through real PostgreSQL.
 
 Verifies that:
   - What goes into the DB column is a Fernet ciphertext, never plaintext

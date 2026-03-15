@@ -74,7 +74,7 @@ def test_fetch_unclassified_excludes_shorts(db_session, make_user, make_channel)
 
 
 def test_fetch_unclassified_excludes_null_duration(db_session, make_user, make_channel):
-    """Videos with unknown duration (None) are excluded — can't verify they're not Shorts."""
+    """Videos with unknown duration (None) are excluded - can't verify they're not Shorts."""
     user = make_user()
     ch = make_channel(user.id)
     _seed_video(db_session, ch.id, "no-dur-vid", duration_sec=None)

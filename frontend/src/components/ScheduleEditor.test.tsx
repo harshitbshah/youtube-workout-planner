@@ -16,7 +16,7 @@ function makeSchedule(overrides: Partial<ScheduleSlot>[] = []): ScheduleSlot[] {
   }));
 }
 
-describe("ScheduleEditor — rendering", () => {
+describe("ScheduleEditor - rendering", () => {
   it("renders all 7 days", () => {
     const onChange = vi.fn();
     render(<ScheduleEditor schedule={makeSchedule()} onScheduleChange={onChange} />);
@@ -45,7 +45,7 @@ describe("ScheduleEditor — rendering", () => {
   });
 });
 
-describe("ScheduleEditor — toggle rest", () => {
+describe("ScheduleEditor - toggle rest", () => {
   it("calls onScheduleChange with null workout_type when 'Set rest' is clicked", () => {
     const onChange = vi.fn();
     render(<ScheduleEditor schedule={makeSchedule()} onScheduleChange={onChange} />);
@@ -81,7 +81,7 @@ describe("ScheduleEditor — toggle rest", () => {
   });
 });
 
-describe("ScheduleEditor — dropdowns", () => {
+describe("ScheduleEditor - dropdowns", () => {
   it("calls onScheduleChange with updated workout_type when select changes", () => {
     const onChange = vi.fn();
     render(<ScheduleEditor schedule={makeSchedule()} onScheduleChange={onChange} />);
@@ -111,7 +111,7 @@ describe("ScheduleEditor — dropdowns", () => {
   });
 });
 
-describe("ScheduleEditor — duration inputs", () => {
+describe("ScheduleEditor - duration inputs", () => {
   it("calls onScheduleChange with updated duration_min", () => {
     const onChange = vi.fn();
     render(<ScheduleEditor schedule={makeSchedule()} onScheduleChange={onChange} />);

@@ -1,5 +1,5 @@
 """
-Phase A unit tests — AI Cost Reduction features 1–4 + graceful scanner failure.
+Phase A unit tests - AI Cost Reduction features 1–4 + graceful scanner failure.
 
 All tests use SQLite in-memory; no real network calls.
 """
@@ -217,7 +217,7 @@ def test_f3_subsequent_scan_uncapped(db_session):
     ch.first_scan_done = True
     db_session.commit()
 
-    # Limit set low — should be ignored since first_scan_done=True
+    # Limit set low - should be ignored since first_scan_done=True
     original_limit = scanner_mod.FIRST_SCAN_LIMIT
     scanner_mod.FIRST_SCAN_LIMIT = 3
 

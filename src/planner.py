@@ -1,5 +1,5 @@
 """
-planner.py — Generate a holistic weekly workout plan from the video library.
+planner.py - Generate a holistic weekly workout plan from the video library.
 
 Selection logic (in priority order):
   1. Matches the day's required workout_type and body_focus
@@ -12,11 +12,11 @@ Selection logic (in priority order):
   8. Random jitter ensures the plan feels fresh even with identical scores
 
 Fallback tiers (when strict query returns too few candidates):
-  Tier 1 — Full constraints + channel limit enforced
-  Tier 2 — Relax history window to 4 weeks + channel limit enforced
-  Tier 3 — Relax body_focus to 'any' + channel limit enforced
-  Tier 4 — No history restriction + channel limit enforced
-  Tier 5 — No restrictions at all (last resort, ignores channel limit)
+  Tier 1 - Full constraints + channel limit enforced
+  Tier 2 - Relax history window to 4 weeks + channel limit enforced
+  Tier 3 - Relax body_focus to 'any' + channel limit enforced
+  Tier 4 - No history restriction + channel limit enforced
+  Tier 5 - No restrictions at all (last resort, ignores channel limit)
 """
 
 import logging
@@ -153,7 +153,7 @@ def pick_video_for_slot(workout_type: str, body_focus: str,
     """
     Pick the best video for a single workout slot using tiered fallbacks.
 
-    excluded_channels: channels that have hit their weekly repeat limit — excluded
+    excluded_channels: channels that have hit their weekly repeat limit - excluded
     from all tiers except the final last-resort tier.
 
     Returns a video dict, or None if the library has nothing suitable at all.
@@ -177,7 +177,7 @@ def pick_video_for_slot(workout_type: str, body_focus: str,
         )
         if candidates:
             if not respect_limit and excluded_channels:
-                logger.debug(f"    Channel limit relaxed — picking from excluded channels")
+                logger.debug(f"    Channel limit relaxed - picking from excluded channels")
             elif history_weeks < HISTORY_WINDOW_WEEKS:
                 logger.debug(f"    Tier fallback (history={history_weeks}w, focus={effective_focus})")
             break
@@ -222,7 +222,7 @@ def format_plan_summary(plan: list[dict], week_start: str) -> str:
     Return a human-readable weekly plan summary.
     Used for logging and as the YouTube playlist description.
     """
-    lines = [f"Weekly Workout Plan — w/c {week_start}", ""]
+    lines = [f"Weekly Workout Plan - w/c {week_start}", ""]
 
     for day in plan:
         day_label = day["day"].capitalize()
@@ -306,7 +306,7 @@ def generate_weekly_plan(config: dict) -> list[dict]:
             logger.info(f"    ✓ {video['title'][:60]}  ({ch})")
         else:
             logger.warning(
-                f"    ✗ No video found for {day} ({workout_type}/{body_focus}) — "
+                f"    ✗ No video found for {day} ({workout_type}/{body_focus}) - "
                 f"consider adding more videos or adjusting config.yaml"
             )
 

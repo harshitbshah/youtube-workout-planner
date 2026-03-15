@@ -72,7 +72,7 @@ def test_publish_requires_auth(client):
 
 def test_publish_no_plan(auth_client):
     client, user = auth_client
-    # No plan in DB — should 404
+    # No plan in DB - should 404
     resp = client.post("/plan/publish")
     assert resp.status_code == 404
 

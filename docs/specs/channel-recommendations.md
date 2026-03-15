@@ -10,11 +10,11 @@
 
 The current channel suggestion system is:
 - A static hardcoded list of channel name strings per `LifeStage`
-- Shown as plain text chips — no avatar, no subscriber count, no description
+- Shown as plain text chips - no avatar, no subscriber count, no description
 - Not personalised by goal (only by life stage)
-- Clicking a chip triggers a YouTube search for the name — adds a round-trip and can return
+- Clicking a chip triggers a YouTube search for the name - adds a round-trip and can return
   the wrong channel if the name is ambiguous
-- Has no feedback loop — never improves as users accumulate
+- Has no feedback loop - never improves as users accumulate
 
 ---
 
@@ -24,15 +24,15 @@ Deliver channel recommendations that feel hand-picked and get smarter over time:
 
 | Phase | What it unlocks | Self-improving? |
 |---|---|---|
-| **R1** — Rich curated channels | Thumbnails, fast one-click add, scored by profile+goal | No (static) |
-| **R2** — Content-match scoring | Recommendations from your own library's classification data | Yes (grows with library) |
-| **R3** — Collaborative filtering | "Users like you also use…" from real usage patterns | Yes (grows with users) |
+| **R1** - Rich curated channels | Thumbnails, fast one-click add, scored by profile+goal | No (static) |
+| **R2** - Content-match scoring | Recommendations from your own library's classification data | Yes (grows with library) |
+| **R3** - Collaborative filtering | "Users like you also use…" from real usage patterns | Yes (grows with users) |
 
 Phases are independent and additive. Each can be shipped separately.
 
 ---
 
-## Phase R1 — Rich curated channels with thumbnails
+## Phase R1 - Rich curated channels with thumbnails
 
 ### User-facing changes
 
@@ -40,7 +40,7 @@ Phases are independent and additive. Each can be shipped separately.
 - Replace chip row with a **card grid** (2 columns mobile, 3 desktop)
 - Each card shows: channel avatar (48px) | channel name (bold) | subscriber count | 1-line description | goal tags | "Add" button
 - "Best match" badge on the top 1–2 cards (highest score for this user's profile+goal)
-- One-click add: no search round-trip — channel ID is already known, add immediately
+- One-click add: no search round-trip - channel ID is already known, add immediately
 - Already-added cards show a "✓ Added" state (greyed, button disabled)
 - "See all suggestions" toggle reveals remaining cards below the top 6
 
@@ -50,7 +50,7 @@ Phases are independent and additive. Each can be shipped separately.
 
 ### Bootstrapping the curated data
 
-**Step 1 — Discovery script**
+**Step 1 - Discovery script**
 
 New file: `scripts/discover_channels.py`
 
@@ -73,7 +73,7 @@ SEARCH_QUERIES = [
 # Output: scripts/channel_candidates.json
 ```
 
-**Step 2 — Manual curation**
+**Step 2 - Manual curation**
 
 Cross-reference `channel_candidates.json` against:
 - `r/bodyweightfitness` wiki (community-vetted quality signal)
@@ -97,7 +97,7 @@ Pick 25–35 channels. For each, tag manually:
 }
 ```
 
-**Step 3 — Commit as static data**
+**Step 3 - Commit as static data**
 
 Save final curated set to `api/data/curated_channels.json`.
 This file is committed to the repo and loaded by the backend at startup.
@@ -162,7 +162,7 @@ interface Props {
   onChannelsChange: (channels: ChannelResponse[]) => void;
   // Remove: suggestions?: string[]
   // Add:
-  profile?: string;       // passed from onboarding — drives curated fetch
+  profile?: string;       // passed from onboarding - drives curated fetch
   goal?: string;
   scheduleTypes?: string[];
   showCurated?: boolean;  // default false (settings page opts in)
@@ -220,7 +220,7 @@ export async function getCuratedChannels(
 
 ---
 
-## Phase R2 — Content-match scoring from library
+## Phase R2 - Content-match scoring from library
 
 ### Concept
 
@@ -256,7 +256,7 @@ Authorization: Bearer <token>
 Backend logic:
 1. Read the requesting user's schedule (`schedules` table) to get desired workout types,
    difficulties, and durations
-2. For all channels in the DB (across all users — this is cross-user data, but it's
+2. For all channels in the DB (across all users - this is cross-user data, but it's
    aggregated, not user-identifiable):
 
 ```sql
@@ -288,9 +288,9 @@ curated list. Options (pick one at implementation time):
   API during channel scan (free, already fetching channel metadata)
 - **Option B:** Fetch on-demand only when channel appears in recommendations (lazy, uses
   quota)
-- **Option C:** Show a grey avatar placeholder for uncurated channels — acceptable for v1
+- **Option C:** Show a grey avatar placeholder for uncurated channels - acceptable for v1
 
-**Recommendation:** Option A. Store `thumbnail_url` in `channels` during scan — it's
+**Recommendation:** Option A. Store `thumbnail_url` in `channels` during scan - it's
 a one-line addition to the scanner and makes the whole system richer (settings page,
 library page could use it too).
 
@@ -305,7 +305,7 @@ Backfill: one-off script to fetch thumbnails for existing channels via YouTube D
 
 ---
 
-## Phase R3 — Collaborative filtering from usage patterns
+## Phase R3 - Collaborative filtering from usage patterns
 
 ### Concept
 
@@ -337,10 +337,10 @@ class VideoFeedback(Base):
 
 ### When to write feedback
 
-**Swap signal (negative):** in `PATCH /plan/{day}` — when a video is replaced, write
+**Swap signal (negative):** in `PATCH /plan/{day}` - when a video is replaced, write
 `signal="swapped"` for the outgoing `video_id`.
 
-**Kept signal (positive):** in `POST /plan/generate` — before overwriting the previous
+**Kept signal (positive):** in `POST /plan/generate` - before overwriting the previous
 week's plan, scan the outgoing week's rows. Any video that was NOT swapped (still
 present in `program_history` as originally assigned) gets `signal="kept"`.
 
@@ -367,7 +367,7 @@ def channel_quality_score(channel_id: str, db: Session) -> float:
 def similar_user_channels(user_id: str, db: Session) -> list[str]:
     """Return channel IDs popular among users with the same profile."""
     # 1. Get this user's profile (life_stage, goal) from users table
-    #    NOTE: life_stage + goal are not stored yet — see "User profile storage" below
+    #    NOTE: life_stage + goal are not stored yet - see "User profile storage" below
     # 2. Find users with same profile
     # 3. Count which channels those users added (channels table)
     # 4. Exclude channels current user already has
@@ -376,7 +376,7 @@ def similar_user_channels(user_id: str, db: Session) -> list[str]:
 
 ### User profile storage (prerequisite for R3)
 
-`life_stage` and `goal` are currently only frontend state — collected in onboarding but
+`life_stage` and `goal` are currently only frontend state - collected in onboarding but
 never persisted to the DB. R3 needs them to find "similar users".
 
 **Migration:** add to `users` table:
@@ -385,7 +385,7 @@ life_stage = Column(String, nullable=True)   # "beginner"|"adult"|"senior"|"athl
 goal       = Column(String, nullable=True)   # free text from GOALS constant
 ```
 
-**Backend:** `PATCH /auth/me` already exists — extend it to also accept `life_stage`
+**Backend:** `PATCH /auth/me` already exists - extend it to also accept `life_stage`
 and `goal` fields.
 
 **Frontend:** after `PUT /schedule` in onboarding step 5, also call `PATCH /auth/me`
@@ -429,9 +429,9 @@ blended_score = (
 ```
 
 The `source` field on each card controls the label shown under the channel name:
-- "Editor's pick" — only in curated list, no content/collab data yet
-- "Matches your schedule" — content-match score > 0.6
-- "Popular with users like you" — collab signal present
+- "Editor's pick" - only in curated list, no content/collab data yet
+- "Matches your schedule" - content-match score > 0.6
+- "Popular with users like you" - collab signal present
 
 Until R3 has data (< ~20 users), blended_score degrades gracefully:
 `collab_score` defaults to 0.5 (neutral) when `len(feedback_rows) < 3`.
@@ -446,7 +446,7 @@ Until R3 has data (< ~20 users), blended_score degrades gracefully:
 | `api/data/curated_channels.json` | Committed curated channel data (output of manual curation) |
 | `api/services/recommender.py` | Scoring functions: `score_channel()`, `content_match_channels()`, `similar_user_channels()`, `blended_recommendations()` |
 | `alembic/versions/011_add_channel_thumbnail.py` | Add `thumbnail_url` to `channels` table |
-| ~~`011_add_user_profile.py`~~ | ~~Add `life_stage` + `goal` to `users` table~~ — **removed**, covered by migration 009 (Phase O1). See [migrations-roadmap.md](migrations-roadmap.md). |
+| ~~`011_add_user_profile.py`~~ | ~~Add `life_stage` + `goal` to `users` table~~ - **removed**, covered by migration 009 (Phase O1). See [migrations-roadmap.md](migrations-roadmap.md). |
 | `alembic/versions/012_add_video_feedback.py` | `video_feedback` table |
 | `tests/api/test_recommender.py` | Unit tests for scoring functions |
 | `tests/api/test_curated_channels.py` | Unit tests for `GET /channels/curated` endpoint |
@@ -474,50 +474,50 @@ Until R3 has data (< ~20 users), blended_score degrades gracefully:
 
 ## Tests
 
-### Unit tests — `tests/api/test_recommender.py`
+### Unit tests - `tests/api/test_recommender.py`
 
-1. `test_score_channel_profile_match` — profile match adds 40 pts
-2. `test_score_channel_goal_match` — goal match adds 30 pts
-3. `test_score_channel_type_match` — matching schedule types add 10 pts each
-4. `test_score_channel_no_match` — zero overlap → score = subscriber tiebreaker only
-5. `test_best_match_flag_top_two` — top 2 by score get `best_match=True`
-6. `test_content_match_channels_returns_sorted` — mock classification data → channels sorted by type overlap
-7. `test_content_match_excludes_user_channels` — channels user already has are excluded
-8. `test_channel_quality_score_no_data` — fewer than 3 feedback rows → returns 0.5
+1. `test_score_channel_profile_match` - profile match adds 40 pts
+2. `test_score_channel_goal_match` - goal match adds 30 pts
+3. `test_score_channel_type_match` - matching schedule types add 10 pts each
+4. `test_score_channel_no_match` - zero overlap → score = subscriber tiebreaker only
+5. `test_best_match_flag_top_two` - top 2 by score get `best_match=True`
+6. `test_content_match_channels_returns_sorted` - mock classification data → channels sorted by type overlap
+7. `test_content_match_excludes_user_channels` - channels user already has are excluded
+8. `test_channel_quality_score_no_data` - fewer than 3 feedback rows → returns 0.5
 9. `test_channel_quality_score_all_kept` → 1.0
-10. `test_channel_quality_score_mixed` — 3 kept, 1 swapped → 0.75
-11. `test_similar_user_channels_same_profile` — two users, same profile → channel of user B surfaces for user A
-12. `test_similar_user_channels_excludes_already_added` — user already has channel → not returned
+10. `test_channel_quality_score_mixed` - 3 kept, 1 swapped → 0.75
+11. `test_similar_user_channels_same_profile` - two users, same profile → channel of user B surfaces for user A
+12. `test_similar_user_channels_excludes_already_added` - user already has channel → not returned
 
-### Unit tests — `tests/api/test_curated_channels.py`
+### Unit tests - `tests/api/test_curated_channels.py`
 
-13. `test_curated_endpoint_returns_sorted_by_score` — profile+goal match scores correctly
-14. `test_curated_endpoint_marks_already_added` — user has channel → `already_added=true`
+13. `test_curated_endpoint_returns_sorted_by_score` - profile+goal match scores correctly
+14. `test_curated_endpoint_marks_already_added` - user has channel → `already_added=true`
 15. `test_curated_endpoint_unauthenticated` → 401
-16. `test_curated_endpoint_invalid_profile_graceful` — unknown profile → returns all channels unsorted (no crash)
+16. `test_curated_endpoint_invalid_profile_graceful` - unknown profile → returns all channels unsorted (no crash)
 
-### Unit tests — `tests/api/test_plan.py` additions
+### Unit tests - `tests/api/test_plan.py` additions
 
-17. `test_patch_day_records_swapped_feedback` — `PATCH /plan/{day}` with a new video → `video_feedback` row written with `signal="swapped"` for old video
-18. `test_generate_plan_records_kept_feedback` — previous week had un-swapped video → `signal="kept"` written before overwrite
+17. `test_patch_day_records_swapped_feedback` - `PATCH /plan/{day}` with a new video → `video_feedback` row written with `signal="swapped"` for old video
+18. `test_generate_plan_records_kept_feedback` - previous week had un-swapped video → `signal="kept"` written before overwrite
 
-### Integration tests — `tests/integration/test_recommendations.py`
+### Integration tests - `tests/integration/test_recommendations.py`
 
-19. `test_content_match_real_classifications` — insert channels+videos+classifications → `GET /channels/recommended` returns correct ranking
-20. `test_feedback_accumulates_across_weeks` — 2 swaps + 1 kept for same channel → quality score = 0.33
-21. `test_for_you_deduplicates_sources` — same channel in curated + content-match → appears once
+19. `test_content_match_real_classifications` - insert channels+videos+classifications → `GET /channels/recommended` returns correct ranking
+20. `test_feedback_accumulates_across_weeks` - 2 swaps + 1 kept for same channel → quality score = 0.33
+21. `test_for_you_deduplicates_sources` - same channel in curated + content-match → appears once
 
 ---
 
 ## Implementation order (suggested)
 
-### Phase R1 (ship first — standalone, no DB changes beyond thumbnail)
+### Phase R1 (ship first - standalone, no DB changes beyond thumbnail)
 
 1. Run `scripts/discover_channels.py` → curate `api/data/curated_channels.json` manually
 2. Migration 011: `channels.thumbnail_url`; update scanner to populate it
-3. `api/services/recommender.py` — `score_channel()` + `load_curated()` only
+3. `api/services/recommender.py` - `score_channel()` + `load_curated()` only
 4. `GET /channels/curated` endpoint + Pydantic schema
-5. Unit tests 1–5, 13–16 — all passing
+5. Unit tests 1–5, 13–16 - all passing
 6. `ChannelManager.tsx` card grid + `getCuratedChannels()` in `lib/api.ts`
 7. Onboarding: pass `profile` + `goal` + `scheduleTypes` props to ChannelManager
 
@@ -525,14 +525,14 @@ Until R3 has data (< ~20 users), blended_score degrades gracefully:
 
 8. `content_match_channels()` in `recommender.py`
 9. `GET /channels/recommended` endpoint
-10. Unit tests 6–7 — all passing
+10. Unit tests 6–7 - all passing
 11. Integration test 19
 12. Blend into `GET /channels/for-you` (weight 0.4)
 13. Frontend: onboarding + settings call `getForYouChannels()` instead of `getCuratedChannels()`
 
 ### Phase R3 (add after R2, requires user base)
 
-14. `life_stage` + `goal` are already on the `users` table via migration 009 (Phase O1) — no additional migration needed. If O1 is not yet deployed, do it first.
+14. `life_stage` + `goal` are already on the `users` table via migration 009 (Phase O1) - no additional migration needed. If O1 is not yet deployed, do it first.
 15. Migration 012: `video_feedback` table
 16. Record `swapped` in `PATCH /plan/{day}`; record `kept` in `POST /plan/generate`
 17. `channel_quality_score()` + `similar_user_channels()` in `recommender.py`
@@ -546,6 +546,6 @@ Until R3 has data (< ~20 users), blended_score degrades gracefully:
 
 - **Migration numbers:** see [migrations-roadmap.md](migrations-roadmap.md) for the authoritative sequence. This spec uses 011 (thumbnail_url) and 012 (video_feedback). Migration 009 (O1 profile fields) already covers `life_stage` + `goal` on `users`.
 - **curated_channels.json size:** ~35 channels × ~10 fields = ~15 KB. Fine to commit.
-- **Thumbnail URL stability:** YouTube channel thumbnail URLs are stable for years. No TTL/refresh needed for v1. If a thumbnail 404s, `<img>` falls back gracefully to a broken-image placeholder — add `onError` to swap to a grey avatar div.
+- **Thumbnail URL stability:** YouTube channel thumbnail URLs are stable for years. No TTL/refresh needed for v1. If a thumbnail 404s, `<img>` falls back gracefully to a broken-image placeholder - add `onError` to swap to a grey avatar div.
 - **Cross-user channel data in R2:** `GET /channels/recommended` queries classifications across all users. This is aggregate usage data (channel profiles), not user-identifiable. No privacy concern, but worth noting in architecture docs.
-- **R3 minimum viable signal:** wait until you have ≥ 10 active users before surfacing collaborative recommendations — below that the signal is noise. Add a feature flag or simple count check in `similar_user_channels()`.
+- **R3 minimum viable signal:** wait until you have ≥ 10 active users before surfacing collaborative recommendations - below that the signal is noise. Add a feature flag or simple count check in `similar_user_channels()`.

@@ -22,7 +22,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     // Single effect: read saved pref (or fall back to system), apply, then
-    // watch for system changes — but only when no explicit pref is saved.
+    // watch for system changes - but only when no explicit pref is saved.
     const saved = localStorage.getItem("theme") as Theme | null;
     const initial =
       saved === "light" || saved === "dark"

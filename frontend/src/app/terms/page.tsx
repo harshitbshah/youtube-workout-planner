@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import { LegalSection as Section } from "@/components/LegalSection";
 
 export const metadata: Metadata = {
-  title: "Terms of Service — Plan My Workout",
+  title: "Terms of Service - Plan My Workout",
 };
 
 export default function TermsPage() {

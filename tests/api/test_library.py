@@ -230,7 +230,7 @@ def test_unknown_filter_value_returns_empty(auth_client, db_session):
 
 
 def test_filter_is_case_insensitive(auth_client, db_session):
-    """Classifier stores 'Strength'/'HIIT' — frontend sends lowercase, must still match."""
+    """Classifier stores 'Strength'/'HIIT' - frontend sends lowercase, must still match."""
     client, user = auth_client
     ch = _seed_channel(db_session, user)
     # Seed with mixed-case values as the classifier writes them

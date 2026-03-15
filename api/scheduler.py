@@ -1,5 +1,5 @@
 """
-scheduler.py — APScheduler weekly cron for all users.
+scheduler.py - APScheduler weekly cron for all users.
 
 Runs every Sunday at 18:00 UTC:
   For each user who has been active in the last 14 days AND has at least one channel:
@@ -12,13 +12,13 @@ Runs every Sunday at 18:00 UTC:
 Design intent
 ─────────────
 The web app is the primary interface. Users log in, view their plan, optionally swap
-videos, and click "Publish to YouTube" — all within the app. The YouTube playlist is
+videos, and click "Publish to YouTube" - all within the app. The YouTube playlist is
 a convenience output so users can play videos directly from the YouTube app without
 signing in to the web app each time.
 
 Any authenticated request (viewing the dashboard, swapping a video, clicking Publish)
 updates `user.last_active_at`. We use that as the activity gate for the cron. Users
-who haven't opened the app in 14+ days have no plan to act on — skip them to save
+who haven't opened the app in 14+ days have no plan to act on - skip them to save
 YouTube API quota and Anthropic credits.
 
 The 14-day threshold tolerates a user missing one week (8–13 days absent) and still
@@ -84,7 +84,7 @@ def _weekly_pipeline_for_user(user_id: str):
             except Exception as e:
                 logger.error(f"[weekly] Classification failed for user {user_id}: {e}")
         else:
-            logger.info(f"[weekly] user={user_id}: plan fillable from existing pool — skipping Anthropic batch")
+            logger.info(f"[weekly] user={user_id}: plan fillable from existing pool - skipping Anthropic batch")
 
         # Step 3: generate next week's plan
         plan = None
@@ -102,7 +102,7 @@ def _weekly_pipeline_for_user(user_id: str):
                 send_weekly_plan_email(user, plan)
                 logger.info(f"[weekly] user={user_id}: plan email sent to {user.email}")
             except Exception as e:
-                logger.error(f"[weekly] user={user_id}: email failed — {e}")
+                logger.error(f"[weekly] user={user_id}: email failed - {e}")
                 # Never let email failure break the pipeline
 
         # Step 5: auto-publish if user has valid YouTube credentials
@@ -123,9 +123,9 @@ def _weekly_pipeline_for_user(user_id: str):
                     f"[weekly] user={user_id}: auto-published {result['video_count']} videos"
                 )
             except (YouTubeNotConnectedError, YouTubeAccessRevokedError) as e:
-                logger.warning(f"[weekly] user={user_id}: YouTube publish skipped — {e}")
+                logger.warning(f"[weekly] user={user_id}: YouTube publish skipped - {e}")
             except Exception as e:
-                logger.error(f"[weekly] user={user_id}: publish failed — {e}")
+                logger.error(f"[weekly] user={user_id}: publish failed - {e}")
 
     finally:
         session.close()
@@ -181,7 +181,7 @@ def start_scheduler():
         replace_existing=True,
     )
     scheduler.start()
-    logger.info("[scheduler] Started — weekly pipeline scheduled for Sunday 18:00 UTC")
+    logger.info("[scheduler] Started - weekly pipeline scheduled for Sunday 18:00 UTC")
 
 
 def stop_scheduler():

@@ -1,8 +1,8 @@
 """
-test_planner_integration.py — Plan generation against real PostgreSQL.
+test_planner_integration.py - Plan generation against real PostgreSQL.
 
 Key things SQLite can't verify that these tests do:
-  - program_history.week_start is a real DATE column — comparisons are strict
+  - program_history.week_start is a real DATE column - comparisons are strict
   - History exclusion window works correctly with PostgreSQL date arithmetic
   - CASCADE: deleting a user removes their program_history
   - Full plan generation persists correct user_id on all history rows

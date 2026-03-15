@@ -1,7 +1,7 @@
 """
 Tests for /channels endpoints.
 
-YouTube search calls are mocked — no real network calls.
+YouTube search calls are mocked - no real network calls.
 """
 
 from unittest.mock import AsyncMock, patch
@@ -61,7 +61,7 @@ def test_add_channel(auth_client, db_session):
     assert data["youtube_url"] == "https://youtube.com/@athleanx"
     assert "id" in data
 
-    # Persisted in DB — verify via UserChannel join
+    # Persisted in DB - verify via UserChannel join
     uc = db_session.query(UserChannel).filter(UserChannel.user_id == user.id).first()
     assert uc is not None
     ch = db_session.query(Channel).filter(Channel.id == uc.channel_id).first()
@@ -188,7 +188,7 @@ def test_suggestions_cache_hit(auth_client, db_session):
     assert len(data) == 3
     names = {d["name"] for d in data}
     assert "Athlean-X" in names
-    # YouTube API must NOT have been called — all served from cache
+    # YouTube API must NOT have been called - all served from cache
     mock_http.assert_not_called()
 
 
@@ -406,7 +406,7 @@ def test_add_channel_validation_fails_open_on_error(auth_client, db_session):
 
     app.dependency_overrides[get_current_user] = lambda: user_with_profile
 
-    # The validator catches exceptions internally — patch the Anthropic client to raise
+    # The validator catches exceptions internally - patch the Anthropic client to raise
     # so the internal try/except fires and returns (True, None), allowing the channel through.
     try:
         from unittest.mock import MagicMock
