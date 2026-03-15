@@ -124,7 +124,12 @@ Authenticates to YouTube via OAuth (using a stored refresh token - no browser ne
 2. Insert the new videos in Mon → Sun order (rest days skipped)
 3. Update the playlist description with the human-readable plan summary
 
+**Sleep reduction:** `time.sleep(0.3)` reduced to `time.sleep(0.05)` between API calls, saving ~3s per publish.
+
 **YouTube API quota:** ~650 units per weekly refresh - well within the 10,000/day free limit.
+
+**Web app publish flow (async):**
+`POST /plan/publish` returns 202 immediately and starts a background thread (`_run_publish`). The frontend polls `GET /plan/publish/status` every 2s until `status == "done"` or `"failed"`. Status is stored in the `_publish_status` in-memory dict (keyed by user ID). This mirrors the `_pipeline_status` pattern in `jobs.py`.
 
 ---
 

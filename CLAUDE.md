@@ -179,7 +179,7 @@ cd frontend && npm run test:run
 | `api/routers/auth.py` | Google OAuth login/logout + `GET/PATCH/DELETE /auth/me` |
 | `api/routers/channels.py` | `GET/POST /channels`, `DELETE /channels/{id}`, `GET /channels/search` |
 | `api/routers/schedule.py` | `GET/PUT /schedule` |
-| `api/routers/plan.py` | `GET /plan/upcoming`, `POST /plan/generate`, `PATCH /plan/{day}`, `POST /plan/publish` |
+| `api/routers/plan.py` | `GET /plan/upcoming`, `POST /plan/generate`, `PATCH /plan/{day}`, `POST /plan/publish` (202 async), `GET /plan/publish/status`; `_publish_status` in-memory dict; `_run_publish` background function |
 | `api/routers/library.py` | `GET /library` - paginated, filtered video browser |
 | `api/routers/jobs.py` | `POST /jobs/scan`, `GET /jobs/status`, `get_all_pipeline_statuses()` |
 | `api/routers/admin.py` | Admin stats, user management, announcements (ADMIN_EMAIL gated) |
@@ -238,7 +238,8 @@ cd frontend && npm run test:run
 | GET | `/plan/upcoming` | Yes | Latest generated plan |
 | POST | `/plan/generate` | Yes | Generate/regenerate plan |
 | PATCH | `/plan/{day}` | Yes | Swap a day's video |
-| POST | `/plan/publish` | Yes | Publish plan to YouTube playlist |
+| POST | `/plan/publish` | Yes | Publish plan to YouTube playlist (async, returns 202 immediately) |
+| GET | `/plan/publish/status` | Yes | Poll publish background task status (`_publish_status` in-memory dict) |
 | GET | `/library` | Yes | Paginated/filtered video library |
 | POST | `/jobs/scan` | Yes | Trigger manual channel scan |
 | GET | `/jobs/status` | Yes | Pipeline stage + classify progress `{stage, total, done, error, background_classifying}`. `background_classifying=true` means plan is ready but background Anthropic classification is still running. |

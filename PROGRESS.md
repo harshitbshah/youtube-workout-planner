@@ -1,10 +1,19 @@
 # Progress
 
 ## Status
-Phases 1–5 complete + admin console + charts + guide page + mobile UX complete. Phase A complete. Phase B complete. Phase C complete. Phase D F5+F6+F9 complete. Backlog items T1+T2+S1+M2 complete. Channel suggestions + onboarding UX complete. Channel fitness validation (migration 019) complete. Email notifications opt-in step in onboarding complete. Dark mode all pages fixed. Light mode button visibility fixed. Lazy classification (plan-first) complete. Onboarding guard + admin reset complete. Homepage M1 redesign complete. Planner Tier 6 + body-focus/workout-type coupling complete. Onboarding guard no-flash + admin bypass complete.
-**390 backend + 175 frontend = 565 tests passing**.
+Phases 1–5 complete + admin console + charts + guide page + mobile UX complete. Phase A complete. Phase B complete. Phase C complete. Phase D F5+F6+F9 complete. Backlog items T1+T2+S1+M2 complete. Channel suggestions + onboarding UX complete. Channel fitness validation (migration 019) complete. Email notifications opt-in step in onboarding complete. Dark mode all pages fixed. Light mode button visibility fixed. Lazy classification (plan-first) complete. Onboarding guard + admin reset complete. Homepage M1 redesign complete. Planner Tier 6 + body-focus/workout-type coupling complete. Onboarding guard no-flash + admin bypass complete. Async YouTube publish complete. Homepage avatar size bumped.
+**312 backend unit + 179 frontend = 491 automated tests passing** (+ integration tests).
 Both Railway (backend) and Vercel (frontend) live and functional on `main`.
-**Ready for first users** - Google OAuth fully verified ✅. YouTube scope approved by Google Trust & Safety (2026-03-15). No more "unverified app" warning for any user.
+**Ready for first users** - Google OAuth fully verified. YouTube scope approved by Google Trust & Safety (2026-03-15). No more "unverified app" warning for any user.
+
+**Done this session (2026-03-15, checkpoint 6):**
+- Async YouTube publish: `POST /plan/publish` returns 202 immediately; background thread runs `_run_publish`; `GET /plan/publish/status` polls `_publish_status` dict (same pattern as jobs pipeline); dashboard polls every 2s showing in-progress/success/failed banners ✅
+- YouTube API sleep reduced: `time.sleep(0.3)` → `time.sleep(0.05)` in `clear_playlist` + `populate_playlist` (saves ~3s per publish) ✅
+- `PublishStatus` Pydantic schema added (`status/playlist_url/video_count/error`) ✅
+- Dashboard: replaced blocking `publishing` state with full polling state machine; amber warning banner when a plan day has `scheduled_workout_type` but no video ✅
+- Homepage marquee: channel avatar size 48px → 64px, container w-16 → w-20, text 10px → 12px ✅
+- Integration tests added: `tests/integration/test_publish_api.py` (5 tests: 202 returns immediately, background success + playlist ID persisted, revoked token marks credentials invalid, no-plan 404, GET /auth/me returns youtube fields) ✅
+- **312 backend unit + 179 frontend = 491 automated tests passing** ✅
 
 **Done this session (2026-03-15, checkpoint 5):**
 - Planner Tier 6: fallback ignores workout_type when all type-specific tiers fail - no active day ever stays blank ✅
