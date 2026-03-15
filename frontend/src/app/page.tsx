@@ -6,52 +6,55 @@ import Link from "next/link";
 import { getChannels, getMe, loginUrl, setToken } from "@/lib/api";
 import { Footer } from "@/components/Footer";
 
-const HOW_IT_WORKS = [
-  {
-    step: "01",
-    title: "Add your channels",
-    body: "Pick the YouTube fitness creators you already follow. We pull from their libraries - not generic content.",
-  },
-  {
-    step: "02",
-    title: "Set your split",
-    body: "Tell us your weekly training goals - strength, HIIT, cardio, rest days, duration. You're in control.",
-  },
-  {
-    step: "03",
-    title: "Get your plan",
-    body: "Every Sunday we scan your channels, classify videos with AI, and build a fresh personalised weekly plan.",
-  },
+const SAMPLE_PLAN = [
+  { day: "Mon", type: "Strength", title: "How to Build Bigger Legs", channel: "Jeff Nippard" },
+  { day: "Tue", type: "HIIT", title: "10 Min Full Body Burn", channel: "Athlean-X" },
+  { day: "Wed", type: "Rest", title: null, channel: null },
+  { day: "Thu", type: "Cardio", title: "45 Min Steady State Run", channel: "Heather Robertson" },
+  { day: "Fri", type: "Strength", title: "Perfect Pull Day Protocol", channel: "Athlean-X" },
+  { day: "Sat", type: "Mobility", title: "Morning Full Body Stretch", channel: "FitnessBlender" },
+  { day: "Sun", type: "Rest", title: null, channel: null },
 ];
 
-const FEATURES = [
-  {
-    title: "Powered by creators you love",
-    body: "No algorithm pushing random content. Your plan is built exclusively from channels you've chosen.",
-  },
-  {
-    title: "Intelligent classification",
-    body: "Every video is classified by workout type, body focus, and difficulty so the right video lands on the right day.",
-  },
-  {
-    title: "No decision fatigue",
-    body: "Open the app on Monday and your workout is waiting. Just press play.",
-  },
+const TYPE_PILL: Record<string, string> = {
+  Strength: "bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400",
+  HIIT: "bg-orange-50 text-orange-600 dark:bg-orange-900/30 dark:text-orange-400",
+  Cardio: "bg-green-50 text-green-600 dark:bg-green-900/30 dark:text-green-400",
+  Mobility: "bg-purple-50 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400",
+};
+
+// Duplicated for seamless marquee loop
+const CHANNELS = [
+  "Jeff Nippard", "Athlean-X", "Heather Robertson", "FitnessBlender",
+  "Jeremy Ethier", "Caroline Girvan", "Chris Heria", "Sydney Cummings",
+  "MuscleWiki", "Koboko Fitness", "Mark Lauren", "Juice & Toya",
+  "Jeff Nippard", "Athlean-X", "Heather Robertson", "FitnessBlender",
+  "Jeremy Ethier", "Caroline Girvan", "Chris Heria", "Sydney Cummings",
+  "MuscleWiki", "Koboko Fitness", "Mark Lauren", "Juice & Toya",
 ];
+
+function GoogleIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 18 18" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <path d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.875 2.684-6.615z" fill="#4285F4"/>
+      <path d="M9 18c2.43 0 4.467-.806 5.956-2.184l-2.908-2.258c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z" fill="#34A853"/>
+      <path d="M3.964 10.707A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.707V4.961H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.039l3.007-2.332z" fill="#FBBC05"/>
+      <path d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.961L3.964 6.293C4.672 4.166 6.656 3.58 9 3.58z" fill="#EA4335"/>
+    </svg>
+  );
+}
 
 export default function LandingPage() {
   const router = useRouter();
   const [checking, setChecking] = useState(true);
 
   useEffect(() => {
-    // Extract token from URL after OAuth redirect (e.g. /?token=xxx)
     const params = new URLSearchParams(window.location.search);
     const token = params.get("token");
     if (token) {
       setToken(token);
       window.history.replaceState({}, "", window.location.pathname);
     }
-
     getMe()
       .then(() => getChannels())
       .then((channels) =>
@@ -72,18 +75,18 @@ export default function LandingPage() {
     <main className="min-h-screen bg-white dark:bg-zinc-950 text-zinc-900 dark:text-white">
 
       {/* Nav */}
-      <nav className="flex items-center justify-between px-6 py-5 max-w-5xl mx-auto">
-        <span className="font-semibold text-zinc-900 dark:text-white tracking-tight">Plan My Workout</span>
-        <div className="flex items-center gap-3">
+      <nav className="flex items-center justify-between px-6 py-5 max-w-6xl mx-auto">
+        <span className="font-semibold tracking-tight">Plan My Workout</span>
+        <div className="flex items-center gap-4">
           <Link
             href="/guide"
-            className="text-sm text-zinc-600 dark:text-zinc-400 hover:text-zinc-800 dark:hover:text-zinc-200 transition"
+            className="text-sm text-zinc-500 dark:text-zinc-400 hover:text-zinc-800 dark:hover:text-zinc-200 transition"
           >
             Guide
           </Link>
           <a
             href={loginUrl()}
-            className="rounded-lg border border-zinc-200 dark:border-zinc-700 px-4 py-2 text-sm text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition"
+            className="rounded-lg bg-zinc-900 dark:bg-white px-4 py-2 text-sm font-semibold text-white dark:text-zinc-900 hover:bg-zinc-700 dark:hover:bg-zinc-100 transition"
           >
             Sign in
           </a>
@@ -91,89 +94,137 @@ export default function LandingPage() {
       </nav>
 
       {/* Hero */}
-      <section className="flex flex-col items-center text-center px-6 pt-20 pb-24 max-w-3xl mx-auto">
-        <div className="mb-4 rounded-full bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 px-3 py-1 text-xs text-zinc-600 dark:text-zinc-400 tracking-wide">
-          Free · No credit card required
-        </div>
-        <h1 className="text-4xl sm:text-5xl font-bold text-zinc-900 dark:text-white leading-tight mb-6">
-          Your YouTube workout plan,{" "}
-          <span className="text-zinc-600 dark:text-zinc-400">on autopilot.</span>
-        </h1>
-        <p className="text-zinc-600 dark:text-zinc-400 text-lg leading-relaxed mb-10 max-w-xl">
-          Add your favourite fitness channels, set your weekly training split, and
-          get a fresh plan curated from content you already love - every Sunday.
-        </p>
-        <a
-          href={loginUrl()}
-          className="flex items-center gap-2.5 rounded-lg bg-zinc-900 dark:bg-white px-8 py-3.5 text-sm font-semibold text-white dark:text-zinc-900 hover:bg-zinc-700 dark:hover:bg-zinc-100 transition"
-        >
-          <svg width="18" height="18" viewBox="0 0 18 18" xmlns="http://www.w3.org/2000/svg">
-            <path d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.875 2.684-6.615z" fill="#4285F4"/>
-            <path d="M9 18c2.43 0 4.467-.806 5.956-2.184l-2.908-2.258c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z" fill="#34A853"/>
-            <path d="M3.964 10.707A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.707V4.961H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.039l3.007-2.332z" fill="#FBBC05"/>
-            <path d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.961L3.964 6.293C4.672 4.166 6.656 3.58 9 3.58z" fill="#EA4335"/>
-          </svg>
-          Get started free
-        </a>
-        <p className="mt-4 text-xs text-zinc-500">
-          Already have an account?{" "}
-          <a href={loginUrl()} className="underline underline-offset-2 hover:text-zinc-700 dark:hover:text-zinc-300 transition">
-            Sign in
-          </a>
-        </p>
-      </section>
+      <section className="max-w-6xl mx-auto px-6 pt-14 pb-20 grid grid-cols-1 lg:grid-cols-2 gap-14 items-center">
 
-      {/* How it works */}
-      <section className="px-6 py-20 border-t border-zinc-200 dark:border-zinc-800">
-        <div className="max-w-5xl mx-auto">
-          <h2 className="text-xs font-semibold text-zinc-500 uppercase tracking-widest text-center mb-12">
-            How it works
-          </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-8">
-            {HOW_IT_WORKS.map(({ step, title, body }) => (
-              <div key={step}>
-                <div className="text-3xl font-bold text-zinc-200 dark:text-zinc-700 mb-3">{step}</div>
-                <h3 className="text-base font-semibold text-zinc-900 dark:text-white mb-2">{title}</h3>
-                <p className="text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed">{body}</p>
-              </div>
-            ))}
+        {/* Left: copy + CTA */}
+        <div>
+          <div className="mb-5 inline-flex items-center rounded-full bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 px-3 py-1 text-xs text-zinc-500 dark:text-zinc-400">
+            Free - no credit card required
+          </div>
+          <h1 className="text-5xl sm:text-6xl font-bold leading-[1.1] tracking-tight mb-6">
+            Stop watching.<br />
+            <span className="text-zinc-400 dark:text-zinc-500">Start doing.</span>
+          </h1>
+          <p className="text-zinc-600 dark:text-zinc-400 text-lg leading-relaxed mb-8 max-w-md">
+            Turn your favourite YouTube fitness channels into a structured weekly plan - automatically.
+            A different workout, every day.
+          </p>
+          <a
+            href={loginUrl()}
+            className="inline-flex items-center gap-2.5 rounded-lg bg-zinc-900 dark:bg-white px-7 py-3.5 text-sm font-semibold text-white dark:text-zinc-900 hover:bg-zinc-700 dark:hover:bg-zinc-100 transition"
+          >
+            <GoogleIcon />
+            Get started free
+          </a>
+          <p className="mt-3 text-xs text-zinc-400 dark:text-zinc-600">
+            Ready in under 3 minutes
+          </p>
+        </div>
+
+        {/* Right: sample plan mockup */}
+        <div>
+          <div className="rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/80 p-4 shadow-2xl shadow-zinc-200/60 dark:shadow-zinc-950/60">
+            <div className="flex items-center justify-between mb-4 px-1">
+              <span className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">This week</span>
+              <span className="text-[11px] text-zinc-400 italic">Sample plan</span>
+            </div>
+            <div className="flex flex-col gap-1.5">
+              {SAMPLE_PLAN.map(({ day, type, title, channel }) =>
+                type === "Rest" ? (
+                  <div key={day} className="flex items-center gap-3 px-3 py-2 rounded-lg">
+                    <span className="w-8 text-xs font-medium text-zinc-400 shrink-0">{day}</span>
+                    <span className="text-xs text-zinc-400">Rest day</span>
+                  </div>
+                ) : (
+                  <div
+                    key={day}
+                    className="flex items-start gap-3 rounded-xl border border-zinc-200 dark:border-zinc-700/60 bg-white dark:bg-zinc-800/70 px-3 py-2.5"
+                  >
+                    <span className="w-8 pt-0.5 text-xs font-semibold text-zinc-500 shrink-0">{day}</span>
+                    <div className="flex-1 min-w-0">
+                      <span className={`inline-block rounded px-1.5 py-0.5 text-[10px] font-semibold mb-1 ${TYPE_PILL[type]}`}>
+                        {type}
+                      </span>
+                      <p className="text-xs font-medium text-zinc-900 dark:text-white truncate">{title}</p>
+                      <p className="text-[11px] text-zinc-400 mt-0.5">{channel}</p>
+                    </div>
+                  </div>
+                )
+              )}
+            </div>
           </div>
         </div>
       </section>
 
-      {/* Features */}
-      <section className="px-6 py-20 border-t border-zinc-200 dark:border-zinc-800">
-        <div className="max-w-5xl mx-auto">
-          <h2 className="text-xs font-semibold text-zinc-500 uppercase tracking-widest text-center mb-12">
-            Why Plan My Workout
+      {/* Channel marquee */}
+      <section className="border-t border-zinc-100 dark:border-zinc-800/60 py-6 overflow-hidden">
+        <p className="text-center text-[11px] font-semibold text-zinc-400 uppercase tracking-widest mb-5">
+          Works with creators you already follow
+        </p>
+        <div className="flex gap-3 animate-marquee">
+          {CHANNELS.map((name, i) => (
+            <span
+              key={i}
+              className="inline-flex items-center rounded-full border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-4 py-1.5 text-xs font-medium text-zinc-600 dark:text-zinc-400 shrink-0"
+            >
+              {name}
+            </span>
+          ))}
+        </div>
+      </section>
+
+      {/* How it works */}
+      <section className="px-6 py-24 border-t border-zinc-100 dark:border-zinc-800/60">
+        <div className="max-w-6xl mx-auto">
+          <h2 className="text-[11px] font-semibold text-zinc-400 uppercase tracking-widest text-center mb-16">
+            How it works
           </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-8">
-            {FEATURES.map(({ title, body }) => (
-              <div key={title} className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-6">
-                <h3 className="text-sm font-semibold text-zinc-900 dark:text-white mb-2">{title}</h3>
-                <p className="text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed">{body}</p>
-              </div>
-            ))}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-12">
+            <div>
+              <div className="text-4xl font-bold text-zinc-100 dark:text-zinc-800 mb-4">01</div>
+              <h3 className="text-base font-semibold mb-2">Add your channels</h3>
+              <p className="text-sm text-zinc-500 dark:text-zinc-400 leading-relaxed">
+                Pick the YouTube fitness creators you already follow. We pull from their libraries - not generic content.
+              </p>
+            </div>
+            <div>
+              <div className="text-4xl font-bold text-zinc-100 dark:text-zinc-800 mb-4">02</div>
+              <h3 className="text-base font-semibold mb-2">Set your split</h3>
+              <p className="text-sm text-zinc-500 dark:text-zinc-400 leading-relaxed">
+                Tell us your training days, workout types, and session length. Takes about 2 minutes.
+              </p>
+            </div>
+            <div>
+              <div className="text-4xl font-bold text-zinc-100 dark:text-zinc-800 mb-4">03</div>
+              <h3 className="text-base font-semibold mb-2">Get your plan</h3>
+              <p className="text-sm text-zinc-500 dark:text-zinc-400 leading-relaxed">
+                Every Sunday we scan your channels and build a fresh weekly plan from videos that match your schedule. Just press play on Monday.
+              </p>
+            </div>
           </div>
         </div>
       </section>
 
       {/* Bottom CTA */}
-      <section className="px-6 py-24 border-t border-zinc-200 dark:border-zinc-800 text-center">
-        <h2 className="text-2xl font-bold text-zinc-900 dark:text-white mb-4">Ready to stop guessing?</h2>
-        <p className="text-zinc-600 dark:text-zinc-400 text-sm mb-8">
-          Join and get your first personalised plan in minutes.
-        </p>
-        <a
-          href={loginUrl()}
-          className="rounded-lg bg-zinc-900 dark:bg-white px-8 py-3.5 text-sm font-semibold text-white dark:text-zinc-900 hover:bg-zinc-700 dark:hover:bg-zinc-100 transition"
-        >
-          Get started free →
-        </a>
+      <section className="px-6 pb-20">
+        <div className="max-w-5xl mx-auto rounded-2xl bg-zinc-900 dark:bg-zinc-800 px-8 py-16 text-center">
+          <h2 className="text-3xl font-bold text-white mb-4">
+            Ready to stop guessing?
+          </h2>
+          <p className="text-zinc-400 text-sm mb-8 max-w-sm mx-auto leading-relaxed">
+            Your first personalised plan is waiting. Three minutes from now you&apos;ll know exactly what to do on Monday.
+          </p>
+          <a
+            href={loginUrl()}
+            className="inline-flex items-center gap-2.5 rounded-lg bg-white px-8 py-3.5 text-sm font-semibold text-zinc-900 hover:bg-zinc-100 transition"
+          >
+            <GoogleIcon />
+            Get started free
+          </a>
+        </div>
       </section>
 
       <Footer />
-
     </main>
   );
 }
