@@ -214,6 +214,8 @@ export default function DashboardPage() {
   const [publishResult, setPublishResult] = useState<PublishResponse | null>(null);
   const [announcement, setAnnouncement] = useState<{ id: number; message: string } | null>(null);
   const [stalePlanDismissed, setStalePlanDismissed] = useState(false);
+  const [alreadySetUpDismissed, setAlreadySetUpDismissed] = useState(false);
+  const [showAlreadySetUp, setShowAlreadySetUp] = useState(false);
   const [openSwapDay, setOpenSwapDay] = useState<string | null>(null);
   const [error, setError] = useState("");
 
@@ -221,8 +223,14 @@ export default function DashboardPage() {
     // Check if we just came from onboarding with a scan in progress
     const params = new URLSearchParams(window.location.search);
     const scanJustTriggered = params.get("scanning") === "1";
+    const fromOnboarding = params.get("from") === "onboarding";
     if (scanJustTriggered) {
       setScanning(true);
+    }
+    if (fromOnboarding) {
+      setShowAlreadySetUp(true);
+    }
+    if (scanJustTriggered || fromOnboarding) {
       window.history.replaceState({}, "", window.location.pathname);
     }
 
@@ -464,6 +472,14 @@ export default function DashboardPage() {
             </button>
           </div>
         </div>
+
+        {/* Already set up banner - shown when user tried to access /onboarding */}
+        {showAlreadySetUp && !alreadySetUpDismissed && (
+          <div className="mb-6 flex items-center justify-between gap-3 rounded-lg border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/60 px-4 py-3 text-sm text-zinc-700 dark:text-zinc-300">
+            <span>You&apos;re already all set. Head to <Link href="/settings" className="underline hover:text-zinc-900 dark:hover:text-white transition">Settings</Link> to update your channels or schedule.</span>
+            <button onClick={() => setAlreadySetUpDismissed(true)} aria-label="Dismiss" className="shrink-0 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 transition">✕</button>
+          </div>
+        )}
 
         {/* Announcement banner */}
         {announcement && (

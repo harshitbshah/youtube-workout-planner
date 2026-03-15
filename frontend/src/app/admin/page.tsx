@@ -12,7 +12,7 @@ import {
   ResponsiveContainer,
   CartesianGrid,
 } from "recharts";
-import { getMe, getAdminCharts, type ChartsResponse } from "@/lib/api";
+import { getMe, getAdminCharts, adminResetOnboarding, type ChartsResponse } from "@/lib/api";
 import { Tooltip } from "@/components/Tooltip";
 import { Footer } from "@/components/Footer";
 
@@ -217,6 +217,7 @@ export default function AdminPage() {
   const [lastRefresh, setLastRefresh] = useState<Date | null>(null);
   const [deletingUser, setDeletingUser] = useState<string | null>(null);
   const [retryingUser, setRetryingUser] = useState<string | null>(null);
+  const [resettingUser, setResettingUser] = useState<string | null>(null);
 
   async function fetchStats() {
     const data = await adminFetch<AdminStats>("/admin/stats");
@@ -274,6 +275,19 @@ export default function AdminPage() {
       alert("Failed to trigger scan.");
     } finally {
       setRetryingUser(null);
+    }
+  }
+
+  async function handleResetOnboarding(userId: string, email: string) {
+    if (!confirm(`Reset onboarding for ${email}? This removes all their channel subscriptions and schedule. They will go through onboarding again on next login.`)) return;
+    setResettingUser(userId);
+    try {
+      await adminResetOnboarding(userId);
+      await fetchStats();
+    } catch {
+      alert("Failed to reset onboarding.");
+    } finally {
+      setResettingUser(null);
     }
   }
 
@@ -567,6 +581,15 @@ export default function AdminPage() {
                             className="text-xs text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200 disabled:opacity-30 transition"
                           >
                             {retryingUser === u.id ? "Starting…" : "↺ Scan"}
+                          </button>
+                        </Tooltip>
+                        <Tooltip text="Remove all channel subscriptions and schedule - user goes through onboarding again on next login">
+                          <button
+                            onClick={() => handleResetOnboarding(u.id, u.email)}
+                            disabled={resettingUser === u.id}
+                            className="text-xs text-amber-700 hover:text-amber-400 disabled:opacity-30 transition"
+                          >
+                            {resettingUser === u.id ? "Resetting…" : "Reset"}
                           </button>
                         </Tooltip>
                         <Tooltip text="Permanently delete this user and all their data - channels, videos, plan history, and credentials">

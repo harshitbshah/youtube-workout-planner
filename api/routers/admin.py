@@ -25,6 +25,7 @@ from ..models import (
     Channel,
     Classification,
     ProgramHistory,
+    Schedule,
     ScanLog,
     User,
     UserActivityLog,
@@ -352,6 +353,28 @@ def admin_retry_scan(
     from .jobs import _run_full_pipeline
     background_tasks.add_task(_run_full_pipeline, user_id)
     return {"message": f"Pipeline started for user {user.email}"}
+
+
+# ─── Admin: reset onboarding ───────────────────────────────────────────────────
+
+@router.post("/admin/users/{user_id}/reset-onboarding", status_code=204)
+def admin_reset_onboarding(
+    user_id: str,
+    db: Session = Depends(get_db),
+    _: User = Depends(_require_admin),
+):
+    """
+    Reset a user's onboarding state: removes all channel subscriptions and
+    schedule slots. The user will be treated as a new user on next login and
+    directed back through the onboarding wizard. Channels, videos, and
+    classifications are preserved (they are shared resources).
+    """
+    user = db.get(User, user_id)
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    db.query(UserChannel).filter(UserChannel.user_id == user_id).delete()
+    db.query(Schedule).filter(Schedule.user_id == user_id).delete()
+    db.commit()
 
 
 # ─── Admin: announcements ──────────────────────────────────────────────────────

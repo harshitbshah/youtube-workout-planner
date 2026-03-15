@@ -3,6 +3,8 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 import {
+  getMe,
+  getChannels,
   updateSchedule,
   updateEmailNotifications,
   triggerScan,
@@ -257,6 +259,16 @@ export default function OnboardingPage() {
   const [classifyProgress, setClassifyProgress] = useState<{ total: number; done: number } | null>(null);
 
   const isSenior = profile === "senior";
+
+  // Guard: redirect already-onboarded users to dashboard
+  useEffect(() => {
+    getMe()
+      .then(() => getChannels())
+      .then((ch) => {
+        if (ch.length > 0) router.replace("/dashboard?from=onboarding");
+      })
+      .catch(() => router.replace("/"));
+  }, [router]);
 
   // Step 1: select profile (highlight only - Next button advances)
   function handleProfileSelect(p: LifeStage) {

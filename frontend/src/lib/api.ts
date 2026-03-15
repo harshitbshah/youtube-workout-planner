@@ -239,6 +239,9 @@ export interface ChartsResponse {
 export const getAdminCharts = (days = 30) =>
   apiFetch<ChartsResponse>(`/admin/charts?days=${days}`);
 
+export const adminResetOnboarding = (userId: string) =>
+  apiFetch<void>(`/admin/users/${userId}/reset-onboarding`, { method: "POST" });
+
 // ─── Feedback ─────────────────────────────────────────────────────────────────
 
 export const submitFeedback = (category: string, message: string) =>

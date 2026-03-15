@@ -343,3 +343,46 @@ describe("DashboardPage - swap picker", () => {
     );
   });
 });
+
+describe("DashboardPage - already set up banner", () => {
+  it("shows banner when navigated from onboarding", async () => {
+    // Simulate ?from=onboarding in the URL
+    Object.defineProperty(window, "location", {
+      value: { ...window.location, search: "?from=onboarding" },
+      writable: true,
+    });
+    mockGetUpcomingPlan.mockResolvedValue(makePlan(getCurrentMondayISO()));
+    render(<DashboardPage />);
+    await waitFor(() =>
+      expect(screen.getByText(/You're already all set/i)).toBeInTheDocument()
+    );
+    // Restore
+    Object.defineProperty(window, "location", {
+      value: { ...window.location, search: "" },
+      writable: true,
+    });
+  });
+
+  it("does not show banner without from=onboarding param", async () => {
+    mockGetUpcomingPlan.mockResolvedValue(makePlan(getCurrentMondayISO()));
+    render(<DashboardPage />);
+    await waitFor(() => screen.getByText(/Regenerate/i));
+    expect(screen.queryByText(/You're already all set/i)).not.toBeInTheDocument();
+  });
+
+  it("dismisses banner when X is clicked", async () => {
+    Object.defineProperty(window, "location", {
+      value: { ...window.location, search: "?from=onboarding" },
+      writable: true,
+    });
+    mockGetUpcomingPlan.mockResolvedValue(makePlan(getCurrentMondayISO()));
+    render(<DashboardPage />);
+    await waitFor(() => screen.getByText(/You're already all set/i));
+    fireEvent.click(screen.getByRole("button", { name: /Dismiss/i }));
+    expect(screen.queryByText(/You're already all set/i)).not.toBeInTheDocument();
+    Object.defineProperty(window, "location", {
+      value: { ...window.location, search: "" },
+      writable: true,
+    });
+  });
+});

@@ -1,15 +1,18 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import { useRouter } from "next/navigation";
 import OnboardingPage from "./page";
 import * as api from "@/lib/api";
 
 // Mock next/navigation
 vi.mock("next/navigation", () => ({
-  useRouter: () => ({ push: vi.fn() }),
+  useRouter: vi.fn(() => ({ push: vi.fn(), replace: vi.fn() })),
 }));
 
 // Mock api calls
 vi.mock("@/lib/api", () => ({
+  getMe: vi.fn(),
+  getChannels: vi.fn(),
   updateSchedule: vi.fn(),
   updateEmailNotifications: vi.fn(),
   triggerScan: vi.fn(),
@@ -20,12 +23,17 @@ vi.mock("@/lib/api", () => ({
   getSuggestions: vi.fn(),
 }));
 
+const mockGetMe = api.getMe as ReturnType<typeof vi.fn>;
+const mockGetChannels = api.getChannels as ReturnType<typeof vi.fn>;
 const mockUpdateSchedule = api.updateSchedule as ReturnType<typeof vi.fn>;
 const mockUpdateEmailNotifications = api.updateEmailNotifications as ReturnType<typeof vi.fn>;
 const mockTriggerScan = api.triggerScan as ReturnType<typeof vi.fn>;
 
 beforeEach(() => {
   vi.clearAllMocks();
+  // Default: user is not yet onboarded (no channels)
+  mockGetMe.mockResolvedValue({ id: 1, email: "test@example.com" });
+  mockGetChannels.mockResolvedValue([]);
   mockUpdateSchedule.mockResolvedValue(undefined);
   mockUpdateEmailNotifications.mockResolvedValue({});
   mockTriggerScan.mockResolvedValue({});
@@ -480,5 +488,43 @@ describe("OnboardingPage - Step Indicator", () => {
     await waitFor(() => screen.getByText(/Add your favourite channels/i));
     const channelsEl = screen.getByText("Channels");
     expect(channelsEl.className).toMatch(/text-white/);
+  });
+});
+
+describe("OnboardingPage - already-onboarded guard", () => {
+  it("redirects to /dashboard?from=onboarding when user already has channels", async () => {
+    const mockReplace = vi.fn();
+    vi.mocked(useRouter).mockReturnValue({ push: vi.fn(), replace: mockReplace } as ReturnType<typeof useRouter>);
+    mockGetChannels.mockResolvedValue([{ id: "ch1", name: "FitnessBlender", youtube_url: "https://youtube.com/@fb" }]);
+
+    render(<OnboardingPage />);
+
+    await waitFor(() =>
+      expect(mockReplace).toHaveBeenCalledWith("/dashboard?from=onboarding")
+    );
+  });
+
+  it("does not redirect when user has no channels", async () => {
+    const mockReplace = vi.fn();
+    vi.mocked(useRouter).mockReturnValue({ push: vi.fn(), replace: mockReplace } as ReturnType<typeof useRouter>);
+    // mockGetChannels already returns [] from beforeEach
+
+    render(<OnboardingPage />);
+
+    // Wait a tick for the effect to run
+    await new Promise((r) => setTimeout(r, 50));
+    expect(mockReplace).not.toHaveBeenCalledWith(expect.stringContaining("from=onboarding"));
+  });
+
+  it("redirects to / when getMe fails (unauthenticated)", async () => {
+    const mockReplace = vi.fn();
+    vi.mocked(useRouter).mockReturnValue({ push: vi.fn(), replace: mockReplace } as ReturnType<typeof useRouter>);
+    mockGetMe.mockRejectedValue(new Error("401"));
+
+    render(<OnboardingPage />);
+
+    await waitFor(() =>
+      expect(mockReplace).toHaveBeenCalledWith("/")
+    );
   });
 });

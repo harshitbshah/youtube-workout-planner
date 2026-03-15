@@ -355,3 +355,79 @@ def test_charts_scans_counted(admin_client):
 def test_charts_non_admin_403(non_admin_client):
     client, _ = non_admin_client
     assert client.get("/admin/charts").status_code == 403
+
+
+# --- Reset onboarding ---
+
+
+def test_reset_onboarding_removes_channels_and_schedule(admin_client):
+    """Reset endpoint deletes user_channels and schedule rows for the target user."""
+    from api.models import Schedule
+    client, admin, db = admin_client
+    target = User(google_id="target-google-id", email="target@example.com")
+    db.add(target)
+    db.flush()
+    channel = Channel(name="Ch", youtube_url="https://youtube.com/c/ch")
+    db.add(channel)
+    db.flush()
+    db.add(UserChannel(user_id=target.id, channel_id=channel.id))
+    db.add(Schedule(user_id=target.id, day="monday", workout_type="Strength"))
+    db.commit()
+
+    resp = client.post(f"/admin/users/{target.id}/reset-onboarding")
+    assert resp.status_code == 204
+
+    assert db.query(UserChannel).filter(UserChannel.user_id == target.id).count() == 0
+    assert db.query(Schedule).filter(Schedule.user_id == target.id).count() == 0
+
+
+def test_reset_onboarding_preserves_channel_and_videos(admin_client):
+    """Shared channel and its videos must survive a reset (other users may reference them)."""
+    from api.models import Schedule
+    client, admin, db = admin_client
+    target = User(google_id="target2-id", email="target2@example.com")
+    db.add(target)
+    db.flush()
+    channel = Channel(name="Shared", youtube_url="https://youtube.com/c/shared")
+    db.add(channel)
+    db.flush()
+    db.add(UserChannel(user_id=target.id, channel_id=channel.id))
+    video = Video(id="vid-reset", channel_id=channel.id, title="V", url="https://youtube.com/watch?v=vid-reset")
+    db.add(video)
+    db.commit()
+
+    client.post(f"/admin/users/{target.id}/reset-onboarding")
+
+    assert db.get(Channel, channel.id) is not None
+    assert db.get(Video, "vid-reset") is not None
+
+
+def test_reset_onboarding_does_not_affect_other_users(admin_client):
+    """Resetting one user must not remove another user's channel subscriptions."""
+    client, admin, db = admin_client
+    other = User(google_id="other-id", email="other@example.com")
+    target = User(google_id="target3-id", email="target3@example.com")
+    db.add_all([other, target])
+    db.flush()
+    channel = Channel(name="Ch2", youtube_url="https://youtube.com/c/ch2")
+    db.add(channel)
+    db.flush()
+    db.add(UserChannel(user_id=other.id, channel_id=channel.id))
+    db.add(UserChannel(user_id=target.id, channel_id=channel.id))
+    db.commit()
+
+    client.post(f"/admin/users/{target.id}/reset-onboarding")
+
+    assert db.query(UserChannel).filter(UserChannel.user_id == other.id).count() == 1
+
+
+def test_reset_onboarding_404_for_unknown_user(admin_client):
+    client, _, _ = admin_client
+    resp = client.post("/admin/users/nonexistent-id/reset-onboarding")
+    assert resp.status_code == 404
+
+
+def test_reset_onboarding_403_for_non_admin(non_admin_client):
+    client, user = non_admin_client
+    resp = client.post(f"/admin/users/{user.id}/reset-onboarding")
+    assert resp.status_code == 403
