@@ -23,15 +23,47 @@ const TYPE_PILL: Record<string, string> = {
   Mobility: "bg-purple-50 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400",
 };
 
-// Duplicated for seamless marquee loop
+// Verified unavatar.io handles - duplicated for seamless marquee loop
 const CHANNELS = [
-  "Jeff Nippard", "Athlean-X", "Heather Robertson", "FitnessBlender",
-  "Jeremy Ethier", "Caroline Girvan", "Chris Heria", "Sydney Cummings",
-  "MuscleWiki", "Koboko Fitness", "Mark Lauren", "Juice & Toya",
-  "Jeff Nippard", "Athlean-X", "Heather Robertson", "FitnessBlender",
-  "Jeremy Ethier", "Caroline Girvan", "Chris Heria", "Sydney Cummings",
-  "MuscleWiki", "Koboko Fitness", "Mark Lauren", "Juice & Toya",
+  { name: "Jeff Nippard",    handle: "JeffNippard" },
+  { name: "Athlean-X",       handle: "athleanx" },
+  { name: "Heather Robertson", handle: "heatherrobertsoncom" },
+  { name: "FitnessBlender",  handle: "FitnessBlender" },
+  { name: "Jeremy Ethier",   handle: "JeremyEthier" },
+  { name: "Caroline Girvan", handle: "CarolineGirvan" },
+  { name: "Chris Heria",     handle: "ChrisHeria" },
+  { name: "Sydney Cummings", handle: "sydneycummingshoudyshell" },
+  { name: "MuscleWiki",      handle: "MuscleWiki" },
+  { name: "Koboko Fitness",  handle: "KobokoFitness" },
+  { name: "Juice & Toya",    handle: "JuiceandToya" },
+  { name: "Chloe Ting",      handle: "ChloeTing" },
 ];
+
+function ChannelAvatar({ name, handle }: { name: string; handle: string }) {
+  const [errored, setErrored] = useState(false);
+  const initials = name.split(" ").slice(0, 2).map((w) => w[0]).join("").toUpperCase();
+  return (
+    <div className="flex flex-col items-center gap-1.5 shrink-0 w-16">
+      {errored ? (
+        <div className="w-12 h-12 rounded-full bg-zinc-200 dark:bg-zinc-700 flex items-center justify-center text-xs font-semibold text-zinc-600 dark:text-zinc-300">
+          {initials}
+        </div>
+      ) : (
+        <img
+          src={`https://unavatar.io/youtube/${handle}`}
+          alt={name}
+          width={48}
+          height={48}
+          className="w-12 h-12 rounded-full object-cover"
+          onError={() => setErrored(true)}
+        />
+      )}
+      <span className="text-[10px] text-zinc-500 dark:text-zinc-400 text-center leading-tight max-w-full truncate px-1">
+        {name}
+      </span>
+    </div>
+  );
+}
 
 function GoogleIcon() {
   return (
@@ -121,54 +153,61 @@ export default function LandingPage() {
           </p>
         </div>
 
-        {/* Right: sample plan mockup */}
+        {/* Right: plan mockup inside browser chrome */}
         <div>
-          <div className="rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/80 p-4 shadow-2xl shadow-zinc-200/60 dark:shadow-zinc-950/60">
-            <div className="flex items-center justify-between mb-4 px-1">
-              <span className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">This week</span>
-              <span className="text-[11px] text-zinc-400 italic">Sample plan</span>
+          {/* Browser chrome */}
+          <div className="rounded-2xl border border-zinc-200 dark:border-zinc-700 overflow-hidden shadow-2xl shadow-zinc-200/60 dark:shadow-zinc-950/60">
+            <div className="flex items-center gap-1.5 px-4 py-3 bg-zinc-100 dark:bg-zinc-800 border-b border-zinc-200 dark:border-zinc-700">
+              <div className="w-3 h-3 rounded-full bg-zinc-300 dark:bg-zinc-600" />
+              <div className="w-3 h-3 rounded-full bg-zinc-300 dark:bg-zinc-600" />
+              <div className="w-3 h-3 rounded-full bg-zinc-300 dark:bg-zinc-600" />
+              <div className="ml-3 flex-1 rounded-md bg-zinc-200 dark:bg-zinc-700 px-3 py-1 text-[11px] text-zinc-500 dark:text-zinc-400">
+                planmyworkout.app/dashboard
+              </div>
             </div>
-            <div className="flex flex-col gap-1.5">
-              {SAMPLE_PLAN.map(({ day, type, title, channel }) =>
-                type === "Rest" ? (
-                  <div key={day} className="flex items-center gap-3 px-3 py-2 rounded-lg">
-                    <span className="w-8 text-xs font-medium text-zinc-400 shrink-0">{day}</span>
-                    <span className="text-xs text-zinc-400">Rest day</span>
-                  </div>
-                ) : (
-                  <div
-                    key={day}
-                    className="flex items-start gap-3 rounded-xl border border-zinc-200 dark:border-zinc-700/60 bg-white dark:bg-zinc-800/70 px-3 py-2.5"
-                  >
-                    <span className="w-8 pt-0.5 text-xs font-semibold text-zinc-500 shrink-0">{day}</span>
-                    <div className="flex-1 min-w-0">
-                      <span className={`inline-block rounded px-1.5 py-0.5 text-[10px] font-semibold mb-1 ${TYPE_PILL[type]}`}>
-                        {type}
-                      </span>
-                      <p className="text-xs font-medium text-zinc-900 dark:text-white truncate">{title}</p>
-                      <p className="text-[11px] text-zinc-400 mt-0.5">{channel}</p>
+            {/* Plan grid */}
+            <div className="bg-zinc-50 dark:bg-zinc-900 p-4">
+              <div className="flex items-center justify-between mb-4 px-1">
+                <span className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">This week</span>
+                <span className="text-[11px] text-zinc-400 italic">Sample plan</span>
+              </div>
+              <div className="flex flex-col gap-1.5">
+                {SAMPLE_PLAN.map(({ day, type, title, channel }) =>
+                  type === "Rest" ? (
+                    <div key={day} className="flex items-center gap-3 px-3 py-2 rounded-lg">
+                      <span className="w-8 text-xs font-medium text-zinc-400 shrink-0">{day}</span>
+                      <span className="text-xs text-zinc-400">Rest day</span>
                     </div>
-                  </div>
-                )
-              )}
+                  ) : (
+                    <div
+                      key={day}
+                      className="flex items-start gap-3 rounded-xl border border-zinc-200 dark:border-zinc-700/60 bg-white dark:bg-zinc-800/70 px-3 py-2.5"
+                    >
+                      <span className="w-8 pt-0.5 text-xs font-semibold text-zinc-500 shrink-0">{day}</span>
+                      <div className="flex-1 min-w-0">
+                        <span className={`inline-block rounded px-1.5 py-0.5 text-[10px] font-semibold mb-1 ${TYPE_PILL[type]}`}>
+                          {type}
+                        </span>
+                        <p className="text-xs font-medium text-zinc-900 dark:text-white truncate">{title}</p>
+                        <p className="text-[11px] text-zinc-400 mt-0.5">{channel}</p>
+                      </div>
+                    </div>
+                  )
+                )}
+              </div>
             </div>
           </div>
         </div>
       </section>
 
       {/* Channel marquee */}
-      <section className="border-t border-zinc-100 dark:border-zinc-800/60 py-6 overflow-hidden">
-        <p className="text-center text-[11px] font-semibold text-zinc-400 uppercase tracking-widest mb-5">
+      <section className="border-t border-zinc-100 dark:border-zinc-800/60 py-8 overflow-hidden">
+        <p className="text-center text-[11px] font-semibold text-zinc-400 uppercase tracking-widest mb-6">
           Works with creators you already follow
         </p>
-        <div className="flex gap-3 animate-marquee">
-          {CHANNELS.map((name, i) => (
-            <span
-              key={i}
-              className="inline-flex items-center rounded-full border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-4 py-1.5 text-xs font-medium text-zinc-600 dark:text-zinc-400 shrink-0"
-            >
-              {name}
-            </span>
+        <div className="flex gap-8 animate-marquee">
+          {[...CHANNELS, ...CHANNELS].map((ch, i) => (
+            <ChannelAvatar key={i} name={ch.name} handle={ch.handle} />
           ))}
         </div>
       </section>
