@@ -7,12 +7,12 @@ export const metadata: Metadata = {
 
 export default function PrivacyPage() {
   return (
-    <main className="min-h-screen bg-zinc-950 px-4 py-12">
-      <div className="max-w-2xl mx-auto space-y-8 text-zinc-300">
+    <main className="min-h-screen bg-white dark:bg-zinc-950 px-4 py-12">
+      <div className="max-w-2xl mx-auto space-y-8 text-zinc-700 dark:text-zinc-300">
 
         <div>
-          <Link href="/" className="text-xs text-zinc-600 hover:text-zinc-400 transition">← Home</Link>
-          <h1 className="text-2xl font-bold text-white mt-4">Privacy Policy</h1>
+          <Link href="/" className="text-xs text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-400 transition">← Home</Link>
+          <h1 className="text-2xl font-bold text-zinc-900 dark:text-white mt-4">Privacy Policy</h1>
           <p className="text-xs text-zinc-500 mt-1">Effective date: 10 March 2026</p>
         </div>
 
@@ -54,13 +54,13 @@ export default function PrivacyPage() {
           </p>
           <p>
             By using this app, you are also agreeing to the{" "}
-            <a href="https://www.youtube.com/t/terms" target="_blank" rel="noopener noreferrer" className="text-zinc-400 underline hover:text-white">YouTube Terms of Service</a>{" "}
+            <a href="https://www.youtube.com/t/terms" target="_blank" rel="noopener noreferrer" className="text-zinc-600 dark:text-zinc-400 underline hover:text-zinc-900 dark:hover:text-white">YouTube Terms of Service</a>{" "}
             and the{" "}
-            <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer" className="text-zinc-400 underline hover:text-white">Google Privacy Policy</a>.
+            <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer" className="text-zinc-600 dark:text-zinc-400 underline hover:text-zinc-900 dark:hover:text-white">Google Privacy Policy</a>.
           </p>
           <p>
             You can revoke this app&apos;s access to your YouTube account at any time via your{" "}
-            <a href="https://myaccount.google.com/permissions" target="_blank" rel="noopener noreferrer" className="text-zinc-400 underline hover:text-white">Google Account security settings</a>.
+            <a href="https://myaccount.google.com/permissions" target="_blank" rel="noopener noreferrer" className="text-zinc-600 dark:text-zinc-400 underline hover:text-zinc-900 dark:hover:text-white">Google Account security settings</a>.
           </p>
         </Section>
 
@@ -79,10 +79,10 @@ export default function PrivacyPage() {
         <Section title="8. Third-party services">
           <p>We use the following third-party services to operate the app:</p>
           <ul>
-            <li><strong className="text-zinc-200">Google OAuth</strong> — sign-in and YouTube access</li>
-            <li><strong className="text-zinc-200">Anthropic Claude</strong> — AI video classification</li>
-            <li><strong className="text-zinc-200">Railway</strong> — backend hosting and database</li>
-            <li><strong className="text-zinc-200">Vercel</strong> — frontend hosting</li>
+            <li><strong className="text-zinc-800 dark:text-zinc-200">Google OAuth</strong> — sign-in and YouTube access</li>
+            <li><strong className="text-zinc-800 dark:text-zinc-200">Anthropic Claude</strong> — AI video classification</li>
+            <li><strong className="text-zinc-800 dark:text-zinc-200">Railway</strong> — backend hosting and database</li>
+            <li><strong className="text-zinc-800 dark:text-zinc-200">Vercel</strong> — frontend hosting</li>
           </ul>
         </Section>
 
@@ -95,7 +95,7 @@ export default function PrivacyPage() {
         </Section>
 
         <Section title="11. Contact">
-          <p>Questions? Email us at <a href="mailto:harshitspeaks@gmail.com" className="text-zinc-400 underline hover:text-white">harshitspeaks@gmail.com</a>.</p>
+          <p>Questions? Email us at <a href="mailto:harshitspeaks@gmail.com" className="text-zinc-600 dark:text-zinc-400 underline hover:text-zinc-900 dark:hover:text-white">harshitspeaks@gmail.com</a>.</p>
         </Section>
 
       </div>
@@ -106,7 +106,7 @@ export default function PrivacyPage() {
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <section className="space-y-3">
-      <h2 className="text-base font-semibold text-white">{title}</h2>
+      <h2 className="text-base font-semibold text-zinc-900 dark:text-white">{title}</h2>
       <div className="space-y-2 text-sm leading-relaxed [&_ul]:list-disc [&_ul]:pl-5 [&_ul]:space-y-1">
         {children}
       </div>

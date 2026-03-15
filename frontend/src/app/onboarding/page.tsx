@@ -64,7 +64,7 @@ function OptionCard({
   return (
     <button
       onClick={onClick}
-      className={`w-full text-left rounded-xl border px-5 py-4 transition ${
+      className={`w-full text-left rounded-xl border px-5 py-4 transition cursor-pointer ${
         selected
           ? "border-zinc-900 dark:border-white bg-zinc-100 dark:bg-zinc-800"
           : "border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-900 hover:border-zinc-400 dark:hover:border-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800"
@@ -94,7 +94,7 @@ function StepNav({
       {onBack && (
         <button
           onClick={onBack}
-          className="rounded-lg border border-zinc-200 dark:border-zinc-700 px-4 py-3 text-sm font-medium text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition"
+          className="rounded-lg border border-zinc-200 dark:border-zinc-700 px-4 py-3 text-sm font-medium text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition cursor-pointer"
         >
           ← Back
         </button>
@@ -102,7 +102,7 @@ function StepNav({
       <button
         onClick={onNext}
         disabled={nextDisabled}
-        className="flex-1 rounded-lg bg-white px-4 py-3 text-sm font-semibold text-zinc-900 hover:bg-zinc-100 disabled:opacity-30 transition"
+        className="flex-1 rounded-lg bg-white px-4 py-3 text-sm font-semibold text-zinc-900 hover:bg-zinc-100 disabled:opacity-30 transition cursor-pointer"
       >
         {nextLabel}
       </button>
@@ -442,7 +442,7 @@ export default function OnboardingPage() {
                 <button
                   key={d}
                   onClick={() => setTrainingDays(d)}
-                  className={`h-12 w-12 rounded-xl border text-sm font-bold transition
+                  className={`h-12 w-12 rounded-xl border text-sm font-bold transition cursor-pointer
                     ${trainingDays === d ? "border-white bg-white text-zinc-900" : "border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-900 text-zinc-900 dark:text-white hover:border-zinc-400 dark:hover:border-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800"}`}
                 >
                   {d}
@@ -489,13 +489,13 @@ export default function OnboardingPage() {
                   <button
                     onClick={handleScheduleConfirm}
                     disabled={savingSchedule}
-                    className="flex-1 rounded-lg bg-white px-4 py-3 text-sm font-semibold text-zinc-900 hover:bg-zinc-100 disabled:opacity-40 transition"
+                    className="flex-1 rounded-lg bg-white px-4 py-3 text-sm font-semibold text-zinc-900 hover:bg-zinc-100 disabled:opacity-40 transition cursor-pointer"
                   >
                     {savingSchedule ? "Saving…" : "Looks good →"}
                   </button>
                   <button
                     onClick={() => setCustomising(true)}
-                    className="rounded-lg border border-zinc-200 dark:border-zinc-700 px-4 py-3 text-sm font-medium text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition"
+                    className="rounded-lg border border-zinc-200 dark:border-zinc-700 px-4 py-3 text-sm font-medium text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition cursor-pointer"
                   >
                     Customise
                   </button>
@@ -505,13 +505,13 @@ export default function OnboardingPage() {
               <>
                 <ScheduleEditor schedule={schedule} onScheduleChange={setSchedule} />
                 <div className="flex gap-3 mt-6">
-                  <button onClick={() => setStep(4)} className="rounded-lg border border-zinc-200 dark:border-zinc-700 px-4 py-3 text-sm font-medium text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition">
+                  <button onClick={() => setStep(4)} className="rounded-lg border border-zinc-200 dark:border-zinc-700 px-4 py-3 text-sm font-medium text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition cursor-pointer">
                     ← Back
                   </button>
                   <button
                     onClick={handleScheduleConfirm}
                     disabled={savingSchedule}
-                    className="flex-1 rounded-lg bg-white px-4 py-3 text-sm font-semibold text-zinc-900 hover:bg-zinc-100 disabled:opacity-40 transition"
+                    className="flex-1 rounded-lg bg-white px-4 py-3 text-sm font-semibold text-zinc-900 hover:bg-zinc-100 disabled:opacity-40 transition cursor-pointer"
                   >
                     {savingSchedule ? "Saving…" : "Looks good →"}
                   </button>
@@ -569,13 +569,13 @@ export default function OnboardingPage() {
               suggestionsLoading={suggestionsLoading}
             />
             <div className="flex gap-3 mt-6">
-              <button onClick={() => setStep(6)} className="rounded-lg border border-zinc-200 dark:border-zinc-700 px-4 py-3 text-sm font-medium text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition">
+              <button onClick={() => setStep(6)} className="rounded-lg border border-zinc-200 dark:border-zinc-700 px-4 py-3 text-sm font-medium text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition cursor-pointer">
                 ← Back
               </button>
               <button
                 onClick={handleStartScan}
                 disabled={channels.length === 0}
-                className="flex-1 rounded-lg bg-white px-4 py-3 text-sm font-semibold text-zinc-900 hover:bg-zinc-100 disabled:opacity-30 transition"
+                className="flex-1 rounded-lg bg-white px-4 py-3 text-sm font-semibold text-zinc-900 hover:bg-zinc-100 disabled:opacity-30 transition cursor-pointer"
               >
                 Continue →
               </button>
@@ -597,7 +597,7 @@ export default function OnboardingPage() {
                 <p className="text-sm text-red-400 mb-3">{scanError}</p>
                 <button
                   onClick={handleRetry}
-                  className="rounded-lg bg-red-800 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 transition"
+                  className="rounded-lg bg-red-800 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 transition cursor-pointer"
                 >
                   Try again
                 </button>
@@ -607,7 +607,7 @@ export default function OnboardingPage() {
               Taking too long?{" "}
               <button
                 onClick={() => router.push("/dashboard")}
-                className="underline hover:text-zinc-300 transition"
+                className="underline hover:text-zinc-300 transition cursor-pointer"
               >
                 Go to dashboard
               </button>
