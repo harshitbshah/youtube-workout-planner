@@ -29,7 +29,7 @@ Run before every commit:
 cd frontend && npm run test:run
 ```
 
-Current: **564/564 passing** (390 backend + 174 frontend)
+Current: **565/565 passing** (390 backend + 175 frontend)
 
 New test files added:
 - `tests/api/test_jobs.py` - `POST /jobs/scan` (202, 400 no channels, 503 no key, 401 unauth, channel count); `GET /jobs/status` (no pipeline, unauthenticated, reflects live state); scanner filters (upper duration cap, title blocklist); classifier (batch cap limits to 300, `on_progress` callback during polling, resume existing batch, batch ID cleared on completion)
@@ -43,7 +43,7 @@ New test files added:
 - `frontend/src/test/ThemeProvider.test.tsx` - 6 tests: system-dark default, system-light default, explicit dark/light override, toggle persists, system change respects explicit choice
 - `frontend/src/test/ThemeToggle.test.tsx` - 3 tests: renders correctly, toggles on click, aria-label reflects current theme
 - `frontend/src/app/dashboard/page.test.tsx` - 22 tests: stale plan banner (show/hide/dismiss/generate), plan rendering, week label, announcement banner, swap picker (open, video list, type filter, show-all-types, cancel, swap call, post-swap close), already-set-up banner (from=onboarding param shows banner, dismiss, no-channels does not redirect)
-- `frontend/src/app/onboarding/page.test.tsx` - guard tests: redirects to /dashboard?from=onboarding when user has channels, no redirect when no channels, redirects to / when getMe fails
+- `frontend/src/app/onboarding/page.test.tsx` - guard tests: redirects to /dashboard?from=onboarding when user has channels, no redirect when no channels, redirects to / when getMe fails, admin user not redirected despite having channels; all 44 tests use async `renderPage()` helper to wait for guard before interacting
 - `tests/api/test_admin.py` - 5 new: reset-onboarding removes channels+schedule, preserves channel+videos, does not affect other users, 404 unknown user, 403 non-admin
 - `tests/integration/test_admin_reset_api.py` - 2 integration tests: reset clears subscriptions+schedule, does not touch other user subscriptions
 - `frontend/src/app/settings/page.test.tsx` - 15 tests: initial render, display name save/error, schedule save/error, delete 2-step confirm/cancel/confirm-calls-API
@@ -69,7 +69,7 @@ New test files added:
 cd frontend && npm run test:run
 ```
 
-168 tests covering:
+175 tests covering:
 - `scheduleTemplates.ts` - `buildSchedule()` logic for all life-stage/goal/days/duration combinations
 - `ChannelManager.tsx` - search, add, remove, suggestions chips, minimum-1-channel gate
 - Onboarding page steps - step rendering, auto-advance, schedule preview, scan progress

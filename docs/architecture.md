@@ -218,7 +218,7 @@ Can be triggered manually via `workflow_dispatch` for testing.
 
 **8-day incremental window** - not 7, to give a buffer for timezone differences and avoid videos published at the boundary slipping through.
 
-**Tiered fallback in the planner** - constraints are relaxed progressively rather than failing hard. A plan is always produced even if the library is sparse for a given slot.
+**Tiered fallback in the planner** - constraints are relaxed progressively rather than failing hard. A plan is always produced even if the library is sparse for a given slot. Tier 6 (final fallback) ignores `workout_type` entirely and assigns any available video - no active day is ever left blank. The `scheduled_workout_type` field is propagated through the plan dict so the frontend can distinguish a rest day (null) from an active day that exhausted all tiers (show a warning).
 
 **`INSERT OR IGNORE` everywhere** - scanning and classifying are idempotent. Safe to re-run `--init` after adding a new channel without duplicating existing data.
 

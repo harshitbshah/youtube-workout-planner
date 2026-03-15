@@ -207,7 +207,7 @@ cd frontend && npm run test:run
 | `lib/utils.ts` | Shared `DAY_LABELS` constant + `formatDuration()` utility |
 | `components/ChannelManager.tsx` | Reusable channel search/add/remove; optional `suggestions` prop for curated chips (used in onboarding + settings) |
 | `components/Badge.tsx` | Shared styled badge pill (used in dashboard + library) |
-| `components/ScheduleEditor.tsx` | Reusable weekly schedule grid (used in onboarding + settings) |
+| `components/ScheduleEditor.tsx` | Reusable weekly schedule grid (used in onboarding + settings); `BODY_FOCUS_FOR_TYPE` map enforces valid workout_type+body_focus combos; auto-resets body_focus on workout_type change; valid values: strength/mobility=full/upper/lower/core, hiit=full/core, cardio=full only |
 | `components/Tooltip.tsx` | CSS-only tooltip component (`group/tip` pattern, `delay-300`) |
 | `components/Footer.tsx` | Shared footer with YouTube API attribution; accepts optional `isAdmin` prop - shows "Admin Guide" link beside "User Guide" on admin pages |
 | `components/ThemeProvider.tsx` | React context for light/dark theme; reads system pref, persists to localStorage, exposes `useTheme()` |
@@ -264,6 +264,7 @@ cd frontend && npm run test:run
 Google OAuth → /auth/google → Google → /auth/google/callback → /
 
   → New user (no channels): /onboarding
+      Guard: renders null while checking (no flash); admin users bypass regardless of channels
       Step 1: Life stage (4 cards, auto-advance)
       Step 2: Goal (3–4 options by profile, auto-advance)
       Step 3: Training days (2–6 toggle, auto-advance)

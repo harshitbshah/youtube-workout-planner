@@ -1,10 +1,20 @@
 # Progress
 
 ## Status
-Phases 1–5 complete + admin console + charts + guide page + mobile UX complete. Phase A complete. Phase B complete. Phase C complete. Phase D F5+F6+F9 complete. Backlog items T1+T2+S1+M2 complete. Channel suggestions + onboarding UX complete. Channel fitness validation (migration 019) complete. Email notifications opt-in step in onboarding complete. Dark mode all pages fixed. Light mode button visibility fixed. Lazy classification (plan-first) complete. Onboarding guard + admin reset complete. Homepage M1 redesign complete.
-**390 backend + 174 frontend = 564 tests passing**.
+Phases 1–5 complete + admin console + charts + guide page + mobile UX complete. Phase A complete. Phase B complete. Phase C complete. Phase D F5+F6+F9 complete. Backlog items T1+T2+S1+M2 complete. Channel suggestions + onboarding UX complete. Channel fitness validation (migration 019) complete. Email notifications opt-in step in onboarding complete. Dark mode all pages fixed. Light mode button visibility fixed. Lazy classification (plan-first) complete. Onboarding guard + admin reset complete. Homepage M1 redesign complete. Planner Tier 6 + body-focus/workout-type coupling complete. Onboarding guard no-flash + admin bypass complete.
+**390 backend + 175 frontend = 565 tests passing**.
 Both Railway (backend) and Vercel (frontend) live and functional on `main`.
 **Ready for first users** - Google OAuth fully verified ✅. YouTube scope approved by Google Trust & Safety (2026-03-15). No more "unverified app" warning for any user.
+
+**Done this session (2026-03-15, checkpoint 5):**
+- Planner Tier 6: fallback ignores workout_type when all type-specific tiers fail - no active day ever stays blank ✅
+- `scheduled_workout_type` propagated through planner dict → `PlanDay` schema → `/plan/upcoming` router → `api.ts` frontend type ✅
+- Dashboard: amber warning banner when a plan day has no video but was supposed to (links to Settings) ✅
+- ScheduleEditor: `BODY_FOCUS_FOR_TYPE` map enforces valid combos (e.g. Cardio only allows "full"); removed arms/legs/back from body_focus options (classifier never outputs these); auto-resets body_focus when workout_type changes to incompatible type ✅
+- Onboarding guard: renders `null` while guard API calls are in flight - users never see onboarding content before redirecting (instant, no flash) ✅
+- Admin bypass on onboarding: admin users (`is_admin=true`) skip the guard and can always access `/onboarding` ✅
+- Frontend tests: all onboarding tests migrated to async `renderPage()` helper; +1 admin bypass test ✅
+- **565 total (390 backend + 175 frontend)** ✅
 
 **Done this session (2026-03-15, checkpoint 4):**
 - Em dash replacement: all em dashes (—) replaced with hyphens across entire codebase (.md, .py, .ts, .tsx); "No em dashes" convention added to CLAUDE.md ✅
