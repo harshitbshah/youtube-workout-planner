@@ -1,10 +1,25 @@
 # Progress
 
 ## Status
-Phases 1–5 complete + admin console + charts + guide page + mobile UX complete. Phase A complete. Phase B complete. Phase C complete. Phase D F5+F6 complete. Backlog items T1+T2+S1 complete. M2 (swap video from dashboard) complete. Channel suggestion card UI with DB caching complete. Onboarding select-then-Next UX complete. Progress tracker negative display fix + "Go to dashboard" escape hatch.
-**359 backend + 152 frontend = 511 tests passing**.
+Phases 1–5 complete + admin console + charts + guide page + mobile UX complete. Phase A complete. Phase B complete. Phase C complete. Phase D F5+F6 complete. Backlog items T1+T2+S1+M2 complete. Channel suggestions + onboarding UX complete. Channel fitness validation (migration 019) complete. Email notifications opt-in step in onboarding complete. Dark mode on all pages complete.
+**359 backend + 160 frontend = 519 tests passing**.
 Both Railway (backend) and Vercel (frontend) live and functional on `main`.
 **Ready for first users** — Google OAuth sensitive scope review in progress (4–6 week wait). Users see "unverified app" warning until review completes.
+
+**Done this session (2026-03-14, checkpoint 2):**
+- Email notifications opt-in/out step (step 6) added to onboarding wizard ✅
+- Sublabel copy fixed: "Arrives every Sunday evening" (scheduler runs Sunday 18:00 UTC) ✅
+- Channel fitness validation: `POST /channels` calls Claude Haiku (max_tokens=20) before any DB write; "no: label" response raises 422 with user-friendly message; "yes"/"unsure"/error fail open ✅
+- Migration 019: `users.profile` + `users.goal` columns; written by `PUT /schedule` ✅
+- `ChannelCreate` schema: `description` field added; stored on `Channel` for future cache hits ✅
+- `api/services/channel_validator.py`: new service; 9 unit tests in `test_channel_validator.py` ✅
+- 4 new unit tests + 4 new integration tests for channel validation ✅
+- 404 Not Found page created (`app/not-found.tsx`) with proper dark mode support ✅
+- `privacy/page.tsx` + `terms/page.tsx`: fixed from hardcoded `bg-zinc-950` to `bg-white dark:bg-zinc-950` with all text/link dark: variants ✅
+- Onboarding: `cursor-pointer` added to all interactive buttons ✅
+- Global `button { cursor: pointer }` rule in `globals.css` — covers all pages ✅
+- Shared `LegalSection` component extracted from privacy + terms pages ✅
+- **519 total (359 backend + 160 frontend)** ✅
 
 **Done this session (2026-03-14, checkpoint):**
 - Simplify cleanup: `_GENERAL_SUGGESTIONS` now references `_SUGGESTION_NAMES["adult"]` (was duplicated); `dict[Optional[str], ...]` → `dict[str, ...]`; single `httpx.AsyncClient` reused across suggestion loop (was new client per name); double `db.commit()` in upsert consolidated to one; `handleNextStep4` renamed to `handleBuildSchedule`; unused `buildCount` variable inlined ✅

@@ -394,10 +394,11 @@ Thin wrappers that adapt the existing `src/` pure functions to use SQLAlchemy se
 instead of raw SQLite. The business logic lives in `src/`; services handle DB I/O.
 
 ```
-api/services/scanner.py    uses src/scanner.py      → scans YouTube channels
-api/services/classifier.py uses src/classifier.py   → Anthropic Batch API classification
-api/services/planner.py    uses src/planner.py      → weekly plan generation
-api/services/email.py                               → send_weekly_plan_email() + send_feedback_email()
+api/services/scanner.py          uses src/scanner.py      → scans YouTube channels
+api/services/classifier.py       uses src/classifier.py   → Anthropic Batch API classification
+api/services/planner.py          uses src/planner.py      → weekly plan generation
+api/services/email.py                                     → send_weekly_plan_email() + send_feedback_email()
+api/services/channel_validator.py                         → validate_channel_fitness() (Claude Haiku, fail-open)
 ```
 
 ### Email service (`api/services/email.py`)
@@ -549,6 +550,12 @@ passes the profile-specific list, settings passes the general list. The backend 
 results in the shared `channels` table (`thumbnail_url`, `description` columns added in
 migration 018) so the YouTube API is only called once per unique suggestion channel across
 all users and all time.
+
+**Channel fitness validation** — `POST /channels` calls `validate_channel_fitness()` (migration 019
+added `users.profile` + `users.goal`; written by `PUT /schedule`). If the user has a profile+goal
+set, the channel name + description is sent to Claude Haiku (max_tokens=20). Response "yes" or
+"unsure" allows through; "no: <label>" raises 422 with a user-friendly message. Fails open on
+any error or missing API key — a sparse description never blocks a legitimate channel.
 
 `Badge` (`src/components/Badge.tsx`) — shared styled badge pill used in dashboard and
 library pages for workout type, body focus, and difficulty tags.
