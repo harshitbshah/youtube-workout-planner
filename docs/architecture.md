@@ -323,8 +323,9 @@ Migration history:
 
 ### Authentication flow
 ```
-GET /auth/google
+GET /auth/google?color_scheme=light|dark
   → redirect to Google consent screen (scopes: openid, email, profile, youtube)
+  → color_scheme forwarded to Google OAuth URL so sign-in page matches app theme (default: light)
 
 GET /auth/google/callback?code=&state=
   → exchange code for tokens
