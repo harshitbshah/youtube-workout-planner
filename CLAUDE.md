@@ -176,7 +176,7 @@ cd frontend && npm run test:run
 | `api/database.py` | SQLAlchemy engine + session factory |
 | `api/crypto.py` | Fernet encryption for credentials at rest |
 | `api/scheduler.py` | APScheduler weekly cron (replaces GitHub Actions for web users) |
-| `api/routers/auth.py` | Google OAuth login/logout + `GET/PATCH/DELETE /auth/me` |
+| `api/routers/auth.py` | Google OAuth login/logout + `GET/PATCH/DELETE /auth/me` + `/auth/youtube/connect` + `/auth/youtube/callback`; `LOGIN_SCOPES` (basic) and `YOUTUBE_SCOPES` are separate; `YOUTUBE_REDIRECT_URI` env var required |
 | `api/routers/channels.py` | `GET/POST /channels`, `DELETE /channels/{id}`, `GET /channels/search` |
 | `api/routers/schedule.py` | `GET/PUT /schedule` |
 | `api/routers/plan.py` | `GET /plan/upcoming`, `POST /plan/generate`, `PATCH /plan/{day}`, `POST /plan/publish` (202 async), `GET /plan/publish/status`; `_publish_status` in-memory dict; `_run_publish` background function |
@@ -221,8 +221,10 @@ cd frontend && npm run test:run
 | Method | Path | Auth | Purpose |
 |---|---|---|---|
 | GET | `/health` | No | Health check |
-| GET | `/auth/google` | No | Redirect to Google OAuth |
-| GET | `/auth/google/callback` | No | OAuth callback, set session |
+| GET | `/auth/google` | No | Redirect to Google OAuth (basic scopes only: openid, email, profile) |
+| GET | `/auth/google/callback` | No | OAuth callback, upsert user, set session (no YouTube token) |
+| GET | `/auth/youtube/connect` | Yes | Redirect to Google to grant YouTube scope (incremental auth) |
+| GET | `/auth/youtube/callback` | Yes | Store YouTube refresh token, redirect to `/dashboard?youtube=connected` |
 | GET | `/auth/me` | Yes | Current user profile |
 | PATCH | `/auth/me` | Yes | Update display name |
 | PATCH | `/auth/me/notifications` | Yes | Update email_notifications preference |
@@ -262,7 +264,8 @@ cd frontend && npm run test:run
 ```
 / (landing page)
   ↓ [click "Get started free"]
-Google OAuth → /auth/google → Google → /auth/google/callback → /
+Google OAuth → /auth/google → Google (basic scopes only) → /auth/google/callback → /
+YouTube connect → /auth/youtube/connect → Google (YouTube scope, login_hint pre-fills email) → /auth/youtube/callback → /dashboard?youtube=connected
 
   → New user (no channels): /onboarding
       Guard: renders null while checking (no flash); admin users bypass regardless of channels

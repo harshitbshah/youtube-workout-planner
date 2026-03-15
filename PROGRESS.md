@@ -1,10 +1,23 @@
 # Progress
 
 ## Status
-Phases 1–5 complete + admin console + charts + guide page + mobile UX complete. Phase A complete. Phase B complete. Phase C complete. Phase D F5+F6+F9 complete. Backlog items T1+T2+S1+M2 complete. Channel suggestions + onboarding UX complete. Channel fitness validation (migration 019) complete. Email notifications opt-in step in onboarding complete. Dark mode all pages fixed. Light mode button visibility fixed. Lazy classification (plan-first) complete. Onboarding guard + admin reset complete. Homepage M1 redesign complete. Planner Tier 6 + body-focus/workout-type coupling complete. Onboarding guard no-flash + admin bypass complete. Async YouTube publish complete. Homepage avatar size bumped.
-**312 backend unit + 179 frontend = 491 automated tests passing** (+ integration tests).
+Phases 1–5 complete + admin console + charts + guide page + mobile UX complete. Phase A complete. Phase B complete. Phase C complete. Phase D F5+F6+F9 complete. Backlog items T1+T2+S1+M2 complete. Channel suggestions + onboarding UX complete. Channel fitness validation (migration 019) complete. Email notifications opt-in step in onboarding complete. Dark mode all pages fixed. Light mode button visibility fixed. Lazy classification (plan-first) complete. Onboarding guard + admin reset complete. Homepage M1 redesign complete. Planner Tier 6 + body-focus/workout-type coupling complete. Onboarding guard no-flash + admin bypass complete. Async YouTube publish complete. Homepage avatar size bumped. Homepage marquee channels updated (yoga/pilates/dance variety). Settings regenerate-after-removal banner complete. Incremental OAuth (login split from YouTube connect) complete.
+**320 backend unit + 185 frontend = 505 automated tests passing** (+ integration tests).
 Both Railway (backend) and Vercel (frontend) live and functional on `main`.
 **Ready for first users** - Google OAuth fully verified. YouTube scope approved by Google Trust & Safety (2026-03-15). No more "unverified app" warning for any user.
+
+**Done this session (2026-03-15, checkpoint 7):**
+- Incremental OAuth: login now requests only `openid email profile` (1-2 steps); YouTube scope deferred to separate `/auth/youtube/connect` flow ✅
+- `GET /auth/youtube/connect` (auth required): redirects to Google with YouTube scope + `login_hint` pre-fills email (1 step for user) ✅
+- `GET /auth/youtube/callback`: stores refresh token, redirects to `/dashboard?youtube=connected` ✅
+- Dashboard: "Connect YouTube" button (active red link) when not connected; "Reconnect YouTube" (amber) when revoked - no more sign out/in cycle ✅
+- Green "YouTube connected" success banner on dashboard after connect ✅
+- `LOGIN_SCOPES` / `YOUTUBE_SCOPES` split in `auth.py`; `YOUTUBE_REDIRECT_URI` env var added ✅
+- Homepage marquee updated: yoga/pilates/dance variety (Yoga with Adriene, Move with Nicole, DanceWithDeepti, HASfit, Fitness Marshall, Lottie Murphy replacing Athlean-X/FitnessBlender/Jeremy Ethier/Sydney Cummings/MuscleWiki) ✅
+- Settings: regenerate banner after channel removal - "Your plan may include videos from removed channels" + Regenerate now / Dismiss ✅
+- **Railway env var needed:** `YOUTUBE_REDIRECT_URI=https://planmyworkout-api.up.railway.app/auth/youtube/callback`
+- **Google Cloud Console:** add `/auth/youtube/callback` to authorized redirect URIs
+- **320 backend unit + 185 frontend = 505 automated tests passing** ✅
 
 **Done this session (2026-03-15, checkpoint 6):**
 - Async YouTube publish: `POST /plan/publish` returns 202 immediately; background thread runs `_run_publish`; `GET /plan/publish/status` polls `_publish_status` dict (same pattern as jobs pipeline); dashboard polls every 2s showing in-progress/success/failed banners ✅

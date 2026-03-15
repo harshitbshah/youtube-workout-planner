@@ -29,7 +29,7 @@ Run before every commit:
 cd frontend && npm run test:run
 ```
 
-Current: **312 backend unit + 179 frontend = 491 automated tests passing** (+ integration tests run separately)
+Current: **320 backend unit + 185 frontend = 505 automated tests passing** (+ integration tests run separately)
 
 New test files added:
 - `tests/api/test_jobs.py` - `POST /jobs/scan` (202, 400 no channels, 503 no key, 401 unauth, channel count); `GET /jobs/status` (no pipeline, unauthenticated, reflects live state); scanner filters (upper duration cap, title blocklist); classifier (batch cap limits to 300, `on_progress` callback during polling, resume existing batch, batch ID cleared on completion)
@@ -45,6 +45,7 @@ New test files added:
 - `frontend/src/app/dashboard/page.test.tsx` - 22 tests: stale plan banner (show/hide/dismiss/generate), plan rendering, week label, announcement banner, swap picker (open, video list, type filter, show-all-types, cancel, swap call, post-swap close), already-set-up banner (from=onboarding param shows banner, dismiss, no-channels does not redirect)
 - `frontend/src/app/onboarding/page.test.tsx` - guard tests: redirects to /dashboard?from=onboarding when user has channels, no redirect when no channels, redirects to / when getMe fails, admin user not redirected despite having channels; all 44 tests use async `renderPage()` helper to wait for guard before interacting
 - `tests/integration/test_publish_api.py` - 5 integration tests: POST /plan/publish returns 202, `_run_publish` background success sets done + persists playlist ID, revoked token sets failed + marks credentials invalid, no-plan user gets 404, GET /auth/me includes youtube_connected + credentials_valid
+- `tests/api/test_auth.py` updated (+6 tests): login does not include YouTube scope, uses select_account prompt; `/auth/youtube/connect` requires auth + redirects to Google with YouTube scope + login_hint; `/auth/youtube/callback` stores refresh token + rejects bad state; delete_me helper refactored to manually seed credentials
 - `tests/api/test_admin.py` - 5 new: reset-onboarding removes channels+schedule, preserves channel+videos, does not affect other users, 404 unknown user, 403 non-admin
 - `tests/integration/test_admin_reset_api.py` - 2 integration tests: reset clears subscriptions+schedule, does not touch other user subscriptions
 - `frontend/src/app/settings/page.test.tsx` - 15 tests: initial render, display name save/error, schedule save/error, delete 2-step confirm/cancel/confirm-calls-API
