@@ -15,8 +15,13 @@ vi.mock("next/link", () => ({
 
 vi.mock("@/components/Footer", () => ({ Footer: () => null }));
 vi.mock("@/components/FeedbackWidget", () => ({ default: () => null }));
+// Capture onChannelsChange so tests can simulate channel add/remove
+let channelManagerOnChange: (ch: { id: string; name: string }[]) => void = () => {};
 vi.mock("@/components/ChannelManager", () => ({
-  default: () => <div data-testid="channel-manager" />,
+  default: ({ onChannelsChange }: { onChannelsChange: (ch: { id: string; name: string }[]) => void }) => {
+    channelManagerOnChange = onChannelsChange;
+    return <div data-testid="channel-manager" />;
+  },
 }));
 vi.mock("@/components/ScheduleEditor", () => ({
   default: () => <div data-testid="schedule-editor" />,
@@ -31,6 +36,7 @@ vi.mock("@/lib/api", () => ({
   deleteMe: vi.fn(),
   updateSchedule: vi.fn(),
   updateEmailNotifications: vi.fn(),
+  generatePlan: vi.fn(),
   logout: vi.fn(),
 }));
 
@@ -42,6 +48,8 @@ const mockDeleteMe = api.deleteMe as ReturnType<typeof vi.fn>;
 const mockUpdateSchedule = api.updateSchedule as ReturnType<typeof vi.fn>;
 const mockUpdateEmailNotifications = api.updateEmailNotifications as ReturnType<typeof vi.fn>;
 const mockLogout = api.logout as ReturnType<typeof vi.fn>;
+
+const mockGeneratePlan = api.generatePlan as ReturnType<typeof vi.fn>;
 
 const mockUser = {
   id: 1,
@@ -74,6 +82,7 @@ beforeEach(() => {
   mockDeleteMe.mockResolvedValue(undefined);
   mockUpdateSchedule.mockResolvedValue(undefined);
   mockUpdateEmailNotifications.mockResolvedValue({ ...mockUser, email_notifications: false });
+  mockGeneratePlan.mockResolvedValue({});
   mockLogout.mockResolvedValue(undefined);
   (api.getSuggestions as ReturnType<typeof vi.fn>).mockResolvedValue([]);
 });
@@ -205,5 +214,71 @@ describe("SettingsPage - delete account", () => {
     fireEvent.click(screen.getByRole("button", { name: /Yes, delete my account/i }));
     await waitFor(() => expect(mockDeleteMe).toHaveBeenCalledOnce());
     await waitFor(() => expect(mockLogout).toHaveBeenCalledOnce());
+  });
+});
+
+describe("SettingsPage - channel removal regenerate banner", () => {
+  const twoChannels = [
+    { id: "ch1", name: "Jeff Nippard" },
+    { id: "ch2", name: "Chloe Ting" },
+  ];
+
+  beforeEach(() => {
+    mockGetChannels.mockResolvedValue(twoChannels);
+  });
+
+  it("banner not shown on initial render", async () => {
+    render(<SettingsPage />);
+    await waitFor(() => screen.getByTestId("channel-manager"));
+    expect(screen.queryByText(/may include videos from removed channels/i)).not.toBeInTheDocument();
+  });
+
+  it("shows regenerate banner when a channel is removed", async () => {
+    render(<SettingsPage />);
+    await waitFor(() => screen.getByTestId("channel-manager"));
+    channelManagerOnChange([twoChannels[0]]);
+    await waitFor(() =>
+      expect(screen.getByText(/may include videos from removed channels/i)).toBeInTheDocument()
+    );
+  });
+
+  it("does not show banner when a channel is added", async () => {
+    render(<SettingsPage />);
+    await waitFor(() => screen.getByTestId("channel-manager"));
+    channelManagerOnChange([...twoChannels, { id: "ch3", name: "New Channel" }]);
+    expect(screen.queryByText(/may include videos from removed channels/i)).not.toBeInTheDocument();
+  });
+
+  it("dismisses banner when Dismiss is clicked", async () => {
+    render(<SettingsPage />);
+    await waitFor(() => screen.getByTestId("channel-manager"));
+    channelManagerOnChange([twoChannels[0]]);
+    await waitFor(() => screen.getByText(/may include videos from removed channels/i));
+    fireEvent.click(screen.getByRole("button", { name: /Dismiss/i }));
+    expect(screen.queryByText(/may include videos from removed channels/i)).not.toBeInTheDocument();
+  });
+
+  it("calls generatePlan and hides banner on regenerate", async () => {
+    render(<SettingsPage />);
+    await waitFor(() => screen.getByTestId("channel-manager"));
+    channelManagerOnChange([twoChannels[0]]);
+    await waitFor(() => screen.getByRole("button", { name: /Regenerate now/i }));
+    fireEvent.click(screen.getByRole("button", { name: /Regenerate now/i }));
+    await waitFor(() => expect(mockGeneratePlan).toHaveBeenCalledOnce());
+    await waitFor(() =>
+      expect(screen.queryByText(/may include videos from removed channels/i)).not.toBeInTheDocument()
+    );
+  });
+
+  it("shows error message when generatePlan fails", async () => {
+    mockGeneratePlan.mockRejectedValue(new Error("Server error"));
+    render(<SettingsPage />);
+    await waitFor(() => screen.getByTestId("channel-manager"));
+    channelManagerOnChange([twoChannels[0]]);
+    await waitFor(() => screen.getByRole("button", { name: /Regenerate now/i }));
+    fireEvent.click(screen.getByRole("button", { name: /Regenerate now/i }));
+    await waitFor(() =>
+      expect(screen.getByText(/Failed to regenerate/i)).toBeInTheDocument()
+    );
   });
 });

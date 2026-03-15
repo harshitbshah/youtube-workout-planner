@@ -14,6 +14,7 @@ import {
   deleteMe,
   updateSchedule,
   updateEmailNotifications,
+  generatePlan,
   logout,
   type User,
   type ChannelResponse,
@@ -53,6 +54,11 @@ export default function SettingsPage() {
   // Schedule
   const [savingSchedule, setSavingSchedule] = useState(false);
   const [scheduleStatus, setScheduleStatus] = useState<"idle" | "ok" | "err">("idle");
+
+  // Channel removal banner
+  const [showRegenerateBanner, setShowRegenerateBanner] = useState(false);
+  const [regenerating, setRegenerating] = useState(false);
+  const [regenerateStatus, setRegenerateStatus] = useState<"idle" | "ok" | "err">("idle");
 
   // Danger zone
   const [confirmDelete, setConfirmDelete] = useState(false);
@@ -113,6 +119,28 @@ export default function SettingsPage() {
       setScheduleStatus("err");
     } finally {
       setSavingSchedule(false);
+    }
+  }
+
+  function handleChannelsChange(newChannels: ChannelResponse[]) {
+    if (newChannels.length < channels.length) {
+      setShowRegenerateBanner(true);
+      setRegenerateStatus("idle");
+    }
+    setChannels(newChannels);
+  }
+
+  async function handleRegenerate() {
+    setRegenerating(true);
+    setRegenerateStatus("idle");
+    try {
+      await generatePlan();
+      setRegenerateStatus("ok");
+      setShowRegenerateBanner(false);
+    } catch {
+      setRegenerateStatus("err");
+    } finally {
+      setRegenerating(false);
     }
   }
 
@@ -228,10 +256,38 @@ export default function SettingsPage() {
             </p>
             <ChannelManager
               channels={channels}
-              onChannelsChange={setChannels}
+              onChannelsChange={handleChannelsChange}
               suggestions={channelSuggestions}
               suggestionsLoading={suggestionsLoading}
             />
+            {showRegenerateBanner && (
+              <div className="mt-4 flex items-center justify-between gap-3 rounded-lg border border-amber-500/30 bg-amber-50 dark:bg-amber-900/20 px-4 py-3">
+                <p className="text-xs text-amber-700 dark:text-amber-300">
+                  Your plan may include videos from removed channels.
+                </p>
+                <div className="flex items-center gap-3 shrink-0">
+                  <button
+                    onClick={handleRegenerate}
+                    disabled={regenerating}
+                    className="text-xs font-semibold text-amber-700 dark:text-amber-300 hover:underline disabled:opacity-50"
+                  >
+                    {regenerating ? "Regenerating…" : "Regenerate now"}
+                  </button>
+                  <button
+                    onClick={() => setShowRegenerateBanner(false)}
+                    className="text-xs text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300"
+                  >
+                    Dismiss
+                  </button>
+                </div>
+              </div>
+            )}
+            {regenerateStatus === "ok" && (
+              <p className="mt-2 text-xs text-green-500">Plan regenerated.</p>
+            )}
+            {regenerateStatus === "err" && (
+              <p className="mt-2 text-xs text-red-400">Failed to regenerate. Try again from the dashboard.</p>
+            )}
           </SectionCard>
 
           {/* Schedule */}
