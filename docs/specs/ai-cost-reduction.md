@@ -15,6 +15,7 @@
 | F6 | Rule-based title pre-classifier | ✅ Done (2026-03-11) | Phase D — `title_classify()`, ~30–40% fewer AI calls |
 | F7 | Per-user monthly budget cap | ⏳ Deferred | Low priority until real users |
 | F8 | Global classification cache | ⏳ Deferred | High impact at scale; schema decision needed |
+| F9 | Lazy classification — plan-first | ⏳ Not started | See [lazy-classification.md](lazy-classification.md) — biggest UX + cost win |
 
 ---
 
