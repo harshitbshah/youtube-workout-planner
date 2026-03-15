@@ -6,23 +6,6 @@ import Link from "next/link";
 import { getChannels, getMe, loginUrl, setToken } from "@/lib/api";
 import { Footer } from "@/components/Footer";
 
-const SAMPLE_PLAN = [
-  { day: "Mon", type: "Strength", title: "How to Build Bigger Legs", channel: "Jeff Nippard" },
-  { day: "Tue", type: "HIIT", title: "10 Min Full Body Burn", channel: "Athlean-X" },
-  { day: "Wed", type: "Rest", title: null, channel: null },
-  { day: "Thu", type: "Cardio", title: "45 Min Steady State Run", channel: "Heather Robertson" },
-  { day: "Fri", type: "Strength", title: "Perfect Pull Day Protocol", channel: "Athlean-X" },
-  { day: "Sat", type: "Mobility", title: "Morning Full Body Stretch", channel: "FitnessBlender" },
-  { day: "Sun", type: "Rest", title: null, channel: null },
-];
-
-const TYPE_PILL: Record<string, string> = {
-  Strength: "bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400",
-  HIIT: "bg-orange-50 text-orange-600 dark:bg-orange-900/30 dark:text-orange-400",
-  Cardio: "bg-green-50 text-green-600 dark:bg-green-900/30 dark:text-green-400",
-  Mobility: "bg-purple-50 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400",
-};
-
 // Verified unavatar.io handles - duplicated for seamless marquee loop
 const CHANNELS = [
   { name: "Jeff Nippard",    handle: "JeffNippard" },
@@ -126,77 +109,53 @@ export default function LandingPage() {
       </nav>
 
       {/* Hero */}
-      <section className="max-w-6xl mx-auto px-6 pt-14 pb-20 grid grid-cols-1 lg:grid-cols-2 gap-14 items-center">
-
-        {/* Left: copy + CTA */}
-        <div>
-          <div className="mb-5 inline-flex items-center rounded-full bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 px-3 py-1 text-xs text-zinc-500 dark:text-zinc-400">
-            Free - no credit card required
-          </div>
-          <h1 className="text-5xl sm:text-6xl font-bold leading-[1.1] tracking-tight mb-6">
-            Stop watching.<br />
-            <span className="text-zinc-400 dark:text-zinc-500">Start doing.</span>
-          </h1>
-          <p className="text-zinc-600 dark:text-zinc-400 text-lg leading-relaxed mb-8 max-w-md">
-            Turn your favourite YouTube fitness channels into a structured weekly plan - automatically.
-            A different workout, every day.
-          </p>
-          <a
-            href={loginUrl()}
-            className="inline-flex items-center gap-2.5 rounded-lg bg-zinc-900 dark:bg-white px-7 py-3.5 text-sm font-semibold text-white dark:text-zinc-900 hover:bg-zinc-700 dark:hover:bg-zinc-100 transition"
-          >
-            <GoogleIcon />
-            Get started free
-          </a>
-          <p className="mt-3 text-xs text-zinc-400 dark:text-zinc-600">
-            Ready in under 3 minutes
-          </p>
+      <section className="max-w-4xl mx-auto px-6 pt-14 pb-16 text-center">
+        <div className="mb-5 inline-flex items-center rounded-full bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 px-3 py-1 text-xs text-zinc-500 dark:text-zinc-400">
+          Free - no credit card required
         </div>
+        <h1 className="text-5xl sm:text-6xl font-bold leading-[1.1] tracking-tight mb-6">
+          Stop watching.<br />
+          <span className="text-zinc-400 dark:text-zinc-500">Start doing.</span>
+        </h1>
+        <p className="text-zinc-600 dark:text-zinc-400 text-lg leading-relaxed mb-8 max-w-xl mx-auto">
+          Turn your favourite YouTube fitness channels into a structured weekly plan - automatically.
+          A different workout, every day.
+        </p>
+        <a
+          href={loginUrl()}
+          className="inline-flex items-center gap-2.5 rounded-lg bg-zinc-900 dark:bg-white px-7 py-3.5 text-sm font-semibold text-white dark:text-zinc-900 hover:bg-zinc-700 dark:hover:bg-zinc-100 transition"
+        >
+          <GoogleIcon />
+          Get started free
+        </a>
+        <p className="mt-3 text-xs text-zinc-400 dark:text-zinc-600">
+          Ready in under 3 minutes
+        </p>
+      </section>
 
-        {/* Right: plan mockup inside browser chrome */}
-        <div>
+      {/* Dashboard screenshot */}
+      <section className="max-w-5xl mx-auto px-6 pb-20">
+        <div className="rounded-2xl border border-zinc-200 dark:border-zinc-700 overflow-hidden shadow-2xl shadow-zinc-200/60 dark:shadow-zinc-950/60">
           {/* Browser chrome */}
-          <div className="rounded-2xl border border-zinc-200 dark:border-zinc-700 overflow-hidden shadow-2xl shadow-zinc-200/60 dark:shadow-zinc-950/60">
-            <div className="flex items-center gap-1.5 px-4 py-3 bg-zinc-100 dark:bg-zinc-800 border-b border-zinc-200 dark:border-zinc-700">
-              <div className="w-3 h-3 rounded-full bg-zinc-300 dark:bg-zinc-600" />
-              <div className="w-3 h-3 rounded-full bg-zinc-300 dark:bg-zinc-600" />
-              <div className="w-3 h-3 rounded-full bg-zinc-300 dark:bg-zinc-600" />
-              <div className="ml-3 flex-1 rounded-md bg-zinc-200 dark:bg-zinc-700 px-3 py-1 text-[11px] text-zinc-500 dark:text-zinc-400">
-                planmyworkout.app/dashboard
-              </div>
-            </div>
-            {/* Plan grid */}
-            <div className="bg-zinc-50 dark:bg-zinc-900 p-4">
-              <div className="flex items-center justify-between mb-4 px-1">
-                <span className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">This week</span>
-                <span className="text-[11px] text-zinc-400 italic">Sample plan</span>
-              </div>
-              <div className="flex flex-col gap-1.5">
-                {SAMPLE_PLAN.map(({ day, type, title, channel }) =>
-                  type === "Rest" ? (
-                    <div key={day} className="flex items-center gap-3 px-3 py-2 rounded-lg">
-                      <span className="w-8 text-xs font-medium text-zinc-400 shrink-0">{day}</span>
-                      <span className="text-xs text-zinc-400">Rest day</span>
-                    </div>
-                  ) : (
-                    <div
-                      key={day}
-                      className="flex items-start gap-3 rounded-xl border border-zinc-200 dark:border-zinc-700/60 bg-white dark:bg-zinc-800/70 px-3 py-2.5"
-                    >
-                      <span className="w-8 pt-0.5 text-xs font-semibold text-zinc-500 shrink-0">{day}</span>
-                      <div className="flex-1 min-w-0">
-                        <span className={`inline-block rounded px-1.5 py-0.5 text-[10px] font-semibold mb-1 ${TYPE_PILL[type]}`}>
-                          {type}
-                        </span>
-                        <p className="text-xs font-medium text-zinc-900 dark:text-white truncate">{title}</p>
-                        <p className="text-[11px] text-zinc-400 mt-0.5">{channel}</p>
-                      </div>
-                    </div>
-                  )
-                )}
-              </div>
+          <div className="flex items-center gap-1.5 px-4 py-3 bg-zinc-100 dark:bg-zinc-800 border-b border-zinc-200 dark:border-zinc-700">
+            <div className="w-3 h-3 rounded-full bg-zinc-300 dark:bg-zinc-600" />
+            <div className="w-3 h-3 rounded-full bg-zinc-300 dark:bg-zinc-600" />
+            <div className="w-3 h-3 rounded-full bg-zinc-300 dark:bg-zinc-600" />
+            <div className="ml-3 flex-1 max-w-xs rounded-md bg-zinc-200 dark:bg-zinc-700 px-3 py-1 text-[11px] text-zinc-500 dark:text-zinc-400">
+              planmyworkout.app/dashboard
             </div>
           </div>
+          {/* Screenshots - swap with theme */}
+          <img
+            src="/dashboard-light.png"
+            alt="Plan My Workout dashboard"
+            className="w-full block dark:hidden"
+          />
+          <img
+            src="/dashboard-dark.png"
+            alt="Plan My Workout dashboard"
+            className="w-full hidden dark:block"
+          />
         </div>
       </section>
 
