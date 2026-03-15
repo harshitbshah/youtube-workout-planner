@@ -71,7 +71,7 @@ Migrated frontend from `planmyworkout.vercel.app` → `planmyworkout.app` (purch
 
 **Domain ownership:** Verified via Google Search Console DNS TXT record on Hostinger.
 
-**Google OAuth verification:** Re-submitted to Trust & Safety team on 2026-03-13 with updated homepage `https://planmyworkout.app`. Review in progress.
+**Google OAuth verification:** ✅ **Approved 2026-03-15.** YouTube scope (`https://www.googleapis.com/auth/youtube`) verified by Google Trust & Safety. App is fully verified — no "unverified app" warning shown to any user.
 
 ---
 
@@ -82,7 +82,7 @@ Test this after any auth or redirect change:
 - [ ] `/` shows "Sign in with Google" button (not a spinner)
 - [ ] Clicking sign-in redirects to Google's OAuth consent screen
 - [ ] If in Testing mode: warning screen appears — click Advanced → Go to app
-- [ ] If in Production mode: standard consent screen, no warning
+- [x] If in Production mode: standard consent screen, no warning (verified ✅ 2026-03-15)
 - [ ] Select account and grant permissions
 - [ ] **New user (no channels):** redirected to `/onboarding`
 - [ ] **Returning user (has channels):** redirected to `/dashboard`

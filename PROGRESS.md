@@ -4,7 +4,11 @@
 Phases 1–5 complete + admin console + charts + guide page + mobile UX complete. Phase A complete. Phase B complete. Phase C complete. Phase D F5+F6 complete. Backlog items T1+T2+S1+M2 complete. Channel suggestions + onboarding UX complete. Channel fitness validation (migration 019) complete. Email notifications opt-in step in onboarding complete. Dark mode on all pages complete. Light mode button visibility fixed. Google sign-in color_scheme forwarding complete.
 **376 backend + 164 frontend = 540 tests passing**.
 Both Railway (backend) and Vercel (frontend) live and functional on `main`.
-**Ready for first users** — Google OAuth sensitive scope review in progress (4–6 week wait). Users see "unverified app" warning until review completes.
+**Ready for first users** — Google OAuth fully verified ✅. YouTube scope approved by Google Trust & Safety (2026-03-15). No more "unverified app" warning for any user.
+
+**Done this session (2026-03-15, checkpoint 2):**
+- Notifications toggle in settings: ON-state thumb was `bg-zinc-900` on `bg-zinc-900` track — invisible in light mode. Fixed to `bg-white` ✅
+- Google OAuth YouTube scope verification approved by Trust & Safety (2026-03-15) ✅ — app is fully verified, red warning gone for all users
 
 **Done this session (2026-03-15, checkpoint):**
 - Light mode button visibility fixed: all `bg-white text-zinc-900 hover:bg-zinc-100` action buttons changed to `bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 hover:bg-zinc-700 dark:hover:bg-zinc-100` across dashboard, settings, onboarding, admin, guide, FeedbackWidget ✅
