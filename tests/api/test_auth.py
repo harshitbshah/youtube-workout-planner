@@ -6,7 +6,7 @@ All HTTP calls to Google are mocked - no real network calls are made.
 
 from unittest.mock import AsyncMock, patch
 
-from api.crypto import decrypt
+from api.crypto import decrypt, encrypt
 from api.models import User, UserCredentials
 
 
@@ -18,10 +18,20 @@ def test_google_login_redirects_to_google(client):
 
 def test_google_login_sets_state_in_session(client):
     resp = client.get("/auth/google", follow_redirects=False)
-    # State param must be in the redirect URL
     location = resp.headers["location"]
     assert "state=" in location
 
+
+def test_google_login_does_not_include_youtube_scope(client):
+    resp = client.get("/auth/google", follow_redirects=False)
+    location = resp.headers["location"]
+    assert "youtube" not in location
+
+
+def test_google_login_uses_select_account_prompt(client):
+    resp = client.get("/auth/google", follow_redirects=False)
+    location = resp.headers["location"]
+    assert "select_account" in location
 
 
 def _mock_google(access_token="tok", refresh_token="ref", google_id="g123",
@@ -42,7 +52,6 @@ def _mock_google(access_token="tok", refresh_token="ref", google_id="g123",
 
 
 def test_callback_creates_user_and_sets_session(client, db_session):
-    # Seed a valid state in the session by hitting /auth/google first
     login_resp = client.get("/auth/google", follow_redirects=False)
     state = login_resp.headers["location"].split("state=")[1].split("&")[0]
 
@@ -58,16 +67,12 @@ def test_callback_creates_user_and_sets_session(client, db_session):
     assert user is not None
     assert user.email == "user@example.com"
 
+    # Login no longer stores YouTube credentials - they come from /auth/youtube/connect
     creds = db_session.query(UserCredentials).filter(UserCredentials.user_id == user.id).first()
-    assert creds is not None
-    # DB must never contain the plaintext token
-    assert creds.youtube_refresh_token != "ref"
-    # But it must decrypt back to the original value
-    assert decrypt(creds.youtube_refresh_token) == "ref"
+    assert creds is None
 
 
 def test_callback_updates_existing_user(client, db_session):
-    # First login - creates user
     login_resp = client.get("/auth/google", follow_redirects=False)
     state = login_resp.headers["location"].split("state=")[1].split("&")[0]
 
@@ -76,14 +81,13 @@ def test_callback_updates_existing_user(client, db_session):
          patch("api.routers.auth._get_google_userinfo", new=AsyncMock(return_value=mock_userinfo_resp.json())):
         client.get(f"/auth/google/callback?code=c&state={state}", follow_redirects=False)
 
-    # Second login - same google_id, updated name
     login_resp2 = client.get("/auth/google", follow_redirects=False)
     state2 = login_resp2.headers["location"].split("state=")[1].split("&")[0]
 
-    mock_token_resp2, mock_userinfo_resp2 = _mock_google(name="New Name", refresh_token=None)
-    tokens2 = {"access_token": "tok2"}   # no refresh_token this time
+    tokens2 = {"access_token": "tok2"}
+    mock_userinfo2 = {"id": "g123", "email": "user@example.com", "name": "New Name"}
     with patch("api.routers.auth._exchange_code_for_tokens", new=AsyncMock(return_value=tokens2)), \
-         patch("api.routers.auth._get_google_userinfo", new=AsyncMock(return_value=mock_userinfo_resp2.json())):
+         patch("api.routers.auth._get_google_userinfo", new=AsyncMock(return_value=mock_userinfo2)):
         client.get(f"/auth/google/callback?code=c2&state={state2}", follow_redirects=False)
 
     users = db_session.query(User).filter(User.google_id == "g123").all()
@@ -96,17 +100,85 @@ def test_callback_rejects_invalid_state(client):
     assert resp.status_code == 400
 
 
-def test_delete_me_revokes_token_and_deletes_user(client, db_session):
-    # Log in to create a user with credentials
+# ─── YouTube connect tests ─────────────────────────────────────────────────────
+
+def test_youtube_connect_requires_auth(client):
+    resp = client.get("/auth/youtube/connect", follow_redirects=False)
+    assert resp.status_code == 401
+
+
+def test_youtube_connect_redirects_to_google(auth_client):
+    client, user = auth_client
+    resp = client.get("/auth/youtube/connect", follow_redirects=False)
+    assert resp.status_code in (302, 307)
+    assert "accounts.google.com" in resp.headers["location"]
+
+
+def test_youtube_connect_includes_youtube_scope(auth_client):
+    client, user = auth_client
+    resp = client.get("/auth/youtube/connect", follow_redirects=False)
+    location = resp.headers["location"]
+    assert "youtube" in location
+
+
+def test_youtube_connect_uses_login_hint(auth_client):
+    from urllib.parse import unquote
+    client, user = auth_client
+    resp = client.get("/auth/youtube/connect", follow_redirects=False)
+    location = unquote(resp.headers["location"])
+    assert user.email in location
+
+
+def test_youtube_callback_stores_refresh_token(auth_client, db_session):
+    client, user = auth_client
+
+    # Initiate YouTube connect to seed state in session
+    connect_resp = client.get("/auth/youtube/connect", follow_redirects=False)
+    state = connect_resp.headers["location"].split("state=")[1].split("&")[0]
+
+    tokens = {"access_token": "yt_access", "refresh_token": "yt_refresh"}
+    with patch("api.routers.auth._exchange_code_for_tokens", new=AsyncMock(return_value=tokens)):
+        resp = client.get(f"/auth/youtube/callback?code=ytcode&state={state}", follow_redirects=False)
+
+    assert resp.status_code in (302, 307)
+    assert "/dashboard" in resp.headers["location"]
+
+    db_session.expire_all()
+    creds = db_session.query(UserCredentials).filter(UserCredentials.user_id == user.id).first()
+    assert creds is not None
+    assert creds.credentials_valid is True
+    assert decrypt(creds.youtube_refresh_token) == "yt_refresh"
+
+
+def test_youtube_callback_rejects_invalid_state(auth_client):
+    client, user = auth_client
+    # Do not initiate connect - session has no youtube_oauth_state
+    tokens = {"access_token": "tok", "refresh_token": "ref"}
+    with patch("api.routers.auth._exchange_code_for_tokens", new=AsyncMock(return_value=tokens)):
+        resp = client.get("/auth/youtube/callback?code=x&state=bad_state")
+    assert resp.status_code == 400
+
+
+# ─── Account deletion ─────────────────────────────────────────────────────────
+
+def _login_and_create_creds(client, db_session, refresh_token="refresh_tok"):
+    """Helper: log in via OAuth and manually seed YouTube credentials."""
     login_resp = client.get("/auth/google", follow_redirects=False)
     state = login_resp.headers["location"].split("state=")[1].split("&")[0]
-    mock_token, mock_userinfo = _mock_google(refresh_token="refresh_tok")
+    mock_token, mock_userinfo = _mock_google()
     with patch("api.routers.auth._exchange_code_for_tokens", new=AsyncMock(return_value=mock_token.json())), \
          patch("api.routers.auth._get_google_userinfo", new=AsyncMock(return_value=mock_userinfo.json())):
         client.get(f"/auth/google/callback?code=c&state={state}", follow_redirects=False)
 
     user = db_session.query(User).filter(User.google_id == "g123").first()
-    assert user is not None
+    creds = UserCredentials(user_id=user.id, youtube_refresh_token=encrypt(refresh_token))
+    db_session.add(creds)
+    db_session.commit()
+    return user
+
+
+def test_delete_me_revokes_token_and_deletes_user(client, db_session):
+    _login_and_create_creds(client, db_session, refresh_token="refresh_tok")
 
     revoke_mock = AsyncMock()
     with patch("api.routers.auth.httpx.AsyncClient") as mock_client_cls:
@@ -115,24 +187,16 @@ def test_delete_me_revokes_token_and_deletes_user(client, db_session):
         resp = client.delete("/auth/me")
 
     assert resp.status_code == 204
-    # Token revoked with Google
     revoke_mock.assert_called_once()
     call_kwargs = revoke_mock.call_args
     assert "revoke" in call_kwargs[0][0]
     assert call_kwargs[1]["params"]["token"] == "refresh_tok"
-    # User gone from DB
     db_session.expire_all()
     assert db_session.query(User).filter(User.google_id == "g123").first() is None
 
 
 def test_delete_me_proceeds_if_revoke_fails(client, db_session):
-    # Deletion must complete even if Google's revoke endpoint errors
-    login_resp = client.get("/auth/google", follow_redirects=False)
-    state = login_resp.headers["location"].split("state=")[1].split("&")[0]
-    mock_token, mock_userinfo = _mock_google(refresh_token="refresh_tok")
-    with patch("api.routers.auth._exchange_code_for_tokens", new=AsyncMock(return_value=mock_token.json())), \
-         patch("api.routers.auth._get_google_userinfo", new=AsyncMock(return_value=mock_userinfo.json())):
-        client.get(f"/auth/google/callback?code=c&state={state}", follow_redirects=False)
+    _login_and_create_creds(client, db_session)
 
     with patch("api.routers.auth.httpx.AsyncClient") as mock_client_cls:
         mock_client_cls.return_value.__aenter__ = AsyncMock(side_effect=Exception("network error"))
@@ -145,7 +209,6 @@ def test_delete_me_proceeds_if_revoke_fails(client, db_session):
 
 
 def test_logout_clears_session(client, db_session):
-    # Log in first
     login_resp = client.get("/auth/google", follow_redirects=False)
     state = login_resp.headers["location"].split("state=")[1].split("&")[0]
     mock_token, mock_userinfo = _mock_google()

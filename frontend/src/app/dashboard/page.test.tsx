@@ -33,6 +33,7 @@ vi.mock("@/lib/api", () => ({
   getLibrary: vi.fn(),
   swapPlanDay: vi.fn(),
   logout: vi.fn(),
+  youtubeConnectUrl: () => "http://localhost:8000/auth/youtube/connect",
 }));
 
 const mockGetMe = api.getMe as ReturnType<typeof vi.fn>;

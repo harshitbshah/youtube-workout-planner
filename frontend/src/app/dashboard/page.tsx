@@ -18,6 +18,7 @@ import {
   getLibrary,
   swapPlanDay,
   logout,
+  youtubeConnectUrl,
   type User,
   type PlanResponse,
   type PlanDay,
@@ -221,6 +222,7 @@ export default function DashboardPage() {
   const [screenshotMode, setScreenshotMode] = useState(false);
   const [error, setError] = useState("");
   const [missingTypesDismissed, setMissingTypesDismissed] = useState(false);
+  const [youtubeJustConnected, setYoutubeJustConnected] = useState(false);
 
   useEffect(() => {
     // Check if we just came from onboarding with a scan in progress
@@ -228,13 +230,14 @@ export default function DashboardPage() {
     const scanJustTriggered = params.get("scanning") === "1";
     const fromOnboarding = params.get("from") === "onboarding";
     if (params.get("screenshot") === "1") setScreenshotMode(true);
+    if (params.get("youtube") === "connected") setYoutubeJustConnected(true);
     if (scanJustTriggered) {
       setScanning(true);
     }
     if (fromOnboarding) {
       setShowAlreadySetUp(true);
     }
-    if (scanJustTriggered || fromOnboarding) {
+    if (scanJustTriggered || fromOnboarding || params.get("youtube") === "connected") {
       window.history.replaceState({}, "", window.location.pathname);
     }
 
@@ -465,7 +468,22 @@ export default function DashboardPage() {
                 {generating ? "Starting…" : allDaysEmpty ? "Rescan channels" : "Generate plan"}
               </button>
             )}
-            {user?.youtube_connected && user?.credentials_valid && plan ? (
+            {!user?.youtube_connected ? (
+              <a
+                href={youtubeConnectUrl()}
+                className="rounded-lg border border-red-600 bg-red-600/10 px-3 py-2 text-sm font-medium text-red-400 hover:bg-red-600/20 transition"
+              >
+                Connect YouTube
+              </a>
+            ) : user?.youtube_connected && !user?.credentials_valid ? (
+              <a
+                href={youtubeConnectUrl()}
+                title="Your YouTube access was revoked - click to reconnect"
+                className="rounded-lg border border-amber-500 bg-amber-500/10 px-3 py-2 text-sm font-medium text-amber-400 hover:bg-amber-500/20 transition"
+              >
+                Reconnect YouTube
+              </a>
+            ) : plan ? (
               <button
                 onClick={handlePublish}
                 disabled={publishStatus?.status === "publishing"}
@@ -476,13 +494,7 @@ export default function DashboardPage() {
             ) : (
               <button
                 disabled
-                title={
-                  !user?.youtube_connected
-                    ? "Sign in with Google to connect YouTube"
-                    : !user?.credentials_valid
-                    ? "YouTube access revoked - sign out and sign in again to reconnect"
-                    : "Generate a plan first"
-                }
+                title="Generate a plan first"
                 className="rounded-lg border border-zinc-200 dark:border-zinc-700 px-3 py-2 text-sm text-zinc-500 dark:text-zinc-600 opacity-50 cursor-not-allowed transition"
               >
                 Publish to YouTube
@@ -496,6 +508,14 @@ export default function DashboardPage() {
             </button>
           </div>
         </div>
+
+        {/* YouTube connected banner */}
+        {youtubeJustConnected && (
+          <div className="mb-6 flex items-center justify-between gap-3 rounded-lg border border-green-700 bg-green-900/20 px-4 py-3 text-sm text-green-300">
+            <span>YouTube connected. You can now publish your plan directly to your YouTube playlist.</span>
+            <button onClick={() => setYoutubeJustConnected(false)} aria-label="Dismiss" className="shrink-0 text-green-500 hover:text-green-300 transition">✕</button>
+          </div>
+        )}
 
         {/* Already set up banner - shown when user tried to access /onboarding */}
         {showAlreadySetUp && !alreadySetUpDismissed && (

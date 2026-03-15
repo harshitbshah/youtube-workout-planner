@@ -1,10 +1,16 @@
 """
 auth.py - Google OAuth 2.0 login/logout routes.
 
-Flow:
-  1. GET /auth/google         → redirect to Google consent screen
+Login flow (basic scopes only):
+  1. GET /auth/google          → redirect to Google consent screen (openid, email, profile)
   2. GET /auth/google/callback → exchange code, upsert user, set session
-  3. POST /auth/logout         → clear session
+
+YouTube connect flow (separate, incremental auth):
+  3. GET /auth/youtube/connect  → redirect to Google with YouTube scope (requires login)
+  4. GET /auth/youtube/callback → store YouTube refresh token, redirect to dashboard
+
+Splitting scopes reduces initial login to 1-2 steps. YouTube permission is
+requested only when the user explicitly connects YouTube.
 """
 
 import os
@@ -30,10 +36,16 @@ GOOGLE_CLIENT_SECRET = os.getenv("GOOGLE_CLIENT_SECRET", "")
 GOOGLE_REDIRECT_URI = os.getenv(
     "GOOGLE_REDIRECT_URI", "http://localhost:8000/auth/google/callback"
 )
+YOUTUBE_REDIRECT_URI = os.getenv(
+    "YOUTUBE_REDIRECT_URI", "http://localhost:8000/auth/youtube/callback"
+)
 FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:3000")
 
-# Request YouTube access now so we don't need to re-prompt in Phase 5
-SCOPES = " ".join([
+# Basic login scopes - no YouTube, keeps initial sign-in to 1-2 steps
+LOGIN_SCOPES = " ".join(["openid", "email", "profile"])
+
+# YouTube scope requested separately via /auth/youtube/connect
+YOUTUBE_SCOPES = " ".join([
     "openid",
     "email",
     "profile",
@@ -41,7 +53,7 @@ SCOPES = " ".join([
 ])
 
 
-async def _exchange_code_for_tokens(code: str) -> dict:
+async def _exchange_code_for_tokens(code: str, redirect_uri: str) -> dict:
     """POST to Google token endpoint and return the token response JSON."""
     async with httpx.AsyncClient() as client:
         resp = await client.post(
@@ -50,7 +62,7 @@ async def _exchange_code_for_tokens(code: str) -> dict:
                 "code": code,
                 "client_id": GOOGLE_CLIENT_ID,
                 "client_secret": GOOGLE_CLIENT_SECRET,
-                "redirect_uri": GOOGLE_REDIRECT_URI,
+                "redirect_uri": redirect_uri,
                 "grant_type": "authorization_code",
             },
         )
@@ -73,7 +85,7 @@ async def _get_google_userinfo(access_token: str) -> dict:
 
 @router.get("/google")
 async def google_login(request: Request):
-    """Redirect the user to Google's OAuth consent screen."""
+    """Redirect the user to Google's OAuth consent screen (basic scopes only)."""
     state = secrets.token_urlsafe(16)
     request.session["oauth_state"] = state
 
@@ -81,10 +93,9 @@ async def google_login(request: Request):
         "client_id": GOOGLE_CLIENT_ID,
         "redirect_uri": GOOGLE_REDIRECT_URI,
         "response_type": "code",
-        "scope": SCOPES,
+        "scope": LOGIN_SCOPES,
         "state": state,
-        "access_type": "offline",
-        "prompt": "consent",
+        "prompt": "select_account",
     })
     return RedirectResponse(f"https://accounts.google.com/o/oauth2/v2/auth?{params}")
 
@@ -100,7 +111,7 @@ async def google_callback(
     if state != request.session.get("oauth_state"):
         raise HTTPException(status_code=400, detail="Invalid OAuth state - possible CSRF")
 
-    tokens = await _exchange_code_for_tokens(code)
+    tokens = await _exchange_code_for_tokens(code, GOOGLE_REDIRECT_URI)
     userinfo = await _get_google_userinfo(tokens["access_token"])
 
     # Upsert user
@@ -117,14 +128,6 @@ async def google_callback(
         user.email = userinfo["email"]
         user.display_name = userinfo.get("name")
 
-    # Persist YouTube refresh token (only present on first consent)
-    creds = db.query(UserCredentials).filter(UserCredentials.user_id == user.id).first()
-    if not creds:
-        creds = UserCredentials(user_id=user.id)
-        db.add(creds)
-    if "refresh_token" in tokens:
-        creds.youtube_refresh_token = encrypt(tokens["refresh_token"])
-
     db.commit()
 
     request.session["user_id"] = str(user.id)
@@ -135,6 +138,60 @@ async def google_callback(
     secret = os.getenv("SESSION_SECRET_KEY", "dev-secret-change-in-production")
     token = URLSafeTimedSerializer(secret).dumps(str(user.id))
     return RedirectResponse(f"{FRONTEND_URL}?token={token}")
+
+
+@router.get("/youtube/connect")
+async def youtube_connect(
+    request: Request,
+    current_user: User = Depends(get_current_user),
+):
+    """Redirect the authenticated user to Google to grant YouTube access.
+
+    Uses login_hint to skip the account chooser since the user is already
+    signed in - reducing this to a single YouTube permission screen.
+    """
+    state = secrets.token_urlsafe(16)
+    request.session["youtube_oauth_state"] = state
+
+    params = urlencode({
+        "client_id": GOOGLE_CLIENT_ID,
+        "redirect_uri": YOUTUBE_REDIRECT_URI,
+        "response_type": "code",
+        "scope": YOUTUBE_SCOPES,
+        "state": state,
+        "access_type": "offline",
+        "prompt": "consent",
+        "login_hint": current_user.email,
+    })
+    return RedirectResponse(f"https://accounts.google.com/o/oauth2/v2/auth?{params}")
+
+
+@router.get("/youtube/callback")
+async def youtube_callback(
+    code: str,
+    state: str,
+    request: Request,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Store the YouTube refresh token and redirect back to the dashboard."""
+    if state != request.session.get("youtube_oauth_state"):
+        raise HTTPException(status_code=400, detail="Invalid OAuth state - possible CSRF")
+
+    tokens = await _exchange_code_for_tokens(code, YOUTUBE_REDIRECT_URI)
+
+    creds = db.query(UserCredentials).filter(UserCredentials.user_id == current_user.id).first()
+    if not creds:
+        creds = UserCredentials(user_id=current_user.id)
+        db.add(creds)
+
+    if "refresh_token" in tokens:
+        creds.youtube_refresh_token = encrypt(tokens["refresh_token"])
+        creds.credentials_valid = True
+
+    db.commit()
+    request.session.pop("youtube_oauth_state", None)
+    return RedirectResponse(f"{FRONTEND_URL}/dashboard?youtube=connected")
 
 
 def _me_response(user: User, db: Session) -> MeResponse:

@@ -55,6 +55,7 @@ export const logout = () => {
   return apiFetch<void>("/auth/logout", { method: "POST" });
 };
 export const loginUrl = () => `${API_BASE}/auth/google`;
+export const youtubeConnectUrl = () => `${API_BASE}/auth/youtube/connect`;
 export const patchMe = (display_name: string) =>
   apiFetch<User>("/auth/me", { method: "PATCH", body: JSON.stringify({ display_name }) });
 export const deleteMe = () => apiFetch<void>("/auth/me", { method: "DELETE" });
