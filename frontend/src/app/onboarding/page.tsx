@@ -31,7 +31,7 @@ function StepIndicator({ internalStep }: { internalStep: number }) {
         return (
           <div key={label} className="flex items-center gap-3">
             <div className="flex items-center gap-2">
-              <div className={`h-7 w-7 rounded-full flex items-center justify-center text-xs font-bold transition-colors ${active ? "bg-white text-zinc-900" : done ? "bg-zinc-400 dark:bg-zinc-600 text-white" : "bg-zinc-100 dark:bg-zinc-800 text-zinc-500"}`}>
+              <div className={`h-7 w-7 rounded-full flex items-center justify-center text-xs font-bold transition-colors ${active ? "bg-zinc-900 dark:bg-white text-white dark:text-zinc-900" : done ? "bg-zinc-400 dark:bg-zinc-600 text-white" : "bg-zinc-100 dark:bg-zinc-800 text-zinc-500"}`}>
                 {done ? "✓" : step}
               </div>
               <span className={`text-sm ${active ? "text-zinc-900 dark:text-white font-medium" : "text-zinc-500"}`}>
@@ -102,7 +102,7 @@ function StepNav({
       <button
         onClick={onNext}
         disabled={nextDisabled}
-        className="flex-1 rounded-lg bg-white px-4 py-3 text-sm font-semibold text-zinc-900 hover:bg-zinc-100 disabled:opacity-30 transition cursor-pointer"
+        className="flex-1 rounded-lg bg-zinc-900 dark:bg-white px-4 py-3 text-sm font-semibold text-white dark:text-zinc-900 hover:bg-zinc-700 dark:hover:bg-zinc-100 disabled:opacity-30 transition cursor-pointer"
       >
         {nextLabel}
       </button>
@@ -177,7 +177,7 @@ function ProgressTracker({
         return (
           <div key={item}>
             <div className="flex items-center gap-3">
-              <div className={`h-6 w-6 rounded-full flex items-center justify-center text-xs shrink-0 transition-colors ${done ? "bg-zinc-400 dark:bg-zinc-600 text-white" : active ? "bg-white text-zinc-900 animate-pulse" : "bg-zinc-100 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-600"}`}>
+              <div className={`h-6 w-6 rounded-full flex items-center justify-center text-xs shrink-0 transition-colors ${done ? "bg-zinc-400 dark:bg-zinc-600 text-white" : active ? "bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 animate-pulse" : "bg-zinc-100 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-600"}`}>
                 {done ? "✓" : active ? "⟳" : ""}
               </div>
               <span className={`text-sm ${done ? "text-zinc-700 dark:text-zinc-300" : active ? "text-zinc-900 dark:text-white font-medium" : "text-zinc-500 dark:text-zinc-600"}`}>
@@ -194,7 +194,7 @@ function ProgressTracker({
             {showProgress && !isBuilding && (
               <div className="ml-9 mt-2 w-full bg-zinc-200 dark:bg-zinc-800 rounded-full h-1">
                 <div
-                  className="bg-white h-1 rounded-full transition-all duration-500"
+                  className="bg-zinc-900 dark:bg-white h-1 rounded-full transition-all duration-500"
                   style={{ width: `${pct}%` }}
                 />
               </div>
@@ -443,7 +443,7 @@ export default function OnboardingPage() {
                   key={d}
                   onClick={() => setTrainingDays(d)}
                   className={`h-12 w-12 rounded-xl border text-sm font-bold transition cursor-pointer
-                    ${trainingDays === d ? "border-white bg-white text-zinc-900" : "border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-900 text-zinc-900 dark:text-white hover:border-zinc-400 dark:hover:border-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800"}`}
+                    ${trainingDays === d ? "border-zinc-900 bg-zinc-900 text-white dark:border-white dark:bg-white dark:text-zinc-900" : "border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-900 text-zinc-900 dark:text-white hover:border-zinc-400 dark:hover:border-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800"}`}
                 >
                   {d}
                 </button>
@@ -489,7 +489,7 @@ export default function OnboardingPage() {
                   <button
                     onClick={handleScheduleConfirm}
                     disabled={savingSchedule}
-                    className="flex-1 rounded-lg bg-white px-4 py-3 text-sm font-semibold text-zinc-900 hover:bg-zinc-100 disabled:opacity-40 transition cursor-pointer"
+                    className="flex-1 rounded-lg bg-zinc-900 dark:bg-white px-4 py-3 text-sm font-semibold text-white dark:text-zinc-900 hover:bg-zinc-700 dark:hover:bg-zinc-100 disabled:opacity-40 transition cursor-pointer"
                   >
                     {savingSchedule ? "Saving…" : "Looks good →"}
                   </button>
@@ -511,7 +511,7 @@ export default function OnboardingPage() {
                   <button
                     onClick={handleScheduleConfirm}
                     disabled={savingSchedule}
-                    className="flex-1 rounded-lg bg-white px-4 py-3 text-sm font-semibold text-zinc-900 hover:bg-zinc-100 disabled:opacity-40 transition cursor-pointer"
+                    className="flex-1 rounded-lg bg-zinc-900 dark:bg-white px-4 py-3 text-sm font-semibold text-white dark:text-zinc-900 hover:bg-zinc-700 dark:hover:bg-zinc-100 disabled:opacity-40 transition cursor-pointer"
                   >
                     {savingSchedule ? "Saving…" : "Looks good →"}
                   </button>
@@ -575,7 +575,7 @@ export default function OnboardingPage() {
               <button
                 onClick={handleStartScan}
                 disabled={channels.length === 0}
-                className="flex-1 rounded-lg bg-white px-4 py-3 text-sm font-semibold text-zinc-900 hover:bg-zinc-100 disabled:opacity-30 transition cursor-pointer"
+                className="flex-1 rounded-lg bg-zinc-900 dark:bg-white px-4 py-3 text-sm font-semibold text-white dark:text-zinc-900 hover:bg-zinc-700 dark:hover:bg-zinc-100 disabled:opacity-30 transition cursor-pointer"
               >
                 Continue →
               </button>

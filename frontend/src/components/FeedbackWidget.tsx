@@ -39,7 +39,7 @@ export default function FeedbackWidget() {
       {/* Floating button */}
       <button
         onClick={() => setOpen(true)}
-        className="fixed bottom-6 right-6 z-40 flex items-center gap-2 rounded-full bg-white px-4 py-2.5 text-sm font-semibold text-zinc-900 shadow-lg ring-1 ring-zinc-200 hover:bg-zinc-100 transition cursor-pointer"
+        className="fixed bottom-6 right-6 z-40 flex items-center gap-2 rounded-full bg-zinc-900 dark:bg-white px-4 py-2.5 text-sm font-semibold text-white dark:text-zinc-900 shadow-lg ring-1 ring-zinc-200 dark:ring-zinc-700 hover:bg-zinc-700 dark:hover:bg-zinc-100 transition cursor-pointer"
       >
         <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 shrink-0" viewBox="0 0 20 20" fill="currentColor">
           <path d="M2 10.5a1.5 1.5 0 113 0v6a1.5 1.5 0 01-3 0v-6zM6 10.333v5.43a2 2 0 001.106 1.79l.05.025A4 4 0 008.943 18h5.416a2 2 0 001.962-1.608l1.2-6A2 2 0 0015.56 8H12V4a2 2 0 00-2-2 1 1 0 00-1 1v.667a4 4 0 01-.8 2.4L6.8 7.933a4 4 0 00-.8 2.4z" />
@@ -65,7 +65,7 @@ export default function FeedbackWidget() {
               <p className="text-sm text-zinc-600 dark:text-zinc-400 mb-5">We&apos;ll get back to you if needed.</p>
               <button
                 onClick={handleClose}
-                className="rounded-lg bg-white px-5 py-2 text-sm font-semibold text-zinc-900 hover:bg-zinc-100 transition"
+                className="rounded-lg bg-zinc-900 dark:bg-white px-5 py-2 text-sm font-semibold text-white dark:text-zinc-900 hover:bg-zinc-700 dark:hover:bg-zinc-100 transition"
               >
                 Close
               </button>
@@ -90,7 +90,7 @@ export default function FeedbackWidget() {
                       onClick={() => setCategory(c.value)}
                       className={`flex-1 rounded-lg border px-2 py-2 text-xs font-medium transition cursor-pointer ${
                         category === c.value
-                          ? "border-white bg-white text-zinc-900"
+                          ? "border-zinc-900 bg-zinc-900 text-white dark:border-white dark:bg-white dark:text-zinc-900"
                           : "border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-400 hover:border-zinc-400 dark:hover:border-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200"
                       }`}
                     >
@@ -114,7 +114,7 @@ export default function FeedbackWidget() {
                 <button
                   onClick={handleSubmit}
                   disabled={!message.trim() || status === "submitting"}
-                  className="w-full rounded-lg bg-white py-2.5 text-sm font-semibold text-zinc-900 hover:bg-zinc-100 disabled:opacity-40 transition"
+                  className="w-full rounded-lg bg-zinc-900 dark:bg-white py-2.5 text-sm font-semibold text-white dark:text-zinc-900 hover:bg-zinc-700 dark:hover:bg-zinc-100 disabled:opacity-40 transition"
                 >
                   {status === "submitting" ? "Sending…" : "Send"}
                 </button>

@@ -72,7 +72,7 @@ async def _get_google_userinfo(access_token: str) -> dict:
 
 
 @router.get("/google")
-async def google_login(request: Request):
+async def google_login(request: Request, color_scheme: str = "light"):
     """Redirect the user to Google's OAuth consent screen."""
     state = secrets.token_urlsafe(16)
     request.session["oauth_state"] = state
@@ -85,6 +85,7 @@ async def google_login(request: Request):
         "state": state,
         "access_type": "offline",
         "prompt": "consent",
+        "color_scheme": color_scheme if color_scheme in ("light", "dark") else "light",
     })
     return RedirectResponse(f"https://accounts.google.com/o/oauth2/v2/auth?{params}")
 

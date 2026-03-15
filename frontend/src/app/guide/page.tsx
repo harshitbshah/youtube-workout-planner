@@ -314,7 +314,7 @@ export default function GuidePage() {
             <p className="text-zinc-600 dark:text-zinc-400 text-sm mb-6">Sign up free and have your first plan in minutes.</p>
             <Link
               href="/"
-              className="rounded-lg bg-white px-8 py-3 text-sm font-semibold text-zinc-900 hover:bg-zinc-100 transition"
+              className="rounded-lg bg-zinc-900 dark:bg-white px-8 py-3 text-sm font-semibold text-white dark:text-zinc-900 hover:bg-zinc-700 dark:hover:bg-zinc-100 transition"
             >
               Get started free →
             </Link>

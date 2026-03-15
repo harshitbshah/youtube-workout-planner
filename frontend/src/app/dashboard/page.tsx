@@ -420,7 +420,7 @@ export default function DashboardPage() {
               <button
                 onClick={handleGenerate}
                 disabled={generating}
-                className="rounded-lg bg-white px-3 py-2 text-sm font-semibold text-zinc-900 hover:bg-zinc-100 disabled:opacity-40 cursor-pointer transition"
+                className="rounded-lg bg-zinc-900 dark:bg-white px-3 py-2 text-sm font-semibold text-white dark:text-zinc-900 hover:bg-zinc-700 dark:hover:bg-zinc-100 disabled:opacity-40 cursor-pointer transition"
               >
                 {generating ? "Generating…" : "Regenerate"}
               </button>
@@ -428,7 +428,7 @@ export default function DashboardPage() {
               <button
                 onClick={handleScan}
                 disabled={generating || scanning}
-                className="rounded-lg bg-white px-3 py-2 text-sm font-semibold text-zinc-900 hover:bg-zinc-100 disabled:opacity-40 cursor-pointer transition"
+                className="rounded-lg bg-zinc-900 dark:bg-white px-3 py-2 text-sm font-semibold text-white dark:text-zinc-900 hover:bg-zinc-700 dark:hover:bg-zinc-100 disabled:opacity-40 cursor-pointer transition"
               >
                 {generating ? "Starting…" : allDaysEmpty ? "Rescan channels" : "Generate plan"}
               </button>
@@ -534,7 +534,7 @@ export default function DashboardPage() {
             {pipelineStage === "classifying" && classifyProgress && (
               <div className="w-full bg-zinc-200 dark:bg-zinc-700 rounded-full h-1.5">
                 <div
-                  className="bg-white h-1.5 rounded-full transition-all duration-500"
+                  className="bg-zinc-900 dark:bg-white h-1.5 rounded-full transition-all duration-500"
                   style={{ width: `${Math.round((Math.abs(classifyProgress.done) / classifyProgress.total) * 100)}%` }}
                 />
               </div>
@@ -582,7 +582,7 @@ export default function DashboardPage() {
                 </p>
                 <Link
                   href="/onboarding"
-                  className="inline-block rounded-lg bg-white px-5 py-2.5 text-sm font-semibold text-zinc-900 hover:bg-zinc-100 transition"
+                  className="inline-block rounded-lg bg-zinc-900 dark:bg-white px-5 py-2.5 text-sm font-semibold text-white dark:text-zinc-900 hover:bg-zinc-700 dark:hover:bg-zinc-100 transition"
                 >
                   Set up my plan →
                 </Link>
@@ -595,7 +595,7 @@ export default function DashboardPage() {
                 <button
                   onClick={handleScan}
                   disabled={generating}
-                  className="rounded-lg bg-white px-5 py-2.5 text-sm font-semibold text-zinc-900 hover:bg-zinc-100 disabled:opacity-40 cursor-pointer transition"
+                  className="rounded-lg bg-zinc-900 dark:bg-white px-5 py-2.5 text-sm font-semibold text-white dark:text-zinc-900 hover:bg-zinc-700 dark:hover:bg-zinc-100 disabled:opacity-40 cursor-pointer transition"
                 >
                   {generating ? "Starting scan…" : "Scan channels & generate plan"}
                 </button>

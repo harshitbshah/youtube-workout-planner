@@ -23,6 +23,26 @@ def test_google_login_sets_state_in_session(client):
     assert "state=" in location
 
 
+def test_google_login_defaults_to_light_color_scheme(client):
+    resp = client.get("/auth/google", follow_redirects=False)
+    assert "color_scheme=light" in resp.headers["location"]
+
+
+def test_google_login_forwards_dark_color_scheme(client):
+    resp = client.get("/auth/google?color_scheme=dark", follow_redirects=False)
+    assert "color_scheme=dark" in resp.headers["location"]
+
+
+def test_google_login_forwards_light_color_scheme(client):
+    resp = client.get("/auth/google?color_scheme=light", follow_redirects=False)
+    assert "color_scheme=light" in resp.headers["location"]
+
+
+def test_google_login_sanitizes_invalid_color_scheme(client):
+    resp = client.get("/auth/google?color_scheme=invalid", follow_redirects=False)
+    assert "color_scheme=light" in resp.headers["location"]
+
+
 def _mock_google(access_token="tok", refresh_token="ref", google_id="g123",
                  email="user@example.com", name="Test User"):
     """Return patch targets for both Google HTTP calls."""

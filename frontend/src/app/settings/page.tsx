@@ -167,7 +167,7 @@ export default function SettingsPage() {
                   <button
                     onClick={handleSaveName}
                     disabled={savingName || displayName === (user?.display_name ?? "")}
-                    className="rounded-lg bg-white px-4 py-2.5 text-sm font-semibold text-zinc-900 hover:bg-zinc-100 disabled:opacity-40 transition"
+                    className="rounded-lg bg-zinc-900 dark:bg-white px-4 py-2.5 text-sm font-semibold text-white dark:text-zinc-900 hover:bg-zinc-700 dark:hover:bg-zinc-100 disabled:opacity-40 transition"
                   >
                     {savingName ? "Saving…" : "Save"}
                   </button>
@@ -200,7 +200,7 @@ export default function SettingsPage() {
                   />
                   <div
                     className={`w-10 h-6 rounded-full transition ${
-                      user?.email_notifications ? "bg-white" : "bg-zinc-200 dark:bg-zinc-700"
+                      user?.email_notifications ? "bg-zinc-900 dark:bg-white" : "bg-zinc-200 dark:bg-zinc-700"
                     }`}
                   />
                   <div
@@ -244,7 +244,7 @@ export default function SettingsPage() {
               <button
                 onClick={handleSaveSchedule}
                 disabled={savingSchedule}
-                className="rounded-lg bg-white px-5 py-2.5 text-sm font-semibold text-zinc-900 hover:bg-zinc-100 disabled:opacity-40 transition"
+                className="rounded-lg bg-zinc-900 dark:bg-white px-5 py-2.5 text-sm font-semibold text-white dark:text-zinc-900 hover:bg-zinc-700 dark:hover:bg-zinc-100 disabled:opacity-40 transition"
               >
                 {savingSchedule ? "Saving…" : "Save schedule"}
               </button>

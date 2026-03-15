@@ -447,7 +447,7 @@ export default function AdminPage() {
             <Tooltip text="Post this announcement — it will appear as a banner on all users' dashboards immediately">
               <button
                 type="submit"
-                className="rounded-lg bg-white px-4 py-2 text-sm font-semibold text-zinc-900 hover:bg-zinc-100 transition"
+                className="rounded-lg bg-zinc-900 dark:bg-white px-4 py-2 text-sm font-semibold text-white dark:text-zinc-900 hover:bg-zinc-700 dark:hover:bg-zinc-100 transition"
               >
                 Post
               </button>
