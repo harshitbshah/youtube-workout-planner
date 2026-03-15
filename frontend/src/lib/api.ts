@@ -199,6 +199,7 @@ export interface VideoSummary {
 export interface PlanDay {
   day: string;
   video: VideoSummary | null;
+  scheduled_workout_type?: string | null;
 }
 
 export interface PlanResponse {

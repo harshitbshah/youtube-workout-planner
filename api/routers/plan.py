@@ -14,7 +14,7 @@ from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from ..dependencies import get_current_user, get_db
-from ..models import Channel, Classification, ProgramHistory, User, UserChannel, Video
+from ..models import Channel, Classification, ProgramHistory, Schedule, User, UserChannel, Video
 from ..schemas import PatchDayRequest, PlanDay, PlanResponse, PublishResponse, VideoSummary
 from ..services.planner import generate_weekly_plan_for_user, pick_video_for_slot_for_user
 from ..services.publisher import (
@@ -43,20 +43,27 @@ def _video_row_to_summary(video: Video, channel_name: str) -> VideoSummary:
     )
 
 
-def _history_to_plan_response(rows: list[ProgramHistory], week_start: date, db: Session) -> PlanResponse:
+def _history_to_plan_response(rows: list[ProgramHistory], week_start: date, db: Session, user_id: str | None = None) -> PlanResponse:
     """Convert ProgramHistory rows for a given week into a PlanResponse."""
     by_day: dict[str, ProgramHistory] = {row.assigned_day: row for row in rows}
+
+    # Load schedule to know which days are active vs rest
+    schedule_wt: dict[str, str | None] = {}
+    if user_id:
+        for s in db.query(Schedule).filter(Schedule.user_id == user_id).all():
+            schedule_wt[s.day] = s.workout_type
 
     days = []
     for day in DAYS_OF_WEEK:
         row = by_day.get(day)
+        wt = schedule_wt.get(day)
         if row and row.video_id:
             video = db.query(Video).filter(Video.id == row.video_id).first()
             if video:
                 channel_name = video.channel.name if video.channel else ""
-                days.append(PlanDay(day=day, video=_video_row_to_summary(video, channel_name)))
+                days.append(PlanDay(day=day, video=_video_row_to_summary(video, channel_name), scheduled_workout_type=wt))
                 continue
-        days.append(PlanDay(day=day, video=None))
+        days.append(PlanDay(day=day, video=None, scheduled_workout_type=wt))
 
     return PlanResponse(week_start=week_start.isoformat(), days=days)
 
@@ -85,7 +92,7 @@ def get_upcoming_plan(
         )
         .all()
     )
-    return _history_to_plan_response(rows, latest_week, db)
+    return _history_to_plan_response(rows, latest_week, db, user_id=current_user.id)
 
 
 # ─── Generate ─────────────────────────────────────────────────────────────────
@@ -135,9 +142,10 @@ def generate_plan(
                     body_focus=video_dict.get("body_focus"),
                     difficulty=video_dict.get("difficulty"),
                 ),
+                scheduled_workout_type=entry.get("scheduled_workout_type"),
             ))
         else:
-            days.append(PlanDay(day=day, video=None))
+            days.append(PlanDay(day=day, video=None, scheduled_workout_type=entry.get("scheduled_workout_type")))
 
     return PlanResponse(week_start=week_start.isoformat(), days=days)
 

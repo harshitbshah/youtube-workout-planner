@@ -90,6 +90,7 @@ def _fetch_candidates_for_user(
     history_weeks: int,
     excluded_channel_ids: list[str] | None = None,
     excluded_video_ids: list[str] | None = None,
+    ignore_workout_type: bool = False,
 ) -> list[dict]:
     """
     Query classified videos belonging to this user's channels that match
@@ -119,7 +120,7 @@ def _fetch_candidates_for_user(
         .join(Channel, Channel.id == Video.channel_id)
         .join(UserChannel, (UserChannel.channel_id == Channel.id) & (UserChannel.user_id == user_id))
         .filter(
-            func.lower(Classification.workout_type) == workout_type.lower(),
+            *([func.lower(Classification.workout_type) == workout_type.lower()] if not ignore_workout_type else []),
             or_(
                 Classification.body_focus == body_focus,
                 Classification.body_focus == "any",
@@ -178,22 +179,24 @@ def pick_video_for_slot_for_user(
     as the CLI planner, but querying PostgreSQL scoped to a user.
     """
     fallback_tiers = [
-        (HISTORY_WINDOW_WEEKS, body_focus, True),
-        (4,                    body_focus, True),
-        (4,                    "any",      True),
-        (0,                    "any",      True),
-        (0,                    "any",      False),
+        (HISTORY_WINDOW_WEEKS, body_focus, True,  False),
+        (4,                    body_focus, True,  False),
+        (4,                    "any",      True,  False),
+        (0,                    "any",      True,  False),
+        (0,                    "any",      False, False),
+        (0,                    "any",      False, True),   # Tier 6: any workout type - ensures no active day is ever blank
     ]
 
     excluded_channel_ids = excluded_channel_ids or []
     candidates = []
 
-    for history_weeks, effective_focus, respect_limit in fallback_tiers:
+    for history_weeks, effective_focus, respect_limit, ignore_wt in fallback_tiers:
         active_exclusions = excluded_channel_ids if respect_limit else []
         candidates = _fetch_candidates_for_user(
             session, user_id, workout_type, effective_focus,
             min_duration_sec, max_duration_sec, difficulty, history_weeks,
             active_exclusions, excluded_video_ids,
+            ignore_workout_type=ignore_wt,
         )
         if candidates:
             break
@@ -255,7 +258,7 @@ def generate_weekly_plan_for_user(
         slot = schedule.get(day)
 
         if not slot or not slot.workout_type:
-            plan.append({"day": day, "video": None})
+            plan.append({"day": day, "video": None, "scheduled_workout_type": None})
             continue
 
         min_dur = (slot.duration_min or 0) * 60
@@ -282,7 +285,7 @@ def generate_weekly_plan_for_user(
             used_video_ids.append(video["id"])
             channel_usage[video["channel_id"]] = channel_usage.get(video["channel_id"], 0) + 1
 
-        plan.append({"day": day, "video": video})
+        plan.append({"day": day, "video": video, "scheduled_workout_type": slot.workout_type})
 
     _save_plan_to_history(session, user_id, week_start, plan)
 

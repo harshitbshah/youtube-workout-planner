@@ -219,6 +219,7 @@ export default function DashboardPage() {
   const [openSwapDay, setOpenSwapDay] = useState<string | null>(null);
   const [screenshotMode, setScreenshotMode] = useState(false);
   const [error, setError] = useState("");
+  const [missingTypesDismissed, setMissingTypesDismissed] = useState(false);
 
   useEffect(() => {
     // Check if we just came from onboarding with a scan in progress
@@ -482,6 +483,24 @@ export default function DashboardPage() {
             <button onClick={() => setAlreadySetUpDismissed(true)} aria-label="Dismiss" className="shrink-0 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 transition">✕</button>
           </div>
         )}
+
+        {/* Missing workout types banner - shown when active schedule days have no matching videos */}
+        {(() => {
+          if (!plan || missingTypesDismissed) return null;
+          const missing = [...new Set(
+            plan.days
+              .filter(d => !d.video && d.scheduled_workout_type)
+              .map(d => d.scheduled_workout_type!)
+          )];
+          if (missing.length === 0) return null;
+          const typeList = missing.map(t => t.charAt(0).toUpperCase() + t.slice(1)).join(", ");
+          return (
+            <div className="mb-6 flex items-center justify-between gap-3 rounded-lg border border-amber-200 dark:border-amber-800/60 bg-amber-50 dark:bg-amber-900/20 px-4 py-3 text-sm text-amber-800 dark:text-amber-300">
+              <span>Some days couldn&apos;t be filled - your library has no <strong>{typeList}</strong> videos. Try adding channels that cover these workout types, or update your schedule in <Link href="/settings" className="underline hover:text-amber-900 dark:hover:text-amber-100 transition">Settings</Link>.</span>
+              <button onClick={() => setMissingTypesDismissed(true)} aria-label="Dismiss" className="shrink-0 text-amber-400 hover:text-amber-600 dark:hover:text-amber-200 transition">✕</button>
+            </div>
+          );
+        })()}
 
         {/* Announcement banner */}
         {announcement && (

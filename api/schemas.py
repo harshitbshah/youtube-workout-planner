@@ -73,6 +73,7 @@ class VideoSummary(BaseModel):
 class PlanDay(BaseModel):
     day: str
     video: Optional[VideoSummary]
+    scheduled_workout_type: Optional[str] = None
 
 
 class PlanResponse(BaseModel):

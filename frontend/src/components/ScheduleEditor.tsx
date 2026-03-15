@@ -15,7 +15,14 @@ const DEFAULT_SLOTS: Record<string, Partial<ScheduleSlot>> = {
 };
 
 const WORKOUT_TYPES = ["strength", "hiit", "cardio", "mobility"];
-const BODY_FOCUS_OPTIONS = ["full", "upper", "lower", "core", "arms", "legs", "back"];
+const BODY_FOCUS_OPTIONS = ["full", "upper", "lower", "core"];
+
+const BODY_FOCUS_FOR_TYPE: Record<string, string[]> = {
+  strength: ["full", "upper", "lower", "core"],
+  hiit:     ["full", "core"],
+  cardio:   ["full"],
+  mobility: ["full", "upper", "lower", "core"],
+};
 const DIFFICULTY_OPTIONS = ["any", "beginner", "intermediate", "advanced"];
 
 interface Props {
@@ -26,6 +33,17 @@ interface Props {
 export default function ScheduleEditor({ schedule, onScheduleChange }: Props) {
   function updateDay(day: string, patch: Partial<ScheduleSlot>) {
     onScheduleChange(schedule.map((s) => (s.day === day ? { ...s, ...patch } : s)));
+  }
+
+  function handleWorkoutTypeChange(day: string, newType: string) {
+    const slot = schedule.find((s) => s.day === day);
+    const allowed = BODY_FOCUS_FOR_TYPE[newType] ?? BODY_FOCUS_OPTIONS;
+    const currentFocus = slot?.body_focus ?? "";
+    const needsReset = currentFocus && !allowed.includes(currentFocus);
+    updateDay(day, {
+      workout_type: newType,
+      ...(needsReset ? { body_focus: null } : {}),
+    });
   }
 
   function toggleRest(day: string, makeRest: boolean) {
@@ -73,7 +91,7 @@ export default function ScheduleEditor({ schedule, onScheduleChange }: Props) {
                 <div className="flex flex-wrap gap-2 flex-1">
                   <select
                     value={slot.workout_type ?? ""}
-                    onChange={(e) => updateDay(day, { workout_type: e.target.value })}
+                    onChange={(e) => handleWorkoutTypeChange(day, e.target.value)}
                     className="rounded-md bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 px-2 py-1 text-xs text-zinc-900 dark:text-white focus:outline-none focus:border-zinc-500"
                   >
                     {WORKOUT_TYPES.map((t) => (
@@ -87,7 +105,7 @@ export default function ScheduleEditor({ schedule, onScheduleChange }: Props) {
                     className="rounded-md bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 px-2 py-1 text-xs text-zinc-900 dark:text-white focus:outline-none focus:border-zinc-500"
                   >
                     <option value="">any focus</option>
-                    {BODY_FOCUS_OPTIONS.map((f) => (
+                    {(BODY_FOCUS_FOR_TYPE[slot.workout_type ?? ""] ?? BODY_FOCUS_OPTIONS).map((f) => (
                       <option key={f} value={f}>{f}</option>
                     ))}
                   </select>
