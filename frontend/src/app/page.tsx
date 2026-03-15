@@ -8,18 +8,18 @@ import { Footer } from "@/components/Footer";
 
 // Verified unavatar.io handles - duplicated for seamless marquee loop
 const CHANNELS = [
-  { name: "Jeff Nippard",    handle: "JeffNippard" },
-  { name: "Athlean-X",       handle: "athleanx" },
-  { name: "Heather Robertson", handle: "heatherrobertsoncom" },
-  { name: "FitnessBlender",  handle: "FitnessBlender" },
-  { name: "Jeremy Ethier",   handle: "JeremyEthier" },
-  { name: "Caroline Girvan", handle: "CarolineGirvan" },
-  { name: "Chris Heria",     handle: "ChrisHeria" },
-  { name: "Sydney Cummings", handle: "sydneycummingshoudyshell" },
-  { name: "MuscleWiki",      handle: "MuscleWiki" },
-  { name: "Koboko Fitness",  handle: "KobokoFitness" },
-  { name: "Juice & Toya",    handle: "JuiceandToya" },
-  { name: "Chloe Ting",      handle: "ChloeTing" },
+  { name: "Jeff Nippard",      handle: "JeffNippard" },
+  { name: "Caroline Girvan",   handle: "CarolineGirvan" },
+  { name: "Chris Heria",       handle: "ChrisHeria" },
+  { name: "Chloe Ting",        handle: "ChloeTing" },
+  { name: "Juice & Toya",      handle: "JuiceandToya" },
+  { name: "Koboko Fitness",    handle: "KobokoFitness" },
+  { name: "Yoga with Adriene", handle: "yogawithadriene" },
+  { name: "Move with Nicole",  handle: "movewithnicole" },
+  { name: "DanceWithDeepti",   handle: "dancewithdeepti" },
+  { name: "HASfit",            handle: "hasfit" },
+  { name: "Fitness Marshall",  handle: "thefitmarshall" },
+  { name: "Lottie Murphy",     handle: "lottiemurphy" },
 ];
 
 function ChannelAvatar({ name, handle }: { name: string; handle: string }) {
