@@ -247,6 +247,7 @@ cd frontend && npm run test:run
 | GET | `/admin/stats` | Admin | Aggregate stats + per-user rows |
 | DELETE | `/admin/users/{id}` | Admin | Delete any user (blocks self-deletion) |
 | POST | `/admin/users/{id}/scan` | Admin | Trigger pipeline for any user |
+| POST | `/admin/users/{id}/reset-onboarding` | Admin | Delete user's channel subscriptions + schedule (treats them as new user; shared channels/videos preserved) |
 | GET | `/admin/announcements` | Admin | List all announcements |
 | POST | `/admin/announcements` | Admin | Create announcement |
 | DELETE | `/admin/announcements/{id}` | Admin | Delete announcement |

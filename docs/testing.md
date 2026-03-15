@@ -29,7 +29,7 @@ Run before every commit:
 cd frontend && npm run test:run
 ```
 
-Current: **577/577 passing** (409 backend + 168 frontend)
+Current: **564/564 passing** (390 backend + 174 frontend)
 
 New test files added:
 - `tests/api/test_jobs.py` - `POST /jobs/scan` (202, 400 no channels, 503 no key, 401 unauth, channel count); `GET /jobs/status` (no pipeline, unauthenticated, reflects live state); scanner filters (upper duration cap, title blocklist); classifier (batch cap limits to 300, `on_progress` callback during polling, resume existing batch, batch ID cleared on completion)
@@ -42,7 +42,10 @@ New test files added:
 - `tests/api/helpers.py` - shared `make_mock_user()` factory used by test_email.py and test_feedback.py
 - `frontend/src/test/ThemeProvider.test.tsx` - 6 tests: system-dark default, system-light default, explicit dark/light override, toggle persists, system change respects explicit choice
 - `frontend/src/test/ThemeToggle.test.tsx` - 3 tests: renders correctly, toggles on click, aria-label reflects current theme
-- `frontend/src/app/dashboard/page.test.tsx` - 19 tests: stale plan banner (show/hide/dismiss/generate), plan rendering, week label, announcement banner, swap picker (open, video list, type filter, show-all-types, cancel, swap call, post-swap close)
+- `frontend/src/app/dashboard/page.test.tsx` - 22 tests: stale plan banner (show/hide/dismiss/generate), plan rendering, week label, announcement banner, swap picker (open, video list, type filter, show-all-types, cancel, swap call, post-swap close), already-set-up banner (from=onboarding param shows banner, dismiss, no-channels does not redirect)
+- `frontend/src/app/onboarding/page.test.tsx` - guard tests: redirects to /dashboard?from=onboarding when user has channels, no redirect when no channels, redirects to / when getMe fails
+- `tests/api/test_admin.py` - 5 new: reset-onboarding removes channels+schedule, preserves channel+videos, does not affect other users, 404 unknown user, 403 non-admin
+- `tests/integration/test_admin_reset_api.py` - 2 integration tests: reset clears subscriptions+schedule, does not touch other user subscriptions
 - `frontend/src/app/settings/page.test.tsx` - 15 tests: initial render, display name save/error, schedule save/error, delete 2-step confirm/cancel/confirm-calls-API
 - `frontend/src/app/library/page.test.tsx` - 20 tests: video rendering, total count, empty state, filters, clear filters, no-match empty state, assign-to-day success/error, pagination, background-classifying banner (show/hide/dismiss/API failure)
 - `frontend/src/components/FeedbackWidget.test.tsx` - 11 tests: floating button, modal open/close, state reset, category selection, submit disabled on empty/whitespace, submit calls API, success state, error state

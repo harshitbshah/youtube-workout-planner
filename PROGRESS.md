@@ -1,10 +1,17 @@
 # Progress
 
 ## Status
-Phases 1–5 complete + admin console + charts + guide page + mobile UX complete. Phase A complete. Phase B complete. Phase C complete. Phase D F5+F6+F9 complete. Backlog items T1+T2+S1+M2 complete. Channel suggestions + onboarding UX complete. Channel fitness validation (migration 019) complete. Email notifications opt-in step in onboarding complete. Dark mode all pages fixed. Light mode button visibility fixed. Lazy classification (plan-first) complete.
-**409 backend + 168 frontend = 577 tests passing**.
+Phases 1–5 complete + admin console + charts + guide page + mobile UX complete. Phase A complete. Phase B complete. Phase C complete. Phase D F5+F6+F9 complete. Backlog items T1+T2+S1+M2 complete. Channel suggestions + onboarding UX complete. Channel fitness validation (migration 019) complete. Email notifications opt-in step in onboarding complete. Dark mode all pages fixed. Light mode button visibility fixed. Lazy classification (plan-first) complete. Onboarding guard + admin reset complete. Homepage M1 redesign complete.
+**390 backend + 174 frontend = 564 tests passing**.
 Both Railway (backend) and Vercel (frontend) live and functional on `main`.
 **Ready for first users** - Google OAuth fully verified ✅. YouTube scope approved by Google Trust & Safety (2026-03-15). No more "unverified app" warning for any user.
+
+**Done this session (2026-03-15, checkpoint 4):**
+- Em dash replacement: all em dashes (—) replaced with hyphens across entire codebase (.md, .py, .ts, .tsx); "No em dashes" convention added to CLAUDE.md ✅
+- Onboarding guard: `/onboarding` redirects already-onboarded users (with channels) to `/dashboard?from=onboarding`; dashboard shows dismissible "You're already all set" tip banner pointing to Settings ✅
+- Admin reset-onboarding: `POST /admin/users/{id}/reset-onboarding` deletes UserChannel + Schedule rows; amber "Reset" button in admin user table with confirm dialog; shared channels/videos preserved ✅
+- Homepage M1 redesign: "Stop watching. Start doing." headline; real dashboard screenshots (light + dark) in browser chrome frame; scrolling channel avatar marquee (12 creators via unavatar.io); dark rounded bottom CTA ✅
+- **564 total (390 backend + 174 frontend)** ✅
 
 **Done this session (2026-03-15, checkpoint 3):**
 - Lazy classification - F9 complete ✅

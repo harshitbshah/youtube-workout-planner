@@ -374,6 +374,7 @@ POST /feedback                            → submit user feedback (category: fe
 GET  /admin/stats                         → aggregate stats + per-user rows
 DELETE /admin/users/{user_id}             → delete any user (blocks self-deletion)
 POST /admin/users/{user_id}/scan          → trigger full pipeline for any user
+POST /admin/users/{user_id}/reset-onboarding → delete user's UserChannel + Schedule rows (treated as new user on next login; shared channels/videos preserved)
 GET  /admin/announcements                 → list all announcements
 POST /admin/announcements                 → create announcement
 DELETE /admin/announcements/{id}          → delete announcement
@@ -513,8 +514,7 @@ still handles the single original user independently.
 
 ### Page map
 ```
-/ ─────────── Landing page (hero, how it works, features, CTA)
-              Signed-in users auto-redirected to /dashboard or /onboarding
+/ ─────────── Landing page (redesigned M1): centered hero with "Stop watching. Start doing." headline + real dashboard screenshot (light/dark) in browser chrome frame; scrolling channel avatar marquee (12 creators via unavatar.io); how it works 3-step; dark rounded bottom CTA. Signed-in users auto-redirected to /dashboard or /onboarding.
 
 /onboarding ─ 7-step onboarding wizard
               Step 1: Life stage (4 cards, auto-advance)
