@@ -2,18 +2,16 @@
 
 ## Status
 Phases 1–5 complete + admin console + charts + guide page + mobile UX complete. Phase A complete. Phase B complete. Phase C complete. Phase D F5+F6 complete. Backlog items T1+T2+S1+M2 complete. Channel suggestions + onboarding UX complete. Channel fitness validation (migration 019) complete. Email notifications opt-in step in onboarding complete. Dark mode on all pages complete. Light mode button visibility fixed. Google sign-in color_scheme forwarding complete.
-**363 backend + 167 frontend = 530 tests passing**.
+**376 backend + 164 frontend = 540 tests passing**.
 Both Railway (backend) and Vercel (frontend) live and functional on `main`.
 **Ready for first users** — Google OAuth sensitive scope review in progress (4–6 week wait). Users see "unverified app" warning until review completes.
 
 **Done this session (2026-03-15, checkpoint):**
 - Light mode button visibility fixed: all `bg-white text-zinc-900 hover:bg-zinc-100` action buttons changed to `bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 hover:bg-zinc-700 dark:hover:bg-zinc-100` across dashboard, settings, onboarding, admin, guide, FeedbackWidget ✅
 - Selected/active states (training days, category tabs) and progress bar fills updated to match ✅
-- Google sign-in color_scheme: `loginUrl(colorScheme?)` now appends `?color_scheme=` param; `GET /auth/google` forwards it to Google OAuth URL so their sign-in page matches app theme ✅
-- Landing page uses `useTheme()` and passes theme to all four `loginUrl()` calls ✅
-- New test files: `frontend/src/lib/api.test.ts` (loginUrl), `frontend/src/app/page.test.tsx` (landing page theme/sign-in links) ✅
-- 4 new backend auth tests (color_scheme default, dark, light, invalid sanitization) ✅
-- **530 total (363 backend + 167 frontend)** ✅
+- Investigated Google sign-in page theming — confirmed Google's OAuth2 endpoint ignores `color_scheme`; sign-in page follows OS/browser preference only, not controllable by the app ✅
+- New test files: `frontend/src/lib/api.test.ts` (loginUrl), `frontend/src/app/page.test.tsx` (landing page sign-in links) ✅
+- **540 total (376 backend + 164 frontend)** ✅
 
 **Done this session (2026-03-14, checkpoint 2):**
 - Email notifications opt-in/out step (step 6) added to onboarding wizard ✅
