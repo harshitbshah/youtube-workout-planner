@@ -258,14 +258,19 @@ export default function OnboardingPage() {
   const [scanError, setScanError] = useState("");
   const [classifyProgress, setClassifyProgress] = useState<{ total: number; done: number } | null>(null);
 
+  const [guardChecking, setGuardChecking] = useState(true);
+
   const isSenior = profile === "senior";
 
-  // Guard: redirect already-onboarded users to dashboard
+  // Guard: redirect already-onboarded non-admin users to dashboard
   useEffect(() => {
     getMe()
-      .then(() => getChannels())
-      .then((ch) => {
-        if (ch.length > 0) router.replace("/dashboard?from=onboarding");
+      .then((user) => {
+        if (user.is_admin) { setGuardChecking(false); return; }
+        return getChannels().then((ch) => {
+          if (ch.length > 0) router.replace("/dashboard?from=onboarding");
+          else setGuardChecking(false);
+        });
       })
       .catch(() => router.replace("/"));
   }, [router]);
@@ -394,6 +399,8 @@ export default function OnboardingPage() {
   }, [step, pollStatus]);
 
   const contentClass = `w-full ${isSenior ? "text-lg" : ""}`;
+
+  if (guardChecking) return null;
 
   return (
     <main className="min-h-screen bg-white dark:bg-zinc-950 flex flex-col items-center justify-center px-4 py-12">
