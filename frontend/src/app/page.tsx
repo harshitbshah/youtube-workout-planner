@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { getChannels, getMe, loginUrl, setToken } from "@/lib/api";
 import { Footer } from "@/components/Footer";
-import { useTheme } from "@/components/ThemeProvider";
 
 const HOW_IT_WORKS = [
   {
@@ -42,7 +41,6 @@ const FEATURES = [
 
 export default function LandingPage() {
   const router = useRouter();
-  const { theme } = useTheme();
   const [checking, setChecking] = useState(true);
 
   useEffect(() => {
@@ -84,7 +82,7 @@ export default function LandingPage() {
             Guide
           </Link>
           <a
-            href={loginUrl(theme)}
+            href={loginUrl()}
             className="rounded-lg border border-zinc-200 dark:border-zinc-700 px-4 py-2 text-sm text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition"
           >
             Sign in
@@ -106,7 +104,7 @@ export default function LandingPage() {
           get a fresh plan curated from content you already love — every Sunday.
         </p>
         <a
-          href={loginUrl(theme)}
+          href={loginUrl()}
           className="flex items-center gap-2.5 rounded-lg bg-zinc-900 dark:bg-white px-8 py-3.5 text-sm font-semibold text-white dark:text-zinc-900 hover:bg-zinc-700 dark:hover:bg-zinc-100 transition"
         >
           <svg width="18" height="18" viewBox="0 0 18 18" xmlns="http://www.w3.org/2000/svg">
@@ -119,7 +117,7 @@ export default function LandingPage() {
         </a>
         <p className="mt-4 text-xs text-zinc-500">
           Already have an account?{" "}
-          <a href={loginUrl(theme)} className="underline underline-offset-2 hover:text-zinc-700 dark:hover:text-zinc-300 transition">
+          <a href={loginUrl()} className="underline underline-offset-2 hover:text-zinc-700 dark:hover:text-zinc-300 transition">
             Sign in
           </a>
         </p>
@@ -167,7 +165,7 @@ export default function LandingPage() {
           Join and get your first personalised plan in minutes.
         </p>
         <a
-          href={loginUrl(theme)}
+          href={loginUrl()}
           className="rounded-lg bg-zinc-900 dark:bg-white px-8 py-3.5 text-sm font-semibold text-white dark:text-zinc-900 hover:bg-zinc-700 dark:hover:bg-zinc-100 transition"
         >
           Get started free →

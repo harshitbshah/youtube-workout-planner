@@ -17,14 +17,8 @@ vi.mock("@/components/Footer", () => ({ Footer: () => null }));
 vi.mock("@/lib/api", () => ({
   getMe: vi.fn(),
   getChannels: vi.fn(),
-  loginUrl: vi.fn((scheme?: string) =>
-    scheme ? `http://localhost:8000/auth/google?color_scheme=${scheme}` : "http://localhost:8000/auth/google"
-  ),
+  loginUrl: vi.fn(() => "http://localhost:8000/auth/google"),
   setToken: vi.fn(),
-}));
-
-vi.mock("@/components/ThemeProvider", () => ({
-  useTheme: () => ({ theme: "light", toggleTheme: vi.fn() }),
 }));
 
 import * as api from "@/lib/api";
@@ -45,21 +39,12 @@ describe("LandingPage — unauthenticated", () => {
     );
   });
 
-  it("passes current theme to loginUrl for all sign-in links", async () => {
-    render(<LandingPage />);
-    await waitFor(() =>
-      expect(screen.getAllByRole("link", { name: /sign in|get started/i }).length).toBeGreaterThan(0)
-    );
-    // loginUrl should have been called with the current theme ("light")
-    expect(mockLoginUrl).toHaveBeenCalledWith("light");
-  });
-
-  it("sign-in links include color_scheme in href", async () => {
+  it("sign-in links point to the auth/google URL", async () => {
     render(<LandingPage />);
     await waitFor(() => {
       const links = screen.getAllByRole("link", { name: /sign in|get started/i });
       links.forEach((link) => {
-        expect(link.getAttribute("href")).toContain("color_scheme=light");
+        expect(link.getAttribute("href")).toContain("/auth/google");
       });
     });
   });

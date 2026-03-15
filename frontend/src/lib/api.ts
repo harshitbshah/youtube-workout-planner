@@ -54,8 +54,7 @@ export const logout = () => {
   clearToken();
   return apiFetch<void>("/auth/logout", { method: "POST" });
 };
-export const loginUrl = (colorScheme?: "light" | "dark") =>
-  `${API_BASE}/auth/google${colorScheme ? `?color_scheme=${colorScheme}` : ""}`;
+export const loginUrl = () => `${API_BASE}/auth/google`;
 export const patchMe = (display_name: string) =>
   apiFetch<User>("/auth/me", { method: "PATCH", body: JSON.stringify({ display_name }) });
 export const deleteMe = () => apiFetch<void>("/auth/me", { method: "DELETE" });
