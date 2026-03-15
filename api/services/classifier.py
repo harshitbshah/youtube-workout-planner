@@ -70,13 +70,15 @@ _DIFFICULTY_RULES: list[tuple[re.Pattern, str]] = [
 ]
 
 
-def title_classify(title: str, duration_sec: int | None) -> dict | None:
+def title_classify(title: str | None, duration_sec: int | None) -> dict | None:
     """
     Attempt rule-based classification from the video title alone.
 
     Returns a classification dict if a workout type can be determined with
     confidence, else None (caller should fall through to AI classification).
     """
+    if not title:
+        return None
     workout_type = None
     for pattern, wtype in _TYPE_RULES:
         if pattern.search(title):
@@ -220,7 +222,7 @@ def build_targeted_batch(
     targeted: list[dict] = []
     remainder: list[dict] = []
     for video in unclassified:
-        title = video["title"]
+        title = video["title"] or ""
         matched = any(
             t in gap_type_names and pattern.search(title)
             for t, pattern in _GAP_TYPE_PATTERNS.items()

@@ -22,12 +22,14 @@ vi.mock("@/components/Badge", () => ({
 vi.mock("@/lib/api", () => ({
   getMe: vi.fn(),
   getChannels: vi.fn(),
+  getJobStatus: vi.fn(),
   getLibrary: vi.fn(),
   swapPlanDay: vi.fn(),
 }));
 
 const mockGetMe = api.getMe as ReturnType<typeof vi.fn>;
 const mockGetChannels = api.getChannels as ReturnType<typeof vi.fn>;
+const mockGetJobStatus = api.getJobStatus as ReturnType<typeof vi.fn>;
 const mockGetLibrary = api.getLibrary as ReturnType<typeof vi.fn>;
 const mockSwapPlanDay = api.swapPlanDay as ReturnType<typeof vi.fn>;
 
@@ -66,6 +68,7 @@ beforeEach(() => {
   vi.clearAllMocks();
   mockGetMe.mockResolvedValue({ id: 1, email: "test@example.com" });
   mockGetChannels.mockResolvedValue([]);
+  mockGetJobStatus.mockResolvedValue({ stage: "done", total: null, done: null, error: null, background_classifying: false });
   mockGetLibrary.mockResolvedValue(makeLibraryResponse());
   mockSwapPlanDay.mockResolvedValue(undefined);
 });
@@ -199,6 +202,37 @@ describe("LibraryPage — assign to day", () => {
     await waitFor(() =>
       expect(screen.getByText(/Failed — generate a plan first/i)).toBeInTheDocument()
     );
+  });
+});
+
+describe("LibraryPage — background classifying banner", () => {
+  it("shows banner when background_classifying is true", async () => {
+    mockGetJobStatus.mockResolvedValue({ stage: "done", total: null, done: null, error: null, background_classifying: true });
+    render(<LibraryPage />);
+    await waitFor(() =>
+      expect(screen.getByText(/library is still building/i)).toBeInTheDocument()
+    );
+  });
+
+  it("does not show banner when background_classifying is false", async () => {
+    render(<LibraryPage />);
+    await waitFor(() => screen.getByText("Video Library"));
+    expect(screen.queryByText(/library is still building/i)).not.toBeInTheDocument();
+  });
+
+  it("does not show banner when getJobStatus fails", async () => {
+    mockGetJobStatus.mockRejectedValue(new Error("network error"));
+    render(<LibraryPage />);
+    await waitFor(() => screen.getByText("Video Library"));
+    expect(screen.queryByText(/library is still building/i)).not.toBeInTheDocument();
+  });
+
+  it("dismisses banner when ✕ is clicked", async () => {
+    mockGetJobStatus.mockResolvedValue({ stage: "done", total: null, done: null, error: null, background_classifying: true });
+    render(<LibraryPage />);
+    await waitFor(() => screen.getByText(/library is still building/i));
+    fireEvent.click(screen.getByRole("button", { name: /Dismiss/i }));
+    expect(screen.queryByText(/library is still building/i)).not.toBeInTheDocument();
   });
 });
 

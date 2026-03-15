@@ -337,4 +337,4 @@ No DB migration needed. No schema changes.
 | Modified pipeline in `jobs.py` | ✅ Done (2026-03-15) |
 | `background_classifying` status field | ✅ Done (2026-03-15) |
 | Scheduler integration | ✅ Done (2026-03-15) |
-| Library "building" banner (optional) | ⏳ Deferred |
+| Library "building" banner (optional) | ✅ Done (2026-03-15) |

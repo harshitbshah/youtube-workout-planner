@@ -2,7 +2,7 @@
 
 ## Status
 Phases 1–5 complete + admin console + charts + guide page + mobile UX complete. Phase A complete. Phase B complete. Phase C complete. Phase D F5+F6+F9 complete. Backlog items T1+T2+S1+M2 complete. Channel suggestions + onboarding UX complete. Channel fitness validation (migration 019) complete. Email notifications opt-in step in onboarding complete. Dark mode all pages fixed. Light mode button visibility fixed. Lazy classification (plan-first) complete.
-**393 backend + 164 frontend = 557 tests passing**.
+**409 backend + 168 frontend = 577 tests passing**.
 Both Railway (backend) and Vercel (frontend) live and functional on `main`.
 **Ready for first users** — Google OAuth fully verified ✅. YouTube scope approved by Google Trust & Safety (2026-03-15). No more "unverified app" warning for any user.
 
@@ -14,7 +14,9 @@ Both Railway (backend) and Vercel (frontend) live and functional on `main`.
   - `_run_full_pipeline()` in `jobs.py` uses fast/slow path: rule-classify → check → skip Anthropic or targeted mini-batch → plan → background classify remainder
   - `scheduler.py` uses same `can_fill_plan` gate — most weekly scans skip Anthropic entirely
   - `background_classifying` field added to `/jobs/status` response
-  - 17 new unit tests — all pass
+  - Library page "still building" banner when `background_classifying=true`, dismissible ✅
+  - NULL title guard added to `title_classify()` and `build_targeted_batch()`
+  - 33 backend + 4 frontend tests covering all edge cases (user isolation, idempotency, NULL titles, case sensitivity, multi-pattern dedup, cap scaling, unknown gap types, etc.)
 - Notifications toggle light mode thumb fixed (`bg-white` when ON) ✅
 - Google OAuth YouTube scope verification approved by Trust & Safety (2026-03-15) ✅
 

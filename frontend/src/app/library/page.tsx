@@ -8,6 +8,7 @@ import FeedbackWidget from "@/components/FeedbackWidget";
 import {
   getMe,
   getChannels,
+  getJobStatus,
   getLibrary,
   swapPlanDay,
   type VideoSummary,
@@ -153,6 +154,8 @@ export default function LibraryPage() {
   const [data, setData] = useState<LibraryResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [backgroundClassifying, setBackgroundClassifying] = useState(false);
+  const [bannerDismissed, setBannerDismissed] = useState(false);
 
   // Filters
   const [workoutType, setWorkoutType] = useState("");
@@ -183,6 +186,9 @@ export default function LibraryPage() {
   useEffect(() => {
     getMe().catch(() => router.replace("/"));
     getChannels().then(setChannels).catch(() => {});
+    getJobStatus()
+      .then((s) => setBackgroundClassifying(s.background_classifying === true))
+      .catch(() => {});
   }, [router]);
 
   useEffect(() => {
@@ -223,6 +229,20 @@ export default function LibraryPage() {
             <p className="text-sm text-zinc-500">{data.total.toLocaleString()} videos</p>
           )}
         </div>
+
+        {/* Background classification banner */}
+        {backgroundClassifying && !bannerDismissed && (
+          <div className="flex items-center justify-between gap-3 mb-6 rounded-lg border border-amber-700/50 bg-amber-900/20 px-4 py-3 text-sm text-amber-300">
+            <span>Your library is still building — more videos are being classified in the background.</span>
+            <button
+              onClick={() => setBannerDismissed(true)}
+              className="shrink-0 text-amber-400 hover:text-amber-200 transition"
+              aria-label="Dismiss"
+            >
+              ✕
+            </button>
+          </div>
+        )}
 
         {/* Filters */}
         <div className="flex flex-wrap items-center gap-3 mb-6">
