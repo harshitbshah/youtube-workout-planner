@@ -302,7 +302,7 @@ def test_add_channel_blocked_when_mismatch(auth_client, db_session):
         google_id="profile-user",
         email="profile@example.com",
         profile="adult",
-        goal="Build muscle",
+        goal='["Build muscle"]',
     )
     db_session.add(user_with_profile)
     db_session.commit()
@@ -351,7 +351,7 @@ def test_add_channel_allowed_when_match(auth_client, db_session):
         google_id="profile-user-2",
         email="profile2@example.com",
         profile="adult",
-        goal="Build muscle",
+        goal='["Build muscle"]',
     )
     db_session.add(user_with_profile)
     db_session.commit()
@@ -413,7 +413,7 @@ def test_add_channel_validation_fails_open_on_error(auth_client, db_session):
         google_id="failopen-user",
         email="failopen@example.com",
         profile="adult",
-        goal="Build muscle",
+        goal='["Build muscle"]',
     )
     db_session.add(user_with_profile)
     db_session.commit()

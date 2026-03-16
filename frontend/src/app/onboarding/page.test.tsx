@@ -80,7 +80,7 @@ describe("OnboardingPage - Step 1 (Life Stage)", () => {
     await renderPage();
     fireEvent.click(screen.getByText("Active adult"));
     clickNext();
-    expect(screen.getByText(/What's your main goal/i)).toBeInTheDocument();
+    expect(screen.getByText(/What are your goals/i)).toBeInTheDocument();
   });
 });
 
@@ -295,7 +295,7 @@ describe("OnboardingPage - Step 5 (Schedule Preview)", () => {
       expect(mockUpdateSchedule).toHaveBeenCalledWith(
         expect.any(Array),
         "adult",
-        "Build muscle",
+        ["Build muscle"],
       );
     });
   });

@@ -13,6 +13,7 @@ Splitting scopes reduces initial login to 1-2 steps. YouTube permission is
 requested only when the user explicitly connects YouTube.
 """
 
+import json
 import os
 import secrets
 from urllib.parse import urlencode
@@ -207,7 +208,7 @@ def _me_response(user: User, db: Session) -> MeResponse:
         is_admin=bool(admin_email and user.email == admin_email),
         email_notifications=user.email_notifications,
         profile=user.profile,
-        goal=user.goal,
+        goal=json.loads(user.goal) if user.goal else None,
         created_at=user.created_at.isoformat() if user.created_at else None,
     )
 
@@ -248,10 +249,16 @@ def patch_me_profile(
     """Update the current user's fitness profile and goal."""
     if body.profile not in VALID_PROFILES:
         raise HTTPException(status_code=400, detail="Invalid profile")
-    if body.goal not in VALID_GOALS.get(body.profile, set()):
-        raise HTTPException(status_code=400, detail="Invalid goal for this profile")
+    if not body.goal:
+        raise HTTPException(status_code=400, detail="At least one goal is required")
+    if len(body.goal) > 3:
+        raise HTTPException(status_code=400, detail="Maximum 3 goals allowed")
+    valid = VALID_GOALS.get(body.profile, set())
+    for g in body.goal:
+        if g not in valid:
+            raise HTTPException(status_code=400, detail=f"Invalid goal '{g}' for this profile")
     current_user.profile = body.profile
-    current_user.goal = body.goal
+    current_user.goal = json.dumps(body.goal)
     db.commit()
     return _me_response(current_user, db)
 

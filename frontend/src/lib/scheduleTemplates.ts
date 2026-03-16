@@ -58,7 +58,7 @@ function makeSlots(
 
 export function buildSchedule(
   profile: LifeStage,
-  goal: string,
+  goals: string[],
   days: number,
   duration: SessionLength,
 ): ScheduleSlot[] {
@@ -83,7 +83,7 @@ export function buildSchedule(
   }
 
   if (profile === "adult") {
-    if (goal === "Build muscle") {
+    if (goals.includes("Build muscle")) {
       return makeSlots(activeDays, [
         { workout_type: "strength", body_focus: "upper" },
         { workout_type: "hiit",     body_focus: "full" },
@@ -93,7 +93,7 @@ export function buildSchedule(
         { workout_type: "strength", body_focus: "full" },
       ].slice(0, activeDays.length), diff, dur);
     }
-    if (goal === "Lose fat" || goal === "Improve cardio") {
+    if (goals.includes("Lose fat") || goals.includes("Improve cardio")) {
       return makeSlots(activeDays, [
         { workout_type: "hiit",   body_focus: "full" },
         { workout_type: "cardio", body_focus: "full" },
@@ -115,7 +115,7 @@ export function buildSchedule(
   }
 
   if (profile === "athlete") {
-    if (goal === "Endurance" || goal === "Athletic performance") {
+    if (goals.includes("Endurance") || goals.includes("Athletic performance")) {
       return makeSlots(activeDays, [
         { workout_type: "strength", body_focus: "upper" },
         { workout_type: "hiit",     body_focus: "full" },
@@ -125,7 +125,7 @@ export function buildSchedule(
         { workout_type: "cardio",   body_focus: "full" },
       ].slice(0, activeDays.length), diff, dur);
     }
-    if (goal === "Strength & hypertrophy") {
+    if (goals.includes("Strength & hypertrophy")) {
       return makeSlots(activeDays, [
         { workout_type: "strength", body_focus: "upper" },
         { workout_type: "hiit",     body_focus: "full" },

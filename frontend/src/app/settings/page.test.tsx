@@ -62,7 +62,7 @@ const mockUser = {
   is_admin: false,
   email_notifications: true,
   profile: "adult",
-  goal: "Build muscle",
+  goal: ["Build muscle"],
   created_at: "2024-01-01T00:00:00",
 };
 
@@ -88,7 +88,7 @@ beforeEach(() => {
   mockUpdateSchedule.mockResolvedValue(undefined);
   mockUpdateEmailNotifications.mockResolvedValue({ ...mockUser, email_notifications: false });
   mockGeneratePlan.mockResolvedValue({});
-  mockUpdateProfile.mockResolvedValue({ ...mockUser, profile: "adult", goal: "Build muscle" });
+  mockUpdateProfile.mockResolvedValue({ ...mockUser, profile: "adult", goal: ["Build muscle"] });
   mockLogout.mockResolvedValue(undefined);
   (api.getSuggestions as ReturnType<typeof vi.fn>).mockResolvedValue([]);
 });
@@ -228,7 +228,7 @@ describe("SettingsPage - fitness profile", () => {
     render(<SettingsPage />);
     await waitFor(() => screen.getByRole("button", { name: /Save profile/i }));
     expect(screen.getByDisplayValue("Active adult")).toBeInTheDocument();
-    expect(screen.getByDisplayValue("Build muscle")).toBeInTheDocument();
+    expect(screen.getByRole("checkbox", { name: /Build muscle/i })).toBeChecked();
   });
 
   it("Save profile button is disabled when values match current profile", async () => {
@@ -239,18 +239,20 @@ describe("SettingsPage - fitness profile", () => {
 
   it("calls updateProfile and shows success on save", async () => {
     render(<SettingsPage />);
-    await waitFor(() => screen.getByDisplayValue("Build muscle"));
-    fireEvent.change(screen.getByDisplayValue("Build muscle"), { target: { value: "Lose fat" } });
+    await waitFor(() => screen.getByRole("checkbox", { name: /Build muscle/i }));
+    fireEvent.click(screen.getByRole("checkbox", { name: /Build muscle/i }));
+    fireEvent.click(screen.getByRole("checkbox", { name: /Lose fat/i }));
     fireEvent.click(screen.getByRole("button", { name: /Save profile/i }));
-    await waitFor(() => expect(mockUpdateProfile).toHaveBeenCalledWith("adult", "Lose fat"));
+    await waitFor(() => expect(mockUpdateProfile).toHaveBeenCalledWith("adult", ["Lose fat"]));
     await waitFor(() => expect(screen.getByText(/Profile updated/i)).toBeInTheDocument());
   });
 
   it("shows error when updateProfile fails", async () => {
     mockUpdateProfile.mockRejectedValue(new Error("Server error"));
     render(<SettingsPage />);
-    await waitFor(() => screen.getByDisplayValue("Build muscle"));
-    fireEvent.change(screen.getByDisplayValue("Build muscle"), { target: { value: "Lose fat" } });
+    await waitFor(() => screen.getByRole("checkbox", { name: /Build muscle/i }));
+    fireEvent.click(screen.getByRole("checkbox", { name: /Build muscle/i }));
+    fireEvent.click(screen.getByRole("checkbox", { name: /Lose fat/i }));
     fireEvent.click(screen.getByRole("button", { name: /Save profile/i }));
     await waitFor(() => expect(screen.getByText(/Failed to update/i)).toBeInTheDocument());
   });
@@ -259,7 +261,7 @@ describe("SettingsPage - fitness profile", () => {
     render(<SettingsPage />);
     await waitFor(() => screen.getByDisplayValue("Active adult"));
     fireEvent.change(screen.getByDisplayValue("Active adult"), { target: { value: "beginner" } });
-    await waitFor(() => expect(screen.getByDisplayValue("Build a habit")).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText("Build a habit")).toBeInTheDocument());
   });
 });
 

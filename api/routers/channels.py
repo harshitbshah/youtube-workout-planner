@@ -8,6 +8,7 @@ Routes:
   GET    /channels/search?q= - search YouTube channels by name
 """
 
+import json
 import os
 from typing import Optional
 
@@ -86,18 +87,20 @@ def add_channel(
         # Prefer cached description from DB; fall back to what the frontend sent
         desc = (channel.description if channel else None) or body.description or ""
         channel_name = channel.name if channel else body.name
+        goals = json.loads(current_user.goal) if current_user.goal else []
+        goal_str = ", ".join(goals) if goals else ""
         ok, label = validate_channel_fitness(
             channel_name=channel_name,
             channel_description=desc,
             profile=current_user.profile,
-            goal=current_user.goal,
+            goal=goal_str,
         )
         if not ok:
             raise HTTPException(
                 status_code=422,
                 detail=(
                     f"This looks like a {label} channel. "
-                    f"Your plan is focused on {current_user.goal.lower()}. "
+                    f"Your plan is focused on {goal_str.lower()}. "
                     f"Try adding a fitness channel instead."
                 ),
             )

@@ -212,43 +212,44 @@ def test_delete_me_proceeds_if_revoke_fails(client, db_session):
 
 def test_patch_me_profile_updates_profile_and_goal(auth_client, db_session):
     client, user = auth_client
-    resp = client.patch("/auth/me/profile", json={"profile": "adult", "goal": "Build muscle"})
+    resp = client.patch("/auth/me/profile", json={"profile": "adult", "goal": ["Build muscle"]})
     assert resp.status_code == 200
     data = resp.json()
     assert data["profile"] == "adult"
-    assert data["goal"] == "Build muscle"
+    assert data["goal"] == ["Build muscle"]
     db_session.refresh(user)
     assert user.profile == "adult"
-    assert user.goal == "Build muscle"
+    assert user.goal == '["Build muscle"]'
 
 
 def test_patch_me_profile_rejects_invalid_profile(auth_client):
     client, user = auth_client
-    resp = client.patch("/auth/me/profile", json={"profile": "ninja", "goal": "Build muscle"})
+    resp = client.patch("/auth/me/profile", json={"profile": "ninja", "goal": ["Build muscle"]})
     assert resp.status_code == 400
 
 
 def test_patch_me_profile_rejects_goal_mismatched_to_profile(auth_client):
     client, user = auth_client
-    resp = client.patch("/auth/me/profile", json={"profile": "beginner", "goal": "Strength & hypertrophy"})
+    resp = client.patch("/auth/me/profile", json={"profile": "beginner", "goal": ["Strength & hypertrophy"]})
     assert resp.status_code == 400
 
 
 def test_patch_me_profile_requires_auth(client):
-    resp = client.patch("/auth/me/profile", json={"profile": "adult", "goal": "Build muscle"})
+    resp = client.patch("/auth/me/profile", json={"profile": "adult", "goal": ["Build muscle"]})
     assert resp.status_code == 401
 
 
 def test_me_response_includes_profile_and_goal(auth_client, db_session):
+    import json
     client, user = auth_client
     user.profile = "senior"
-    user.goal = "Stay active & healthy"
+    user.goal = json.dumps(["Stay active & healthy"])
     db_session.commit()
     resp = client.get("/auth/me")
     assert resp.status_code == 200
     data = resp.json()
     assert data["profile"] == "senior"
-    assert data["goal"] == "Stay active & healthy"
+    assert data["goal"] == ["Stay active & healthy"]
     assert data["created_at"] is not None
 
 

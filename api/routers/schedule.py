@@ -6,6 +6,8 @@ Routes:
   PUT /schedule     - replace the full schedule
 """
 
+import json
+
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
@@ -61,7 +63,7 @@ def update_schedule(
     if body.profile is not None:
         current_user.profile = body.profile
     if body.goal is not None:
-        current_user.goal = body.goal
+        current_user.goal = json.dumps(body.goal)
 
     # Delete existing schedule for this user and replace entirely
     db.query(Schedule).filter(Schedule.user_id == current_user.id).delete()

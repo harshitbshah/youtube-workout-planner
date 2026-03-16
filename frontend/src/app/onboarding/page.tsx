@@ -242,7 +242,7 @@ export default function OnboardingPage() {
 
   const [step, setStep] = useState(1);
   const [profile, setProfile] = useState<LifeStage | null>(null);
-  const [goal, setGoal] = useState<string | null>(null);
+  const [goals, setGoals] = useState<string[]>([]);
   const [trainingDays, setTrainingDays] = useState(3);
   const [sessionLength, setSessionLength] = useState<SessionLength>("medium");
   const [schedule, setSchedule] = useState<ScheduleSlot[]>([]);
@@ -280,12 +280,14 @@ export default function OnboardingPage() {
     setProfile(p);
     setTrainingDays(DEFAULT_DAYS[p]);
     setSessionLength(DEFAULT_DURATION[p]);
-    setGoal(null);
+    setGoals([]);
   }
 
-  // Step 2: select goal (highlight only - Next button advances)
-  function handleGoalSelect(g: string) {
-    setGoal(g);
+  // Step 2: toggle goal in/out of selection (max 3)
+  function handleGoalToggle(g: string) {
+    setGoals((prev) =>
+      prev.includes(g) ? prev.filter((x) => x !== g) : prev.length < 3 ? [...prev, g] : prev
+    );
   }
 
   // Step 4: select session length (highlight only - Next button advances)
@@ -295,7 +297,7 @@ export default function OnboardingPage() {
 
   // Step 4 → 5: build schedule then advance
   function handleBuildSchedule() {
-    const generated = buildSchedule(profile!, goal!, trainingDays, sessionLength);
+    const generated = buildSchedule(profile!, goals, trainingDays, sessionLength);
     setSchedule(generated);
     setCustomising(false);
     setStep(5);
@@ -305,7 +307,7 @@ export default function OnboardingPage() {
     setSavingSchedule(true);
     setError("");
     try {
-      await updateSchedule(schedule, profile!, goal!);
+      await updateSchedule(schedule, profile!, goals);
       setStep(6);
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : "Failed to save schedule");
@@ -433,22 +435,39 @@ export default function OnboardingPage() {
           </div>
         )}
 
-        {/* Step 2 - Goal */}
+        {/* Step 2 - Goals */}
         {step === 2 && profile && (
           <div className={contentClass}>
-            <h2 className="text-xl font-semibold text-zinc-900 dark:text-white mb-1">What&apos;s your main goal?</h2>
-            <p className="text-zinc-600 dark:text-zinc-400 text-sm mb-6">Pick the one that feels most right.</p>
+            <h2 className="text-xl font-semibold text-zinc-900 dark:text-white mb-1">What are your goals?</h2>
+            <p className="text-zinc-600 dark:text-zinc-400 text-sm mb-6">Pick up to 3 that apply.</p>
             <div className="flex flex-col gap-3">
-              {GOALS[profile].map((g) => (
-                <OptionCard
-                  key={g}
-                  label={g}
-                  selected={goal === g}
-                  onClick={() => handleGoalSelect(g)}
-                />
-              ))}
+              {GOALS[profile].map((g) => {
+                const selected = goals.includes(g);
+                const atMax = goals.length >= 3 && !selected;
+                return (
+                  <button
+                    key={g}
+                    onClick={() => handleGoalToggle(g)}
+                    disabled={atMax}
+                    className={`w-full text-left rounded-xl border px-5 py-4 transition cursor-pointer disabled:opacity-40 ${
+                      selected
+                        ? "border-zinc-900 dark:border-white bg-zinc-100 dark:bg-zinc-800"
+                        : "border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-900 hover:border-zinc-400 dark:hover:border-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className={`h-4 w-4 rounded shrink-0 border-2 flex items-center justify-center transition ${
+                        selected ? "border-zinc-900 dark:border-white bg-zinc-900 dark:bg-white" : "border-zinc-400 dark:border-zinc-600"
+                      }`}>
+                        {selected && <span className="text-white dark:text-zinc-900 text-xs font-bold leading-none">✓</span>}
+                      </div>
+                      <p className="font-medium text-zinc-900 dark:text-white">{g}</p>
+                    </div>
+                  </button>
+                );
+              })}
             </div>
-            <StepNav onBack={() => setStep(1)} onNext={() => setStep(3)} nextDisabled={!goal} />
+            <StepNav onBack={() => setStep(1)} onNext={() => setStep(3)} nextDisabled={goals.length === 0} />
           </div>
         )}
 

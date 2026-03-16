@@ -55,7 +55,7 @@ class ScheduleResponse(BaseModel):
 class ScheduleUpdate(BaseModel):
     schedule: list[ScheduleSlot]
     profile: Optional[str] = None
-    goal: Optional[str] = None
+    goal: Optional[list[str]] = None
 
 
 # ─── Plan ─────────────────────────────────────────────────────────────────────
@@ -105,13 +105,13 @@ class MeResponse(BaseModel):
     is_admin: bool = False
     email_notifications: bool = True
     profile: Optional[str] = None
-    goal: Optional[str] = None
+    goal: Optional[list[str]] = None
     created_at: Optional[str] = None
 
 
 class PatchMeProfileRequest(BaseModel):
     profile: str
-    goal: str
+    goal: list[str]
 
 
 # ─── Feedback ─────────────────────────────────────────────────────────────────

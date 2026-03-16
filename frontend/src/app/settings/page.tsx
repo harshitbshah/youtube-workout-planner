@@ -67,7 +67,7 @@ export default function SettingsPage() {
 
   // Fitness profile
   const [selectedLifeStage, setSelectedLifeStage] = useState<LifeStage | "">("");
-  const [selectedGoal, setSelectedGoal] = useState("");
+  const [selectedGoals, setSelectedGoals] = useState<string[]>([]);
   const [savingFitnessProfile, setSavingFitnessProfile] = useState(false);
   const [fitnessProfileStatus, setFitnessProfileStatus] = useState<"idle" | "ok" | "err">("idle");
 
@@ -93,7 +93,7 @@ export default function SettingsPage() {
         setUser(u);
         setDisplayName(u.display_name ?? "");
         if (u.profile) setSelectedLifeStage(u.profile as LifeStage);
-        if (u.goal) setSelectedGoal(u.goal);
+        if (u.goal) setSelectedGoals(u.goal);
         setChannels(ch);
         setSchedule(sched.schedule);
       })
@@ -124,11 +124,11 @@ export default function SettingsPage() {
   }
 
   async function handleSaveFitnessProfile() {
-    if (!selectedLifeStage || !selectedGoal) return;
+    if (!selectedLifeStage || selectedGoals.length === 0) return;
     setSavingFitnessProfile(true);
     setFitnessProfileStatus("idle");
     try {
-      const updated = await updateProfile(selectedLifeStage, selectedGoal);
+      const updated = await updateProfile(selectedLifeStage, selectedGoals);
       setUser(updated);
       setFitnessProfileStatus("ok");
       setTimeout(() => setFitnessProfileStatus("idle"), 2500);
@@ -268,7 +268,7 @@ export default function SettingsPage() {
                   onChange={(e) => {
                     const ls = e.target.value as LifeStage;
                     setSelectedLifeStage(ls);
-                    setSelectedGoal(GOALS[ls]?.[0] ?? "");
+                    setSelectedGoals([]);
                   }}
                   className="w-full rounded-lg bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 px-4 py-2.5 text-sm text-zinc-900 dark:text-white focus:outline-none focus:border-zinc-500"
                 >
@@ -278,28 +278,48 @@ export default function SettingsPage() {
                   ))}
                 </select>
               </div>
-              <div>
-                <label className="block text-xs text-zinc-500 mb-1.5">Goal</label>
-                <select
-                  value={selectedGoal}
-                  onChange={(e) => setSelectedGoal(e.target.value)}
-                  disabled={!selectedLifeStage}
-                  className="w-full rounded-lg bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 px-4 py-2.5 text-sm text-zinc-900 dark:text-white focus:outline-none focus:border-zinc-500 disabled:opacity-50"
-                >
-                  <option value="" disabled>Select goal</option>
-                  {selectedLifeStage && GOALS[selectedLifeStage].map((g) => (
-                    <option key={g} value={g}>{g}</option>
-                  ))}
-                </select>
-              </div>
+              {selectedLifeStage && (
+                <div>
+                  <label className="block text-xs text-zinc-500 mb-2">Goals <span className="text-zinc-400">(pick up to 3)</span></label>
+                  <div className="flex flex-col gap-2">
+                    {GOALS[selectedLifeStage].map((g) => {
+                      const checked = selectedGoals.includes(g);
+                      const atMax = selectedGoals.length >= 3 && !checked;
+                      return (
+                        <label key={g} className={`flex items-center gap-3 rounded-lg border px-4 py-2.5 cursor-pointer transition ${
+                          checked
+                            ? "border-zinc-900 dark:border-white bg-zinc-100 dark:bg-zinc-800"
+                            : "border-zinc-200 dark:border-zinc-700 hover:border-zinc-400 dark:hover:border-zinc-500"
+                        } ${atMax ? "opacity-40 cursor-not-allowed" : ""}`}>
+                          <input
+                            type="checkbox"
+                            checked={checked}
+                            disabled={atMax}
+                            onChange={() => {
+                              if (checked) {
+                                setSelectedGoals(selectedGoals.filter((x) => x !== g));
+                              } else if (!atMax) {
+                                setSelectedGoals([...selectedGoals, g]);
+                              }
+                            }}
+                            className="h-4 w-4 rounded accent-zinc-900 dark:accent-white"
+                          />
+                          <span className="text-sm text-zinc-900 dark:text-white">{g}</span>
+                        </label>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
               <div className="flex items-center gap-3 pt-1">
                 <button
                   onClick={handleSaveFitnessProfile}
                   disabled={
                     savingFitnessProfile ||
                     !selectedLifeStage ||
-                    !selectedGoal ||
-                    (selectedLifeStage === user?.profile && selectedGoal === user?.goal)
+                    selectedGoals.length === 0 ||
+                    (selectedLifeStage === user?.profile &&
+                      JSON.stringify([...(selectedGoals)].sort()) === JSON.stringify([...(user?.goal ?? [])].sort()))
                   }
                   className="rounded-lg bg-zinc-900 dark:bg-white px-4 py-2.5 text-sm font-semibold text-white dark:text-zinc-900 hover:bg-zinc-700 dark:hover:bg-zinc-100 disabled:opacity-40 transition"
                 >

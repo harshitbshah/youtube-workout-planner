@@ -65,7 +65,7 @@ export const updateEmailNotifications = (email_notifications: boolean) =>
     body: JSON.stringify({ email_notifications }),
   });
 
-export const updateProfile = (profile: string, goal: string) =>
+export const updateProfile = (profile: string, goal: string[]) =>
   apiFetch<User>("/auth/me/profile", {
     method: "PATCH",
     body: JSON.stringify({ profile, goal }),
@@ -93,7 +93,7 @@ export const getSuggestions = (profile?: string) => {
 
 export const getSchedule = () => apiFetch<ScheduleResponse>("/schedule");
 
-export const updateSchedule = (schedule: ScheduleSlot[], profile?: string, goal?: string) =>
+export const updateSchedule = (schedule: ScheduleSlot[], profile?: string, goal?: string[]) =>
   apiFetch<ScheduleResponse>("/schedule", {
     method: "PUT",
     body: JSON.stringify({ schedule, ...(profile !== undefined && { profile }), ...(goal !== undefined && { goal }) }),
@@ -158,7 +158,7 @@ export interface User {
   is_admin: boolean;
   email_notifications: boolean;
   profile: string | null;
-  goal: string | null;
+  goal: string[] | null;
   created_at: string | null;
 }
 

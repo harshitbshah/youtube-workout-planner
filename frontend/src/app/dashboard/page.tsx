@@ -576,7 +576,7 @@ export default function DashboardPage() {
         {showProfileNudge && (
           <div className="mb-6 flex items-center justify-between gap-3 rounded-lg border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/60 px-4 py-3 text-sm text-zinc-700 dark:text-zinc-300">
             <span>
-              Your fitness profile is set to <strong>{LIFE_STAGE_LABELS[user!.profile!] ?? user!.profile}</strong> - <strong>{user!.goal}</strong>. Still accurate?{" "}
+              Your fitness profile is set to <strong>{LIFE_STAGE_LABELS[user!.profile!] ?? user!.profile}</strong> - <strong>{user!.goal!.join(", ")}</strong>. Still accurate?{" "}
               <Link href="/settings" className="underline hover:text-zinc-900 dark:hover:text-white transition">
                 Update in Settings →
               </Link>
