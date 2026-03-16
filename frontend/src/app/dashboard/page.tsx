@@ -613,6 +613,12 @@ export default function DashboardPage() {
               </button>
             )}
             <button
+              onClick={() => { throw new Error("Sentry frontend test - delete me") }}
+              className="rounded-lg border border-red-300 px-3 py-2 text-sm text-red-500 cursor-pointer"
+            >
+              Sentry test
+            </button>
+            <button
               onClick={handleLogout}
               className="rounded-lg border border-zinc-200 dark:border-zinc-700 px-3 py-2 text-sm text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 cursor-pointer transition"
             >
