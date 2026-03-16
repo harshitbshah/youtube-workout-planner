@@ -346,13 +346,13 @@ GET /auth/google?color_scheme=light|dark
 
 GET /auth/google/callback?code=&state=
   → exchange code for tokens
+  → decode id_token JWT locally (base64 payload decode - no extra /userinfo HTTP call)
   → upsert user in DB
-  → store youtube_refresh_token encrypted in user_credentials
   → generate signed token: URLSafeTimedSerializer(SECRET).dumps(user_id)
-  → redirect to {FRONTEND_URL}?token=<signed_token>
+  → check UserChannel count; redirect to {FRONTEND_URL}/dashboard?token=... or /onboarding?token=...
 
-Frontend (page.tsx on mount):
-  → extract ?token= from URL, store in localStorage, strip from URL
+Frontend (dashboard or onboarding page on mount):
+  → extract ?token= from URL, call setToken(), strip from URL
   → all subsequent API calls send: Authorization: Bearer <token>
 
 GET /auth/me                     → current user profile (includes profile, goal list, created_at)

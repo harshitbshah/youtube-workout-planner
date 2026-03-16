@@ -2,9 +2,19 @@
 
 ## Status
 Phases 1–5 complete + admin console + charts + guide page + mobile UX complete. Phase A complete. Phase B complete. Phase C complete. Phase D F5+F6+F9 complete. Backlog items T1+T2+S1+M2 complete. Channel suggestions + onboarding UX complete. Channel fitness validation (migration 019) complete. Email notifications opt-in step in onboarding complete. Dark mode all pages fixed. Light mode button visibility fixed. Lazy classification (plan-first) complete. Onboarding guard + admin reset complete. Homepage M1 redesign complete. Planner Tier 6 + body-focus/workout-type coupling complete. Onboarding guard no-flash + admin bypass complete. Async YouTube publish complete. Homepage marquee updated. Settings regenerate banner on channel add or remove. Incremental OAuth complete. Multi-select goals + fitness profile editing in Settings complete (migration 020). 5-channel limit enforced. 8-week profile nudge banner on dashboard.
-**300 backend unit + 193 frontend = 493 automated tests passing** (+ integration tests).
+**300 backend unit + 194 frontend = 494 automated tests passing** (+ integration tests).
 Both Railway (backend) and Vercel (frontend) live and functional on `main`.
 **Ready for first users** - Google OAuth fully verified. YouTube scope approved by Google Trust & Safety (2026-03-15). No more "unverified app" warning for any user.
+
+**Done this session (2026-03-15, checkpoint 9):**
+- `_decode_id_token`: replaced `_get_google_userinfo` HTTP call with local JWT base64 decode - saves ~100ms per sign-in ✅
+- OAuth callback redirects straight to `/dashboard?token=...` or `/onboarding?token=...` - eliminated landing page hop, removed one full browser round-trip ✅
+- Landing page flicker fix: `checking` state now initialised from `localStorage` - logged-out visitors see content immediately, no spinner-to-content flash ✅
+- Onboarding step 5 Back button: added `← Back` to schedule preview; reordered to `← Back | Customise | Looks good →` ✅
+- Homepage marquee: removed Fitness Marshall + Lottie Murphy (broken avatars), replaced with MommaStrong + Sydney Cummings ✅
+- Settings checkboxes: replaced native `<input type="checkbox">` with custom styled indicator - checked vs unchecked clearly distinct in dark mode ✅
+- Rolling token refresh: discussed and tabled - added to backlog under "Deferred - Auth" ✅
+- **300 backend unit + 194 frontend = 494 automated tests passing** ✅
 
 **Done this session (2026-03-15, checkpoint 8):**
 - Multi-select goals: `users.goal` converted from plain string to JSON array (migration 020 migrates existing rows) ✅

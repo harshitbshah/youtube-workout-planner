@@ -4,6 +4,12 @@ Running list of ideas and deferred features. Append during sessions; review befo
 
 ---
 
+## Deferred - Auth
+
+- **Rolling token refresh**: when backend sees a token with < 7 days remaining, issue a fresh 30-day token in an `X-Refresh-Token` response header; frontend stores it via `setToken`. Prevents silent hard-logout for active users. Not urgent at 30-day expiry.
+
+---
+
 ## Deferred - Phase D
 
 - **F7 - Per-user monthly budget cap**: activate when heavy manual scanners become a cost risk. Reject `POST /jobs/scan` with 429 once user exceeds N Anthropic calls/month.
