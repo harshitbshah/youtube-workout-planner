@@ -587,3 +587,48 @@ def test_build_targeted_batch_multi_pattern_video_appears_once(db_session):
 
     targeted_ids = [v["id"] for v in targeted]
     assert targeted_ids.count("multi_match") == 1  # appears exactly once
+
+
+# ─── Trusted-channel signal in build_targeted_batch ──────────────────────────
+
+def test_build_targeted_batch_trusted_channel_includes_generic_title(db_session):
+    """
+    Yoga channel with a generic-title video ("Morning Flow") should be included
+    in the targeted batch when there is a Yoga gap, because another video on the
+    same channel is already classified as Yoga (trusted channel signal).
+    """
+    u = _user(db_session, "tc1")
+    yoga_ch = _channel(db_session, u, "tc1")
+
+    # One video already classified as Yoga (rule-classified from clear title)
+    _classified_video(db_session, yoga_ch, workout_type="Yoga", vid_id="yoga-clear")
+    # Another video with a generic title - title pattern would miss it
+    _unclassified_video(db_session, yoga_ch, title="Morning Flow", vid_id="yoga-generic")
+
+    gap_types = [{"workout_type": "Yoga", "duration_min": 20, "duration_max": 60}]
+    targeted, remainder = build_targeted_batch(str(u.id), gap_types, db_session)
+
+    targeted_ids = [v["id"] for v in targeted]
+    # Generic title must be in targeted because channel is trusted for Yoga
+    assert "yoga-generic" in targeted_ids
+    assert "yoga-generic" not in [v["id"] for v in remainder]
+
+
+def test_build_targeted_batch_unrelated_channel_not_trusted(db_session):
+    """
+    A channel with no yoga-classified videos is NOT a trusted yoga channel -
+    its generic-title videos still go to remainder for a yoga gap.
+    """
+    u = _user(db_session, "tc2")
+    strength_ch = _channel(db_session, u, "tc2")
+
+    # Strength channel - classified videos are Strength, not Yoga
+    _classified_video(db_session, strength_ch, workout_type="Strength", vid_id="str-cls")
+    _unclassified_video(db_session, strength_ch, title="Morning Flow", vid_id="generic-str")
+
+    gap_types = [{"workout_type": "Yoga", "duration_min": 20, "duration_max": 60}]
+    targeted, remainder = build_targeted_batch(str(u.id), gap_types, db_session)
+
+    # Generic title from a non-yoga channel goes to remainder
+    assert "generic-str" not in [v["id"] for v in targeted]
+    assert "generic-str" in [v["id"] for v in remainder]

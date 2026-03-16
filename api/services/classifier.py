@@ -24,7 +24,7 @@ from src.classifier import (
     _parse_classification,
 )
 
-from sqlalchemy import or_
+from sqlalchemy import func, or_
 
 from ..models import Channel, Classification, UserChannel, Video
 
@@ -142,6 +142,7 @@ def _fetch_unclassified_for_user(session: Session, user_id: str) -> list[dict]:
     return [
         {
             "id": v.id,
+            "channel_id": v.channel_id,
             "title": v.title,
             "description": v.description,
             "duration_sec": v.duration_sec,
@@ -219,30 +220,56 @@ def build_targeted_batch(
 ) -> tuple[list[dict], list[dict]]:
     """
     Split unclassified videos into (targeted, remainder).
-    Targeted = videos whose titles match the missing workout types, capped at
-    max(len(gap_types) * TARGETED_BATCH_MULTIPLIER, 10).
-    Remainder = everything else, deferred to background classification.
+
+    Targeted videos are selected by two signals, in priority order:
+    1. Channel-based: channels that already have >=1 classified video of a gap type
+       are trusted producers of that type. All their unclassified videos are included,
+       even if individual titles are generic (e.g. yoga channels with "Morning Flow").
+    2. Title-based: unclassified videos whose titles match a gap type pattern.
+
+    Both signals are capped together at max(len(gap_types) * TARGETED_BATCH_MULTIPLIER, 10).
+    Remainder is deferred to background classification.
     """
     unclassified = _fetch_unclassified_for_user(session, user_id)
     gap_type_names = {g["workout_type"].lower() for g in gap_types}
     cap = max(len(gap_types) * TARGETED_BATCH_MULTIPLIER, 10)
 
+    # Find channel IDs that already have at least one classified video for each gap type.
+    # These are "trusted channels" for that type - include their unclassified videos
+    # even when titles are ambiguous.
+    trusted_channel_ids: set[str] = set()
+    for gap_type in gap_type_names:
+        channel_ids = (
+            session.query(Video.channel_id)
+            .join(Classification, Classification.video_id == Video.id)
+            .join(UserChannel, (UserChannel.channel_id == Video.channel_id) & (UserChannel.user_id == user_id))
+            .filter(func.lower(Classification.workout_type) == gap_type)
+            .distinct()
+            .all()
+        )
+        trusted_channel_ids.update(cid for (cid,) in channel_ids)
+
     targeted: list[dict] = []
     remainder: list[dict] = []
     for video in unclassified:
+        if len(targeted) >= cap:
+            remainder.append(video)
+            continue
+
         title = video["title"] or ""
-        matched = any(
+        from_trusted_channel = video["channel_id"] in trusted_channel_ids
+        title_matched = any(
             t in gap_type_names and pattern.search(title)
             for t, pattern in _GAP_TYPE_PATTERNS.items()
         )
-        if matched and len(targeted) < cap:
+        if from_trusted_channel or title_matched:
             targeted.append(video)
         else:
             remainder.append(video)
 
     logger.info(
-        f"[user={user_id}] Targeted batch: {len(targeted)} for gaps {gap_type_names}, "
-        f"{len(remainder)} deferred to background"
+        f"[user={user_id}] Targeted batch: {len(targeted)} for gaps {gap_type_names} "
+        f"({len(trusted_channel_ids)} trusted channels), {len(remainder)} deferred to background"
     )
     return targeted, remainder
 
