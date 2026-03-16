@@ -3,21 +3,18 @@
   <rect width="512" height="512" rx="120" fill="#18181b"/>
 
   <!--
-    Geometric "P"
-    Horizontally centred: letter spans x=126–386 (260px), centre=256
-    Vertically: y=96–420 (324px tall), bowl y=96–280
-
-    Stem:  x=126, width=76
-    Bowl outer D:  semicircle centre=(294, 188) r=92  →  rightmost x=386
-    Bowl inner cutout:  same centre r=48  (wall thickness=44px)
+    Geometric "P" — ~57% of icon height, centred with even padding
+    Letter bounds: x=140–373, y=111–401  (padding: ~111px top/bottom, ~140px left/right)
+    Stem:        x=140, width=68
+    Bowl centre: (290, 194)  outer r=83  inner r=43  wall=40px
   -->
 
   <!-- Stem -->
-  <rect x="126" y="96" width="76" height="324" rx="14" fill="white"/>
+  <rect x="140" y="111" width="68" height="290" rx="12" fill="white"/>
 
-  <!-- Bowl outer (D-shape: flat left + semicircle right) -->
-  <path d="M 126 96 L 294 96 A 92 92 0 1 1 294 280 L 126 280 Z" fill="white"/>
+  <!-- Bowl outer (D-shape) -->
+  <path d="M 140 111 L 290 111 A 83 83 0 1 1 290 277 L 140 277 Z" fill="white"/>
 
   <!-- Bowl inner cutout -->
-  <path d="M 202 140 L 294 140 A 48 48 0 1 1 294 236 L 202 236 Z" fill="#18181b"/>
+  <path d="M 208 151 L 290 151 A 43 43 0 1 1 290 237 L 208 237 Z" fill="#18181b"/>
 </svg>
