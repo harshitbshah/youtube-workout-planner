@@ -11,6 +11,7 @@ import {
   getJobStatus,
   getSuggestions,
   setToken,
+  loginUrl,
   type ChannelResponse,
   type ChannelSearchResult,
   type ScheduleSlot,
@@ -259,10 +260,11 @@ export default function OnboardingPage() {
   const [classifyProgress, setClassifyProgress] = useState<{ total: number; done: number } | null>(null);
 
   const [guardChecking, setGuardChecking] = useState(true);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   const isSenior = profile === "senior";
 
-  // Guard: redirect already-onboarded non-admin users to dashboard
+  // Guard: redirect already-onboarded users to dashboard; allow unauthenticated for pre-auth steps
   useEffect(() => {
     let cancelled = false;
     // Extract token if we arrived directly from OAuth callback
@@ -275,15 +277,49 @@ export default function OnboardingPage() {
     getMe()
       .then((user) => {
         if (cancelled) return;
+        setIsAuthenticated(true);
         if (user.is_admin) { setGuardChecking(false); return; }
         return getChannels().then((ch) => {
-          if (!cancelled) {
-            if (ch.length > 0) router.replace("/dashboard?from=onboarding");
-            else setGuardChecking(false);
+          if (cancelled) return;
+          if (ch.length > 0) {
+            router.replace("/dashboard?from=onboarding");
+            return;
           }
+          // New user - check if returning from OAuth with saved pre-auth state
+          const pending = localStorage.getItem("onboarding_pending");
+          if (pending) {
+            try {
+              const saved = JSON.parse(pending);
+              localStorage.removeItem("onboarding_pending");
+              if (saved.profile) setProfile(saved.profile);
+              if (saved.goals) setGoals(saved.goals);
+              if (saved.equipment) setEquipment(saved.equipment);
+              if (saved.trainingDays) setTrainingDays(saved.trainingDays);
+              if (saved.sessionLength) setSessionLength(saved.sessionLength);
+              if (saved.schedule?.length) {
+                setSchedule(saved.schedule);
+                updateSchedule(saved.schedule, saved.profile, saved.goals, saved.equipment)
+                  .then(() => { if (!cancelled) setStep(7); })
+                  .catch((e: unknown) => {
+                    if (!cancelled) {
+                      setStep(6);
+                      setError(e instanceof Error ? e.message : "Failed to save schedule");
+                    }
+                  })
+                  .finally(() => { if (!cancelled) setGuardChecking(false); });
+                return;
+              }
+            } catch {
+              localStorage.removeItem("onboarding_pending");
+            }
+          }
+          setGuardChecking(false);
         });
       })
-      .catch(() => { if (!cancelled) router.replace("/"); });
+      .catch(() => {
+        // Unauthenticated - allow pre-auth steps 1-6 without redirect
+        if (!cancelled) setGuardChecking(false);
+      });
     return () => { cancelled = true; };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -322,6 +358,13 @@ export default function OnboardingPage() {
   }
 
   async function handleScheduleConfirm() {
+    if (!isAuthenticated) {
+      localStorage.setItem("onboarding_pending", JSON.stringify({
+        profile, goals, equipment, trainingDays, sessionLength, schedule,
+      }));
+      window.location.href = loginUrl();
+      return;
+    }
     setSavingSchedule(true);
     setError("");
     try {
@@ -594,9 +637,12 @@ export default function OnboardingPage() {
                     disabled={savingSchedule}
                     className="flex-1 rounded-lg bg-zinc-900 dark:bg-white px-4 py-3 text-sm font-semibold text-white dark:text-zinc-900 hover:bg-zinc-700 dark:hover:bg-zinc-100 disabled:opacity-40 transition cursor-pointer"
                   >
-                    {savingSchedule ? "Saving…" : "Looks good →"}
+                    {savingSchedule ? "Saving…" : isAuthenticated ? "Looks good →" : "Create free account →"}
                   </button>
                 </div>
+                {!isAuthenticated && (
+                  <p className="text-xs text-zinc-400 dark:text-zinc-600 text-center mt-2">Takes 10 seconds - no credit card needed</p>
+                )}
               </>
             ) : (
               <>
@@ -610,9 +656,12 @@ export default function OnboardingPage() {
                     disabled={savingSchedule}
                     className="flex-1 rounded-lg bg-zinc-900 dark:bg-white px-4 py-3 text-sm font-semibold text-white dark:text-zinc-900 hover:bg-zinc-700 dark:hover:bg-zinc-100 disabled:opacity-40 transition cursor-pointer"
                   >
-                    {savingSchedule ? "Saving…" : "Looks good →"}
+                    {savingSchedule ? "Saving…" : isAuthenticated ? "Looks good →" : "Create free account →"}
                   </button>
                 </div>
+                {!isAuthenticated && (
+                  <p className="text-xs text-zinc-400 dark:text-zinc-600 text-center mt-2">Takes 10 seconds - no credit card needed</p>
+                )}
               </>
             )}
           </div>

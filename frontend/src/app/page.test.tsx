@@ -39,12 +39,20 @@ describe("LandingPage - unauthenticated", () => {
     );
   });
 
-  it("sign-in links point to the auth/google URL", async () => {
+  it("'Sign in' nav link points to the auth/google URL", async () => {
     render(<LandingPage />);
     await waitFor(() => {
-      const links = screen.getAllByRole("link", { name: /sign in|get started/i });
-      links.forEach((link) => {
-        expect(link.getAttribute("href")).toContain("/auth/google");
+      const signInLink = screen.getByRole("link", { name: /^sign in$/i });
+      expect(signInLink.getAttribute("href")).toContain("/auth/google");
+    });
+  });
+
+  it("'Get started free' CTA links point to /onboarding", async () => {
+    render(<LandingPage />);
+    await waitFor(() => {
+      const ctaLinks = screen.getAllByRole("link", { name: /get started free/i });
+      ctaLinks.forEach((link) => {
+        expect(link.getAttribute("href")).toBe("/onboarding");
       });
     });
   });

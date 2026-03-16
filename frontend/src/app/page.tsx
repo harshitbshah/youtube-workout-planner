@@ -123,13 +123,12 @@ export default function LandingPage() {
           Turn your favourite YouTube fitness channels into a structured weekly plan - automatically.
           A different workout, every day.
         </p>
-        <a
-          href={loginUrl()}
-          className="inline-flex items-center gap-2.5 rounded-lg bg-zinc-900 dark:bg-white px-7 py-3.5 text-sm font-semibold text-white dark:text-zinc-900 hover:bg-zinc-700 dark:hover:bg-zinc-100 transition"
+        <Link
+          href="/onboarding"
+          className="inline-flex items-center rounded-lg bg-zinc-900 dark:bg-white px-7 py-3.5 text-sm font-semibold text-white dark:text-zinc-900 hover:bg-zinc-700 dark:hover:bg-zinc-100 transition"
         >
-          <GoogleIcon />
           Get started free
-        </a>
+        </Link>
         <p className="mt-3 text-xs text-zinc-400 dark:text-zinc-600">
           Ready in under 3 minutes
         </p>
@@ -214,13 +213,12 @@ export default function LandingPage() {
           <p className="text-zinc-400 text-sm mb-8 max-w-sm mx-auto leading-relaxed">
             Your first personalised plan is waiting. Three minutes from now you&apos;ll know exactly what to do on Monday.
           </p>
-          <a
-            href={loginUrl()}
-            className="inline-flex items-center gap-2.5 rounded-lg bg-white px-8 py-3.5 text-sm font-semibold text-zinc-900 hover:bg-zinc-100 transition"
+          <Link
+            href="/onboarding"
+            className="inline-flex items-center rounded-lg bg-white px-8 py-3.5 text-sm font-semibold text-zinc-900 hover:bg-zinc-100 transition"
           >
-            <GoogleIcon />
             Get started free
-          </a>
+          </Link>
         </div>
       </section>
 

@@ -21,6 +21,8 @@ vi.mock("@/lib/api", () => ({
   addChannel: vi.fn(),
   deleteChannel: vi.fn(),
   getSuggestions: vi.fn(),
+  setToken: vi.fn(),
+  loginUrl: vi.fn(() => "http://test-api/auth/google"),
 }));
 
 const mockGetMe = api.getMe as ReturnType<typeof vi.fn>;
@@ -31,6 +33,8 @@ const mockTriggerScan = api.triggerScan as ReturnType<typeof vi.fn>;
 
 beforeEach(() => {
   vi.clearAllMocks();
+  vi.restoreAllMocks();
+  localStorage.clear();
   // Default: user is not yet onboarded (no channels)
   mockGetMe.mockResolvedValue({ id: 1, email: "test@example.com" });
   mockGetChannels.mockResolvedValue([]);
@@ -540,6 +544,118 @@ describe("OnboardingPage - Step 9 (Progress)", () => {
   });
 });
 
+describe("OnboardingPage - pre-auth onboarding flow", () => {
+  async function goToStep6Unauthed() {
+    mockGetMe.mockRejectedValue(new Error("401"));
+    await renderPage();
+    fireEvent.click(screen.getByText("Active adult"));
+    fireEvent.click(screen.getByRole("button", { name: /Next →/i }));
+    fireEvent.click(screen.getByText("Build muscle"));
+    fireEvent.click(screen.getByRole("button", { name: /Next →/i }));
+    fireEvent.click(screen.getByRole("button", { name: "4" }));
+    fireEvent.click(screen.getByRole("button", { name: /Next →/i }));
+    fireEvent.click(screen.getByText("25–35 min"));
+    fireEvent.click(screen.getByRole("button", { name: /Next →/i }));
+    fireEvent.click(screen.getByRole("button", { name: /Build my schedule/i }));
+    await waitFor(() => screen.getByText(/Here's your personalised plan/i));
+  }
+
+  it("shows step 1 immediately when unauthenticated", async () => {
+    mockGetMe.mockRejectedValue(new Error("401"));
+    await renderPage();
+    expect(screen.getByText(/First, tell us a bit about yourself/i)).toBeInTheDocument();
+  });
+
+  it("shows 'Create free account' button on step 6 when unauthenticated", async () => {
+    await goToStep6Unauthed();
+    expect(screen.getByRole("button", { name: /Create free account/i })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /Looks good →/i })).not.toBeInTheDocument();
+  });
+
+  it("shows 'Looks good' button on step 6 when authenticated", async () => {
+    // Default beforeEach: getMe resolves
+    await renderPage();
+    fireEvent.click(screen.getByText("Active adult"));
+    fireEvent.click(screen.getByRole("button", { name: /Next →/i }));
+    fireEvent.click(screen.getByText("Build muscle"));
+    fireEvent.click(screen.getByRole("button", { name: /Next →/i }));
+    fireEvent.click(screen.getByRole("button", { name: "4" }));
+    fireEvent.click(screen.getByRole("button", { name: /Next →/i }));
+    fireEvent.click(screen.getByText("25–35 min"));
+    fireEvent.click(screen.getByRole("button", { name: /Next →/i }));
+    fireEvent.click(screen.getByRole("button", { name: /Build my schedule/i }));
+    await waitFor(() => screen.getByText(/Here's your personalised plan/i));
+    expect(screen.getByRole("button", { name: /Looks good →/i })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /Create free account/i })).not.toBeInTheDocument();
+  });
+
+  it("saves onboarding state to localStorage when unauthenticated user clicks 'Create free account'", async () => {
+    const setItemSpy = vi.spyOn(Storage.prototype, "setItem");
+    await goToStep6Unauthed();
+    fireEvent.click(screen.getByRole("button", { name: /Create free account/i }));
+
+    const pendingCall = setItemSpy.mock.calls.find((c) => c[0] === "onboarding_pending");
+    expect(pendingCall).toBeDefined();
+    const saved = JSON.parse(pendingCall![1] as string);
+    expect(saved.profile).toBe("adult");
+    expect(saved.goals).toContain("Build muscle");
+    expect(Array.isArray(saved.schedule)).toBe(true);
+    expect(saved.schedule.length).toBeGreaterThan(0);
+  });
+
+  it("restores pending state and calls updateSchedule when returning after OAuth", async () => {
+    localStorage.setItem("onboarding_pending", JSON.stringify({
+      profile: "adult",
+      goals: ["Build muscle"],
+      equipment: [],
+      trainingDays: 4,
+      sessionLength: "medium",
+      schedule: [
+        { day: "monday", workout_type: "strength", body_focus: "upper", duration_min: 25, duration_max: 35, difficulty: "intermediate" },
+      ],
+    }));
+
+    render(<OnboardingPage />);
+
+    await waitFor(() => {
+      expect(mockUpdateSchedule).toHaveBeenCalledWith(
+        expect.any(Array),
+        "adult",
+        ["Build muscle"],
+        [],
+      );
+    });
+
+    await waitFor(() => {
+      expect(screen.getByText(/Get your weekly plan by email/i)).toBeInTheDocument();
+    });
+
+    expect(localStorage.getItem("onboarding_pending")).toBeNull();
+  });
+
+  it("shows schedule preview with error if updateSchedule fails on pending restore", async () => {
+    mockUpdateSchedule.mockRejectedValue(new Error("Server error"));
+    localStorage.setItem("onboarding_pending", JSON.stringify({
+      profile: "adult",
+      goals: ["Build muscle"],
+      equipment: [],
+      trainingDays: 4,
+      sessionLength: "medium",
+      schedule: [
+        { day: "monday", workout_type: "strength", body_focus: "upper", duration_min: 25, duration_max: 35, difficulty: "intermediate" },
+      ],
+    }));
+
+    render(<OnboardingPage />);
+
+    await waitFor(() => {
+      expect(screen.getByText(/Here's your personalised plan/i)).toBeInTheDocument();
+    });
+    expect(screen.getByText("Server error")).toBeInTheDocument();
+    expect(localStorage.getItem("onboarding_pending")).toBeNull();
+  });
+});
+
 describe("OnboardingPage - Step Indicator", () => {
   it("shows 'Profile' as active on step 1", async () => {
     await renderPage();
@@ -593,16 +709,10 @@ describe("OnboardingPage - already-onboarded guard", () => {
     expect(mockReplace).not.toHaveBeenCalledWith(expect.stringContaining("from=onboarding"));
   });
 
-  it("redirects to / when getMe fails (unauthenticated)", async () => {
-    const mockReplace = vi.fn();
-    vi.mocked(useRouter).mockReturnValue({ push: vi.fn(), replace: mockReplace } as unknown as ReturnType<typeof useRouter>);
+  it("renders step 1 for unauthenticated visitors (no redirect)", async () => {
     mockGetMe.mockRejectedValue(new Error("401"));
-
-    render(<OnboardingPage />);
-
-    await waitFor(() =>
-      expect(mockReplace).toHaveBeenCalledWith("/")
-    );
+    await renderPage();
+    expect(screen.getByText(/First, tell us a bit about yourself/i)).toBeInTheDocument();
   });
 
   it("does not redirect admin user even when they already have channels", async () => {
