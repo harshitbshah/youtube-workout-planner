@@ -615,7 +615,7 @@ export default function DashboardPage() {
             )}
             <button
               onClick={() => {
-                console.log("[Sentry test] button clicked, capturing...");
+                console.log("[Sentry test] DSN:", process.env.NEXT_PUBLIC_SENTRY_DSN ? "set" : "MISSING");
                 Sentry.captureException(new Error("Sentry frontend test - delete me"));
                 console.log("[Sentry test] captureException called");
               }}
