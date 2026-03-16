@@ -2,9 +2,13 @@
 022_fix_non_workout_classifications
 
 Fix misclassified videos: set workout_type = 'Other' for videos whose titles
-match commentary, reaction, progress-tracking, or other non-follow-along patterns.
-These slipped through the scanner title blocklist and were incorrectly classified
-as Strength/HIIT/etc by the AI because workout-related words appear in the title.
+clearly indicate commentary/reaction/critique content. These slipped through
+the scanner title blocklist and were incorrectly classified as workout types
+by the AI because workout-related words appear in the title.
+
+The AI classifier system prompt was also fixed (removed the "workout video"
+framing that primed it to always return a workout type). This migration handles
+videos that were already stored and classified under the old broken prompt.
 """
 
 revision = "022"
@@ -13,29 +17,13 @@ down_revision = "021"
 from alembic import op
 
 
+# Only patterns that unambiguously indicate non-follow-along content.
+# Deliberately conservative - the LLM handles everything else going forward.
 _PATTERNS = [
-    # commentary / reaction / critique
     "%critique%",
     "%react to%",
-    "%reaction%",
+    "% reaction%",   # leading space avoids matching e.g. "core reaction time"
     "%commentary%",
-    "%scientists explain%",
-    "%science explains%",
-    "%debunking%",
-    "%debunked%",
-    "%roast%",
-    # progress / challenge tracking
-    "%365 days%",
-    "%30 day%",
-    "%90 day%",
-    "%100 day%",
-    "%how much muscle%",
-    "%how much weight%",
-    "%did i gain%",
-    "%did i lose%",
-    "%progress update%",
-    "%my transformation%",
-    "%natty or not%",
 ]
 
 

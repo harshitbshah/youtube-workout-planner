@@ -41,7 +41,7 @@ TRANSCRIPT_SEGMENTS = 25
 # How often to poll the batch API for completion (seconds)
 BATCH_POLL_INTERVAL = 30
 
-SYSTEM_PROMPT = """You are a fitness video classifier. Given a YouTube workout video's metadata, classify it accurately.
+SYSTEM_PROMPT = """You are a fitness video classifier. Given a YouTube video's metadata, determine whether it is a follow-along workout video and, if so, classify it.
 
 Return ONLY a valid JSON object with these exact fields:
 {
@@ -52,17 +52,20 @@ Return ONLY a valid JSON object with these exact fields:
   "has_cooldown": true | false
 }
 
-Guidelines:
-- workout_type "HIIT"     = high-intensity interval training, tabata, circuit training
-- workout_type "Strength" = weight training, resistance training, dumbbell/barbell workouts
-- workout_type "Cardio"   = running, cycling, traditional aerobics (non-dance)
-- workout_type "Mobility" = stretching, foam rolling, flexibility work (NOT yoga or pilates)
-- workout_type "Yoga"     = yoga flows, vinyasa, hatha, yin yoga, ashtanga, restorative yoga
-- workout_type "Pilates"  = mat pilates, reformer pilates, barre workouts
-- workout_type "Dance"    = Zumba, Bollywood dance fitness, dance cardio, hip-hop dance workouts
-- workout_type "Other"    = vlogs, Q&As, nutrition tips, challenges, non-workout content; also: progress/transformation videos ("how much muscle I gained"), reaction/critique/commentary videos ("scientists critique workouts"), educational explainers about exercise science, challenge tracking ("365 days"), and any video where the viewer is not expected to follow along and exercise
-- body_focus "any"        = when focus cannot be determined from available info
-- difficulty              = use "intermediate" as default when unclear
+The most important distinction: is this a video the viewer exercises ALONG WITH, or is it something they just watch?
+- Use "Other" if the viewer watches but does not exercise: vlogs, Q&As, nutrition/diet advice, progress updates, transformation videos, reaction/critique/commentary videos, educational explainers about exercise science, interviews, podcasts, product reviews, challenge recaps, or any video primarily about fitness rather than doing fitness.
+- Use a workout type only if the viewer is expected to follow along and actually exercise.
+
+Workout type guidelines (only apply when the video IS a follow-along workout):
+- "HIIT"     = high-intensity interval training, tabata, circuit training
+- "Strength" = weight training, resistance training, dumbbell/barbell workouts
+- "Cardio"   = running, cycling, traditional aerobics (non-dance)
+- "Mobility" = stretching, foam rolling, flexibility work (NOT yoga or pilates)
+- "Yoga"     = yoga flows, vinyasa, hatha, yin yoga, ashtanga, restorative yoga
+- "Pilates"  = mat pilates, reformer pilates, barre workouts
+- "Dance"    = Zumba, Bollywood dance fitness, dance cardio, hip-hop dance workouts
+- body_focus "any" = when focus cannot be determined
+- difficulty = use "intermediate" as default when unclear
 - has_warmup/has_cooldown = true only when explicitly mentioned or clearly evident
 - Return ONLY the JSON object, no explanation, no markdown code fences"""
 

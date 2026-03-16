@@ -453,16 +453,11 @@ def test_is_blocked_title_rejects_non_workout():
     assert _is_blocked_title("Q&A - Your Questions Answered") is True
     assert _is_blocked_title("Vlog: Day In My Life") is True
     assert _is_blocked_title("Unboxing: New Home Gym Gear") is True
-    # commentary / reaction / critique
+    # commentary / reaction / critique (blocklist handles these; LLM handles everything else)
     assert _is_blocked_title("Exercise Scientists Critique Fitness Influence Workouts") is True
     assert _is_blocked_title("React To Popular Workout Videos") is True
-    assert _is_blocked_title("Reaction: Watching Old Gym Videos") is True
-    assert _is_blocked_title("Debunking Fitness Myths") is True
-    # progress / challenge tracking
-    assert _is_blocked_title("How Much Muscle Did I Gain in 365 Days?") is True
-    assert _is_blocked_title("My 90 Day Body Transformation") is True
-    assert _is_blocked_title("Progress Update - 6 Months In") is True
-    assert _is_blocked_title("Natty or Not? The Truth") is True
+    assert _is_blocked_title("My Reaction to This Workout") is True
+    assert _is_blocked_title("Full Commentary on My Training") is True
 
 
 def test_is_blocked_title_allows_workout():
@@ -471,6 +466,9 @@ def test_is_blocked_title_allows_workout():
     assert _is_blocked_title("HIIT Cardio Beginner Training") is False
     assert _is_blocked_title("Upper Body Strength - No Equipment") is False
     assert _is_blocked_title("10 Min Core Workout for Beginners") is False
+    # LLM handles these - should NOT be blocked by keyword
+    assert _is_blocked_title("How Much Muscle Did I Gain in 365 Days?") is False
+    assert _is_blocked_title("30 Day Ab Challenge Workout") is False
 
 
 def test_is_blocked_title_case_insensitive():
