@@ -524,6 +524,9 @@ export default function OnboardingPage() {
               <>
                 <SchedulePreview schedule={schedule} isSenior={isSenior} />
                 <div className="flex gap-3 mt-6">
+                  <button onClick={() => setStep(4)} className="rounded-lg border border-zinc-200 dark:border-zinc-700 px-4 py-3 text-sm font-medium text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition cursor-pointer">
+                    ← Back
+                  </button>
                   <button
                     onClick={handleScheduleConfirm}
                     disabled={savingSchedule}

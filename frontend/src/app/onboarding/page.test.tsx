@@ -246,10 +246,17 @@ describe("OnboardingPage - Step 5 (Schedule Preview)", () => {
     expect(screen.getByText(/Here's your personalised plan/i)).toBeInTheDocument();
   });
 
-  it("shows 'Looks good →' and 'Customise' buttons", async () => {
+  it("shows 'Back', 'Looks good →' and 'Customise' buttons", async () => {
     await goToStep5();
+    expect(screen.getByRole("button", { name: /← Back/i })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /Looks good/i })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /Customise/i })).toBeInTheDocument();
+  });
+
+  it("Back button on schedule preview returns to step 4", async () => {
+    await goToStep5();
+    fireEvent.click(screen.getByRole("button", { name: /← Back/i }));
+    expect(screen.getByText(/How long/i)).toBeInTheDocument();
   });
 
   it("senior profile shows 'Recovery day' not 'Rest day'", async () => {
