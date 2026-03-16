@@ -18,6 +18,7 @@ import {
   getLibrary,
   swapPlanDay,
   logout,
+  setToken,
   youtubeConnectUrl,
   type User,
   type PlanResponse,
@@ -228,6 +229,9 @@ export default function DashboardPage() {
   useEffect(() => {
     // Check if we just came from onboarding with a scan in progress
     const params = new URLSearchParams(window.location.search);
+    // Extract token if we arrived directly from OAuth callback
+    const token = params.get("token");
+    if (token) setToken(token);
     const scanJustTriggered = params.get("scanning") === "1";
     const fromOnboarding = params.get("from") === "onboarding";
     if (params.get("screenshot") === "1") setScreenshotMode(true);
@@ -238,7 +242,7 @@ export default function DashboardPage() {
     if (fromOnboarding) {
       setShowAlreadySetUp(true);
     }
-    if (scanJustTriggered || fromOnboarding || params.get("youtube") === "connected") {
+    if (token || scanJustTriggered || fromOnboarding || params.get("youtube") === "connected") {
       window.history.replaceState({}, "", window.location.pathname);
     }
 
@@ -266,7 +270,8 @@ export default function DashboardPage() {
       })
       .catch(() => router.replace("/"))
       .finally(() => setLoading(false));
-  }, [router]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Poll for status every 5s while scanning; stop when pipeline reports done/failed/null
   useEffect(() => {

@@ -10,6 +10,7 @@ import {
   triggerScan,
   getJobStatus,
   getSuggestions,
+  setToken,
   type ChannelResponse,
   type ChannelSearchResult,
   type ScheduleSlot,
@@ -264,16 +265,29 @@ export default function OnboardingPage() {
 
   // Guard: redirect already-onboarded non-admin users to dashboard
   useEffect(() => {
+    let cancelled = false;
+    // Extract token if we arrived directly from OAuth callback
+    const params = new URLSearchParams(window.location.search);
+    const token = params.get("token");
+    if (token) {
+      setToken(token);
+      window.history.replaceState({}, "", window.location.pathname);
+    }
     getMe()
       .then((user) => {
+        if (cancelled) return;
         if (user.is_admin) { setGuardChecking(false); return; }
         return getChannels().then((ch) => {
-          if (ch.length > 0) router.replace("/dashboard?from=onboarding");
-          else setGuardChecking(false);
+          if (!cancelled) {
+            if (ch.length > 0) router.replace("/dashboard?from=onboarding");
+            else setGuardChecking(false);
+          }
         });
       })
-      .catch(() => router.replace("/"));
-  }, [router]);
+      .catch(() => { if (!cancelled) router.replace("/"); });
+    return () => { cancelled = true; };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Step 1: select profile (highlight only - Next button advances)
   function handleProfileSelect(p: LifeStage) {

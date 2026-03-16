@@ -27,7 +27,7 @@ from sqlalchemy.orm import Session
 
 from ..crypto import encrypt, decrypt
 from ..dependencies import get_current_user, get_db
-from ..models import User, UserCredentials
+from ..models import User, UserChannel, UserCredentials
 from ..schemas import MeResponse, PatchMeNotificationsRequest, PatchMeProfileRequest, PatchMeRequest
 
 router = APIRouter(prefix="/auth", tags=["auth"])
@@ -138,7 +138,10 @@ async def google_callback(
     # across domains without relying on cross-domain cookies.
     secret = os.getenv("SESSION_SECRET_KEY", "dev-secret-change-in-production")
     token = URLSafeTimedSerializer(secret).dumps(str(user.id))
-    return RedirectResponse(f"{FRONTEND_URL}?token={token}")
+    # Redirect straight to the destination - skip the landing page as intermediary
+    has_channels = db.query(UserChannel).filter(UserChannel.user_id == user.id).first() is not None
+    route = "dashboard" if has_channels else "onboarding"
+    return RedirectResponse(f"{FRONTEND_URL}/{route}?token={token}")
 
 
 @router.get("/youtube/connect")
