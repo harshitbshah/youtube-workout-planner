@@ -257,6 +257,10 @@ The web app is a multi-user version of the CLI pipeline, built as a FastAPI back
 ```
 users
   id (uuid PK), google_id, email, display_name, created_at,
+  profile (text, nullable) - life stage: "beginner"|"adult"|"senior"|"athlete"
+  goal (text, nullable) - JSON array of goal strings (up to 3)
+  equipment (text, nullable) - JSON array of equipment ids (migration 021)
+  email_notifications (bool, default true)
   last_scan_error (text, nullable) - set on pipeline failure, cleared on success
 
 channels (global - shared across all users)
@@ -274,7 +278,7 @@ videos
 classifications
   video_id (PK FK), workout_type, body_focus, difficulty,
   has_warmup, has_cooldown, classified_at
-  - workout_type values: "Strength" | "HIIT" | "Cardio" | "Mobility" | "Other"
+  - workout_type values: "Strength" | "HIIT" | "Cardio" | "Mobility" | "Yoga" | "Pilates" | "Dance" | "Other"
   - body_focus values: "upper" | "lower" | "full" | "core" | "any"
   - difficulty values: "beginner" | "intermediate" | "advanced"
   NOTE: workout_type is mixed-case (classifier output). All filter comparisons
@@ -597,8 +601,10 @@ navigation; settings wraps them with save buttons.
 `ChannelManager` accepts optional `suggestions?: ChannelSearchResult[]` and
 `suggestionsLoading?: boolean` props. When provided, a 3-card grid of curated channels
 (thumbnail + name + one-click "+ Add") is shown above the search box. Cards are fetched
-from `GET /channels/suggestions?profile=<profile>` by the parent component - onboarding
-passes the profile-specific list, settings passes the general list. The backend caches
+from `GET /channels/suggestions?profile=<profile>&goals=<csv>` by the parent component.
+Modality goals (Yoga & mindfulness, Pilates & core, Dance fitness) override profile-based
+lists with specialist channels; 2+1 interleaving when two modality goals are selected.
+Onboarding passes profile + selected goals; settings passes profile + user.goal. The backend caches
 results in the shared `channels` table (`thumbnail_url`, `description` columns added in
 migration 018) so the YouTube API is only called once per unique suggestion channel across
 all users and all time.

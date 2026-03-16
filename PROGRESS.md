@@ -1,10 +1,27 @@
 # Progress
 
 ## Status
-Phases 1–5 complete + admin console + charts + guide page + mobile UX complete. Phase A complete. Phase B complete. Phase C complete. Phase D F5+F6+F9 complete. Backlog items T1+T2+S1+M2 complete. Channel suggestions + onboarding UX complete. Channel fitness validation (migration 019) complete. Email notifications opt-in step in onboarding complete. Dark mode all pages fixed. Light mode button visibility fixed. Lazy classification (plan-first) complete. Onboarding guard + admin reset complete. Homepage M1 redesign complete. Planner Tier 6 + body-focus/workout-type coupling complete. Onboarding guard no-flash + admin bypass complete. Async YouTube publish complete. Homepage marquee updated. Settings regenerate banner on channel add or remove. Incremental OAuth complete. Multi-select goals + fitness profile editing in Settings complete (migration 020). 5-channel limit enforced. 8-week profile nudge banner on dashboard.
-**300 backend unit + 194 frontend = 494 automated tests passing** (+ integration tests).
+Phases 1–5 complete + admin console + charts + guide page + mobile UX complete. Phase A complete. Phase B complete. Phase C complete. Phase D F5+F6+F9 complete. Backlog items T1+T2+S1+M2 complete. Channel suggestions + onboarding UX complete. Channel fitness validation (migration 019) complete. Email notifications opt-in step in onboarding complete. Dark mode all pages fixed. Lazy classification complete. Onboarding guard + admin reset complete. Homepage M1 redesign complete. Incremental OAuth complete. Multi-select goals + fitness profile editing in Settings complete (migration 020). **Yoga, Pilates, Dance modalities + equipment capture complete (migration 021). Goal-aware channel suggestions complete. 307 backend unit + 199 frontend = 506 automated tests passing.**
 Both Railway (backend) and Vercel (frontend) live and functional on `main`.
-**Ready for first users** - Google OAuth fully verified. YouTube scope approved by Google Trust & Safety (2026-03-15). No more "unverified app" warning for any user.
+**Ready for first users** - Google OAuth fully verified. YouTube scope approved by Google Trust & Safety (2026-03-15).
+
+**Done this session (2026-03-16, checkpoint 10):**
+- New workout types: Yoga, Pilates, Dance added as first-class types alongside Strength/HIIT/Cardio/Mobility ✅
+- Rule-based classifier updated: yoga/pilates/dance titles no longer fall under Mobility ✅
+- AI classifier (src/classifier.py) SYSTEM_PROMPT updated with Yoga/Pilates/Dance guidelines ✅
+- Channel validator prompt updated to accept yoga, pilates, barre, dance fitness channels ✅
+- Schedule templates: new weekly patterns for yoga/pilates/dance goals per life stage ✅
+- ScheduleEditor: BODY_FOCUS_FOR_TYPE extended (yoga=full/upper/lower/core, pilates=full/core/lower, dance=full) ✅
+- Onboarding: 9 steps - equipment step (step 5) inserted between session length and schedule preview ✅
+- Goals grouped by category (Strength & Performance, Mind & Body, etc.) in onboarding + settings ✅
+- Equipment capture (mat, dumbbells, resistance_bands, kettlebell, barbell, pull_up_bar, reformer) stored as JSON array in users.equipment ✅
+- Migration 021: adds equipment column; data migration reclassifies existing videos via regex UPDATE ✅
+- Goal-aware channel suggestions: GET /channels/suggestions accepts ?goals= param; modality goals (yoga/pilates/dance) surface specialist channels ✅
+- Curated channels: Yoga With Adriene/Kassandra/Boho Beautiful (yoga); Move With Nicole/Blogilates/Boho Beautiful (pilates); The Fitness Marshall/BollyX/POPSUGAR Fitness (dance) ✅
+- EQUIPMENT_OPTIONS and GOALS extracted to lib/constants.ts (was duplicated in onboarding + settings) ✅
+- Batch db.commit() in suggestions loop (was 1 commit per channel, now 1 per request) ✅
+- Equipment validation added to PUT /schedule (was missing, only in PATCH /auth/me/profile) ✅
+- **307 backend unit + 199 frontend = 506 automated tests passing** ✅
 
 **Done this session (2026-03-15, checkpoint 9):**
 - `_decode_id_token`: replaced `_get_google_userinfo` HTTP call with local JWT base64 decode - saves ~100ms per sign-in ✅
