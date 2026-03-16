@@ -13,7 +13,6 @@ Running list of ideas and deferred features. Append during sessions; review befo
 
 ## Deferred - Homepage
 
-- **M1 done**: "Stop watching. Start doing." headline + real dashboard screenshots + channel marquee + dark CTA.
 - **M2 (A/B variants)**: if traffic warrants it, test alternative headlines or hero layouts. Use Vercel's built-in split testing or a feature flag.
 
 ---
