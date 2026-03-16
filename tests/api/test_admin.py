@@ -360,9 +360,10 @@ def test_charts_non_admin_403(non_admin_client):
 # --- Reset onboarding ---
 
 
-def test_reset_onboarding_removes_channels_and_schedule(admin_client):
-    """Reset endpoint deletes user_channels and schedule rows for the target user."""
-    from api.models import Schedule
+def test_reset_onboarding_removes_channels_schedule_and_plan(admin_client):
+    """Reset endpoint deletes user_channels, schedule, and program_history rows for the target user."""
+    from api.models import ProgramHistory, Schedule
+    from datetime import date
     client, admin, db = admin_client
     target = User(google_id="target-google-id", email="target@example.com")
     db.add(target)
@@ -372,6 +373,7 @@ def test_reset_onboarding_removes_channels_and_schedule(admin_client):
     db.flush()
     db.add(UserChannel(user_id=target.id, channel_id=channel.id))
     db.add(Schedule(user_id=target.id, day="monday", workout_type="Strength"))
+    db.add(ProgramHistory(user_id=target.id, week_start=date(2026, 1, 6), assigned_day="monday"))
     db.commit()
 
     resp = client.post(f"/admin/users/{target.id}/reset-onboarding")
@@ -379,6 +381,7 @@ def test_reset_onboarding_removes_channels_and_schedule(admin_client):
 
     assert db.query(UserChannel).filter(UserChannel.user_id == target.id).count() == 0
     assert db.query(Schedule).filter(Schedule.user_id == target.id).count() == 0
+    assert db.query(ProgramHistory).filter(ProgramHistory.user_id == target.id).count() == 0
 
 
 def test_reset_onboarding_preserves_channel_and_videos(admin_client):

@@ -374,6 +374,7 @@ def admin_reset_onboarding(
         raise HTTPException(status_code=404, detail="User not found")
     db.query(UserChannel).filter(UserChannel.user_id == user_id).delete()
     db.query(Schedule).filter(Schedule.user_id == user_id).delete()
+    db.query(ProgramHistory).filter(ProgramHistory.user_id == user_id).delete()
     db.commit()
 
 

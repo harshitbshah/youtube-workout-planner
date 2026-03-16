@@ -221,11 +221,11 @@ function RestDayCard({ day, weekStart, profile }: { day: string; weekStart: stri
     REST_MESSAGES.default;
   const message = pickRestMessage(pool, day, weekStart);
   return (
-    <div className="rounded-lg overflow-hidden border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900">
+    <div className="h-full flex flex-col rounded-lg overflow-hidden border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900">
       <div className="aspect-video bg-zinc-50 dark:bg-zinc-800/60 flex items-center justify-center px-5">
         <p className="text-sm text-zinc-400 dark:text-zinc-500 leading-snug text-center">{message}</p>
       </div>
-      <div className="p-3">
+      <div className="p-3 flex-1">
         <p className="text-sm font-medium text-zinc-400 dark:text-zinc-500">Rest day</p>
       </div>
     </div>
@@ -235,11 +235,11 @@ function RestDayCard({ day, weekStart, profile }: { day: string; weekStart: stri
 function MissingVideoCard({ workoutType }: { workoutType: string }) {
   const label = workoutType.charAt(0).toUpperCase() + workoutType.slice(1);
   return (
-    <div className="rounded-lg overflow-hidden border border-amber-200 dark:border-amber-800/50 bg-white dark:bg-zinc-900">
+    <div className="h-full flex flex-col rounded-lg overflow-hidden border border-amber-200 dark:border-amber-800/50 bg-white dark:bg-zinc-900">
       <div className="aspect-video bg-amber-50/60 dark:bg-amber-900/10 flex items-center justify-center px-5">
         <p className="text-sm text-amber-600 dark:text-amber-400 leading-snug text-center">No {label} video found in your library.</p>
       </div>
-      <div className="p-3">
+      <div className="p-3 flex-1">
         <Link href="/settings" className="text-sm font-medium text-amber-600 dark:text-amber-500 hover:text-amber-800 dark:hover:text-amber-300 transition">
           Add channels in Settings →
         </Link>
@@ -254,7 +254,7 @@ function VideoCard({ video }: { video: VideoSummary }) {
       href={video.url}
       target="_blank"
       rel="noopener noreferrer"
-      className="group block rounded-lg overflow-hidden border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 hover:border-zinc-400 dark:hover:border-zinc-500 transition"
+      className="group h-full flex flex-col rounded-lg overflow-hidden border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 hover:border-zinc-400 dark:hover:border-zinc-500 transition"
     >
       {/* Thumbnail */}
       <div className="relative aspect-video bg-zinc-100 dark:bg-zinc-800">
@@ -273,7 +273,7 @@ function VideoCard({ video }: { video: VideoSummary }) {
       </div>
 
       {/* Info */}
-      <div className="p-3 space-y-2">
+      <div className="p-3 space-y-2 flex-1">
         <p className="text-sm font-medium text-zinc-900 dark:text-white leading-snug line-clamp-2 group-hover:text-zinc-700 dark:group-hover:text-zinc-200">
           {video.title}
         </p>
@@ -836,7 +836,7 @@ export default function DashboardPage() {
           <p className="text-xs text-zinc-500 dark:text-zinc-600 mb-3 text-right">✦ Curated by AI</p>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {plan.days.map((day: PlanDay) => (
-              <div key={day.day}>
+              <div key={day.day} className="flex flex-col">
                 <p className="text-xs font-semibold text-zinc-500 uppercase tracking-wide mb-2">
                   {DAY_LABELS[day.day] ?? day.day}
                 </p>
