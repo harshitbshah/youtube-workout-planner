@@ -221,7 +221,7 @@ function RestDayCard({ day, weekStart, profile }: { day: string; weekStart: stri
     REST_MESSAGES.default;
   const message = pickRestMessage(pool, day, weekStart);
   return (
-    <div className="h-full flex flex-col rounded-lg overflow-hidden border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900">
+    <div className="flex-1 flex flex-col rounded-lg overflow-hidden border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900">
       <div className="aspect-video bg-zinc-50 dark:bg-zinc-800/60 flex items-center justify-center px-5">
         <p className="text-sm text-zinc-400 dark:text-zinc-500 leading-snug text-center">{message}</p>
       </div>
@@ -235,7 +235,7 @@ function RestDayCard({ day, weekStart, profile }: { day: string; weekStart: stri
 function MissingVideoCard({ workoutType }: { workoutType: string }) {
   const label = workoutType.charAt(0).toUpperCase() + workoutType.slice(1);
   return (
-    <div className="h-full flex flex-col rounded-lg overflow-hidden border border-amber-200 dark:border-amber-800/50 bg-white dark:bg-zinc-900">
+    <div className="flex-1 flex flex-col rounded-lg overflow-hidden border border-amber-200 dark:border-amber-800/50 bg-white dark:bg-zinc-900">
       <div className="aspect-video bg-amber-50/60 dark:bg-amber-900/10 flex items-center justify-center px-5">
         <p className="text-sm text-amber-600 dark:text-amber-400 leading-snug text-center">No {label} video found in your library.</p>
       </div>
@@ -254,7 +254,7 @@ function VideoCard({ video }: { video: VideoSummary }) {
       href={video.url}
       target="_blank"
       rel="noopener noreferrer"
-      className="group h-full flex flex-col rounded-lg overflow-hidden border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 hover:border-zinc-400 dark:hover:border-zinc-500 transition"
+      className="group flex-1 flex flex-col rounded-lg overflow-hidden border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 hover:border-zinc-400 dark:hover:border-zinc-500 transition"
     >
       {/* Thumbnail */}
       <div className="relative aspect-video bg-zinc-100 dark:bg-zinc-800">
