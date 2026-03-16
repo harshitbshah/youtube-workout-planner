@@ -29,7 +29,7 @@ Run before every commit:
 cd frontend && npm run test:run
 ```
 
-Current: **307 backend unit + 199 frontend = 506 automated tests passing** (+ integration tests run separately)
+Current: **309 backend unit + 199 frontend = 508 automated tests passing** (+ integration tests run separately)
 
 New test files added:
 - `tests/api/test_jobs.py` - `POST /jobs/scan` (202, 400 no channels, 503 no key, 401 unauth, channel count); `GET /jobs/status` (no pipeline, unauthenticated, reflects live state); scanner filters (upper duration cap, title blocklist); classifier (batch cap limits to 300, `on_progress` callback during polling, resume existing batch, batch ID cleared on completion)

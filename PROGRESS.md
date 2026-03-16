@@ -1,9 +1,16 @@
 # Progress
 
 ## Status
-Phases 1–5 complete + admin console + charts + guide page + mobile UX complete. Phase A complete. Phase B complete. Phase C complete. Phase D F5+F6+F9 complete. Backlog items T1+T2+S1+M2 complete. Channel suggestions + onboarding UX complete. Channel fitness validation (migration 019) complete. Email notifications opt-in step in onboarding complete. Dark mode all pages fixed. Lazy classification complete. Onboarding guard + admin reset complete. Homepage M1 redesign complete. Incremental OAuth complete. Multi-select goals + fitness profile editing in Settings complete (migration 020). **Yoga, Pilates, Dance modalities + equipment capture complete (migration 021). Goal-aware channel suggestions complete. 307 backend unit + 199 frontend = 506 automated tests passing.**
+Phases 1–5 complete + admin console + charts + guide page + mobile UX complete. Phase A complete. Phase B complete. Phase C complete. Phase D F5+F6+F9 complete. Backlog items T1+T2+S1+M2 complete. Channel suggestions + onboarding UX complete. Channel fitness validation (migration 019) complete. Email notifications opt-in step in onboarding complete. Dark mode all pages fixed. Lazy classification complete. Onboarding guard + admin reset complete. Homepage M1 redesign complete. Incremental OAuth complete. Multi-select goals + fitness profile editing in Settings complete (migration 020). **Yoga, Pilates, Dance modalities + equipment capture complete (migration 021). Goal-aware channel suggestions complete. Targeted batch trusted-channel fix complete. 309 backend unit + 199 frontend = 508 automated tests passing.**
 Both Railway (backend) and Vercel (frontend) live and functional on `main`.
 **Ready for first users** - Google OAuth fully verified. YouTube scope approved by Google Trust & Safety (2026-03-15).
+
+**Done this session (2026-03-16, checkpoint 11):**
+- Targeted batch trusted-channel signal: channels with >=1 classified video of a gap type are trusted producers - all their unclassified videos included in targeted batch even with generic titles ("Morning Flow" etc.) ✅
+- `_fetch_unclassified_for_user` now returns `channel_id` in each video dict ✅
+- `func` import added to api/services/classifier.py ✅
+- +2 tests: trusted channel pulls in generic-title video; unrelated channel's generic-title stays in remainder ✅
+- **309 backend unit + 199 frontend = 508 automated tests passing** ✅
 
 **Done this session (2026-03-16, checkpoint 10):**
 - New workout types: Yoga, Pilates, Dance added as first-class types alongside Strength/HIIT/Cardio/Mobility ✅
