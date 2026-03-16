@@ -7,11 +7,6 @@ from ..dependencies import get_db
 router = APIRouter(tags=["health"])
 
 
-@router.get("/sentry-test")
-def sentry_test():
-    raise ValueError("Sentry test error - delete this endpoint")
-
-
 @router.api_route("/health", methods=["GET", "HEAD"])
 def health(db: Session = Depends(get_db)):
     try:
