@@ -6,6 +6,8 @@ Always fails open: unexpected results or errors allow the channel through.
 """
 
 import logging
+
+import sentry_sdk
 import os
 
 import anthropic
@@ -68,5 +70,6 @@ def validate_channel_fitness(
             return True, None
 
     except Exception as e:
+        sentry_sdk.capture_exception(e)
         logger.warning(f"[channel_validator] Claude call failed - failing open: {e}")
         return True, None

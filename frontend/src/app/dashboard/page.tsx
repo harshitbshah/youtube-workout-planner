@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import * as Sentry from "@sentry/nextjs";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Footer } from "@/components/Footer";
@@ -53,7 +54,7 @@ function SwapPicker({
     setLoading(true);
     getLibrary({ workout_type: filterType ?? undefined, limit: 10 })
       .then((r) => setVideos(r.videos.filter((v) => v.id !== currentVideoId)))
-      .catch(() => setVideos([]))
+      .catch((e) => { Sentry.captureException(e); setVideos([]); })
       .finally(() => setLoading(false));
   }, [filterType, currentVideoId]);
 
@@ -354,7 +355,7 @@ export default function DashboardPage() {
           setScanning(false);
         }
       })
-      .catch(() => router.replace("/"))
+      .catch((e) => { Sentry.captureException(e); router.replace("/"); })
       .finally(() => setLoading(false));
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -395,6 +396,7 @@ export default function DashboardPage() {
       await triggerScan();
       setScanning(true);
     } catch (e: unknown) {
+      Sentry.captureException(e);
       setError(e instanceof Error ? e.message : "Failed to start scan");
     } finally {
       setGenerating(false);
@@ -433,6 +435,7 @@ export default function DashboardPage() {
       const p = await generatePlan();
       setPlan(p);
     } catch (e: unknown) {
+      Sentry.captureException(e);
       setError(e instanceof Error ? e.message : "Failed to generate plan");
     } finally {
       setGenerating(false);
@@ -445,6 +448,7 @@ export default function DashboardPage() {
     try {
       await publishPlan();
     } catch (e: unknown) {
+      Sentry.captureException(e);
       const msg = e instanceof Error ? e.message : "Failed to start publish";
       setPublishStatus({ status: "failed", error: msg });
       return;

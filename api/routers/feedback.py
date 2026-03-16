@@ -3,6 +3,8 @@ feedback.py - User feedback submission endpoint.
 """
 import logging
 
+import sentry_sdk
+
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
@@ -32,5 +34,6 @@ def submit_feedback(
     try:
         send_feedback_email(current_user, body.category, body.message.strip())
     except RuntimeError as e:
+        sentry_sdk.capture_exception(e)
         logger.error(f"[feedback] Email send failed: {e}")
         raise HTTPException(status_code=503, detail="Email service unavailable")

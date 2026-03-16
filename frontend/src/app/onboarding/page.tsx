@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
+import * as Sentry from "@sentry/nextjs";
 import { useRouter } from "next/navigation";
 import {
   getMe,
@@ -374,6 +375,7 @@ export default function OnboardingPage() {
       await updateSchedule(schedule, profile!, goals, equipment);
       setStep(7);
     } catch (e: unknown) {
+      Sentry.captureException(e);
       setError(e instanceof Error ? e.message : "Failed to save schedule");
     } finally {
       setSavingSchedule(false);
@@ -409,6 +411,7 @@ export default function OnboardingPage() {
       await triggerScan();
       return null;
     } catch (e: unknown) {
+      Sentry.captureException(e);
       return e instanceof Error ? e.message : "Failed to start scan";
     }
   }

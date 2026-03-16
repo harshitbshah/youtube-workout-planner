@@ -10,6 +10,8 @@ Auto-detects full vs incremental:
 """
 
 import logging
+
+import sentry_sdk
 import os
 import time
 from datetime import datetime, timezone
@@ -225,8 +227,8 @@ def _update_last_video_published_at(session: Session, channel: Channel) -> None:
                 latest_str.replace("Z", "+00:00")
             )
             session.commit()
-        except (ValueError, AttributeError):
-            pass
+        except (ValueError, AttributeError) as e:
+            sentry_sdk.capture_exception(e)
 
 
 def scan_channel(

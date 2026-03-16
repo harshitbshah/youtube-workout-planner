@@ -13,6 +13,7 @@ import os
 from typing import Optional
 
 import httpx
+import sentry_sdk
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import func
 from sqlalchemy.orm import Session
@@ -337,7 +338,8 @@ async def get_suggestions(
                     )
                 )
 
-            except Exception:
+            except Exception as e:
+                sentry_sdk.capture_exception(e)
                 continue  # network / parse error - skip this suggestion
 
     if results:

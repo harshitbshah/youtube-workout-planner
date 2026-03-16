@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
+import * as Sentry from "@sentry/nextjs";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Footer } from "@/components/Footer";
@@ -48,7 +49,8 @@ function AssignButton({ videoId }: { videoId: string }) {
       setStatus("ok");
       setSelected("");
       setTimeout(() => setStatus("idle"), 2000);
-    } catch {
+    } catch (e) {
+      Sentry.captureException(e);
       setStatus("err");
       setSelected("");
       setTimeout(() => setStatus("idle"), 2000);
@@ -180,6 +182,7 @@ export default function LibraryPage() {
       });
       setData(result);
     } catch (e: unknown) {
+      Sentry.captureException(e);
       setError(e instanceof Error ? e.message : "Failed to load library");
     } finally {
       setLoading(false);

@@ -8,6 +8,8 @@ Platform-pays model for v1: uses server-side ANTHROPIC_API_KEY.
 """
 
 import logging
+
+import sentry_sdk
 import os
 import re
 import time
@@ -477,6 +479,7 @@ def classify_for_user(
         ))
         session.commit()
     except Exception as e:
+        sentry_sdk.capture_exception(e)
         logger.warning(f"[user={user_id}] Failed to record batch usage: {e}")
 
     total_classified = classified + rule_classified

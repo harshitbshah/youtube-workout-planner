@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import * as Sentry from "@sentry/nextjs";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Footer } from "@/components/Footer";
@@ -96,7 +97,7 @@ export default function SettingsPage() {
         setChannels(ch);
         setSchedule(sched.schedule);
       })
-      .catch(() => router.replace("/"))
+      .catch((e) => { Sentry.captureException(e); router.replace("/"); })
       .finally(() => setLoading(false));
   }, [router]);
 
@@ -159,7 +160,8 @@ export default function SettingsPage() {
       setTimeout(() => setScheduleStatus("idle"), 2500);
       const { gaps } = await getPlanGaps().catch(() => ({ gaps: [] }));
       setScheduleGaps(gaps);
-    } catch {
+    } catch (e) {
+      Sentry.captureException(e);
       setScheduleStatus("err");
     } finally {
       setSavingSchedule(false);
@@ -188,7 +190,8 @@ export default function SettingsPage() {
       await generatePlan();
       setRegenerateStatus("ok");
       setShowRegenerateBanner(false);
-    } catch {
+    } catch (e) {
+      Sentry.captureException(e);
       setRegenerateStatus("err");
     } finally {
       setRegenerating(false);

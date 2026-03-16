@@ -18,6 +18,8 @@ Quota cost per publish (~6 videos):
 """
 
 import logging
+
+import sentry_sdk
 import os
 
 import google.auth.exceptions
@@ -151,6 +153,7 @@ def publish_plan_for_user(db: Session, user_id: str, week_start) -> dict:
         if exc.resp.status in (401, 403):
             _mark_revoked(db, creds)
             raise YouTubeAccessRevokedError(str(exc)) from exc
+        sentry_sdk.capture_exception(exc)
         raise
 
     logger.info(f"[publish] user={user_id}: published {len(video_ids)} videos to {playlist_id}")
