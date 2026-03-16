@@ -61,7 +61,7 @@ export default function ChannelManager({
         youtube_url: `https://www.youtube.com/channel/${result.youtube_channel_id}`,
         youtube_channel_id: result.youtube_channel_id,
         description: result.description,
-        thumbnail_url: result.thumbnail_url,
+        thumbnail_url: result.thumbnail_url ?? undefined,
       });
       onChannelsChange([...channels, ch]);
       setResults((r) => r.filter((x) => x.youtube_channel_id !== result.youtube_channel_id));
