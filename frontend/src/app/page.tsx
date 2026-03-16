@@ -64,6 +64,7 @@ export default function LandingPage() {
   const [checking, setChecking] = useState(true);
 
   useEffect(() => {
+    let cancelled = false;
     const params = new URLSearchParams(window.location.search);
     const token = params.get("token");
     if (token) {
@@ -72,11 +73,13 @@ export default function LandingPage() {
     }
     getMe()
       .then(() => getChannels())
-      .then((channels) =>
-        router.replace(channels.length === 0 ? "/onboarding" : "/dashboard")
-      )
-      .catch(() => setChecking(false));
-  }, [router]);
+      .then((channels) => {
+        if (!cancelled) router.replace(channels.length === 0 ? "/onboarding" : "/dashboard");
+      })
+      .catch(() => { if (!cancelled) setChecking(false); });
+    return () => { cancelled = true; };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   if (checking) {
     return (
