@@ -453,6 +453,16 @@ def test_is_blocked_title_rejects_non_workout():
     assert _is_blocked_title("Q&A - Your Questions Answered") is True
     assert _is_blocked_title("Vlog: Day In My Life") is True
     assert _is_blocked_title("Unboxing: New Home Gym Gear") is True
+    # commentary / reaction / critique
+    assert _is_blocked_title("Exercise Scientists Critique Fitness Influence Workouts") is True
+    assert _is_blocked_title("React To Popular Workout Videos") is True
+    assert _is_blocked_title("Reaction: Watching Old Gym Videos") is True
+    assert _is_blocked_title("Debunking Fitness Myths") is True
+    # progress / challenge tracking
+    assert _is_blocked_title("How Much Muscle Did I Gain in 365 Days?") is True
+    assert _is_blocked_title("My 90 Day Body Transformation") is True
+    assert _is_blocked_title("Progress Update - 6 Months In") is True
+    assert _is_blocked_title("Natty or Not? The Truth") is True
 
 
 def test_is_blocked_title_allows_workout():

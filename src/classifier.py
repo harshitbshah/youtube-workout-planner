@@ -60,7 +60,7 @@ Guidelines:
 - workout_type "Yoga"     = yoga flows, vinyasa, hatha, yin yoga, ashtanga, restorative yoga
 - workout_type "Pilates"  = mat pilates, reformer pilates, barre workouts
 - workout_type "Dance"    = Zumba, Bollywood dance fitness, dance cardio, hip-hop dance workouts
-- workout_type "Other"    = vlogs, Q&As, nutrition tips, challenges, non-workout content
+- workout_type "Other"    = vlogs, Q&As, nutrition tips, challenges, non-workout content; also: progress/transformation videos ("how much muscle I gained"), reaction/critique/commentary videos ("scientists critique workouts"), educational explainers about exercise science, challenge tracking ("365 days"), and any video where the viewer is not expected to follow along and exercise
 - body_focus "any"        = when focus cannot be determined from available info
 - difficulty              = use "intermediate" as default when unclear
 - has_warmup/has_cooldown = true only when explicitly mentioned or clearly evident

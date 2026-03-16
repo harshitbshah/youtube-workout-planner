@@ -52,6 +52,13 @@ _TITLE_BLOCKLIST = {
     # results / meta
     "transformation", "before and after", "tour", "home gym",
     "behind the scenes",
+    # commentary / reaction / critique (not follow-along workouts)
+    "critique", "react to", "reaction", "commentary", "roast",
+    "scientists explain", "science explains", "debunking", "debunked",
+    # progress / challenge tracking (not follow-along workouts)
+    "365 days", "30 day", "90 day", "100 day",
+    "how much muscle", "how much weight", "did i gain", "did i lose",
+    "progress update", "my transformation", "natty or not",
 }
 
 # Videos longer than this are almost certainly livestreams, podcasts, or
