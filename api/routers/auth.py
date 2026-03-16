@@ -27,7 +27,7 @@ from sqlalchemy.orm import Session
 from ..crypto import encrypt, decrypt
 from ..dependencies import get_current_user, get_db
 from ..models import User, UserCredentials
-from ..schemas import MeResponse, PatchMeNotificationsRequest, PatchMeRequest
+from ..schemas import MeResponse, PatchMeNotificationsRequest, PatchMeProfileRequest, PatchMeRequest
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -206,6 +206,9 @@ def _me_response(user: User, db: Session) -> MeResponse:
         credentials_valid=creds.credentials_valid if creds else True,
         is_admin=bool(admin_email and user.email == admin_email),
         email_notifications=user.email_notifications,
+        profile=user.profile,
+        goal=user.goal,
+        created_at=user.created_at.isoformat() if user.created_at else None,
     )
 
 
@@ -223,6 +226,32 @@ def patch_me(
 ):
     """Update the current user's display name."""
     current_user.display_name = body.display_name.strip() or None
+    db.commit()
+    return _me_response(current_user, db)
+
+
+VALID_PROFILES = {"beginner", "adult", "senior", "athlete"}
+VALID_GOALS: dict[str, set[str]] = {
+    "beginner": {"Build a habit", "Lose weight", "Feel more energetic"},
+    "adult":    {"Build muscle", "Lose fat", "Improve cardio", "Stay consistent"},
+    "senior":   {"Stay active & healthy", "Improve flexibility", "Build strength safely"},
+    "athlete":  {"Strength & hypertrophy", "Endurance", "Athletic performance", "Cut weight"},
+}
+
+
+@router.patch("/me/profile", response_model=MeResponse)
+def patch_me_profile(
+    body: PatchMeProfileRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Update the current user's fitness profile and goal."""
+    if body.profile not in VALID_PROFILES:
+        raise HTTPException(status_code=400, detail="Invalid profile")
+    if body.goal not in VALID_GOALS.get(body.profile, set()):
+        raise HTTPException(status_code=400, detail="Invalid goal for this profile")
+    current_user.profile = body.profile
+    current_user.goal = body.goal
     db.commit()
     return _me_response(current_user, db)
 

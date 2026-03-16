@@ -65,6 +65,12 @@ export const updateEmailNotifications = (email_notifications: boolean) =>
     body: JSON.stringify({ email_notifications }),
   });
 
+export const updateProfile = (profile: string, goal: string) =>
+  apiFetch<User>("/auth/me/profile", {
+    method: "PATCH",
+    body: JSON.stringify({ profile, goal }),
+  });
+
 // ─── Channels ────────────────────────────────────────────────────────────────
 
 export const getChannels = () => apiFetch<ChannelResponse[]>("/channels");
@@ -151,6 +157,9 @@ export interface User {
   credentials_valid: boolean;
   is_admin: boolean;
   email_notifications: boolean;
+  profile: string | null;
+  goal: string | null;
+  created_at: string | null;
 }
 
 export interface ChannelCreate {

@@ -104,6 +104,14 @@ class MeResponse(BaseModel):
     credentials_valid: bool
     is_admin: bool = False
     email_notifications: bool = True
+    profile: Optional[str] = None
+    goal: Optional[str] = None
+    created_at: Optional[str] = None
+
+
+class PatchMeProfileRequest(BaseModel):
+    profile: str
+    goal: str
 
 
 # ─── Feedback ─────────────────────────────────────────────────────────────────

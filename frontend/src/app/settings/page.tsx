@@ -14,6 +14,7 @@ import {
   deleteMe,
   updateSchedule,
   updateEmailNotifications,
+  updateProfile,
   generatePlan,
   logout,
   type User,
@@ -21,6 +22,22 @@ import {
   type ChannelSearchResult,
   type ScheduleSlot,
 } from "@/lib/api";
+
+const LIFE_STAGES = [
+  { value: "beginner", label: "Just starting out" },
+  { value: "adult",    label: "Active adult" },
+  { value: "senior",   label: "55 and thriving" },
+  { value: "athlete",  label: "Training seriously" },
+] as const;
+
+type LifeStage = typeof LIFE_STAGES[number]["value"];
+
+const GOALS: Record<LifeStage, string[]> = {
+  beginner: ["Build a habit", "Lose weight", "Feel more energetic"],
+  adult:    ["Build muscle", "Lose fat", "Improve cardio", "Stay consistent"],
+  senior:   ["Stay active & healthy", "Improve flexibility", "Build strength safely"],
+  athlete:  ["Strength & hypertrophy", "Endurance", "Athletic performance", "Cut weight"],
+};
 import ChannelManager from "@/components/ChannelManager";
 import ScheduleEditor from "@/components/ScheduleEditor";
 
@@ -48,6 +65,12 @@ export default function SettingsPage() {
   const [savingName, setSavingName] = useState(false);
   const [nameStatus, setNameStatus] = useState<"idle" | "ok" | "err">("idle");
 
+  // Fitness profile
+  const [selectedLifeStage, setSelectedLifeStage] = useState<LifeStage | "">("");
+  const [selectedGoal, setSelectedGoal] = useState("");
+  const [savingFitnessProfile, setSavingFitnessProfile] = useState(false);
+  const [fitnessProfileStatus, setFitnessProfileStatus] = useState<"idle" | "ok" | "err">("idle");
+
   // Notifications
   const [savingNotifications, setSavingNotifications] = useState(false);
 
@@ -69,6 +92,8 @@ export default function SettingsPage() {
       .then(([u, ch, sched]) => {
         setUser(u);
         setDisplayName(u.display_name ?? "");
+        if (u.profile) setSelectedLifeStage(u.profile as LifeStage);
+        if (u.goal) setSelectedGoal(u.goal);
         setChannels(ch);
         setSchedule(sched.schedule);
       })
@@ -95,6 +120,22 @@ export default function SettingsPage() {
       setNameStatus("err");
     } finally {
       setSavingName(false);
+    }
+  }
+
+  async function handleSaveFitnessProfile() {
+    if (!selectedLifeStage || !selectedGoal) return;
+    setSavingFitnessProfile(true);
+    setFitnessProfileStatus("idle");
+    try {
+      const updated = await updateProfile(selectedLifeStage, selectedGoal);
+      setUser(updated);
+      setFitnessProfileStatus("ok");
+      setTimeout(() => setFitnessProfileStatus("idle"), 2500);
+    } catch {
+      setFitnessProfileStatus("err");
+    } finally {
+      setSavingFitnessProfile(false);
     }
   }
 
@@ -210,6 +251,66 @@ export default function SettingsPage() {
               <div>
                 <label className="block text-xs text-zinc-500 mb-1.5">Email</label>
                 <p className="text-sm text-zinc-600 dark:text-zinc-400">{user?.email}</p>
+              </div>
+            </div>
+          </SectionCard>
+
+          {/* Fitness Profile */}
+          <SectionCard title="Fitness Profile">
+            <p className="text-xs text-zinc-500 mb-4">
+              Used to personalise your plan and validate new channels. Update this if your goals or fitness level have changed.
+            </p>
+            <div className="space-y-3">
+              <div>
+                <label className="block text-xs text-zinc-500 mb-1.5">Life stage</label>
+                <select
+                  value={selectedLifeStage}
+                  onChange={(e) => {
+                    const ls = e.target.value as LifeStage;
+                    setSelectedLifeStage(ls);
+                    setSelectedGoal(GOALS[ls]?.[0] ?? "");
+                  }}
+                  className="w-full rounded-lg bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 px-4 py-2.5 text-sm text-zinc-900 dark:text-white focus:outline-none focus:border-zinc-500"
+                >
+                  <option value="" disabled>Select life stage</option>
+                  {LIFE_STAGES.map((ls) => (
+                    <option key={ls.value} value={ls.value}>{ls.label}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs text-zinc-500 mb-1.5">Goal</label>
+                <select
+                  value={selectedGoal}
+                  onChange={(e) => setSelectedGoal(e.target.value)}
+                  disabled={!selectedLifeStage}
+                  className="w-full rounded-lg bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 px-4 py-2.5 text-sm text-zinc-900 dark:text-white focus:outline-none focus:border-zinc-500 disabled:opacity-50"
+                >
+                  <option value="" disabled>Select goal</option>
+                  {selectedLifeStage && GOALS[selectedLifeStage].map((g) => (
+                    <option key={g} value={g}>{g}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="flex items-center gap-3 pt-1">
+                <button
+                  onClick={handleSaveFitnessProfile}
+                  disabled={
+                    savingFitnessProfile ||
+                    !selectedLifeStage ||
+                    !selectedGoal ||
+                    (selectedLifeStage === user?.profile && selectedGoal === user?.goal)
+                  }
+                  className="rounded-lg bg-zinc-900 dark:bg-white px-4 py-2.5 text-sm font-semibold text-white dark:text-zinc-900 hover:bg-zinc-700 dark:hover:bg-zinc-100 disabled:opacity-40 transition"
+                >
+                  {savingFitnessProfile ? "Saving…" : "Save profile"}
+                </button>
+                {fitnessProfileStatus === "ok" && (
+                  <span className="text-xs text-green-400">Profile updated.</span>
+                )}
+                {fitnessProfileStatus === "err" && (
+                  <span className="text-xs text-red-400">Failed to update. Try again.</span>
+                )}
               </div>
             </div>
           </SectionCard>

@@ -36,6 +36,7 @@ vi.mock("@/lib/api", () => ({
   deleteMe: vi.fn(),
   updateSchedule: vi.fn(),
   updateEmailNotifications: vi.fn(),
+  updateProfile: vi.fn(),
   generatePlan: vi.fn(),
   logout: vi.fn(),
 }));
@@ -50,6 +51,7 @@ const mockUpdateEmailNotifications = api.updateEmailNotifications as ReturnType<
 const mockLogout = api.logout as ReturnType<typeof vi.fn>;
 
 const mockGeneratePlan = api.generatePlan as ReturnType<typeof vi.fn>;
+const mockUpdateProfile = api.updateProfile as ReturnType<typeof vi.fn>;
 
 const mockUser = {
   id: 1,
@@ -59,6 +61,9 @@ const mockUser = {
   credentials_valid: true,
   is_admin: false,
   email_notifications: true,
+  profile: "adult",
+  goal: "Build muscle",
+  created_at: "2024-01-01T00:00:00",
 };
 
 const mockSchedule = {
@@ -83,6 +88,7 @@ beforeEach(() => {
   mockUpdateSchedule.mockResolvedValue(undefined);
   mockUpdateEmailNotifications.mockResolvedValue({ ...mockUser, email_notifications: false });
   mockGeneratePlan.mockResolvedValue({});
+  mockUpdateProfile.mockResolvedValue({ ...mockUser, profile: "adult", goal: "Build muscle" });
   mockLogout.mockResolvedValue(undefined);
   (api.getSuggestions as ReturnType<typeof vi.fn>).mockResolvedValue([]);
 });
@@ -214,6 +220,46 @@ describe("SettingsPage - delete account", () => {
     fireEvent.click(screen.getByRole("button", { name: /Yes, delete my account/i }));
     await waitFor(() => expect(mockDeleteMe).toHaveBeenCalledOnce());
     await waitFor(() => expect(mockLogout).toHaveBeenCalledOnce());
+  });
+});
+
+describe("SettingsPage - fitness profile", () => {
+  it("pre-selects current life stage and goal from user data", async () => {
+    render(<SettingsPage />);
+    await waitFor(() => screen.getByRole("button", { name: /Save profile/i }));
+    expect(screen.getByDisplayValue("Active adult")).toBeInTheDocument();
+    expect(screen.getByDisplayValue("Build muscle")).toBeInTheDocument();
+  });
+
+  it("Save profile button is disabled when values match current profile", async () => {
+    render(<SettingsPage />);
+    await waitFor(() => screen.getByRole("button", { name: /Save profile/i }));
+    expect(screen.getByRole("button", { name: /Save profile/i })).toBeDisabled();
+  });
+
+  it("calls updateProfile and shows success on save", async () => {
+    render(<SettingsPage />);
+    await waitFor(() => screen.getByDisplayValue("Build muscle"));
+    fireEvent.change(screen.getByDisplayValue("Build muscle"), { target: { value: "Lose fat" } });
+    fireEvent.click(screen.getByRole("button", { name: /Save profile/i }));
+    await waitFor(() => expect(mockUpdateProfile).toHaveBeenCalledWith("adult", "Lose fat"));
+    await waitFor(() => expect(screen.getByText(/Profile updated/i)).toBeInTheDocument());
+  });
+
+  it("shows error when updateProfile fails", async () => {
+    mockUpdateProfile.mockRejectedValue(new Error("Server error"));
+    render(<SettingsPage />);
+    await waitFor(() => screen.getByDisplayValue("Build muscle"));
+    fireEvent.change(screen.getByDisplayValue("Build muscle"), { target: { value: "Lose fat" } });
+    fireEvent.click(screen.getByRole("button", { name: /Save profile/i }));
+    await waitFor(() => expect(screen.getByText(/Failed to update/i)).toBeInTheDocument());
+  });
+
+  it("updates goal options when life stage changes", async () => {
+    render(<SettingsPage />);
+    await waitFor(() => screen.getByDisplayValue("Active adult"));
+    fireEvent.change(screen.getByDisplayValue("Active adult"), { target: { value: "beginner" } });
+    await waitFor(() => expect(screen.getByDisplayValue("Build a habit")).toBeInTheDocument());
   });
 });
 

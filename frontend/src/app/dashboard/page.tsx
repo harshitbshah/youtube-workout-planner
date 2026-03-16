@@ -223,6 +223,7 @@ export default function DashboardPage() {
   const [error, setError] = useState("");
   const [missingTypesDismissed, setMissingTypesDismissed] = useState(false);
   const [youtubeJustConnected, setYoutubeJustConnected] = useState(false);
+  const [profileNudgeDismissed, setProfileNudgeDismissed] = useState(false);
 
   useEffect(() => {
     // Check if we just came from onboarding with a scan in progress
@@ -396,6 +397,26 @@ export default function DashboardPage() {
 
   const allDaysEmpty = plan && plan.days.every((d: PlanDay) => !d.video);
 
+  const EIGHT_WEEKS_MS = 56 * 24 * 60 * 60 * 1000;
+  const showProfileNudge = (() => {
+    if (!user?.profile || !user?.created_at) return false;
+    if (profileNudgeDismissed) return false;
+    const signedUpMs = new Date(user.created_at).getTime();
+    if (Date.now() - signedUpMs < EIGHT_WEEKS_MS) return false;
+    const dismissedAt = typeof window !== "undefined"
+      ? localStorage.getItem("profile_nudge_dismissed_at")
+      : null;
+    if (dismissedAt && Date.now() - parseInt(dismissedAt) < EIGHT_WEEKS_MS) return false;
+    return true;
+  })();
+
+  const LIFE_STAGE_LABELS: Record<string, string> = {
+    beginner: "Just starting out",
+    adult: "Active adult",
+    senior: "55 and thriving",
+    athlete: "Training seriously",
+  };
+
   // True when plan.week_start is from a previous week
   const isPlanStale = (() => {
     if (!plan) return false;
@@ -548,6 +569,28 @@ export default function DashboardPage() {
           <div className="mb-6 flex items-start justify-between gap-3 rounded-lg border border-blue-800 bg-blue-900/20 px-4 py-3 text-sm text-blue-300">
             <span>{announcement.message}</span>
             <button onClick={() => setAnnouncement(null)} className="shrink-0 text-blue-500 hover:text-blue-300 transition">✕</button>
+          </div>
+        )}
+
+        {/* Profile nudge banner - shown after 8 weeks to prompt profile review */}
+        {showProfileNudge && (
+          <div className="mb-6 flex items-center justify-between gap-3 rounded-lg border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/60 px-4 py-3 text-sm text-zinc-700 dark:text-zinc-300">
+            <span>
+              Your fitness profile is set to <strong>{LIFE_STAGE_LABELS[user!.profile!] ?? user!.profile}</strong> - <strong>{user!.goal}</strong>. Still accurate?{" "}
+              <Link href="/settings" className="underline hover:text-zinc-900 dark:hover:text-white transition">
+                Update in Settings →
+              </Link>
+            </span>
+            <button
+              onClick={() => {
+                localStorage.setItem("profile_nudge_dismissed_at", Date.now().toString());
+                setProfileNudgeDismissed(true);
+              }}
+              aria-label="Dismiss"
+              className="shrink-0 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 transition"
+            >
+              ✕
+            </button>
           </div>
         )}
 
