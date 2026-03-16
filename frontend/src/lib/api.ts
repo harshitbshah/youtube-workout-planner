@@ -111,6 +111,8 @@ export const updateSchedule = (schedule: ScheduleSlot[], profile?: string, goal?
 
 export const getUpcomingPlan = () => apiFetch<PlanResponse>("/plan/upcoming");
 
+export const getPlanGaps = () => apiFetch<{ gaps: string[] }>("/plan/gaps");
+
 export const generatePlan = () => apiFetch<PlanResponse>("/plan/generate", { method: "POST" });
 
 export const swapPlanDay = (day: string, videoId: string) =>

@@ -18,7 +18,7 @@ from sqlalchemy.orm import Session
 from ..dependencies import get_current_user, get_db
 from ..models import Channel, Classification, ProgramHistory, Schedule, User, UserChannel, Video
 from ..schemas import PatchDayRequest, PlanDay, PlanResponse, PublishResponse, PublishStatus, VideoSummary
-from ..services.planner import generate_weekly_plan_for_user, pick_video_for_slot_for_user
+from ..services.planner import generate_weekly_plan_for_user, get_gap_types, pick_video_for_slot_for_user
 from ..services.publisher import (
     YouTubeAccessRevokedError,
     YouTubeNotConnectedError,
@@ -72,6 +72,23 @@ def _history_to_plan_response(rows: list[ProgramHistory], week_start: date, db: 
         days.append(PlanDay(day=day, video=None, scheduled_workout_type=wt))
 
     return PlanResponse(week_start=week_start.isoformat(), days=days)
+
+
+# ─── Gaps ─────────────────────────────────────────────────────────────────────
+
+@router.get("/gaps")
+def get_plan_gaps(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """
+    Return workout types that the user's schedule requires but their library
+    cannot fill (fewer than MIN_PLAN_CANDIDATES classified videos).
+    Returns {"gaps": ["HIIT", "Cardio"]} - empty list means all slots are covered.
+    """
+    gap_dicts = get_gap_types(db, current_user.id)
+    gap_types = sorted({g["workout_type"] for g in gap_dicts})
+    return {"gaps": gap_types}
 
 
 # ─── Upcoming ─────────────────────────────────────────────────────────────────

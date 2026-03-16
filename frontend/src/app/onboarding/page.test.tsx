@@ -17,6 +17,7 @@ vi.mock("@/lib/api", () => ({
   updateEmailNotifications: vi.fn(),
   triggerScan: vi.fn(),
   getJobStatus: vi.fn(),
+  getPlanGaps: vi.fn(),
   searchChannels: vi.fn(),
   addChannel: vi.fn(),
   deleteChannel: vi.fn(),
@@ -42,6 +43,7 @@ beforeEach(() => {
   mockUpdateEmailNotifications.mockResolvedValue({});
   mockTriggerScan.mockResolvedValue({});
   (api.getJobStatus as ReturnType<typeof vi.fn>).mockResolvedValue({ stage: null, total: null, done: null, error: null });
+  (api.getPlanGaps as ReturnType<typeof vi.fn>).mockResolvedValue({ gaps: [] });
   (api.searchChannels as ReturnType<typeof vi.fn>).mockResolvedValue([]);
   (api.getSuggestions as ReturnType<typeof vi.fn>).mockResolvedValue([
     { youtube_channel_id: "UCabc", name: "Athlean-X", description: "Strength training", thumbnail_url: null },
@@ -524,6 +526,54 @@ describe("OnboardingPage - Step 9 (Progress)", () => {
   it("shows 'Go to dashboard' escape hatch on step 9", async () => {
     await goToStep9();
     expect(screen.getByRole("button", { name: /Go to dashboard/i })).toBeInTheDocument();
+  });
+
+  it("shows gap resolution UI when scan completes with unfilled types", async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    try {
+      (api.getJobStatus as ReturnType<typeof vi.fn>).mockResolvedValue({ stage: "done", total: null, done: null, error: null });
+      (api.getPlanGaps as ReturnType<typeof vi.fn>).mockResolvedValue({ gaps: ["HIIT", "Cardio"] });
+      await goToStep9();
+      await vi.advanceTimersByTimeAsync(3100);
+      await waitFor(() =>
+        expect(screen.getByText(/HIIT, Cardio/i)).toBeInTheDocument()
+      );
+      expect(screen.getByRole("button", { name: /Add more channels/i })).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: /Continue anyway/i })).toBeInTheDocument();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("navigates to dashboard when scan completes with no gaps", async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    const pushMock = vi.fn();
+    (useRouter as ReturnType<typeof vi.fn>).mockReturnValue({ push: pushMock, replace: vi.fn() });
+    try {
+      (api.getJobStatus as ReturnType<typeof vi.fn>).mockResolvedValue({ stage: "done", total: null, done: null, error: null });
+      (api.getPlanGaps as ReturnType<typeof vi.fn>).mockResolvedValue({ gaps: [] });
+      await goToStep9();
+      await vi.advanceTimersByTimeAsync(3100);
+      await vi.advanceTimersByTimeAsync(1000); // setTimeout 800ms
+      await waitFor(() => expect(pushMock).toHaveBeenCalledWith("/dashboard"));
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("'Add more channels' button on gap screen returns to channel step", async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    try {
+      (api.getJobStatus as ReturnType<typeof vi.fn>).mockResolvedValue({ stage: "done", total: null, done: null, error: null });
+      (api.getPlanGaps as ReturnType<typeof vi.fn>).mockResolvedValue({ gaps: ["HIIT"] });
+      await goToStep9();
+      await vi.advanceTimersByTimeAsync(3100);
+      await waitFor(() => screen.getByRole("button", { name: /Add more channels/i }));
+      fireEvent.click(screen.getByRole("button", { name: /Add more channels/i }));
+      await waitFor(() => screen.getByText(/Add your favourite channels/i));
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it("shows 'preparing X / total' for negative classify progress", async () => {

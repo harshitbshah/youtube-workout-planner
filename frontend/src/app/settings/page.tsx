@@ -9,6 +9,7 @@ import {
   getMe,
   getChannels,
   getSchedule,
+  getPlanGaps,
   getSuggestions,
   patchMe,
   deleteMe,
@@ -72,8 +73,10 @@ export default function SettingsPage() {
   // Schedule
   const [savingSchedule, setSavingSchedule] = useState(false);
   const [scheduleStatus, setScheduleStatus] = useState<"idle" | "ok" | "err">("idle");
+  const [scheduleGaps, setScheduleGaps] = useState<string[]>([]);
 
   // Channel removal banner
+  const [channelGaps, setChannelGaps] = useState<string[]>([]);
   const [showRegenerateBanner, setShowRegenerateBanner] = useState(false);
   const [regenerating, setRegenerating] = useState(false);
   const [regenerateStatus, setRegenerateStatus] = useState<"idle" | "ok" | "err">("idle");
@@ -149,10 +152,13 @@ export default function SettingsPage() {
   async function handleSaveSchedule() {
     setSavingSchedule(true);
     setScheduleStatus("idle");
+    setScheduleGaps([]);
     try {
       await updateSchedule(schedule);
       setScheduleStatus("ok");
       setTimeout(() => setScheduleStatus("idle"), 2500);
+      const { gaps } = await getPlanGaps().catch(() => ({ gaps: [] }));
+      setScheduleGaps(gaps);
     } catch {
       setScheduleStatus("err");
     } finally {
@@ -164,6 +170,13 @@ export default function SettingsPage() {
     if (newChannels.length !== channels.length) {
       setShowRegenerateBanner(true);
       setRegenerateStatus("idle");
+      // Check for gaps if a channel was removed
+      if (newChannels.length < channels.length) {
+        setChannelGaps([]);
+        getPlanGaps()
+          .then(({ gaps }) => setChannelGaps(gaps))
+          .catch(() => {});
+      }
     }
     setChannels(newChannels);
   }
@@ -444,6 +457,12 @@ export default function SettingsPage() {
             {regenerateStatus === "err" && (
               <p className="mt-2 text-xs text-red-400">Failed to regenerate. Try again from the dashboard.</p>
             )}
+            {channelGaps.length > 0 && (
+              <div className="mt-3 rounded-lg border border-amber-200 dark:border-amber-800/60 bg-amber-50 dark:bg-amber-900/20 px-4 py-3 text-sm text-amber-800 dark:text-amber-300">
+                Heads up - your library now has no <strong>{channelGaps.join(", ")}</strong> videos.
+                Add a channel that covers {channelGaps.length === 1 ? "this type" : "these types"} to keep those days filled.
+              </div>
+            )}
           </SectionCard>
 
           {/* Schedule */}
@@ -467,6 +486,12 @@ export default function SettingsPage() {
                 <span className="text-xs text-red-400">Failed to save.</span>
               )}
             </div>
+            {scheduleGaps.length > 0 && (
+              <div className="mt-4 rounded-lg border border-amber-200 dark:border-amber-800/60 bg-amber-50 dark:bg-amber-900/20 px-4 py-3 text-sm text-amber-800 dark:text-amber-300">
+                Your library has no <strong>{scheduleGaps.join(", ")}</strong> videos yet.
+                Add a channel that covers {scheduleGaps.length === 1 ? "this type" : "these types"} so the planner can fill {scheduleGaps.length === 1 ? "that day" : "those days"}.
+              </div>
+            )}
           </SectionCard>
 
           {/* Danger zone */}

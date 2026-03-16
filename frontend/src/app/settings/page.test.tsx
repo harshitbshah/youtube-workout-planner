@@ -31,6 +31,7 @@ vi.mock("@/lib/api", () => ({
   getMe: vi.fn(),
   getChannels: vi.fn(),
   getSchedule: vi.fn(),
+  getPlanGaps: vi.fn(),
   getSuggestions: vi.fn(),
   patchMe: vi.fn(),
   deleteMe: vi.fn(),
@@ -91,6 +92,7 @@ beforeEach(() => {
   mockUpdateProfile.mockResolvedValue({ ...mockUser, profile: "adult", goal: ["Build muscle"] });
   mockLogout.mockResolvedValue(undefined);
   (api.getSuggestions as ReturnType<typeof vi.fn>).mockResolvedValue([]);
+  (api.getPlanGaps as ReturnType<typeof vi.fn>).mockResolvedValue({ gaps: [] });
 });
 
 describe("SettingsPage - initial render", () => {
@@ -329,6 +331,40 @@ describe("SettingsPage - channel change regenerate banner", () => {
     fireEvent.click(screen.getByRole("button", { name: /Regenerate now/i }));
     await waitFor(() =>
       expect(screen.getByText(/Failed to regenerate/i)).toBeInTheDocument()
+    );
+  });
+});
+
+describe("SettingsPage - gap warnings", () => {
+  async function renderSettings() {
+    render(<SettingsPage />);
+    await waitFor(() => screen.getByText("Settings"));
+  }
+
+  it("shows gap warning after saving schedule with unsupported types", async () => {
+    (api.getPlanGaps as ReturnType<typeof vi.fn>).mockResolvedValue({ gaps: ["HIIT", "Cardio"] });
+    await renderSettings();
+    fireEvent.click(screen.getByRole("button", { name: /Save schedule/i }));
+    await waitFor(() =>
+      expect(screen.getByText(/HIIT, Cardio/i)).toBeInTheDocument()
+    );
+  });
+
+  it("does not show gap warning after saving schedule when library is covered", async () => {
+    (api.getPlanGaps as ReturnType<typeof vi.fn>).mockResolvedValue({ gaps: [] });
+    await renderSettings();
+    fireEvent.click(screen.getByRole("button", { name: /Save schedule/i }));
+    await waitFor(() => screen.getByText(/Schedule saved/i));
+    expect(screen.queryByText(/your library has no/i)).not.toBeInTheDocument();
+  });
+
+  it("shows gap warning after removing a channel that created a gap", async () => {
+    mockGetChannels.mockResolvedValue([{ id: "ch1", name: "Jeff Nippard" }]);
+    (api.getPlanGaps as ReturnType<typeof vi.fn>).mockResolvedValue({ gaps: ["Strength"] });
+    await renderSettings();
+    channelManagerOnChange([]);
+    await waitFor(() =>
+      expect(screen.getByText(/Strength/i)).toBeInTheDocument()
     );
   });
 });

@@ -282,3 +282,48 @@ def test_get_publish_status_failed_state(auth_client):
 def test_get_publish_status_unauthenticated(client):
     resp = client.get("/plan/publish/status")
     assert resp.status_code == 401
+
+
+# ─── Gaps ─────────────────────────────────────────────────────────────────────
+
+def test_gaps_returns_empty_when_no_schedule(auth_client):
+    """User with no schedule slots has no gaps."""
+    client, _ = auth_client
+    resp = client.get("/plan/gaps")
+    assert resp.status_code == 200
+    assert resp.json() == {"gaps": []}
+
+
+def test_gaps_returns_empty_when_library_is_full(auth_client, db_session):
+    """User whose library has enough videos for every schedule slot reports no gaps."""
+    client, user = auth_client
+    ch = _seed_channel(db_session, user)
+    # 3+ Strength videos (MIN_PLAN_CANDIDATES default = 3)
+    for i in range(3):
+        _seed_video(db_session, ch.id, video_id=f"s{i}", title=f"Strength {i}")
+    db_session.add(Schedule(
+        user_id=user.id, day="monday", workout_type="Strength",
+        body_focus="full", duration_min=20, duration_max=60,
+    ))
+    db_session.commit()
+    resp = client.get("/plan/gaps")
+    assert resp.status_code == 200
+    assert resp.json() == {"gaps": []}
+
+
+def test_gaps_returns_missing_types(auth_client, db_session):
+    """Schedule has HIIT day but library has no HIIT videos - HIIT appears in gaps."""
+    client, user = auth_client
+    db_session.add(Schedule(
+        user_id=user.id, day="tuesday", workout_type="HIIT",
+        body_focus="full", duration_min=20, duration_max=60,
+    ))
+    db_session.commit()
+    resp = client.get("/plan/gaps")
+    assert resp.status_code == 200
+    assert "HIIT" in resp.json()["gaps"]
+
+
+def test_gaps_unauthenticated(client):
+    resp = client.get("/plan/gaps")
+    assert resp.status_code == 401

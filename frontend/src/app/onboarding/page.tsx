@@ -9,6 +9,7 @@ import {
   updateEmailNotifications,
   triggerScan,
   getJobStatus,
+  getPlanGaps,
   getSuggestions,
   setToken,
   loginUrl,
@@ -261,6 +262,7 @@ export default function OnboardingPage() {
 
   const [guardChecking, setGuardChecking] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [planGaps, setPlanGaps] = useState<string[]>([]);
 
   const isSenior = profile === "senior";
 
@@ -444,7 +446,14 @@ export default function OnboardingPage() {
           clearInterval(intervalRef.current);
           intervalRef.current = null;
         }
-        setTimeout(() => router.push("/dashboard"), 800);
+        // Check for library gaps before navigating - intercept if any slots can't be filled
+        const { gaps } = await getPlanGaps().catch(() => ({ gaps: [] }));
+        if (gaps.length > 0) {
+          setPlanGaps(gaps);
+          // stay on step 9 but show gap resolution UI (no navigation)
+        } else {
+          setTimeout(() => router.push("/dashboard"), 800);
+        }
       }
     } catch {
       // ignore transient poll errors
@@ -733,33 +742,69 @@ export default function OnboardingPage() {
         {/* Step 9 - Live Progress (was step 8) */}
         {step === 9 && (
           <div className="w-full max-w-md">
-            <h2 className="text-xl font-semibold text-zinc-900 dark:text-white mb-2">Setting up your plan…</h2>
-            <p className="text-zinc-600 dark:text-zinc-400 text-sm mb-8">
-              We&apos;re scanning your channels and classifying videos with AI.
-              This takes 2–5 minutes on first setup - worth the wait.
-            </p>
-            <ProgressTracker stage={scanStage} classifyProgress={classifyProgress} />
-            {scanError && (
-              <div className="mt-6 rounded-lg border border-red-800 bg-red-900/30 px-4 py-3">
-                <p className="text-sm text-red-400 mb-3">{scanError}</p>
-                <button
-                  onClick={handleRetry}
-                  className="rounded-lg bg-red-800 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 transition cursor-pointer"
-                >
-                  Try again
-                </button>
-              </div>
+            {planGaps.length > 0 ? (
+              /* Gap resolution - shown instead of navigating to dashboard */
+              <>
+                <h2 className="text-xl font-semibold text-zinc-900 dark:text-white mb-2">Your plan is almost complete</h2>
+                <p className="text-zinc-600 dark:text-zinc-400 text-sm mb-6">
+                  We couldn&apos;t find any <strong className="text-zinc-800 dark:text-zinc-200">{planGaps.join(", ")}</strong> videos
+                  in your channels. Add a channel that covers{" "}
+                  {planGaps.length === 1 ? "this type" : "these types"} or update your schedule to remove{" "}
+                  {planGaps.length === 1 ? "that day" : "those days"}.
+                </p>
+                <div className="flex flex-col gap-3">
+                  <button
+                    onClick={() => { setPlanGaps([]); setStep(8); }}
+                    className="rounded-lg bg-zinc-900 dark:bg-white px-4 py-3 text-sm font-semibold text-white dark:text-zinc-900 hover:bg-zinc-700 dark:hover:bg-zinc-100 transition cursor-pointer"
+                  >
+                    Add more channels →
+                  </button>
+                  <button
+                    onClick={() => router.push("/settings#schedule")}
+                    className="rounded-lg border border-zinc-200 dark:border-zinc-700 px-4 py-3 text-sm font-medium text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition cursor-pointer"
+                  >
+                    Update my schedule in Settings
+                  </button>
+                  <button
+                    onClick={() => router.push("/dashboard")}
+                    className="text-xs text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 underline transition cursor-pointer py-1"
+                  >
+                    Continue anyway →
+                  </button>
+                </div>
+              </>
+            ) : (
+              /* Normal scan progress */
+              <>
+                <h2 className="text-xl font-semibold text-zinc-900 dark:text-white mb-2">Setting up your plan…</h2>
+                <p className="text-zinc-600 dark:text-zinc-400 text-sm mb-8">
+                  We&apos;re scanning your channels and classifying videos with AI.
+                  This takes 2–5 minutes on first setup - worth the wait.
+                </p>
+                <ProgressTracker stage={scanStage} classifyProgress={classifyProgress} />
+                {scanError && (
+                  <div className="mt-6 rounded-lg border border-red-800 bg-red-900/30 px-4 py-3">
+                    <p className="text-sm text-red-400 mb-3">{scanError}</p>
+                    <button
+                      onClick={handleRetry}
+                      className="rounded-lg bg-red-800 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 transition cursor-pointer"
+                    >
+                      Try again
+                    </button>
+                  </div>
+                )}
+                <p className="mt-8 text-xs text-zinc-500 text-center">
+                  Taking too long?{" "}
+                  <button
+                    onClick={() => router.push("/dashboard")}
+                    className="underline hover:text-zinc-300 transition cursor-pointer"
+                  >
+                    Go to dashboard
+                  </button>
+                  {" "}- setup continues in the background.
+                </p>
+              </>
             )}
-            <p className="mt-8 text-xs text-zinc-500 text-center">
-              Taking too long?{" "}
-              <button
-                onClick={() => router.push("/dashboard")}
-                className="underline hover:text-zinc-300 transition cursor-pointer"
-              >
-                Go to dashboard
-              </button>
-              {" "}- setup continues in the background.
-            </p>
           </div>
         )}
       </div>
