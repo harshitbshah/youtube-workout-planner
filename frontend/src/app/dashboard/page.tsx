@@ -162,6 +162,85 @@ function SwapPicker({
   );
 }
 
+// ─── Rest day messages ────────────────────────────────────────────────────────
+
+const REST_MESSAGES: Record<string, string[]> = {
+  senior: [
+    "Rest well today. Your body does its best work when you slow down.",
+    "Active rest counts - gentle movement, hydration, good sleep.",
+    "Recovery is where the work settles in.",
+    "Ease off today. Back at it tomorrow.",
+    "Rest, recover, repeat.",
+    "Let the good work from this week settle.",
+    "A gentle walk counts as rest day activity.",
+    "Recovery day. You've earned it.",
+    "Your joints are thanking you right now.",
+    "Slow days make the active days better.",
+  ],
+  athlete: [
+    "Supercompensation in progress.",
+    "Recovery is training.",
+    "Adaptation happens here.",
+    "Your CNS thanks you.",
+    "Today's load: zero. Tomorrow's output: higher.",
+    "The work you did needs time to stick.",
+    "Active rest. Light movement, sleep, hydration.",
+    "Earned rest is the foundation of performance.",
+    "You don't get stronger during the workout. You get stronger after.",
+    "Sleep is the best legal performance enhancer.",
+  ],
+  default: [
+    "Rest day. No guilt required.",
+    "Muscles grow on rest days, not workout days.",
+    "Recovery is part of the program.",
+    "The best workout of the week.",
+    "Today the plan is: do nothing. You've earned it.",
+    "Your muscles are literally growing right now.",
+    "Walk, stretch, sleep. Repeat.",
+    "Rest is not the absence of training. It's part of it.",
+    "Today: rest. Tomorrow: back at it.",
+    "Earned rest is the best rest.",
+    "This is not a gap in the plan. This is the plan.",
+    "Recovery day. The hard part is trusting it.",
+  ],
+};
+
+function pickRestMessage(pool: string[], day: string, weekStart: string): string {
+  const key = `${weekStart}-${day}`;
+  let hash = 0;
+  for (let i = 0; i < key.length; i++) {
+    hash = (hash * 31 + key.charCodeAt(i)) >>> 0;
+  }
+  return pool[hash % pool.length];
+}
+
+function RestDayCard({ day, weekStart, profile }: { day: string; weekStart: string; profile: string | null }) {
+  const pool =
+    profile === "senior" ? REST_MESSAGES.senior :
+    profile === "athlete" ? REST_MESSAGES.athlete :
+    REST_MESSAGES.default;
+  const message = pickRestMessage(pool, day, weekStart);
+  return (
+    <div className="rounded-lg border border-dashed border-zinc-200 dark:border-zinc-700/60 bg-zinc-50 dark:bg-zinc-900/40 px-4 py-5 flex flex-col gap-2">
+      <span className="text-[11px] font-semibold text-zinc-400 dark:text-zinc-600 uppercase tracking-wide">Rest</span>
+      <p className="text-sm text-zinc-400 dark:text-zinc-500 leading-snug">{message}</p>
+    </div>
+  );
+}
+
+function MissingVideoCard({ workoutType }: { workoutType: string }) {
+  const label = workoutType.charAt(0).toUpperCase() + workoutType.slice(1);
+  return (
+    <div className="rounded-lg border border-amber-200 dark:border-amber-800/50 bg-amber-50/40 dark:bg-amber-900/10 px-4 py-5 flex flex-col gap-1.5">
+      <span className="text-[11px] font-semibold text-amber-600 dark:text-amber-500 uppercase tracking-wide">{label}</span>
+      <p className="text-sm text-amber-700 dark:text-amber-400 leading-snug">No matching video found.</p>
+      <Link href="/settings" className="text-xs text-amber-600 dark:text-amber-500 underline hover:text-amber-800 dark:hover:text-amber-300 transition mt-0.5">
+        Add channels in Settings →
+      </Link>
+    </div>
+  );
+}
+
 function VideoCard({ video }: { video: VideoSummary }) {
   return (
     <a
@@ -749,26 +828,34 @@ export default function DashboardPage() {
           <>
           <p className="text-xs text-zinc-500 dark:text-zinc-600 mb-3 text-right">✦ Curated by AI</p>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {plan.days.filter((day: PlanDay) => day.video).map((day: PlanDay) => (
+            {plan.days.map((day: PlanDay) => (
               <div key={day.day}>
                 <p className="text-xs font-semibold text-zinc-500 uppercase tracking-wide mb-2">
                   {DAY_LABELS[day.day] ?? day.day}
                 </p>
-                <VideoCard video={day.video!} />
-                <button
-                  onClick={() => setOpenSwapDay(openSwapDay === day.day ? null : day.day)}
-                  className="mt-1.5 w-full text-xs text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 transition py-1 cursor-pointer"
-                >
-                  {openSwapDay === day.day ? "Cancel" : "Swap video"}
-                </button>
-                {openSwapDay === day.day && (
-                  <SwapPicker
-                    day={day.day}
-                    workoutType={day.video!.workout_type}
-                    currentVideoId={day.video!.id}
-                    onSwap={(video) => handleSwap(day.day, video)}
-                    onClose={() => setOpenSwapDay(null)}
-                  />
+                {day.video ? (
+                  <>
+                    <VideoCard video={day.video} />
+                    <button
+                      onClick={() => setOpenSwapDay(openSwapDay === day.day ? null : day.day)}
+                      className="mt-1.5 w-full text-xs text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 transition py-1 cursor-pointer"
+                    >
+                      {openSwapDay === day.day ? "Cancel" : "Swap video"}
+                    </button>
+                    {openSwapDay === day.day && (
+                      <SwapPicker
+                        day={day.day}
+                        workoutType={day.video.workout_type}
+                        currentVideoId={day.video.id}
+                        onSwap={(video) => handleSwap(day.day, video)}
+                        onClose={() => setOpenSwapDay(null)}
+                      />
+                    )}
+                  </>
+                ) : day.scheduled_workout_type ? (
+                  <MissingVideoCard workoutType={day.scheduled_workout_type} />
+                ) : (
+                  <RestDayCard day={day.day} weekStart={plan.week_start} profile={user?.profile ?? null} />
                 )}
               </div>
             ))}

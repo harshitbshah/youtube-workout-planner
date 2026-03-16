@@ -219,6 +219,75 @@ describe("DashboardPage - plan display", () => {
       expect(screen.getByText(/Week of/i)).toBeInTheDocument()
     );
   });
+
+  it("shows rest day cards for days with no video and no scheduled_workout_type", async () => {
+    mockGetUpcomingPlan.mockResolvedValue(makePlan(getCurrentMondayISO()));
+    render(<DashboardPage />);
+    await waitFor(() => screen.getByText("30 Min Full Body HIIT"));
+    // 6 days have no video and no scheduled_workout_type - each gets a Rest label
+    const restLabels = screen.getAllByText("Rest");
+    expect(restLabels.length).toBe(6);
+  });
+
+  it("shows all 7 day labels in the grid", async () => {
+    mockGetUpcomingPlan.mockResolvedValue(makePlan(getCurrentMondayISO()));
+    render(<DashboardPage />);
+    await waitFor(() => screen.getByText("30 Min Full Body HIIT"));
+    expect(screen.getByText("Mon")).toBeInTheDocument();
+    expect(screen.getByText("Tue")).toBeInTheDocument();
+    expect(screen.getByText("Wed")).toBeInTheDocument();
+    expect(screen.getByText("Thu")).toBeInTheDocument();
+    expect(screen.getByText("Fri")).toBeInTheDocument();
+    expect(screen.getByText("Sat")).toBeInTheDocument();
+    expect(screen.getByText("Sun")).toBeInTheDocument();
+  });
+
+  it("shows MissingVideoCard for days with scheduled_workout_type but no video", async () => {
+    const planWithMissing = {
+      week_start: getCurrentMondayISO(),
+      days: [
+        {
+          day: "monday",
+          video: {
+            id: "abc123", title: "30 Min Full Body HIIT",
+            url: "https://youtube.com/watch?v=abc123",
+            channel_name: "FitnessBlender", duration_sec: 1800,
+            workout_type: "HIIT", body_focus: null, difficulty: null,
+          },
+        },
+        { day: "tuesday", video: null, scheduled_workout_type: "strength" },
+        { day: "wednesday", video: null, scheduled_workout_type: null },
+        { day: "thursday", video: null, scheduled_workout_type: null },
+        { day: "friday", video: null, scheduled_workout_type: null },
+        { day: "saturday", video: null, scheduled_workout_type: null },
+        { day: "sunday", video: null, scheduled_workout_type: null },
+      ],
+    };
+    mockGetUpcomingPlan.mockResolvedValue(planWithMissing);
+    render(<DashboardPage />);
+    await waitFor(() => screen.getByText("30 Min Full Body HIIT"));
+    expect(screen.getAllByText("Strength").length).toBeGreaterThan(0);
+    expect(screen.getByText("No matching video found.")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /Add channels in Settings/i })).toBeInTheDocument();
+    // Tuesday has a missing video card, not a rest card - only 5 rest cards
+    const restLabels = screen.getAllByText("Rest");
+    expect(restLabels.length).toBe(5);
+  });
+
+  it("rest day messages are deterministic for the same day and week_start", async () => {
+    mockGetUpcomingPlan.mockResolvedValue(makePlan(getCurrentMondayISO()));
+    const { unmount } = render(<DashboardPage />);
+    await waitFor(() => screen.getByText("30 Min Full Body HIIT"));
+    const tuesdayCard = screen.getAllByText("Rest")[0].closest("div");
+    const firstMessage = tuesdayCard?.querySelector("p")?.textContent;
+    unmount();
+
+    render(<DashboardPage />);
+    await waitFor(() => screen.getByText("30 Min Full Body HIIT"));
+    const tuesdayCard2 = screen.getAllByText("Rest")[0].closest("div");
+    const secondMessage = tuesdayCard2?.querySelector("p")?.textContent;
+    expect(firstMessage).toBe(secondMessage);
+  });
 });
 
 // ---------------------------------------------------------------------------
