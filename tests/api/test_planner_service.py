@@ -162,6 +162,14 @@ def test_pick_video_avoids_recently_used(db_session, user, channel):
     assert result["id"] == "vid2"
 
 
+def test_pick_video_never_picks_other_type(db_session, user, channel):
+    """'Other' classified videos must never appear in a plan slot, even via Tier 6 fallback."""
+    # Only video available is classified as 'Other' (e.g. a critique/progress video)
+    _add_video(db_session, channel, video_id="other1", workout_type="Other")
+    result = pick_video_for_slot_for_user(**_slot_kwargs(db_session, user.id))
+    assert result is None  # no valid video, not the Other one
+
+
 # ─── generate_weekly_plan_for_user ────────────────────────────────────────────
 
 def _add_schedule(db_session, user, day, workout_type, body_focus="full", duration_min=30, duration_max=45):

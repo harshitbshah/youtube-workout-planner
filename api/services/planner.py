@@ -121,6 +121,7 @@ def _fetch_candidates_for_user(
         .join(UserChannel, (UserChannel.channel_id == Channel.id) & (UserChannel.user_id == user_id))
         .filter(
             *([func.lower(Classification.workout_type) == workout_type.lower()] if not ignore_workout_type else []),
+            Classification.workout_type != "Other",  # never pick non-workout content regardless of tier
             or_(
                 Classification.body_focus == body_focus,
                 Classification.body_focus == "any",
