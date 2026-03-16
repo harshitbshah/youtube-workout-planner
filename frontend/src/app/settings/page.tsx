@@ -335,7 +335,7 @@ export default function SettingsPage() {
                   <div
                     className={`absolute top-1 w-4 h-4 rounded-full transition-all ${
                       user?.email_notifications
-                        ? "left-5 bg-white"
+                        ? "left-5 bg-white dark:bg-zinc-900"
                         : "left-1 bg-zinc-400"
                     }`}
                   />
