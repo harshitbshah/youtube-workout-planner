@@ -282,6 +282,7 @@ export default function OnboardingPage() {
         return getChannels().then((ch) => {
           if (cancelled) return;
           if (ch.length > 0) {
+            localStorage.removeItem("onboarding_pending");
             router.replace("/dashboard?from=onboarding");
             return;
           }
