@@ -13,12 +13,21 @@ from contextlib import asynccontextmanager
 
 logging.basicConfig(level=logging.INFO)
 
+import sentry_sdk
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.sessions import SessionMiddleware
 
 from .routers import admin, auth, channels, feedback, health, jobs, library, plan, schedule
 from .scheduler import start_scheduler, stop_scheduler
+
+_sentry_dsn = os.getenv("SENTRY_DSN", "")
+if _sentry_dsn:
+    sentry_sdk.init(
+        dsn=_sentry_dsn,
+        traces_sample_rate=0.1,
+        environment=os.getenv("RAILWAY_ENVIRONMENT", "development"),
+    )
 
 
 @asynccontextmanager

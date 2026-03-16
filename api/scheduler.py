@@ -30,6 +30,7 @@ Started/stopped via FastAPI lifespan in main.py.
 import logging
 from datetime import datetime, timedelta, timezone
 
+import sentry_sdk
 from apscheduler.schedulers.background import BackgroundScheduler
 
 logger = logging.getLogger(__name__)
@@ -70,6 +71,7 @@ def _weekly_pipeline_for_user(user_id: str):
                 total_new += new
             except Exception as e:
                 logger.error(f"[weekly] Scan failed for channel {channel.name}: {e}")
+                sentry_sdk.capture_exception(e)
 
         logger.info(f"[weekly] user={user_id}: {total_new} new videos across {len(channels)} channels")
 
@@ -83,6 +85,7 @@ def _weekly_pipeline_for_user(user_id: str):
                 logger.info(f"[weekly] user={user_id}: {classified} videos classified")
             except Exception as e:
                 logger.error(f"[weekly] Classification failed for user {user_id}: {e}")
+                sentry_sdk.capture_exception(e)
         else:
             logger.info(f"[weekly] user={user_id}: plan fillable from existing pool - skipping Anthropic batch")
 
@@ -93,6 +96,7 @@ def _weekly_pipeline_for_user(user_id: str):
             logger.info(f"[weekly] user={user_id}: plan generated")
         except Exception as e:
             logger.error(f"[weekly] Plan generation failed for user {user_id}: {e}")
+            sentry_sdk.capture_exception(e)
             return  # can't publish or email without a plan
 
         # Step 4: send weekly plan email
@@ -103,6 +107,7 @@ def _weekly_pipeline_for_user(user_id: str):
                 logger.info(f"[weekly] user={user_id}: plan email sent to {user.email}")
             except Exception as e:
                 logger.error(f"[weekly] user={user_id}: email failed - {e}")
+                sentry_sdk.capture_exception(e)
                 # Never let email failure break the pipeline
 
         # Step 5: auto-publish if user has valid YouTube credentials
@@ -126,6 +131,7 @@ def _weekly_pipeline_for_user(user_id: str):
                 logger.warning(f"[weekly] user={user_id}: YouTube publish skipped - {e}")
             except Exception as e:
                 logger.error(f"[weekly] user={user_id}: publish failed - {e}")
+                sentry_sdk.capture_exception(e)
 
     finally:
         session.close()

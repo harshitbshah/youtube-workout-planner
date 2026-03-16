@@ -11,6 +11,7 @@ from datetime import date, timedelta
 
 import threading
 
+import sentry_sdk
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
 from sqlalchemy import func
 from sqlalchemy.orm import Session
@@ -192,6 +193,7 @@ def _run_publish(user_id: str, week_start):
     except YouTubeAccessRevokedError as exc:
         _publish_status[user_id] = {"status": "failed", "playlist_url": None, "video_count": None, "error": "revoked"}
     except Exception as exc:
+        sentry_sdk.capture_exception(exc)
         _publish_status[user_id] = {"status": "failed", "playlist_url": None, "video_count": None, "error": str(exc)}
     finally:
         session.close()
