@@ -18,8 +18,8 @@ const CHANNELS = [
   { name: "Move with Nicole",  handle: "movewithnicole" },
   { name: "DanceWithDeepti",   handle: "dancewithdeepti" },
   { name: "HASfit",            handle: "hasfit" },
-  { name: "Fitness Marshall",  handle: "thefitmarshall" },
-  { name: "Lottie Murphy",     handle: "lottiemurphy" },
+  { name: "MommaStrong",       handle: "mommastrong" },
+  { name: "Sydney Cummings",   handle: "SydneyCummingsHoudyshell" },
 ];
 
 function ChannelAvatar({ name, handle }: { name: string; handle: string }) {

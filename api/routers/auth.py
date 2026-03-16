@@ -13,6 +13,7 @@ Splitting scopes reduces initial login to 1-2 steps. YouTube permission is
 requested only when the user explicitly connects YouTube.
 """
 
+import base64
 import json
 import os
 import secrets
@@ -72,16 +73,17 @@ async def _exchange_code_for_tokens(code: str, redirect_uri: str) -> dict:
     return resp.json()
 
 
-async def _get_google_userinfo(access_token: str) -> dict:
-    """Fetch the authenticated user's Google profile."""
-    async with httpx.AsyncClient() as client:
-        resp = await client.get(
-            "https://www.googleapis.com/oauth2/v2/userinfo",
-            headers={"Authorization": f"Bearer {access_token}"},
-        )
-    if resp.status_code != 200:
-        raise HTTPException(status_code=400, detail="Failed to fetch user info from Google")
-    return resp.json()
+def _decode_id_token(id_token: str) -> dict:
+    """Decode the JWT id_token payload without a network call.
+
+    The id_token is received directly from Google over HTTPS in the token
+    exchange response, so we trust it without re-verifying the signature.
+    It always contains sub (Google ID), email, and name when openid scope
+    is requested.
+    """
+    payload = id_token.split(".")[1]
+    payload += "=" * (4 - len(payload) % 4)  # restore base64 padding
+    return json.loads(base64.b64decode(payload))
 
 
 @router.get("/google")
@@ -113,21 +115,25 @@ async def google_callback(
         raise HTTPException(status_code=400, detail="Invalid OAuth state - possible CSRF")
 
     tokens = await _exchange_code_for_tokens(code, GOOGLE_REDIRECT_URI)
-    userinfo = await _get_google_userinfo(tokens["access_token"])
+    # Decode id_token locally - avoids a second round-trip to Google /userinfo
+    claims = _decode_id_token(tokens["id_token"])
+    google_id = claims["sub"]
+    email = claims.get("email", "")
+    display_name = claims.get("name")
 
     # Upsert user
-    user = db.query(User).filter(User.google_id == userinfo["id"]).first()
+    user = db.query(User).filter(User.google_id == google_id).first()
     if not user:
         user = User(
-            google_id=userinfo["id"],
-            email=userinfo["email"],
-            display_name=userinfo.get("name"),
+            google_id=google_id,
+            email=email,
+            display_name=display_name,
         )
         db.add(user)
         db.flush()
     else:
-        user.email = userinfo["email"]
-        user.display_name = userinfo.get("name")
+        user.email = email
+        user.display_name = display_name
 
     db.commit()
 

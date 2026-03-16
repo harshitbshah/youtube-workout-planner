@@ -4,6 +4,8 @@ Tests for Google OAuth routes.
 All HTTP calls to Google are mocked - no real network calls are made.
 """
 
+import base64
+import json
 from unittest.mock import AsyncMock, patch
 
 from api.crypto import decrypt, encrypt
@@ -34,31 +36,29 @@ def test_google_login_uses_select_account_prompt(client):
     assert "select_account" in location
 
 
+def _make_id_token(google_id="g123", email="user@example.com", name="Test User") -> str:
+    """Build a minimal JWT id_token with the given claims (no real signature needed for tests)."""
+    payload = base64.b64encode(
+        json.dumps({"sub": google_id, "email": email, "name": name}).encode()
+    ).decode().rstrip("=")
+    return f"header.{payload}.sig"
+
+
 def _mock_google(access_token="tok", refresh_token="ref", google_id="g123",
-                 email="user@example.com", name="Test User"):
-    """Return patch targets for both Google HTTP calls."""
-    token_data = {"access_token": access_token, "refresh_token": refresh_token}
-    userinfo_data = {"id": google_id, "email": email, "name": name}
-
-    mock_token_resp = AsyncMock()
-    mock_token_resp.status_code = 200
-    mock_token_resp.json = lambda: token_data
-
-    mock_userinfo_resp = AsyncMock()
-    mock_userinfo_resp.status_code = 200
-    mock_userinfo_resp.json = lambda: userinfo_data
-
-    return mock_token_resp, mock_userinfo_resp
+                 email="user@example.com", name="Test User") -> dict:
+    """Return a token response dict that _exchange_code_for_tokens would return."""
+    return {
+        "access_token": access_token,
+        "refresh_token": refresh_token,
+        "id_token": _make_id_token(google_id, email, name),
+    }
 
 
 def test_callback_creates_user_and_sets_session(client, db_session):
     login_resp = client.get("/auth/google", follow_redirects=False)
     state = login_resp.headers["location"].split("state=")[1].split("&")[0]
 
-    mock_token_resp, mock_userinfo_resp = _mock_google()
-
-    with patch("api.routers.auth._exchange_code_for_tokens", new=AsyncMock(return_value=mock_token_resp.json())), \
-         patch("api.routers.auth._get_google_userinfo", new=AsyncMock(return_value=mock_userinfo_resp.json())):
+    with patch("api.routers.auth._exchange_code_for_tokens", new=AsyncMock(return_value=_mock_google())):
         resp = client.get(f"/auth/google/callback?code=authcode&state={state}", follow_redirects=False)
 
     assert resp.status_code in (302, 307)
@@ -76,18 +76,13 @@ def test_callback_updates_existing_user(client, db_session):
     login_resp = client.get("/auth/google", follow_redirects=False)
     state = login_resp.headers["location"].split("state=")[1].split("&")[0]
 
-    mock_token_resp, mock_userinfo_resp = _mock_google(name="Old Name")
-    with patch("api.routers.auth._exchange_code_for_tokens", new=AsyncMock(return_value=mock_token_resp.json())), \
-         patch("api.routers.auth._get_google_userinfo", new=AsyncMock(return_value=mock_userinfo_resp.json())):
+    with patch("api.routers.auth._exchange_code_for_tokens", new=AsyncMock(return_value=_mock_google(name="Old Name"))):
         client.get(f"/auth/google/callback?code=c&state={state}", follow_redirects=False)
 
     login_resp2 = client.get("/auth/google", follow_redirects=False)
     state2 = login_resp2.headers["location"].split("state=")[1].split("&")[0]
 
-    tokens2 = {"access_token": "tok2"}
-    mock_userinfo2 = {"id": "g123", "email": "user@example.com", "name": "New Name"}
-    with patch("api.routers.auth._exchange_code_for_tokens", new=AsyncMock(return_value=tokens2)), \
-         patch("api.routers.auth._get_google_userinfo", new=AsyncMock(return_value=mock_userinfo2)):
+    with patch("api.routers.auth._exchange_code_for_tokens", new=AsyncMock(return_value=_mock_google(name="New Name"))):
         client.get(f"/auth/google/callback?code=c2&state={state2}", follow_redirects=False)
 
     users = db_session.query(User).filter(User.google_id == "g123").all()
@@ -165,9 +160,7 @@ def _login_and_create_creds(client, db_session, refresh_token="refresh_tok"):
     """Helper: log in via OAuth and manually seed YouTube credentials."""
     login_resp = client.get("/auth/google", follow_redirects=False)
     state = login_resp.headers["location"].split("state=")[1].split("&")[0]
-    mock_token, mock_userinfo = _mock_google()
-    with patch("api.routers.auth._exchange_code_for_tokens", new=AsyncMock(return_value=mock_token.json())), \
-         patch("api.routers.auth._get_google_userinfo", new=AsyncMock(return_value=mock_userinfo.json())):
+    with patch("api.routers.auth._exchange_code_for_tokens", new=AsyncMock(return_value=_mock_google())):
         client.get(f"/auth/google/callback?code=c&state={state}", follow_redirects=False)
 
     user = db_session.query(User).filter(User.google_id == "g123").first()
@@ -256,9 +249,7 @@ def test_me_response_includes_profile_and_goal(auth_client, db_session):
 def test_logout_clears_session(client, db_session):
     login_resp = client.get("/auth/google", follow_redirects=False)
     state = login_resp.headers["location"].split("state=")[1].split("&")[0]
-    mock_token, mock_userinfo = _mock_google()
-    with patch("api.routers.auth._exchange_code_for_tokens", new=AsyncMock(return_value=mock_token.json())), \
-         patch("api.routers.auth._get_google_userinfo", new=AsyncMock(return_value=mock_userinfo.json())):
+    with patch("api.routers.auth._exchange_code_for_tokens", new=AsyncMock(return_value=_mock_google())):
         client.get(f"/auth/google/callback?code=c&state={state}", follow_redirects=False)
 
     resp = client.post("/auth/logout")
