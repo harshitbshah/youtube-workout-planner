@@ -2,27 +2,22 @@
   <!-- Background -->
   <rect width="512" height="512" rx="120" fill="#18181b"/>
 
-  <!-- 5 x 3 dot grid (r=32, pitch=84) centred in 512x512 -->
-  <!-- Workout days: white  |  Rest days: zinc-700 #3f3f46 -->
+  <!--
+    Geometric "P"
+    Horizontally centred: letter spans x=126–386 (260px), centre=256
+    Vertically: y=96–420 (324px tall), bowl y=96–280
 
-  <!-- Row 1  y=172 -->
-  <circle cx="88"  cy="172" r="32" fill="#ffffff"/>
-  <circle cx="172" cy="172" r="32" fill="#3f3f46"/>
-  <circle cx="256" cy="172" r="32" fill="#ffffff"/>
-  <circle cx="340" cy="172" r="32" fill="#3f3f46"/>
-  <circle cx="424" cy="172" r="32" fill="#ffffff"/>
+    Stem:  x=126, width=76
+    Bowl outer D:  semicircle centre=(294, 188) r=92  →  rightmost x=386
+    Bowl inner cutout:  same centre r=48  (wall thickness=44px)
+  -->
 
-  <!-- Row 2  y=256 -->
-  <circle cx="88"  cy="256" r="32" fill="#3f3f46"/>
-  <circle cx="172" cy="256" r="32" fill="#ffffff"/>
-  <circle cx="256" cy="256" r="32" fill="#3f3f46"/>
-  <circle cx="340" cy="256" r="32" fill="#ffffff"/>
-  <circle cx="424" cy="256" r="32" fill="#3f3f46"/>
+  <!-- Stem -->
+  <rect x="126" y="96" width="76" height="324" rx="14" fill="white"/>
 
-  <!-- Row 3  y=340 -->
-  <circle cx="88"  cy="340" r="32" fill="#ffffff"/>
-  <circle cx="172" cy="340" r="32" fill="#3f3f46"/>
-  <circle cx="256" cy="340" r="32" fill="#ffffff"/>
-  <circle cx="340" cy="340" r="32" fill="#3f3f46"/>
-  <circle cx="424" cy="340" r="32" fill="#ffffff"/>
+  <!-- Bowl outer (D-shape: flat left + semicircle right) -->
+  <path d="M 126 96 L 294 96 A 92 92 0 1 1 294 280 L 126 280 Z" fill="white"/>
+
+  <!-- Bowl inner cutout -->
+  <path d="M 202 140 L 294 140 A 48 48 0 1 1 294 236 L 202 236 Z" fill="#18181b"/>
 </svg>
