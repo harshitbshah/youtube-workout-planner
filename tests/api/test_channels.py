@@ -69,6 +69,21 @@ def test_add_channel(auth_client, db_session):
     assert ch.name == "Athlean-X"
 
 
+def test_add_channel_beyond_limit_returns_400(auth_client, db_session):
+    client, user = auth_client
+    for i in range(5):
+        ch = Channel(name=f"Channel {i}", youtube_url=f"https://youtube.com/@ch{i}", youtube_channel_id=f"UC{i:020d}")
+        db_session.add(ch)
+        db_session.flush()
+        db_session.add(UserChannel(user_id=user.id, channel_id=ch.id))
+    db_session.commit()
+
+    payload = {"name": "Extra Channel", "youtube_url": "https://youtube.com/@extra", "youtube_channel_id": "UCextra000000000000000"}
+    resp = client.post("/channels", json=payload)
+    assert resp.status_code == 400
+    assert "limit" in resp.json()["detail"].lower()
+
+
 def test_add_duplicate_channel_returns_409(auth_client, db_session):
     client, user = auth_client
     _add_channel(db_session, user)

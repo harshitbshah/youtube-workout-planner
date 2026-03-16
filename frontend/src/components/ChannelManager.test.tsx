@@ -140,6 +140,39 @@ describe("ChannelManager - suggestions (card UI)", () => {
   });
 });
 
+describe("ChannelManager - channel limit", () => {
+  const fiveChannels = Array.from({ length: 5 }, (_, i) => ({
+    id: `ch${i}`,
+    name: `Channel ${i}`,
+    youtube_url: `https://youtube.com/@ch${i}`,
+    youtube_channel_id: `UC${i}`,
+    added_at: "2026-01-01",
+  }));
+
+  it("hides search bar and shows limit message when at 5 channels", () => {
+    render(<ChannelManager channels={fiveChannels} onChannelsChange={() => {}} />);
+    expect(screen.queryByPlaceholderText(/TIFFxDAN/i)).not.toBeInTheDocument();
+    expect(screen.getByText(/5-channel limit/i)).toBeInTheDocument();
+  });
+
+  it("shows 'Limit reached' on suggestion cards when at 5 channels", () => {
+    render(
+      <ChannelManager
+        channels={fiveChannels}
+        onChannelsChange={() => {}}
+        suggestions={[mockSuggestion]}
+      />
+    );
+    expect(screen.getByText(/Limit reached/i)).toBeInTheDocument();
+    expect(screen.queryByText("+ Add")).not.toBeInTheDocument();
+  });
+
+  it("shows search bar when below limit", () => {
+    render(<ChannelManager channels={[baseChannel]} onChannelsChange={() => {}} />);
+    expect(screen.getByPlaceholderText(/TIFFxDAN/i)).toBeInTheDocument();
+  });
+});
+
 describe("ChannelManager - search", () => {
   it("search button is disabled when query is empty", () => {
     render(<ChannelManager channels={[]} onChannelsChange={() => {}} />);
