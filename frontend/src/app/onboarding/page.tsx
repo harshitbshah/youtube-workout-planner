@@ -381,7 +381,7 @@ export default function OnboardingPage() {
   useEffect(() => {
     if (step !== 8 || !profile) return;
     setSuggestionsLoading(true);
-    getSuggestions(profile)
+    getSuggestions(profile, goals)
       .then(setSuggestions)
       .catch(() => {})
       .finally(() => setSuggestionsLoading(false));

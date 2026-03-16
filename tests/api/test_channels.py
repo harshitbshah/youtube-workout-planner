@@ -290,6 +290,59 @@ def test_suggestions_unauthenticated(client):
     assert resp.status_code == 401
 
 
+# ─── Goal-aware suggestion resolution ─────────────────────────────────────────
+
+def test_resolve_suggestions_yoga_goal_overrides_profile():
+    from api.routers.channels import _resolve_suggestion_names
+    names = _resolve_suggestion_names("adult", "Yoga & mindfulness")
+    assert names == ["Yoga With Adriene", "Kassandra", "Boho Beautiful"]
+
+
+def test_resolve_suggestions_pilates_goal():
+    from api.routers.channels import _resolve_suggestion_names
+    names = _resolve_suggestion_names("adult", "Pilates & core")
+    assert names == ["Move With Nicole", "Blogilates", "Boho Beautiful"]
+
+
+def test_resolve_suggestions_dance_goal():
+    from api.routers.channels import _resolve_suggestion_names
+    names = _resolve_suggestion_names("beginner", "Dance fitness")
+    assert names == ["The Fitness Marshall", "BollyX", "POPSUGAR Fitness"]
+
+
+def test_resolve_suggestions_two_modality_goals_interleaved():
+    from api.routers.channels import _resolve_suggestion_names
+    names = _resolve_suggestion_names("adult", "Yoga & mindfulness,Pilates & core")
+    # 2 from yoga + 1 from pilates (no duplicates)
+    assert len(names) == 3
+    assert names[0] == "Yoga With Adriene"
+    assert names[1] == "Kassandra"
+    assert names[2] == "Move With Nicole"
+
+
+def test_resolve_suggestions_no_modality_goal_falls_back_to_profile():
+    from api.routers.channels import _resolve_suggestion_names
+    names = _resolve_suggestion_names("senior", "Stay active & healthy")
+    assert names == ["Grow Young Fitness", "HASfit", "SilverSneakers"]
+
+
+def test_resolve_suggestions_mixed_modality_and_non_modality():
+    from api.routers.channels import _resolve_suggestion_names
+    # Non-modality goals are ignored; modality goal takes effect
+    names = _resolve_suggestion_names("adult", "Build muscle,Yoga & mindfulness")
+    assert names == ["Yoga With Adriene", "Kassandra", "Boho Beautiful"]
+
+
+def test_suggestions_route_yoga_goal(auth_client, db_session):
+    """Yoga goal returns yoga channel suggestions from the route."""
+    client, user = auth_client
+    with patch("api.routers.channels.YOUTUBE_API_KEY", ""):
+        resp = client.get("/channels/suggestions?goals=Yoga+%26+mindfulness")
+    assert resp.status_code == 200
+    # No cached channels + no API key = empty list, but 200 confirms routing works
+    assert isinstance(resp.json(), list)
+
+
 # ─── Channel validation ───────────────────────────────────────────────────────
 
 def test_add_channel_blocked_when_mismatch(auth_client, db_session):

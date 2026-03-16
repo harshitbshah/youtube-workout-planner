@@ -181,21 +181,70 @@ _SUGGESTION_NAMES: dict[str, list[str]] = {
 }
 _GENERAL_SUGGESTIONS = _SUGGESTION_NAMES["adult"]
 
+# Goal-aware modality suggestions. These override (or supplement) profile suggestions
+# when the user has selected a modality-specific goal.
+_GOAL_SUGGESTIONS: dict[str, list[str]] = {
+    "yoga":    ["Yoga With Adriene", "Kassandra", "Boho Beautiful"],
+    "pilates": ["Move With Nicole", "Blogilates", "Boho Beautiful"],
+    "dance":   ["The Fitness Marshall", "BollyX", "POPSUGAR Fitness"],
+}
+
+# Maps goal labels (lowercase) to a modality key in _GOAL_SUGGESTIONS
+_GOAL_MODALITY_MAP: dict[str, str] = {
+    "yoga & mindfulness": "yoga",
+    "pilates & core":     "pilates",
+    "dance fitness":      "dance",
+}
+
+
+def _resolve_suggestion_names(profile: Optional[str], goals_csv: Optional[str]) -> list[str]:
+    """Return up to 3 channel names based on profile + goals.
+
+    If the user has modality goals (yoga, pilates, dance), those channels are
+    prioritised. Multiple modality goals are interleaved: 2 from the first + 1
+    from the second. Non-modality goals fall back to profile-based suggestions.
+    """
+    modalities: list[str] = []
+    if goals_csv:
+        for goal in goals_csv.split(","):
+            modality = _GOAL_MODALITY_MAP.get(goal.strip().lower())
+            if modality and modality not in modalities:
+                modalities.append(modality)
+
+    if not modalities:
+        return _SUGGESTION_NAMES.get(profile or "", _GENERAL_SUGGESTIONS)
+
+    # Build a deduplicated list: 2 from first modality, 1 from second (if any)
+    combined: list[str] = []
+    seen: set[str] = set()
+    limits = [2, 1] if len(modalities) >= 2 else [3]
+    for modality, limit in zip(modalities, limits):
+        count = 0
+        for name in _GOAL_SUGGESTIONS.get(modality, []):
+            if name not in seen and count < limit:
+                combined.append(name)
+                seen.add(name)
+                count += 1
+    return combined[:3]
+
 
 @router.get("/suggestions", response_model=list[ChannelSearchResult])
 async def get_suggestions(
     profile: Optional[str] = None,
+    goals: Optional[str] = None,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    """Return up to 3 curated channel cards for the given profile.
+    """Return up to 3 curated channel cards for the given profile + goals.
 
+    Pass goals as a comma-separated string (e.g. "Yoga & mindfulness,Build muscle").
+    Modality goals (yoga, pilates, dance) take priority over profile-based suggestions.
     Results are served from the shared channels table (DB cache). On a cache
     miss the YouTube API is called once and the result is stored for all future
     users. If the YouTube API key is missing, cached rows are still returned and
     uncached names are silently skipped.
     """
-    names = _SUGGESTION_NAMES.get(profile or "", _GENERAL_SUGGESTIONS)
+    names = _resolve_suggestion_names(profile, goals)
     results: list[ChannelSearchResult] = []
 
     async with httpx.AsyncClient() as client:

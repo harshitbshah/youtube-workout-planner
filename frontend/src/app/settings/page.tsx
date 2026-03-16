@@ -114,11 +114,12 @@ export default function SettingsPage() {
   }, [router]);
 
   useEffect(() => {
-    getSuggestions()
+    if (!user) return;
+    getSuggestions(user.profile ?? undefined, user.goal ?? undefined)
       .then(setChannelSuggestions)
       .catch(() => {})
       .finally(() => setSuggestionsLoading(false));
-  }, []);
+  }, [user]);
 
   async function handleSaveName() {
     setSavingName(true);

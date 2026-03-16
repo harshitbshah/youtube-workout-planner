@@ -84,8 +84,11 @@ export const addChannel = (data: ChannelCreate) =>
 export const deleteChannel = (id: string) =>
   apiFetch<void>(`/channels/${id}`, { method: "DELETE" });
 
-export const getSuggestions = (profile?: string) => {
-  const q = profile ? `?profile=${encodeURIComponent(profile)}` : "";
+export const getSuggestions = (profile?: string, goals?: string[]) => {
+  const params = new URLSearchParams();
+  if (profile) params.set("profile", profile);
+  if (goals?.length) params.set("goals", goals.join(","));
+  const q = params.toString() ? `?${params.toString()}` : "";
   return apiFetch<ChannelSearchResult[]>(`/channels/suggestions${q}`);
 };
 

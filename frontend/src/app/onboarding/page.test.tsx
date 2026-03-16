@@ -461,7 +461,7 @@ describe("OnboardingPage - Step 8 (Channels)", () => {
   it("shows adult suggestions as cards after fetch resolves", async () => {
     await goToStep8();
     await waitFor(() => expect(screen.getByText("Athlean-X")).toBeInTheDocument());
-    expect(api.getSuggestions).toHaveBeenCalledWith("adult");
+    expect(api.getSuggestions).toHaveBeenCalledWith("adult", ["Build muscle"]);
   });
 
   it("shows senior subheading for senior profile", async () => {
