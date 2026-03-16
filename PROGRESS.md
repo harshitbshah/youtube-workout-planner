@@ -1,9 +1,25 @@
 # Progress
 
 ## Status
-Phases 1–5 complete + admin console + charts + guide page + mobile UX complete. Phase A complete. Phase B complete. Phase C complete. Phase D F5+F6+F9 complete. Backlog items T1+T2+S1+M2 complete. Channel suggestions + onboarding UX complete. Channel fitness validation (migration 019) complete. Email notifications opt-in step in onboarding complete. Dark mode all pages fixed. Lazy classification complete. Onboarding guard + admin reset complete. Homepage M1 redesign complete. Incremental OAuth complete. Multi-select goals + fitness profile editing in Settings complete (migration 020). Yoga, Pilates, Dance modalities + equipment capture complete (migration 021). Goal-aware channel suggestions complete. Targeted batch trusted-channel fix complete. **Pre-auth onboarding flow complete. 7-day full grid with rest day cards complete. Admin bug fixes complete. 335 backend unit + 210 frontend = 545 automated tests passing.**
+Phases 1–5 complete + admin console + charts + guide page + mobile UX complete. Phase A-D complete. Backlog T1+T2+S1+M2 complete. Pre-auth onboarding flow complete. 7-day full grid with rest day cards complete. Proactive gap detection complete. Non-workout video classifier + planner fix complete. Sentry monitoring + UptimeRobot health check complete. **340 backend unit + 216 frontend = 556 automated tests passing.**
 Both Railway (backend) and Vercel (frontend) live and functional on `main`.
 **Ready for first users** - Google OAuth fully verified. YouTube scope approved by Google Trust & Safety (2026-03-15).
+
+**Done this session (2026-03-16, checkpoint 13):**
+- Proactive gap detection: `GET /plan/gaps` endpoint returns workout types with insufficient library coverage ✅
+- Gap check at onboarding step 9 (after scan): shows resolution UI (add channels / update schedule / continue anyway) before navigating to dashboard ✅
+- Gap warning in Settings after schedule save (`scheduleGaps` state) ✅
+- Gap warning in Settings after channel removal (`channelGaps` state) ✅
+- Classifier bias fix: system prompt changed from "workout video's metadata" to neutral "determine whether it is a follow-along workout video" - 'Other' case described first ✅
+- Planner Tier 6 fix: `Classification.workout_type != "Other"` filter applied at query level - 'Other' videos can never be selected regardless of fallback tier ✅
+- Migration 022: retroactively sets `workout_type='Other'` for videos matching commentary patterns (critique, react to, reaction, commentary) ✅
+- Scanner blocklist: kept only 4 safe commentary patterns; reverted over-specific additions (30 day, 365 days etc.) - LLM handles those ✅
+- Dashboard card height uniformity: added `h-6 mt-1.5` spacer below RestDayCard and MissingVideoCard to match swap button height ✅
+- Sentry backend: `sentry-sdk[fastapi]` installed; initialized in `main.py` when `SENTRY_DSN` set; `capture_exception` added to all caught exceptions in scheduler + publish background task ✅
+- Sentry frontend: `@sentry/nextjs` installed; `sentry.config.ts` shared init; `sentry.client.config.ts` + `sentry.server.config.ts` + `instrumentation.ts` + `withSentryConfig` in `next.config.ts` ✅
+- `/health` endpoint: now pings DB with `SELECT 1` - returns `{"status":"ok","db":"ok"}` or `{"status":"degraded","db":"error"}` ✅
+- `pool_pre_ping=True` added to SQLAlchemy engine - prevents stale connection errors ✅
+- **340 backend unit + 216 frontend = 556 automated tests passing** ✅
 
 **Done this session (2026-03-16, checkpoint 12):**
 - Pre-auth onboarding flow: "Get started free" now navigates to `/onboarding` instead of OAuth; steps 1-6 work without any account; step 6 button label becomes "Create free account ->" for unauthenticated visitors; state saved to `localStorage` (`onboarding_pending`) before OAuth redirect; on return, pending state restored and `updateSchedule` called at step 7 ✅

@@ -131,6 +131,9 @@ Authenticates to YouTube via OAuth (using a stored refresh token - no browser ne
 **Web app publish flow (async):**
 `POST /plan/publish` returns 202 immediately and starts a background thread (`_run_publish`). The frontend polls `GET /plan/publish/status` every 2s until `status == "done"` or `"failed"`. Status is stored in the `_publish_status` in-memory dict (keyed by user ID). This mirrors the `_pipeline_status` pattern in `jobs.py`.
 
+**Gap detection (`GET /plan/gaps`):**
+Returns `{"gaps": ["HIIT", "Cardio"]}` - workout types the user's schedule requires but the library cannot fill (fewer than `MIN_PLAN_CANDIDATES` classified videos). Reuses `get_gap_types()` from `api/services/planner.py`. Called proactively at three points: end of onboarding scan, after schedule save in Settings, after channel removal in Settings. Allows the app to surface coverage issues at the moment they are created rather than on the dashboard.
+
 ---
 
 ### `src/db.py` - Persistence
@@ -392,6 +395,8 @@ reads `ADMIN_EMAIL` env var at request time and raises 403 if the current user's
 doesn't match. Env var is read at request time (not import time) for test isolation.
 
 ```
+GET  /health                              → DB connectivity check; returns {"status":"ok","db":"ok"} or {"status":"degraded","db":"error"}; used by UptimeRobot uptime monitor
+
 POST /feedback                            → submit user feedback (category: feedback/help/bug; trimmed message; emails admin via Resend; 400 invalid category/blank message; 503 on email failure)
 
 GET  /admin/stats                         → aggregate stats + per-user rows
@@ -659,6 +664,11 @@ parsed `detail` from the FastAPI error response.
 ---
 
 ## Key Design Decisions (Web App)
+
+**Monitoring:**
+- **UptimeRobot** - pings `GET /health` every 5 minutes; alerts via email if service is down or DB is unreachable. `/health` runs `SELECT 1` against the DB so both service-down and DB-dead scenarios are caught.
+- **Sentry** - `sentry-sdk[fastapi]` on backend; `@sentry/nextjs` on frontend. Initialized when `SENTRY_DSN` / `NEXT_PUBLIC_SENTRY_DSN` env vars are set. All unhandled exceptions are captured automatically. Caught exceptions in the scheduler (scan, classify, plan gen, email, publish) and publish background task are captured explicitly via `sentry_sdk.capture_exception(e)`. Disabled in dev/test (no DSN set).
+- **`pool_pre_ping=True`** on the SQLAlchemy engine - verifies DB connections before use, prevents stale connection errors after Railway restarts.
 
 **Services reuse `src/` logic** - the core scanner/classifier/planner code is unchanged.
 The web app API services are thin adapters that swap raw SQLite for SQLAlchemy sessions.

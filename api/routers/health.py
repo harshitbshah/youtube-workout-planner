@@ -11,9 +11,6 @@ router = APIRouter(tags=["health"])
 def health(db: Session = Depends(get_db)):
     try:
         db.execute(text("SELECT 1"))
-        db_ok = True
+        return {"status": "ok", "db": "ok"}
     except Exception:
-        db_ok = False
-
-    status = "ok" if db_ok else "degraded"
-    return {"status": status, "db": "ok" if db_ok else "error"}
+        return {"status": "degraded", "db": "error"}
