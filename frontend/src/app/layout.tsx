@@ -1,9 +1,10 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import ThemeToggle from "@/components/ThemeToggle";
 import SentryInit from "@/components/SentryInit";
+import PWAInstallPrompt from "@/components/PWAInstallPrompt";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -21,6 +22,22 @@ export const metadata: Metadata = {
   verification: {
     google: "MgZ_HeYjQ5kfUX2IySazMwV_xjisfW_Q-OGmcCodYsY",
   },
+  manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "Plan My Workout",
+  },
+};
+
+export const viewport: Viewport = {
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
+    { media: "(prefers-color-scheme: dark)", color: "#18181b" },
+  ],
+  width: "device-width",
+  initialScale: 1,
+  minimumScale: 1,
 };
 
 export default function RootLayout({
@@ -37,12 +54,15 @@ export default function RootLayout({
             __html: `(function(){var s=localStorage.getItem('theme');if(s==='dark'||(!s&&window.matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.classList.add('dark')}})()`,
           }}
         />
+        {/* Apple touch icon for iOS home screen */}
+        <link rel="apple-touch-icon" href="/icons/icon-192.png" />
       </head>
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         <ThemeProvider>
           <SentryInit />
           {children}
           <ThemeToggle />
+          <PWAInstallPrompt />
         </ThemeProvider>
       </body>
     </html>
