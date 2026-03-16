@@ -19,6 +19,7 @@ import ChannelManager from "@/components/ChannelManager";
 import ScheduleEditor from "@/components/ScheduleEditor";
 import { buildSchedule, type LifeStage, type SessionLength } from "@/lib/scheduleTemplates";
 import { DAY_LABELS } from "@/lib/utils";
+import { EQUIPMENT_OPTIONS, GOALS, type GoalGroup } from "@/lib/constants";
 
 // ─── Step Indicator ───────────────────────────────────────────────────────────
 
@@ -221,38 +222,6 @@ const LIFE_STAGES: { value: LifeStage; label: string; sublabel: string }[] = [
   { value: "athlete",  label: "Training seriously",  sublabel: "Structured programming, performance goals" },
 ];
 
-type GoalGroup = { group: string; options: string[] };
-
-const GOALS: Record<LifeStage, GoalGroup[]> = {
-  beginner: [
-    { group: "General",    options: ["Build a habit", "Lose weight", "Feel more energetic"] },
-    { group: "Mind & Body", options: ["Yoga & mindfulness", "Dance fitness"] },
-  ],
-  adult: [
-    { group: "Strength & Performance", options: ["Build muscle", "Stay consistent"] },
-    { group: "Cardio & Dance",         options: ["Lose fat", "Improve cardio", "Dance fitness"] },
-    { group: "Mind & Body",            options: ["Yoga & mindfulness", "Pilates & core"] },
-  ],
-  senior: [
-    { group: "General",    options: ["Stay active & healthy", "Build strength safely"] },
-    { group: "Mind & Body", options: ["Improve flexibility", "Yoga & mindfulness", "Pilates & core"] },
-    { group: "Fun",         options: ["Dance fitness"] },
-  ],
-  athlete: [
-    { group: "Strength & Performance", options: ["Strength & hypertrophy", "Endurance", "Athletic performance", "Cut weight"] },
-    { group: "Recovery & Mobility",    options: ["Yoga & mindfulness", "Pilates & core"] },
-  ],
-};
-
-const EQUIPMENT_OPTIONS = [
-  { id: "mat",              label: "Yoga / exercise mat" },
-  { id: "dumbbells",        label: "Dumbbells" },
-  { id: "resistance_bands", label: "Resistance bands" },
-  { id: "kettlebell",       label: "Kettlebell" },
-  { id: "barbell",          label: "Barbell" },
-  { id: "pull_up_bar",      label: "Pull-up bar" },
-  { id: "reformer",         label: "Pilates reformer" },
-];
 
 const DEFAULT_DAYS: Record<LifeStage, number> = { beginner: 3, adult: 4, senior: 3, athlete: 5 };
 const DEFAULT_DURATION: Record<LifeStage, SessionLength> = { beginner: "short", adult: "medium", senior: "short", athlete: "long" };
@@ -385,7 +354,7 @@ export default function OnboardingPage() {
       .then(setSuggestions)
       .catch(() => {})
       .finally(() => setSuggestionsLoading(false));
-  }, [step, profile]);
+  }, [step, profile, goals]);
 
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 

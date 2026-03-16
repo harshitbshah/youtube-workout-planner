@@ -23,33 +23,17 @@ import {
   type ScheduleSlot,
 } from "@/lib/api";
 
+import ChannelManager from "@/components/ChannelManager";
+import ScheduleEditor from "@/components/ScheduleEditor";
+import { EQUIPMENT_OPTIONS, GOALS as GOALS_GROUPED } from "@/lib/constants";
+import { type LifeStage } from "@/lib/scheduleTemplates";
+
 const LIFE_STAGES = [
   { value: "beginner", label: "Just starting out" },
   { value: "adult",    label: "Active adult" },
   { value: "senior",   label: "55 and thriving" },
   { value: "athlete",  label: "Training seriously" },
 ] as const;
-
-type LifeStage = typeof LIFE_STAGES[number]["value"];
-
-const GOALS: Record<LifeStage, string[]> = {
-  beginner: ["Build a habit", "Lose weight", "Feel more energetic", "Yoga & mindfulness", "Dance fitness"],
-  adult:    ["Build muscle", "Lose fat", "Improve cardio", "Stay consistent", "Dance fitness", "Yoga & mindfulness", "Pilates & core"],
-  senior:   ["Stay active & healthy", "Improve flexibility", "Build strength safely", "Yoga & mindfulness", "Pilates & core", "Dance fitness"],
-  athlete:  ["Strength & hypertrophy", "Endurance", "Athletic performance", "Cut weight", "Yoga & mindfulness", "Pilates & core"],
-};
-
-const EQUIPMENT_OPTIONS = [
-  { id: "mat",              label: "Yoga / exercise mat" },
-  { id: "dumbbells",        label: "Dumbbells" },
-  { id: "resistance_bands", label: "Resistance bands" },
-  { id: "kettlebell",       label: "Kettlebell" },
-  { id: "barbell",          label: "Barbell" },
-  { id: "pull_up_bar",      label: "Pull-up bar" },
-  { id: "reformer",         label: "Pilates reformer" },
-] as const;
-import ChannelManager from "@/components/ChannelManager";
-import ScheduleEditor from "@/components/ScheduleEditor";
 
 function SectionCard({ title, children }: { title: string; children: React.ReactNode }) {
   return (
@@ -295,7 +279,7 @@ export default function SettingsPage() {
                 <div>
                   <label className="block text-xs text-zinc-500 mb-2">Goals <span className="text-zinc-400">(pick up to 3)</span></label>
                   <div className="flex flex-col gap-2">
-                    {GOALS[selectedLifeStage].map((g) => {
+                    {GOALS_GROUPED[selectedLifeStage].flatMap((grp) => grp.options).map((g) => {
                       const checked = selectedGoals.includes(g);
                       const atMax = selectedGoals.length >= 3 && !checked;
                       return (

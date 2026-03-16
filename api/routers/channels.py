@@ -327,7 +327,6 @@ async def get_suggestions(
                         description=desc,
                     )
                     db.add(existing)
-                db.commit()
 
                 results.append(
                     ChannelSearchResult(
@@ -340,6 +339,9 @@ async def get_suggestions(
 
             except Exception:
                 continue  # network / parse error - skip this suggestion
+
+    if results:
+        db.commit()
 
     return results
 

@@ -8,12 +8,13 @@ Routes:
 
 import json
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from ..dependencies import get_current_user, get_db
 from ..models import Schedule, User
 from ..schemas import ScheduleResponse, ScheduleSlot, ScheduleUpdate
+from .auth import VALID_EQUIPMENT
 
 DAYS_OF_WEEK = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"]
 
@@ -65,6 +66,9 @@ def update_schedule(
     if body.goal is not None:
         current_user.goal = json.dumps(body.goal)
     if body.equipment is not None:
+        invalid = [e for e in body.equipment if e not in VALID_EQUIPMENT]
+        if invalid:
+            raise HTTPException(status_code=400, detail=f"Invalid equipment: {invalid}")
         current_user.equipment = json.dumps(body.equipment)
 
     # Delete existing schedule for this user and replace entirely
