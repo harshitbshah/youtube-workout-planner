@@ -29,7 +29,8 @@ class User(Base):
     last_scan_error = Column(Text, nullable=True)  # set on pipeline failure, cleared on success
     email_notifications = Column(Boolean, nullable=False, default=True, server_default="true")
     profile = Column(String, nullable=True)   # beginner | adult | senior | athlete
-    goal = Column(String, nullable=True)       # e.g. "Build muscle", "Stay active & healthy"
+    goal = Column(String, nullable=True)       # JSON array, e.g. '["Build muscle"]'
+    equipment = Column(Text, nullable=True)    # JSON array, e.g. '["mat","dumbbells"]'
 
     user_channels = relationship("UserChannel", back_populates="user", cascade="all, delete-orphan")
     schedules = relationship("Schedule", back_populates="user", cascade="all, delete-orphan")

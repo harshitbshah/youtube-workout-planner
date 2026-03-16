@@ -218,6 +218,7 @@ def _me_response(user: User, db: Session) -> MeResponse:
         email_notifications=user.email_notifications,
         profile=user.profile,
         goal=json.loads(user.goal) if user.goal else None,
+        equipment=json.loads(user.equipment) if user.equipment else None,
         created_at=user.created_at.isoformat() if user.created_at else None,
     )
 
@@ -242,11 +243,12 @@ def patch_me(
 
 VALID_PROFILES = {"beginner", "adult", "senior", "athlete"}
 VALID_GOALS: dict[str, set[str]] = {
-    "beginner": {"Build a habit", "Lose weight", "Feel more energetic"},
-    "adult":    {"Build muscle", "Lose fat", "Improve cardio", "Stay consistent"},
-    "senior":   {"Stay active & healthy", "Improve flexibility", "Build strength safely"},
-    "athlete":  {"Strength & hypertrophy", "Endurance", "Athletic performance", "Cut weight"},
+    "beginner": {"Build a habit", "Lose weight", "Feel more energetic", "Yoga & mindfulness", "Dance fitness"},
+    "adult":    {"Build muscle", "Lose fat", "Improve cardio", "Stay consistent", "Dance fitness", "Yoga & mindfulness", "Pilates & core"},
+    "senior":   {"Stay active & healthy", "Improve flexibility", "Build strength safely", "Yoga & mindfulness", "Pilates & core", "Dance fitness"},
+    "athlete":  {"Strength & hypertrophy", "Endurance", "Athletic performance", "Cut weight", "Yoga & mindfulness", "Pilates & core"},
 }
+VALID_EQUIPMENT = {"mat", "dumbbells", "resistance_bands", "kettlebell", "barbell", "pull_up_bar", "reformer"}
 
 
 @router.patch("/me/profile", response_model=MeResponse)
@@ -268,6 +270,11 @@ def patch_me_profile(
             raise HTTPException(status_code=400, detail=f"Invalid goal '{g}' for this profile")
     current_user.profile = body.profile
     current_user.goal = json.dumps(body.goal)
+    if body.equipment is not None:
+        invalid = [e for e in body.equipment if e not in VALID_EQUIPMENT]
+        if invalid:
+            raise HTTPException(status_code=400, detail=f"Invalid equipment: {invalid}")
+        current_user.equipment = json.dumps(body.equipment)
     db.commit()
     return _me_response(current_user, db)
 

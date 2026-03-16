@@ -45,7 +45,7 @@ SYSTEM_PROMPT = """You are a fitness video classifier. Given a YouTube workout v
 
 Return ONLY a valid JSON object with these exact fields:
 {
-  "workout_type": "HIIT" | "Strength" | "Mobility" | "Cardio" | "Other",
+  "workout_type": "HIIT" | "Strength" | "Mobility" | "Cardio" | "Yoga" | "Pilates" | "Dance" | "Other",
   "body_focus": "upper" | "lower" | "full" | "core" | "any",
   "difficulty": "beginner" | "intermediate" | "advanced",
   "has_warmup": true | false,
@@ -53,6 +53,13 @@ Return ONLY a valid JSON object with these exact fields:
 }
 
 Guidelines:
+- workout_type "HIIT"     = high-intensity interval training, tabata, circuit training
+- workout_type "Strength" = weight training, resistance training, dumbbell/barbell workouts
+- workout_type "Cardio"   = running, cycling, traditional aerobics (non-dance)
+- workout_type "Mobility" = stretching, foam rolling, flexibility work (NOT yoga or pilates)
+- workout_type "Yoga"     = yoga flows, vinyasa, hatha, yin yoga, ashtanga, restorative yoga
+- workout_type "Pilates"  = mat pilates, reformer pilates, barre workouts
+- workout_type "Dance"    = Zumba, Bollywood dance fitness, dance cardio, hip-hop dance workouts
 - workout_type "Other"    = vlogs, Q&As, nutrition tips, challenges, non-workout content
 - body_focus "any"        = when focus cannot be determined from available info
 - difficulty              = use "intermediate" as default when unclear
@@ -117,7 +124,7 @@ def _parse_classification(raw: str) -> dict | None:
         cleaned = raw.strip().removeprefix("```json").removeprefix("```").removesuffix("```").strip()
         data = json.loads(cleaned)
 
-        valid_types  = {"HIIT", "Strength", "Mobility", "Cardio", "Other"}
+        valid_types  = {"HIIT", "Strength", "Mobility", "Cardio", "Yoga", "Pilates", "Dance", "Other"}
         valid_focus  = {"upper", "lower", "full", "core", "any"}
         valid_diff   = {"beginner", "intermediate", "advanced"}
 

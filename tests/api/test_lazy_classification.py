@@ -209,7 +209,7 @@ def test_rule_classify_saves_obvious_titles(db_session):
     hiit_clf = db_session.get(Classification, "hiit1")
     yoga_clf = db_session.get(Classification, "yoga1")
     assert hiit_clf is not None and hiit_clf.workout_type == "HIIT"
-    assert yoga_clf is not None and yoga_clf.workout_type == "Mobility"
+    assert yoga_clf is not None and yoga_clf.workout_type == "Yoga"
 
 
 def test_rule_classify_skips_ambiguous_titles(db_session):

@@ -243,7 +243,7 @@ describe("SettingsPage - fitness profile", () => {
     fireEvent.click(screen.getByRole("checkbox", { name: /Build muscle/i }));
     fireEvent.click(screen.getByRole("checkbox", { name: /Lose fat/i }));
     fireEvent.click(screen.getByRole("button", { name: /Save profile/i }));
-    await waitFor(() => expect(mockUpdateProfile).toHaveBeenCalledWith("adult", ["Lose fat"]));
+    await waitFor(() => expect(mockUpdateProfile).toHaveBeenCalledWith("adult", ["Lose fat"], []));
     await waitFor(() => expect(screen.getByText(/Profile updated/i)).toBeInTheDocument());
   });
 

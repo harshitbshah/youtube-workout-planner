@@ -38,6 +38,9 @@ def validate_channel_fitness(
         f"User goal: {goal}\n\n"
         f"Channel name: {channel_name}\n"
         f"Channel description: {channel_description}\n\n"
+        "Valid fitness modalities include: strength training, HIIT, cardio, yoga (all styles "
+        "including vinyasa, hatha, yin, restorative), pilates, barre, dance fitness (Zumba, "
+        "Bollywood dance, dance cardio), mobility/stretching, and any other physical workout.\n\n"
         "Does this channel contain fitness or workout content that suits this user?\n"
         "Reply with ONLY one of:\n"
         '- "yes"\n'

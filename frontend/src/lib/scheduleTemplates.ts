@@ -28,7 +28,7 @@ function getActiveDays(count: number): number[] {
     case 3: return [0, 2, 4];         // Mon, Wed, Fri
     case 4: return [0, 1, 3, 4];      // Mon, Tue, Thu, Fri
     case 5: return [0, 1, 2, 4, 5];   // Mon, Tue, Wed, Fri, Sat
-    case 6: return [0, 1, 2, 3, 4, 5]; // Mon–Sat
+    case 6: return [0, 1, 2, 3, 4, 5]; // Mon-Sat
     default: return [0, 2, 4];
   }
 }
@@ -66,7 +66,37 @@ export function buildSchedule(
   const diff = DIFFICULTY_MAP[profile];
   const activeDays = getActiveDays(days);
 
+  // ── Senior ────────────────────────────────────────────────────────────────
+
   if (profile === "senior") {
+    if (goals.includes("Dance fitness")) {
+      return makeSlots(activeDays, [
+        { workout_type: "dance",    body_focus: "full" },
+        { workout_type: "mobility", body_focus: "full" },
+        { workout_type: "dance",    body_focus: "full" },
+        { workout_type: "strength", body_focus: "full" },
+        { workout_type: "dance",    body_focus: "full" },
+      ].slice(0, activeDays.length), diff, dur);
+    }
+    if (goals.includes("Yoga & mindfulness")) {
+      return makeSlots(activeDays, [
+        { workout_type: "yoga",     body_focus: "full" },
+        { workout_type: "mobility", body_focus: "full" },
+        { workout_type: "yoga",     body_focus: "lower" },
+        { workout_type: "strength", body_focus: "full" },
+        { workout_type: "yoga",     body_focus: "full" },
+      ].slice(0, activeDays.length), diff, dur);
+    }
+    if (goals.includes("Pilates & core")) {
+      return makeSlots(activeDays, [
+        { workout_type: "pilates",  body_focus: "full" },
+        { workout_type: "mobility", body_focus: "full" },
+        { workout_type: "pilates",  body_focus: "core" },
+        { workout_type: "yoga",     body_focus: "full" },
+        { workout_type: "pilates",  body_focus: "lower" },
+      ].slice(0, activeDays.length), diff, dur);
+    }
+    // Default senior: mobility-first, low-impact rotation
     return makeSlots(activeDays, [
       { workout_type: "mobility", body_focus: "full" },
       { workout_type: "cardio",   body_focus: "full" },
@@ -74,13 +104,38 @@ export function buildSchedule(
     ], diff, dur);
   }
 
+  // ── Beginner ──────────────────────────────────────────────────────────────
+
   if (profile === "beginner") {
+    if (goals.includes("Dance fitness")) {
+      return makeSlots(activeDays, [
+        { workout_type: "dance",    body_focus: "full" },
+        { workout_type: "strength", body_focus: "full" },
+        { workout_type: "dance",    body_focus: "full" },
+        { workout_type: "mobility", body_focus: "full" },
+        { workout_type: "dance",    body_focus: "full" },
+        { workout_type: "strength", body_focus: "full" },
+      ].slice(0, activeDays.length), diff, dur);
+    }
+    if (goals.includes("Yoga & mindfulness")) {
+      return makeSlots(activeDays, [
+        { workout_type: "yoga",     body_focus: "full" },
+        { workout_type: "strength", body_focus: "full" },
+        { workout_type: "yoga",     body_focus: "lower" },
+        { workout_type: "mobility", body_focus: "full" },
+        { workout_type: "yoga",     body_focus: "full" },
+        { workout_type: "cardio",   body_focus: "full" },
+      ].slice(0, activeDays.length), diff, dur);
+    }
+    // Default beginner: simple 3-type rotation
     return makeSlots(activeDays, [
       { workout_type: "cardio",   body_focus: "full" },
       { workout_type: "strength", body_focus: "full" },
       { workout_type: "mobility", body_focus: "full" },
     ], diff, dur);
   }
+
+  // ── Adult ─────────────────────────────────────────────────────────────────
 
   if (profile === "adult") {
     if (goals.includes("Build muscle")) {
@@ -103,6 +158,36 @@ export function buildSchedule(
         { workout_type: "cardio", body_focus: "full" },
       ].slice(0, activeDays.length), diff, dur);
     }
+    if (goals.includes("Dance fitness")) {
+      return makeSlots(activeDays, [
+        { workout_type: "dance",    body_focus: "full" },
+        { workout_type: "strength", body_focus: "full" },
+        { workout_type: "dance",    body_focus: "full" },
+        { workout_type: "strength", body_focus: "lower" },
+        { workout_type: "dance",    body_focus: "full" },
+        { workout_type: "yoga",     body_focus: "full" },
+      ].slice(0, activeDays.length), diff, dur);
+    }
+    if (goals.includes("Yoga & mindfulness")) {
+      return makeSlots(activeDays, [
+        { workout_type: "yoga",     body_focus: "full" },
+        { workout_type: "strength", body_focus: "full" },
+        { workout_type: "yoga",     body_focus: "lower" },
+        { workout_type: "strength", body_focus: "upper" },
+        { workout_type: "yoga",     body_focus: "full" },
+        { workout_type: "mobility", body_focus: "full" },
+      ].slice(0, activeDays.length), diff, dur);
+    }
+    if (goals.includes("Pilates & core")) {
+      return makeSlots(activeDays, [
+        { workout_type: "pilates",  body_focus: "core" },
+        { workout_type: "cardio",   body_focus: "full" },
+        { workout_type: "pilates",  body_focus: "full" },
+        { workout_type: "strength", body_focus: "upper" },
+        { workout_type: "pilates",  body_focus: "lower" },
+        { workout_type: "yoga",     body_focus: "full" },
+      ].slice(0, activeDays.length), diff, dur);
+    }
     // Stay consistent / Feel more energetic
     return makeSlots(activeDays, [
       { workout_type: "cardio",   body_focus: "full" },
@@ -113,6 +198,8 @@ export function buildSchedule(
       { workout_type: "mobility", body_focus: "full" },
     ].slice(0, activeDays.length), diff, dur);
   }
+
+  // ── Athlete ───────────────────────────────────────────────────────────────
 
   if (profile === "athlete") {
     if (goals.includes("Endurance") || goals.includes("Athletic performance")) {
@@ -132,6 +219,26 @@ export function buildSchedule(
         { workout_type: "strength", body_focus: "lower" },
         { workout_type: "strength", body_focus: "full" },
         { workout_type: "cardio",   body_focus: "full" },
+        { workout_type: "strength", body_focus: "full" },
+      ].slice(0, activeDays.length), diff, dur);
+    }
+    if (goals.includes("Yoga & mindfulness")) {
+      return makeSlots(activeDays, [
+        { workout_type: "strength", body_focus: "upper" },
+        { workout_type: "yoga",     body_focus: "full" },
+        { workout_type: "strength", body_focus: "lower" },
+        { workout_type: "hiit",     body_focus: "full" },
+        { workout_type: "yoga",     body_focus: "lower" },
+        { workout_type: "cardio",   body_focus: "full" },
+      ].slice(0, activeDays.length), diff, dur);
+    }
+    if (goals.includes("Pilates & core")) {
+      return makeSlots(activeDays, [
+        { workout_type: "strength", body_focus: "upper" },
+        { workout_type: "pilates",  body_focus: "core" },
+        { workout_type: "strength", body_focus: "lower" },
+        { workout_type: "hiit",     body_focus: "full" },
+        { workout_type: "pilates",  body_focus: "full" },
         { workout_type: "strength", body_focus: "full" },
       ].slice(0, activeDays.length), diff, dur);
     }

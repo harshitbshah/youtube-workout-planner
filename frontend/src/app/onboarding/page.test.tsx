@@ -85,7 +85,7 @@ describe("OnboardingPage - Step 1 (Life Stage)", () => {
 });
 
 describe("OnboardingPage - Step 2 (Goal)", () => {
-  it("shows adult goals after selecting 'Active adult' and clicking Next", async () => {
+  it("shows adult goals (grouped) after selecting 'Active adult' and clicking Next", async () => {
     await renderPage();
     fireEvent.click(screen.getByText("Active adult"));
     clickNext();
@@ -93,6 +93,9 @@ describe("OnboardingPage - Step 2 (Goal)", () => {
     expect(screen.getByText("Lose fat")).toBeInTheDocument();
     expect(screen.getByText("Improve cardio")).toBeInTheDocument();
     expect(screen.getByText("Stay consistent")).toBeInTheDocument();
+    expect(screen.getByText("Dance fitness")).toBeInTheDocument();
+    expect(screen.getByText("Yoga & mindfulness")).toBeInTheDocument();
+    expect(screen.getByText("Pilates & core")).toBeInTheDocument();
   });
 
   it("shows senior goals after selecting '55 and thriving' and clicking Next", async () => {
@@ -148,7 +151,7 @@ describe("OnboardingPage - Step 3 (Training Days)", () => {
     clickNext();
   }
 
-  it("renders day buttons 2–6 for adult", async () => {
+  it("renders day buttons 2-6 for adult", async () => {
     await goToStep3();
     [2, 3, 4, 5, 6].forEach((d) => {
       expect(screen.getByRole("button", { name: String(d) })).toBeInTheDocument();
@@ -198,11 +201,11 @@ describe("OnboardingPage - Step 4 (Session Length)", () => {
     expect(screen.getByText("No preference")).toBeInTheDocument();
   });
 
-  it("selecting session length then clicking Next advances to step 5", async () => {
+  it("selecting session length then clicking Next advances to equipment step", async () => {
     await goToStep4();
     fireEvent.click(screen.getByText("25–35 min"));
     clickNext();
-    expect(screen.getByText(/Here's your personalised plan/i)).toBeInTheDocument();
+    expect(screen.getByText(/What do you have at home/i)).toBeInTheDocument();
   });
 
   it("shows affirming copy for senior profile", async () => {
@@ -228,7 +231,7 @@ describe("OnboardingPage - Step 4 (Session Length)", () => {
   });
 });
 
-describe("OnboardingPage - Step 5 (Schedule Preview)", () => {
+describe("OnboardingPage - Step 5 (Equipment)", () => {
   async function goToStep5(profile = "Active adult", goal = "Build muscle", days = "4", duration = "25–35 min") {
     await renderPage();
     fireEvent.click(screen.getByText(profile));
@@ -241,22 +244,70 @@ describe("OnboardingPage - Step 5 (Schedule Preview)", () => {
     clickNext();
   }
 
-  it("shows schedule preview heading", async () => {
+  it("shows equipment heading", async () => {
     await goToStep5();
+    expect(screen.getByText(/What do you have at home/i)).toBeInTheDocument();
+  });
+
+  it("shows equipment options as pill buttons", async () => {
+    await goToStep5();
+    expect(screen.getByRole("button", { name: /Dumbbells/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Yoga.*mat/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Resistance bands/i })).toBeInTheDocument();
+  });
+
+  it("toggling equipment items updates their visual state", async () => {
+    await goToStep5();
+    const dumbbell = screen.getByRole("button", { name: /Dumbbells/i });
+    fireEvent.click(dumbbell);
+    expect(dumbbell.className).toMatch(/bg-zinc-900|bg-white/);
+  });
+
+  it("'Build my schedule' button advances to schedule preview", async () => {
+    await goToStep5();
+    fireEvent.click(screen.getByRole("button", { name: /Build my schedule/i }));
+    await waitFor(() => expect(screen.getByText(/Here's your personalised plan/i)).toBeInTheDocument());
+  });
+
+  it("Back button returns to session length step", async () => {
+    await goToStep5();
+    fireEvent.click(screen.getByRole("button", { name: /← Back/i }));
+    expect(screen.getByText(/How long per session/i)).toBeInTheDocument();
+  });
+});
+
+describe("OnboardingPage - Step 6 (Schedule Preview)", () => {
+  async function goToStep6(profile = "Active adult", goal = "Build muscle", days = "4", duration = "25–35 min") {
+    await renderPage();
+    fireEvent.click(screen.getByText(profile));
+    clickNext();
+    fireEvent.click(screen.getByText(goal));
+    clickNext();
+    fireEvent.click(screen.getByRole("button", { name: days }));
+    clickNext();
+    fireEvent.click(screen.getByText(duration));
+    clickNext();
+    // Equipment step - click "Build my schedule"
+    fireEvent.click(screen.getByRole("button", { name: /Build my schedule/i }));
+    await waitFor(() => screen.getByText(/Here's your personalised plan/i));
+  }
+
+  it("shows schedule preview heading", async () => {
+    await goToStep6();
     expect(screen.getByText(/Here's your personalised plan/i)).toBeInTheDocument();
   });
 
-  it("shows 'Back', 'Looks good →' and 'Customise' buttons", async () => {
-    await goToStep5();
+  it("shows 'Back', 'Looks good' and 'Customise' buttons", async () => {
+    await goToStep6();
     expect(screen.getByRole("button", { name: /← Back/i })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /Looks good/i })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /Customise/i })).toBeInTheDocument();
   });
 
-  it("Back button on schedule preview returns to step 4", async () => {
-    await goToStep5();
+  it("Back button on schedule preview returns to equipment step", async () => {
+    await goToStep6();
     fireEvent.click(screen.getByRole("button", { name: /← Back/i }));
-    expect(screen.getByText(/How long/i)).toBeInTheDocument();
+    expect(screen.getByText(/What do you have at home/i)).toBeInTheDocument();
   });
 
   it("senior profile shows 'Recovery day' not 'Rest day'", async () => {
@@ -269,25 +320,27 @@ describe("OnboardingPage - Step 5 (Schedule Preview)", () => {
     clickNext();
     fireEvent.click(screen.getByText("15–20 min"));
     clickNext();
+    fireEvent.click(screen.getByRole("button", { name: /Build my schedule/i }));
+    await waitFor(() => screen.getByText(/Here's your personalised plan/i));
     expect(screen.getAllByText("Recovery day").length).toBeGreaterThan(0);
     expect(screen.queryByText("Rest day")).not.toBeInTheDocument();
   });
 
   it("non-senior profile shows 'Rest day' not 'Recovery day'", async () => {
-    await goToStep5();
+    await goToStep6();
     expect(screen.getAllByText("Rest day").length).toBeGreaterThan(0);
     expect(screen.queryByText("Recovery day")).not.toBeInTheDocument();
   });
 
   it("'Customise' button shows ScheduleEditor", async () => {
-    await goToStep5();
+    await goToStep6();
     fireEvent.click(screen.getByRole("button", { name: /Customise/i }));
     // ScheduleEditor renders day names with capitalize CSS; text content is lowercase
     expect(screen.getByText("monday")).toBeInTheDocument();
   });
 
-  it("'Looks good →' saves schedule and advances to step 6 (email notifications)", async () => {
-    await goToStep5();
+  it("'Looks good' saves schedule and advances to email notifications step", async () => {
+    await goToStep6();
     fireEvent.click(screen.getByRole("button", { name: /Looks good/i }));
     await waitFor(() => {
       expect(mockUpdateSchedule).toHaveBeenCalledOnce();
@@ -295,85 +348,21 @@ describe("OnboardingPage - Step 5 (Schedule Preview)", () => {
     });
   });
 
-  it("'Looks good →' passes profile and goal to updateSchedule", async () => {
-    await goToStep5("Active adult", "Build muscle", "4", "25–35 min");
+  it("'Looks good' passes profile, goal and equipment to updateSchedule", async () => {
+    await goToStep6("Active adult", "Build muscle", "4", "25–35 min");
     fireEvent.click(screen.getByRole("button", { name: /Looks good/i }));
     await waitFor(() => {
       expect(mockUpdateSchedule).toHaveBeenCalledWith(
         expect.any(Array),
         "adult",
         ["Build muscle"],
+        [],
       );
     });
   });
 });
 
-describe("OnboardingPage - Step 6 (Email Notifications)", () => {
-  async function goToStep6(profile = "Active adult", goal = "Build muscle") {
-    await renderPage();
-    fireEvent.click(screen.getByText(profile));
-    clickNext();
-    fireEvent.click(screen.getByText(goal));
-    clickNext();
-    fireEvent.click(screen.getByRole("button", { name: "4" }));
-    clickNext();
-    fireEvent.click(screen.getByText("25–35 min"));
-    clickNext();
-    fireEvent.click(screen.getByRole("button", { name: /Looks good/i }));
-    await waitFor(() => screen.getByText(/Get your weekly plan by email/i));
-  }
-
-  it("shows email notification heading", async () => {
-    await goToStep6();
-    expect(screen.getByText(/Get your weekly plan by email/i)).toBeInTheDocument();
-  });
-
-  it("'Yes' option is selected by default", async () => {
-    await goToStep6();
-    const yesCard = screen.getByText("Yes, email me my weekly plan").closest("button");
-    expect(yesCard?.className).toMatch(/border-zinc-900|border-white/);
-  });
-
-  it("clicking 'No thanks' selects it", async () => {
-    await goToStep6();
-    fireEvent.click(screen.getByText("No thanks"));
-    const noCard = screen.getByText("No thanks").closest("button");
-    expect(noCard?.className).toMatch(/border-zinc-900|border-white/);
-  });
-
-  it("clicking Next calls updateEmailNotifications with true (default)", async () => {
-    await goToStep6();
-    clickNext();
-    await waitFor(() => {
-      expect(mockUpdateEmailNotifications).toHaveBeenCalledWith(true);
-    });
-  });
-
-  it("opting out calls updateEmailNotifications with false", async () => {
-    await goToStep6();
-    fireEvent.click(screen.getByText("No thanks"));
-    clickNext();
-    await waitFor(() => {
-      expect(mockUpdateEmailNotifications).toHaveBeenCalledWith(false);
-    });
-  });
-
-  it("clicking Next advances to channels step", async () => {
-    await goToStep6();
-    clickNext();
-    await waitFor(() => {
-      expect(screen.getByText(/Add your favourite channels/i)).toBeInTheDocument();
-    });
-  });
-
-  it("Back button returns to schedule preview", async () => {
-    await goToStep6();
-    fireEvent.click(screen.getByRole("button", { name: /← Back/i }));
-    expect(screen.getByText(/Here's your personalised plan/i)).toBeInTheDocument();
-  });
-});
-
-describe("OnboardingPage - Step 7 (Channels)", () => {
+describe("OnboardingPage - Step 7 (Email Notifications)", () => {
   async function goToStep7(profile = "Active adult", goal = "Build muscle") {
     await renderPage();
     fireEvent.click(screen.getByText(profile));
@@ -384,6 +373,75 @@ describe("OnboardingPage - Step 7 (Channels)", () => {
     clickNext();
     fireEvent.click(screen.getByText("25–35 min"));
     clickNext();
+    fireEvent.click(screen.getByRole("button", { name: /Build my schedule/i }));
+    await waitFor(() => screen.getByText(/Here's your personalised plan/i));
+    fireEvent.click(screen.getByRole("button", { name: /Looks good/i }));
+    await waitFor(() => screen.getByText(/Get your weekly plan by email/i));
+  }
+
+  it("shows email notification heading", async () => {
+    await goToStep7();
+    expect(screen.getByText(/Get your weekly plan by email/i)).toBeInTheDocument();
+  });
+
+  it("'Yes' option is selected by default", async () => {
+    await goToStep7();
+    const yesCard = screen.getByText("Yes, email me my weekly plan").closest("button");
+    expect(yesCard?.className).toMatch(/border-zinc-900|border-white/);
+  });
+
+  it("clicking 'No thanks' selects it", async () => {
+    await goToStep7();
+    fireEvent.click(screen.getByText("No thanks"));
+    const noCard = screen.getByText("No thanks").closest("button");
+    expect(noCard?.className).toMatch(/border-zinc-900|border-white/);
+  });
+
+  it("clicking Next calls updateEmailNotifications with true (default)", async () => {
+    await goToStep7();
+    clickNext();
+    await waitFor(() => {
+      expect(mockUpdateEmailNotifications).toHaveBeenCalledWith(true);
+    });
+  });
+
+  it("opting out calls updateEmailNotifications with false", async () => {
+    await goToStep7();
+    fireEvent.click(screen.getByText("No thanks"));
+    clickNext();
+    await waitFor(() => {
+      expect(mockUpdateEmailNotifications).toHaveBeenCalledWith(false);
+    });
+  });
+
+  it("clicking Next advances to channels step", async () => {
+    await goToStep7();
+    clickNext();
+    await waitFor(() => {
+      expect(screen.getByText(/Add your favourite channels/i)).toBeInTheDocument();
+    });
+  });
+
+  it("Back button returns to schedule preview", async () => {
+    await goToStep7();
+    fireEvent.click(screen.getByRole("button", { name: /← Back/i }));
+    expect(screen.getByText(/Here's your personalised plan/i)).toBeInTheDocument();
+  });
+});
+
+describe("OnboardingPage - Step 8 (Channels)", () => {
+  async function goToStep8(profile = "Active adult", goal = "Build muscle") {
+    await renderPage();
+    fireEvent.click(screen.getByText(profile));
+    clickNext();
+    fireEvent.click(screen.getByText(goal));
+    clickNext();
+    fireEvent.click(screen.getByRole("button", { name: "4" }));
+    clickNext();
+    fireEvent.click(screen.getByText("25–35 min"));
+    clickNext();
+    fireEvent.click(screen.getByRole("button", { name: /Build my schedule/i }));
+    await waitFor(() => screen.getByText(/Here's your personalised plan/i));
     fireEvent.click(screen.getByRole("button", { name: /Looks good/i }));
     await waitFor(() => screen.getByText(/Get your weekly plan by email/i));
     clickNext();
@@ -391,17 +449,17 @@ describe("OnboardingPage - Step 7 (Channels)", () => {
   }
 
   it("shows channel manager heading", async () => {
-    await goToStep7();
+    await goToStep8();
     expect(screen.getByText(/Add your favourite channels/i)).toBeInTheDocument();
   });
 
   it("Continue button is disabled with 0 channels", async () => {
-    await goToStep7();
+    await goToStep8();
     expect(screen.getByRole("button", { name: /Continue/i })).toBeDisabled();
   });
 
   it("shows adult suggestions as cards after fetch resolves", async () => {
-    await goToStep7();
+    await goToStep8();
     await waitFor(() => expect(screen.getByText("Athlean-X")).toBeInTheDocument());
     expect(api.getSuggestions).toHaveBeenCalledWith("adult");
   });
@@ -416,6 +474,8 @@ describe("OnboardingPage - Step 7 (Channels)", () => {
     clickNext();
     fireEvent.click(screen.getByText("15–20 min"));
     clickNext();
+    fireEvent.click(screen.getByRole("button", { name: /Build my schedule/i }));
+    await waitFor(() => screen.getByText(/Here's your personalised plan/i));
     fireEvent.click(screen.getByRole("button", { name: /Looks good/i }));
     await waitFor(() => screen.getByText(/Get your weekly plan by email/i));
     clickNext();
@@ -424,8 +484,8 @@ describe("OnboardingPage - Step 7 (Channels)", () => {
   });
 });
 
-describe("OnboardingPage - Step 8 (Progress)", () => {
-  async function goToStep8() {
+describe("OnboardingPage - Step 9 (Progress)", () => {
+  async function goToStep9() {
     const mockAddChannel = api.addChannel as ReturnType<typeof vi.fn>;
     mockAddChannel.mockResolvedValue({
       id: "ch1", name: "Athlean-X", youtube_url: "https://youtube.com/channel/UCabc",
@@ -441,6 +501,8 @@ describe("OnboardingPage - Step 8 (Progress)", () => {
     clickNext();
     fireEvent.click(screen.getByText("25–35 min"));
     clickNext();
+    fireEvent.click(screen.getByRole("button", { name: /Build my schedule/i }));
+    await waitFor(() => screen.getByText(/Here's your personalised plan/i));
     fireEvent.click(screen.getByRole("button", { name: /Looks good/i }));
     await waitFor(() => screen.getByText(/Get your weekly plan by email/i));
     // Accept default (Yes) and continue
@@ -455,8 +517,8 @@ describe("OnboardingPage - Step 8 (Progress)", () => {
     await waitFor(() => screen.getByText(/Setting up your plan/i));
   }
 
-  it("shows 'Go to dashboard' escape hatch on step 8", async () => {
-    await goToStep8();
+  it("shows 'Go to dashboard' escape hatch on step 9", async () => {
+    await goToStep9();
     expect(screen.getByRole("button", { name: /Go to dashboard/i })).toBeInTheDocument();
   });
 
@@ -466,7 +528,7 @@ describe("OnboardingPage - Step 8 (Progress)", () => {
       (api.getJobStatus as ReturnType<typeof vi.fn>).mockResolvedValue({
         stage: "classifying", total: 43, done: -40, error: null,
       });
-      await goToStep8();
+      await goToStep9();
       // Advance past the 3s poll interval so pollStatus fires
       await vi.advanceTimersByTimeAsync(3100);
       await waitFor(() =>
@@ -485,7 +547,7 @@ describe("OnboardingPage - Step Indicator", () => {
     expect(profileEl.className).toMatch(/text-white/);
   });
 
-  it("shows 'Channels' as active on step 7", async () => {
+  it("shows 'Channels' as active on step 8", async () => {
     await renderPage();
     fireEvent.click(screen.getByText("Active adult"));
     clickNext();
@@ -495,6 +557,8 @@ describe("OnboardingPage - Step Indicator", () => {
     clickNext();
     fireEvent.click(screen.getByText("25–35 min"));
     clickNext();
+    fireEvent.click(screen.getByRole("button", { name: /Build my schedule/i }));
+    await waitFor(() => screen.getByText(/Here's your personalised plan/i));
     fireEvent.click(screen.getByRole("button", { name: /Looks good/i }));
     await waitFor(() => screen.getByText(/Get your weekly plan by email/i));
     clickNext();

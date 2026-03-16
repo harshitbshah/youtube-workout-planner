@@ -37,8 +37,8 @@ ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY", "")
 
 _DESCRIPTIVE_PATTERN = re.compile(
     r"\b(\d+\s*(?:min|minute)s?|beginner|advanced|intermediate|hiit|strength|"
-    r"cardio|yoga|pilates|mobility|stretching|full[- ]?body|upper[- ]?body|"
-    r"lower[- ]?body|core|abs|glutes|legs|arms|chest|back)\b",
+    r"cardio|yoga|pilates|mobility|stretching|dance|zumba|bollywood|barre|vinyasa|"
+    r"full[- ]?body|upper[- ]?body|lower[- ]?body|core|abs|glutes|legs|arms|chest|back)\b",
     re.IGNORECASE,
 )
 
@@ -51,8 +51,13 @@ def _title_is_descriptive(title: str) -> bool:
 # ─── F6: Rule-based title pre-classifier ──────────────────────────────────────
 
 _TYPE_RULES: list[tuple[re.Pattern, str]] = [
-    (re.compile(r"\b(hiit|interval)\b", re.I), "HIIT"),
-    (re.compile(r"\b(yoga|stretch(?:ing)?|mobility|flexibility|pilates)\b", re.I), "Mobility"),
+    (re.compile(r"\b(hiit|interval|tabata)\b", re.I), "HIIT"),
+    # Dance must come before Cardio to catch dance cardio titles
+    (re.compile(r"\b(zumba|bollywood[\s_-]*dance|dance[\s_-]*fitness|bhangra|salsa[\s_-]*workout|hip[\s_-]*hop[\s_-]*dance|aerobic[\s_-]*dance)\b", re.I), "Dance"),
+    # Yoga and Pilates before generic Mobility
+    (re.compile(r"\b(yoga|vinyasa|hatha|yin[\s_-]*yoga|ashtanga|kundalini|sun[\s_-]*salutation|pranayama)\b", re.I), "Yoga"),
+    (re.compile(r"\b(pilates|reformer|barre)\b", re.I), "Pilates"),
+    (re.compile(r"\b(stretch(?:ing)?|mobility|flexibility)\b", re.I), "Mobility"),
     (re.compile(r"\b(strength|weight(?:s)?|dumbbell|barbell|resistance|lifting|weight\s*train)\b", re.I), "Strength"),
     (re.compile(r"\b(cardio|run(?:ning)?|cycling|bike|treadmill)\b", re.I), "Cardio"),
 ]
@@ -183,7 +188,10 @@ _GAP_TYPE_PATTERNS: dict[str, re.Pattern] = {
     "hiit":     re.compile(r"\b(hiit|interval|tabata)\b", re.I),
     "strength": re.compile(r"\b(strength|weight|dumbbell|barbell|resistance|lifting)\b", re.I),
     "cardio":   re.compile(r"\b(cardio|run(?:ning)?|cycling|bike|treadmill)\b", re.I),
-    "mobility": re.compile(r"\b(yoga|stretch(?:ing)?|mobility|flexibility|pilates)\b", re.I),
+    "mobility": re.compile(r"\b(stretch(?:ing)?|mobility|flexibility)\b", re.I),
+    "yoga":     re.compile(r"\b(yoga|vinyasa|hatha|yin|ashtanga|sun[\s_-]*salutation)\b", re.I),
+    "pilates":  re.compile(r"\b(pilates|reformer|barre)\b", re.I),
+    "dance":    re.compile(r"\b(zumba|bollywood[\s_-]*dance|dance[\s_-]*fitness|bhangra|salsa)\b", re.I),
 }
 
 

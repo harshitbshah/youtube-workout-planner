@@ -173,12 +173,12 @@ def test_f6_interval_title():
 def test_f6_yoga_title():
     result = title_classify("Morning Yoga Flow for Beginners", 2400)
     assert result is not None
-    assert result["workout_type"] == "Mobility"
+    assert result["workout_type"] == "Yoga"
 
 def test_f6_pilates_title():
     result = title_classify("Core Pilates Full Body", 1800)
     assert result is not None
-    assert result["workout_type"] == "Mobility"
+    assert result["workout_type"] == "Pilates"
 
 def test_f6_strength_title():
     result = title_classify("Upper Body Dumbbell Strength", 2400)
@@ -278,7 +278,7 @@ def test_f6_obvious_videos_skip_ai_batch(db_session):
     assert len(clfs) == 2
     types = {c.workout_type for c in clfs}
     assert "HIIT" in types
-    assert "Mobility" in types
+    assert "Yoga" in types
 
 
 def test_f6_ambiguous_video_sent_to_ai(db_session):

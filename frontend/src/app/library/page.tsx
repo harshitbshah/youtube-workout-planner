@@ -21,12 +21,15 @@ import Badge from "@/components/Badge";
 const DAYS = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday"];
 
 // Values match what the classifier stores (case-insensitive comparison on backend)
-const WORKOUT_TYPES = ["strength", "hiit", "cardio", "mobility"];
+const WORKOUT_TYPES = ["strength", "hiit", "cardio", "mobility", "yoga", "pilates", "dance"];
 const WORKOUT_TYPE_LABELS: Record<string, string> = {
   strength: "Strength",
   hiit: "HIIT",
   cardio: "Cardio",
   mobility: "Mobility",
+  yoga: "Yoga",
+  pilates: "Pilates",
+  dance: "Dance",
 };
 const BODY_FOCUSES = ["full", "upper", "lower", "core", "arms", "legs", "back"];
 const DIFFICULTIES = ["beginner", "intermediate", "advanced"];

@@ -59,11 +59,13 @@ def update_schedule(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    # Persist profile and goal if provided (set during onboarding)
+    # Persist profile, goal and equipment if provided (set during onboarding)
     if body.profile is not None:
         current_user.profile = body.profile
     if body.goal is not None:
         current_user.goal = json.dumps(body.goal)
+    if body.equipment is not None:
+        current_user.equipment = json.dumps(body.equipment)
 
     # Delete existing schedule for this user and replace entirely
     db.query(Schedule).filter(Schedule.user_id == current_user.id).delete()

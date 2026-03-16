@@ -33,11 +33,21 @@ const LIFE_STAGES = [
 type LifeStage = typeof LIFE_STAGES[number]["value"];
 
 const GOALS: Record<LifeStage, string[]> = {
-  beginner: ["Build a habit", "Lose weight", "Feel more energetic"],
-  adult:    ["Build muscle", "Lose fat", "Improve cardio", "Stay consistent"],
-  senior:   ["Stay active & healthy", "Improve flexibility", "Build strength safely"],
-  athlete:  ["Strength & hypertrophy", "Endurance", "Athletic performance", "Cut weight"],
+  beginner: ["Build a habit", "Lose weight", "Feel more energetic", "Yoga & mindfulness", "Dance fitness"],
+  adult:    ["Build muscle", "Lose fat", "Improve cardio", "Stay consistent", "Dance fitness", "Yoga & mindfulness", "Pilates & core"],
+  senior:   ["Stay active & healthy", "Improve flexibility", "Build strength safely", "Yoga & mindfulness", "Pilates & core", "Dance fitness"],
+  athlete:  ["Strength & hypertrophy", "Endurance", "Athletic performance", "Cut weight", "Yoga & mindfulness", "Pilates & core"],
 };
+
+const EQUIPMENT_OPTIONS = [
+  { id: "mat",              label: "Yoga / exercise mat" },
+  { id: "dumbbells",        label: "Dumbbells" },
+  { id: "resistance_bands", label: "Resistance bands" },
+  { id: "kettlebell",       label: "Kettlebell" },
+  { id: "barbell",          label: "Barbell" },
+  { id: "pull_up_bar",      label: "Pull-up bar" },
+  { id: "reformer",         label: "Pilates reformer" },
+] as const;
 import ChannelManager from "@/components/ChannelManager";
 import ScheduleEditor from "@/components/ScheduleEditor";
 
@@ -68,6 +78,7 @@ export default function SettingsPage() {
   // Fitness profile
   const [selectedLifeStage, setSelectedLifeStage] = useState<LifeStage | "">("");
   const [selectedGoals, setSelectedGoals] = useState<string[]>([]);
+  const [selectedEquipment, setSelectedEquipment] = useState<string[]>([]);
   const [savingFitnessProfile, setSavingFitnessProfile] = useState(false);
   const [fitnessProfileStatus, setFitnessProfileStatus] = useState<"idle" | "ok" | "err">("idle");
 
@@ -94,6 +105,7 @@ export default function SettingsPage() {
         setDisplayName(u.display_name ?? "");
         if (u.profile) setSelectedLifeStage(u.profile as LifeStage);
         if (u.goal) setSelectedGoals(u.goal);
+        if (u.equipment) setSelectedEquipment(u.equipment);
         setChannels(ch);
         setSchedule(sched.schedule);
       })
@@ -128,7 +140,7 @@ export default function SettingsPage() {
     setSavingFitnessProfile(true);
     setFitnessProfileStatus("idle");
     try {
-      const updated = await updateProfile(selectedLifeStage, selectedGoals);
+      const updated = await updateProfile(selectedLifeStage, selectedGoals, selectedEquipment);
       setUser(updated);
       setFitnessProfileStatus("ok");
       setTimeout(() => setFitnessProfileStatus("idle"), 2500);
@@ -322,6 +334,32 @@ export default function SettingsPage() {
                   </div>
                 </div>
               )}
+              <div>
+                <label className="block text-xs text-zinc-500 mb-2">Home equipment <span className="text-zinc-400">(tick all you have)</span></label>
+                <div className="flex flex-wrap gap-2">
+                  {EQUIPMENT_OPTIONS.map((opt) => {
+                    const checked = selectedEquipment.includes(opt.id);
+                    return (
+                      <button
+                        key={opt.id}
+                        type="button"
+                        onClick={() =>
+                          setSelectedEquipment((prev) =>
+                            prev.includes(opt.id) ? prev.filter((x) => x !== opt.id) : [...prev, opt.id]
+                          )
+                        }
+                        className={`rounded-full border px-3 py-1.5 text-xs font-medium transition cursor-pointer ${
+                          checked
+                            ? "border-zinc-900 dark:border-white bg-zinc-900 dark:bg-white text-white dark:text-zinc-900"
+                            : "border-zinc-300 dark:border-zinc-600 text-zinc-700 dark:text-zinc-300 hover:border-zinc-500 dark:hover:border-zinc-400"
+                        }`}
+                      >
+                        {opt.label}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
               <div className="flex items-center gap-3 pt-1">
                 <button
                   onClick={handleSaveFitnessProfile}
@@ -330,7 +368,8 @@ export default function SettingsPage() {
                     !selectedLifeStage ||
                     selectedGoals.length === 0 ||
                     (selectedLifeStage === user?.profile &&
-                      JSON.stringify([...(selectedGoals)].sort()) === JSON.stringify([...(user?.goal ?? [])].sort()))
+                      JSON.stringify([...(selectedGoals)].sort()) === JSON.stringify([...(user?.goal ?? [])].sort()) &&
+                      JSON.stringify([...(selectedEquipment)].sort()) === JSON.stringify([...(user?.equipment ?? [])].sort()))
                   }
                   className="rounded-lg bg-zinc-900 dark:bg-white px-4 py-2.5 text-sm font-semibold text-white dark:text-zinc-900 hover:bg-zinc-700 dark:hover:bg-zinc-100 disabled:opacity-40 transition"
                 >

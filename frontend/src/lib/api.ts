@@ -65,10 +65,10 @@ export const updateEmailNotifications = (email_notifications: boolean) =>
     body: JSON.stringify({ email_notifications }),
   });
 
-export const updateProfile = (profile: string, goal: string[]) =>
+export const updateProfile = (profile: string, goal: string[], equipment?: string[]) =>
   apiFetch<User>("/auth/me/profile", {
     method: "PATCH",
-    body: JSON.stringify({ profile, goal }),
+    body: JSON.stringify({ profile, goal, ...(equipment !== undefined && { equipment }) }),
   });
 
 // ─── Channels ────────────────────────────────────────────────────────────────
@@ -93,10 +93,15 @@ export const getSuggestions = (profile?: string) => {
 
 export const getSchedule = () => apiFetch<ScheduleResponse>("/schedule");
 
-export const updateSchedule = (schedule: ScheduleSlot[], profile?: string, goal?: string[]) =>
+export const updateSchedule = (schedule: ScheduleSlot[], profile?: string, goal?: string[], equipment?: string[]) =>
   apiFetch<ScheduleResponse>("/schedule", {
     method: "PUT",
-    body: JSON.stringify({ schedule, ...(profile !== undefined && { profile }), ...(goal !== undefined && { goal }) }),
+    body: JSON.stringify({
+      schedule,
+      ...(profile !== undefined && { profile }),
+      ...(goal !== undefined && { goal }),
+      ...(equipment !== undefined && { equipment }),
+    }),
   });
 
 // ─── Plan ────────────────────────────────────────────────────────────────────
@@ -159,6 +164,7 @@ export interface User {
   email_notifications: boolean;
   profile: string | null;
   goal: string[] | null;
+  equipment: string[] | null;
   created_at: string | null;
 }
 

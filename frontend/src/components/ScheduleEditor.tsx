@@ -14,7 +14,7 @@ const DEFAULT_SLOTS: Record<string, Partial<ScheduleSlot>> = {
   sunday:    { workout_type: null,       body_focus: null,    duration_min: null, duration_max: null },
 };
 
-const WORKOUT_TYPES = ["strength", "hiit", "cardio", "mobility"];
+const WORKOUT_TYPES = ["strength", "hiit", "cardio", "mobility", "yoga", "pilates", "dance"];
 const BODY_FOCUS_OPTIONS = ["full", "upper", "lower", "core"];
 
 const BODY_FOCUS_FOR_TYPE: Record<string, string[]> = {
@@ -22,6 +22,9 @@ const BODY_FOCUS_FOR_TYPE: Record<string, string[]> = {
   hiit:     ["full", "core"],
   cardio:   ["full"],
   mobility: ["full", "upper", "lower", "core"],
+  yoga:     ["full", "upper", "lower", "core"],
+  pilates:  ["full", "core", "lower"],
+  dance:    ["full"],
 };
 const DIFFICULTY_OPTIONS = ["any", "beginner", "intermediate", "advanced"];
 

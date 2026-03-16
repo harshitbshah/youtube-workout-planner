@@ -24,7 +24,7 @@ import { DAY_LABELS } from "@/lib/utils";
 
 function StepIndicator({ internalStep }: { internalStep: number }) {
   const steps = ["Profile", "Channels", "Your Plan"];
-  const visibleStep = internalStep <= 6 ? 1 : internalStep === 7 ? 2 : 3;
+  const visibleStep = internalStep <= 7 ? 1 : internalStep === 8 ? 2 : 3;
   return (
     <div className="flex items-center gap-3 mb-8">
       {steps.map((label, i) => {
@@ -120,6 +120,9 @@ const WORKOUT_LABELS: Record<string, string> = {
   hiit:     "HIIT",
   cardio:   "Light cardio",
   mobility: "Mobility & stretching",
+  yoga:     "Yoga",
+  pilates:  "Pilates",
+  dance:    "Dance fitness",
 };
 
 function SchedulePreview({ schedule, isSenior }: { schedule: ScheduleSlot[]; isSenior: boolean }) {
@@ -218,12 +221,38 @@ const LIFE_STAGES: { value: LifeStage; label: string; sublabel: string }[] = [
   { value: "athlete",  label: "Training seriously",  sublabel: "Structured programming, performance goals" },
 ];
 
-const GOALS: Record<LifeStage, string[]> = {
-  beginner: ["Build a habit", "Lose weight", "Feel more energetic"],
-  adult:    ["Build muscle", "Lose fat", "Improve cardio", "Stay consistent"],
-  senior:   ["Stay active & healthy", "Improve flexibility", "Build strength safely"],
-  athlete:  ["Strength & hypertrophy", "Endurance", "Athletic performance", "Cut weight"],
+type GoalGroup = { group: string; options: string[] };
+
+const GOALS: Record<LifeStage, GoalGroup[]> = {
+  beginner: [
+    { group: "General",    options: ["Build a habit", "Lose weight", "Feel more energetic"] },
+    { group: "Mind & Body", options: ["Yoga & mindfulness", "Dance fitness"] },
+  ],
+  adult: [
+    { group: "Strength & Performance", options: ["Build muscle", "Stay consistent"] },
+    { group: "Cardio & Dance",         options: ["Lose fat", "Improve cardio", "Dance fitness"] },
+    { group: "Mind & Body",            options: ["Yoga & mindfulness", "Pilates & core"] },
+  ],
+  senior: [
+    { group: "General",    options: ["Stay active & healthy", "Build strength safely"] },
+    { group: "Mind & Body", options: ["Improve flexibility", "Yoga & mindfulness", "Pilates & core"] },
+    { group: "Fun",         options: ["Dance fitness"] },
+  ],
+  athlete: [
+    { group: "Strength & Performance", options: ["Strength & hypertrophy", "Endurance", "Athletic performance", "Cut weight"] },
+    { group: "Recovery & Mobility",    options: ["Yoga & mindfulness", "Pilates & core"] },
+  ],
 };
+
+const EQUIPMENT_OPTIONS = [
+  { id: "mat",              label: "Yoga / exercise mat" },
+  { id: "dumbbells",        label: "Dumbbells" },
+  { id: "resistance_bands", label: "Resistance bands" },
+  { id: "kettlebell",       label: "Kettlebell" },
+  { id: "barbell",          label: "Barbell" },
+  { id: "pull_up_bar",      label: "Pull-up bar" },
+  { id: "reformer",         label: "Pilates reformer" },
+];
 
 const DEFAULT_DAYS: Record<LifeStage, number> = { beginner: 3, adult: 4, senior: 3, athlete: 5 };
 const DEFAULT_DURATION: Record<LifeStage, SessionLength> = { beginner: "short", adult: "medium", senior: "short", athlete: "long" };
@@ -244,6 +273,7 @@ export default function OnboardingPage() {
   const [step, setStep] = useState(1);
   const [profile, setProfile] = useState<LifeStage | null>(null);
   const [goals, setGoals] = useState<string[]>([]);
+  const [equipment, setEquipment] = useState<string[]>([]);
   const [trainingDays, setTrainingDays] = useState(3);
   const [sessionLength, setSessionLength] = useState<SessionLength>("medium");
   const [schedule, setSchedule] = useState<ScheduleSlot[]>([]);
@@ -304,25 +334,30 @@ export default function OnboardingPage() {
     );
   }
 
+  // Step 5 (equipment): toggle equipment item in/out of selection
+  function handleEquipmentToggle(id: string) {
+    setEquipment((prev) => prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]);
+  }
+
   // Step 4: select session length (highlight only - Next button advances)
   function handleSessionLengthSelect(sl: SessionLength) {
     setSessionLength(sl);
   }
 
-  // Step 4 → 5: build schedule then advance
+  // Step 5 → 6: build schedule then advance to preview
   function handleBuildSchedule() {
     const generated = buildSchedule(profile!, goals, trainingDays, sessionLength);
     setSchedule(generated);
     setCustomising(false);
-    setStep(5);
+    setStep(6);
   }
 
   async function handleScheduleConfirm() {
     setSavingSchedule(true);
     setError("");
     try {
-      await updateSchedule(schedule, profile!, goals);
-      setStep(6);
+      await updateSchedule(schedule, profile!, goals, equipment);
+      setStep(7);
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : "Failed to save schedule");
     } finally {
@@ -339,12 +374,12 @@ export default function OnboardingPage() {
     } finally {
       setSavingNotifications(false);
     }
-    setStep(7);
+    setStep(8);
   }
 
   // Fetch curated suggestion cards when the user reaches the channels step
   useEffect(() => {
-    if (step !== 7 || !profile) return;
+    if (step !== 8 || !profile) return;
     setSuggestionsLoading(true);
     getSuggestions(profile)
       .then(setSuggestions)
@@ -367,7 +402,7 @@ export default function OnboardingPage() {
     setError("");
     const err = await executeScan();
     if (err) setError(err);
-    else setStep(8);
+    else setStep(9);
   }
 
   async function handleRetry() {
@@ -404,7 +439,7 @@ export default function OnboardingPage() {
   }, [router]);
 
   useEffect(() => {
-    if (step !== 8) return;
+    if (step !== 9) return;
     intervalRef.current = setInterval(pollStatus, 3000);
     return () => {
       if (intervalRef.current) {
@@ -449,37 +484,44 @@ export default function OnboardingPage() {
           </div>
         )}
 
-        {/* Step 2 - Goals */}
+        {/* Step 2 - Goals (grouped by style) */}
         {step === 2 && profile && (
           <div className={contentClass}>
             <h2 className="text-xl font-semibold text-zinc-900 dark:text-white mb-1">What are your goals?</h2>
             <p className="text-zinc-600 dark:text-zinc-400 text-sm mb-6">Pick up to 3 that apply.</p>
-            <div className="flex flex-col gap-3">
-              {GOALS[profile].map((g) => {
-                const selected = goals.includes(g);
-                const atMax = goals.length >= 3 && !selected;
-                return (
-                  <button
-                    key={g}
-                    onClick={() => handleGoalToggle(g)}
-                    disabled={atMax}
-                    className={`w-full text-left rounded-xl border px-5 py-4 transition cursor-pointer disabled:opacity-40 ${
-                      selected
-                        ? "border-zinc-900 dark:border-white bg-zinc-100 dark:bg-zinc-800"
-                        : "border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-900 hover:border-zinc-400 dark:hover:border-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800"
-                    }`}
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className={`h-4 w-4 rounded shrink-0 border-2 flex items-center justify-center transition ${
-                        selected ? "border-zinc-900 dark:border-white bg-zinc-900 dark:bg-white" : "border-zinc-400 dark:border-zinc-600"
-                      }`}>
-                        {selected && <span className="text-white dark:text-zinc-900 text-xs font-bold leading-none">✓</span>}
-                      </div>
-                      <p className="font-medium text-zinc-900 dark:text-white">{g}</p>
-                    </div>
-                  </button>
-                );
-              })}
+            <div className="space-y-5">
+              {GOALS[profile].map((group) => (
+                <div key={group.group}>
+                  <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500 mb-2">{group.group}</p>
+                  <div className="flex flex-col gap-2">
+                    {group.options.map((g) => {
+                      const selected = goals.includes(g);
+                      const atMax = goals.length >= 3 && !selected;
+                      return (
+                        <button
+                          key={g}
+                          onClick={() => handleGoalToggle(g)}
+                          disabled={atMax}
+                          className={`w-full text-left rounded-xl border px-5 py-3.5 transition cursor-pointer disabled:opacity-40 ${
+                            selected
+                              ? "border-zinc-900 dark:border-white bg-zinc-100 dark:bg-zinc-800"
+                              : "border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-900 hover:border-zinc-400 dark:hover:border-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                          }`}
+                        >
+                          <div className="flex items-center gap-3">
+                            <div className={`h-4 w-4 rounded shrink-0 border-2 flex items-center justify-center transition ${
+                              selected ? "border-zinc-900 dark:border-white bg-zinc-900 dark:bg-white" : "border-zinc-400 dark:border-zinc-600"
+                            }`}>
+                              {selected && <span className="text-white dark:text-zinc-900 text-xs font-bold leading-none">✓</span>}
+                            </div>
+                            <p className="font-medium text-zinc-900 dark:text-white">{g}</p>
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              ))}
             </div>
             <StepNav onBack={() => setStep(1)} onNext={() => setStep(3)} nextDisabled={goals.length === 0} />
           </div>
@@ -524,12 +566,43 @@ export default function OnboardingPage() {
                 />
               ))}
             </div>
-            <StepNav onBack={() => setStep(3)} onNext={handleBuildSchedule} />
+            <StepNav onBack={() => setStep(3)} onNext={() => setStep(5)} />
           </div>
         )}
 
-        {/* Step 5 - Schedule Preview */}
+        {/* Step 5 - Equipment */}
         {step === 5 && (
+          <div className={contentClass}>
+            <h2 className="text-xl font-semibold text-zinc-900 dark:text-white mb-1">What do you have at home?</h2>
+            <p className="text-zinc-600 dark:text-zinc-400 text-sm mb-6">
+              We&apos;ll only suggest videos that match your setup. Tick everything you have.
+            </p>
+            <div className="flex flex-wrap gap-2 mb-2">
+              {EQUIPMENT_OPTIONS.map((opt) => {
+                const selected = equipment.includes(opt.id);
+                return (
+                  <button
+                    key={opt.id}
+                    type="button"
+                    onClick={() => handleEquipmentToggle(opt.id)}
+                    className={`rounded-full border px-4 py-2 text-sm font-medium transition cursor-pointer ${
+                      selected
+                        ? "border-zinc-900 dark:border-white bg-zinc-900 dark:bg-white text-white dark:text-zinc-900"
+                        : "border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-900 text-zinc-700 dark:text-zinc-300 hover:border-zinc-400 dark:hover:border-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                    }`}
+                  >
+                    {opt.label}
+                  </button>
+                );
+              })}
+            </div>
+            <p className="text-xs text-zinc-500 mt-3 mb-1">Nothing selected means bodyweight / no equipment - that&apos;s totally fine.</p>
+            <StepNav onBack={() => setStep(4)} onNext={handleBuildSchedule} nextLabel="Build my schedule →" />
+          </div>
+        )}
+
+        {/* Step 6 - Schedule Preview (was step 5) */}
+        {step === 6 && (
           <div className="w-full">
             <h2 className="text-xl font-semibold text-zinc-900 dark:text-white mb-1">Here&apos;s your personalised plan</h2>
             <p className="text-zinc-600 dark:text-zinc-400 text-sm mb-6">Based on your goals. Tweak anything you like.</p>
@@ -538,7 +611,7 @@ export default function OnboardingPage() {
               <>
                 <SchedulePreview schedule={schedule} isSenior={isSenior} />
                 <div className="flex gap-3 mt-6">
-                  <button onClick={() => setStep(4)} className="rounded-lg border border-zinc-200 dark:border-zinc-700 px-4 py-3 text-sm font-medium text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition cursor-pointer">
+                  <button onClick={() => setStep(5)} className="rounded-lg border border-zinc-200 dark:border-zinc-700 px-4 py-3 text-sm font-medium text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition cursor-pointer">
                     ← Back
                   </button>
                   <button
@@ -560,7 +633,7 @@ export default function OnboardingPage() {
               <>
                 <ScheduleEditor schedule={schedule} onScheduleChange={setSchedule} />
                 <div className="flex gap-3 mt-6">
-                  <button onClick={() => setStep(4)} className="rounded-lg border border-zinc-200 dark:border-zinc-700 px-4 py-3 text-sm font-medium text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition cursor-pointer">
+                  <button onClick={() => setStep(5)} className="rounded-lg border border-zinc-200 dark:border-zinc-700 px-4 py-3 text-sm font-medium text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition cursor-pointer">
                     ← Back
                   </button>
                   <button
@@ -576,8 +649,8 @@ export default function OnboardingPage() {
           </div>
         )}
 
-        {/* Step 6 - Email Notifications */}
-        {step === 6 && (
+        {/* Step 7 - Email Notifications (was step 6) */}
+        {step === 7 && (
           <div className={contentClass}>
             <h2 className="text-xl font-semibold text-zinc-900 dark:text-white mb-1">Get your weekly plan by email?</h2>
             <p className="text-zinc-600 dark:text-zinc-400 text-sm mb-6">
@@ -598,7 +671,7 @@ export default function OnboardingPage() {
               />
             </div>
             <StepNav
-              onBack={() => setStep(5)}
+              onBack={() => setStep(6)}
               onNext={handleEmailNotificationsContinue}
               nextLabel={savingNotifications ? "Saving…" : "Next →"}
               nextDisabled={savingNotifications}
@@ -606,8 +679,8 @@ export default function OnboardingPage() {
           </div>
         )}
 
-        {/* Step 7 - Channels */}
-        {step === 7 && profile && (
+        {/* Step 8 - Channels (was step 7) */}
+        {step === 8 && profile && (
           <div className="w-full max-w-lg">
             <h2 className="text-xl font-semibold text-zinc-900 dark:text-white mb-1">Add your favourite channels</h2>
             <p className="text-zinc-600 dark:text-zinc-400 text-sm mb-6">
@@ -624,7 +697,7 @@ export default function OnboardingPage() {
               suggestionsLoading={suggestionsLoading}
             />
             <div className="flex gap-3 mt-6">
-              <button onClick={() => setStep(6)} className="rounded-lg border border-zinc-200 dark:border-zinc-700 px-4 py-3 text-sm font-medium text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition cursor-pointer">
+              <button onClick={() => setStep(7)} className="rounded-lg border border-zinc-200 dark:border-zinc-700 px-4 py-3 text-sm font-medium text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition cursor-pointer">
                 ← Back
               </button>
               <button
@@ -638,8 +711,8 @@ export default function OnboardingPage() {
           </div>
         )}
 
-        {/* Step 8 - Live Progress */}
-        {step === 8 && (
+        {/* Step 9 - Live Progress (was step 8) */}
+        {step === 9 && (
           <div className="w-full max-w-md">
             <h2 className="text-xl font-semibold text-zinc-900 dark:text-white mb-2">Setting up your plan…</h2>
             <p className="text-zinc-600 dark:text-zinc-400 text-sm mb-8">
