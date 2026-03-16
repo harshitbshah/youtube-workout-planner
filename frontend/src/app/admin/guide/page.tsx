@@ -245,6 +245,19 @@ export default function AdminGuidePage() {
               to add channels first via their settings page.
             </Note>
 
+            <H3>Resetting onboarding</H3>
+            <p>
+              Click <strong className="text-zinc-900 dark:text-white">Reset</strong> to wipe a user's onboarding
+              state. This deletes their channel subscriptions, weekly schedule, and plan history
+              (ProgramHistory rows). The user is treated as brand new on next login and redirected
+              through the full onboarding wizard. Shared channels and their videos are preserved
+              (other users may reference them).
+            </p>
+            <Note>
+              Use this when testing the new-user onboarding flow or when a user wants to start
+              completely fresh without losing their Google account.
+            </Note>
+
             <H3>Deleting a user</H3>
             <p>
               Click <strong className="text-zinc-900 dark:text-white">Delete</strong> to permanently remove a user and

@@ -29,7 +29,7 @@ Run before every commit:
 cd frontend && npm run test:run
 ```
 
-Current: **309 backend unit + 199 frontend = 508 automated tests passing** (+ integration tests run separately)
+Current: **335 backend unit + 210 frontend = 545 automated tests passing** (+ integration tests run separately)
 
 New test files added:
 - `tests/api/test_jobs.py` - `POST /jobs/scan` (202, 400 no channels, 503 no key, 401 unauth, channel count); `GET /jobs/status` (no pipeline, unauthenticated, reflects live state); scanner filters (upper duration cap, title blocklist); classifier (batch cap limits to 300, `on_progress` callback during polling, resume existing batch, batch ID cleared on completion)
@@ -56,6 +56,11 @@ New test files added:
 - `tests/api/test_channels.py` - 6 new suggestion tests: cache hit (all 3 served from DB, no YouTube call), cache miss (YouTube called + result stored), no API key returns only cached, no profile returns general list, unknown profile falls back to general, unauthenticated 401
 - `tests/integration/test_channels_api.py` - 1 new suggestion test: full cache-hit path against real PostgreSQL (all 3 pre-loaded, YouTube not called)
 - `tests/api/test_lazy_classification.py` - 33 tests for the lazy classification pipeline (F9):
+- `frontend/src/app/onboarding/page.test.tsx` - 6 new tests in "pre-auth onboarding flow" describe block: renders step 1 unauthenticated (no redirect), "Create free account" label on step 6, "Looks good" label when authenticated, saves onboarding_pending to localStorage, restores pending state + calls updateSchedule on OAuth return, shows error if updateSchedule fails on pending restore
+- `frontend/src/app/page.test.tsx` - updated: "Sign in nav link points to auth/google URL" (exact match) + "Get started free CTA links point to /onboarding" (split from combined test)
+- `frontend/src/app/dashboard/page.test.tsx` - 5 new tests: rest day cards render on all 7 days, all day labels shown, MissingVideoCard renders for scheduled_workout_type days, deterministic messages per day+weekStart, all three card types use uniform height
+- `tests/api/test_admin.py` - updated `test_reset_onboarding_removes_channels_schedule_and_plan` to also verify ProgramHistory rows are deleted
+- `tests/test_classifier.py` - updated `test_parse_classification_invalid_fields`: replaced "Dance" (now valid) with "Zumba" as the invalid workout type
   - `can_fill_plan()`: all slots satisfied → True; any slot below threshold → False; all-rest schedule → True (edge case); case-insensitive workout_type matching; NULL duration defaults
   - `get_gap_types()`: returns only slots below MIN_PLAN_CANDIDATES; empty schedule; duplicate slot types counted correctly
   - `rule_classify_for_user()`: classifies matching titles, skips non-matching, idempotent on re-run

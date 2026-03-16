@@ -1,9 +1,25 @@
 # Progress
 
 ## Status
-Phases 1–5 complete + admin console + charts + guide page + mobile UX complete. Phase A complete. Phase B complete. Phase C complete. Phase D F5+F6+F9 complete. Backlog items T1+T2+S1+M2 complete. Channel suggestions + onboarding UX complete. Channel fitness validation (migration 019) complete. Email notifications opt-in step in onboarding complete. Dark mode all pages fixed. Lazy classification complete. Onboarding guard + admin reset complete. Homepage M1 redesign complete. Incremental OAuth complete. Multi-select goals + fitness profile editing in Settings complete (migration 020). **Yoga, Pilates, Dance modalities + equipment capture complete (migration 021). Goal-aware channel suggestions complete. Targeted batch trusted-channel fix complete. 309 backend unit + 199 frontend = 508 automated tests passing.**
+Phases 1–5 complete + admin console + charts + guide page + mobile UX complete. Phase A complete. Phase B complete. Phase C complete. Phase D F5+F6+F9 complete. Backlog items T1+T2+S1+M2 complete. Channel suggestions + onboarding UX complete. Channel fitness validation (migration 019) complete. Email notifications opt-in step in onboarding complete. Dark mode all pages fixed. Lazy classification complete. Onboarding guard + admin reset complete. Homepage M1 redesign complete. Incremental OAuth complete. Multi-select goals + fitness profile editing in Settings complete (migration 020). Yoga, Pilates, Dance modalities + equipment capture complete (migration 021). Goal-aware channel suggestions complete. Targeted batch trusted-channel fix complete. **Pre-auth onboarding flow complete. 7-day full grid with rest day cards complete. Admin bug fixes complete. 335 backend unit + 210 frontend = 545 automated tests passing.**
 Both Railway (backend) and Vercel (frontend) live and functional on `main`.
 **Ready for first users** - Google OAuth fully verified. YouTube scope approved by Google Trust & Safety (2026-03-15).
+
+**Done this session (2026-03-16, checkpoint 12):**
+- Pre-auth onboarding flow: "Get started free" now navigates to `/onboarding` instead of OAuth; steps 1-6 work without any account; step 6 button label becomes "Create free account ->" for unauthenticated visitors; state saved to `localStorage` (`onboarding_pending`) before OAuth redirect; on return, pending state restored and `updateSchedule` called at step 7 ✅
+- Unauthenticated guard updated: `getMe()` failure no longer redirects to `/`; sets `isAuthenticated=false` and proceeds normally ✅
+- Existing users returning via "Get started free" (has channels): `onboarding_pending` cleared before dashboard redirect ✅
+- "Create free account" hint text added below step 6 CTA: "Takes 10 seconds - no credit card needed" ✅
+- Landing page CTAs: both "Get started free" buttons changed to `<Link href="/onboarding">` (no Google icon, internal navigation) ✅
+- 7-day full plan grid: rest days no longer filtered out; all Mon-Sun always shown ✅
+- `RestDayCard` component: profile-aware motivational/funny messages; deterministic per day+week_start via hash; 3 message pools (senior, athlete, default) ✅
+- `MissingVideoCard` component: amber-tinted card shown when a day has a scheduled workout type but no video; links to Settings ✅
+- `VideoCard`, `RestDayCard`, `MissingVideoCard`: all use `flex-1 flex flex-col` for uniform grid row height ✅
+- Admin delete user error surfaced: `alert(e instanceof Error ? e.message : "Failed to delete user.")` ✅
+- Admin reset onboarding: switched from `apiFetch` (stale token) to `adminFetch` (reads localStorage); error now surfaced to user ✅
+- `admin_reset_onboarding` endpoint: now also deletes `ProgramHistory` rows (plan was not cleared before) ✅
+- Fixed pre-existing test: `test_parse_classification_invalid_fields` used "Dance" as invalid type; Dance is now valid - changed to "Zumba" ✅
+- **335 backend unit + 210 frontend = 545 automated tests passing** ✅
 
 **Done this session (2026-03-16, checkpoint 11):**
 - Targeted batch trusted-channel signal: channels with >=1 classified video of a gap type are trusted producers - all their unclassified videos included in targeted batch even with generic titles ("Morning Flow" etc.) ✅

@@ -10,13 +10,15 @@ for each training day, and has your plan ready when Monday rolls around.
 
 ### Sign up
 
-Go to the app and click **Get started free**. Sign in with your Google account - no
-password, no credit card, nothing else required.
+Go to the app and click **Get started free**. You'll be taken directly into the setup
+wizard - no sign-in required yet. You set up your plan first, then create your account
+with one click at the end. No password, no credit card needed.
 
 ### Set up your plan
 
-After signing in you'll be walked through a short setup wizard that tailors your plan
-before you add a single channel.
+The setup wizard tailors your plan before you add a single channel. You can complete
+steps 1-6 without signing in. Your account is created when you hit **Create free account ->**
+at the schedule step.
 
 **Step 1 - Life stage.** Pick the option that fits you best:
 - Just starting out (new to working out, or getting back into it)
@@ -30,18 +32,24 @@ before you add a single channel.
 
 **Step 4 - Session length.** 15–20 min / 25–35 min / 40–60 min / No preference.
 
-**Step 5 - Review your schedule.** Based on your answers, the app builds a personalised
-weekly training split and shows it to you before saving anything. Hit
-**Looks good →** to keep it, or **Customise** to adjust any day yourself using the
-full schedule editor.
+**Step 5 - Equipment.** Select what equipment you have access to (mat, dumbbells,
+resistance bands, etc.). The app uses this to improve video recommendations. Skip if
+you prefer bodyweight-only workouts.
 
-**Step 6 - Add your channels.** Search for the YouTube fitness creators you follow.
+**Step 6 - Review your schedule.** Based on your answers, the app builds a personalised
+weekly training split and shows it to you before saving anything. Hit **Looks good ->** (or
+**Create free account ->** if you haven't signed in yet) to save. Or hit **Customise**
+to adjust any day yourself using the full schedule editor.
+
+**Step 7 - Add your channels.** Search for the YouTube fitness creators you follow.
 The app shows curated suggestions based on your profile - tap a chip to search
 instantly. You need at least one channel to continue.
 
-**Step 7 - Live setup progress.** Hit Continue and a real-time checklist tracks each
-stage: scanning channels → classifying videos → building your first plan. When it's
-done you're taken straight to your dashboard - no button to click.
+**Step 8 - Notifications.** Opt in to receive a weekly email with your plan every Sunday.
+
+**Step 9 - Live setup progress.** A real-time checklist tracks each stage: scanning
+channels → classifying videos → building your first plan. When it's done you're taken
+straight to your dashboard - no button to click.
 
 The first scan typically takes 5–10 minutes because it processes up to 300 videos. The
 plan appears automatically when it's ready - no need to refresh.
@@ -50,10 +58,11 @@ plan appears automatically when it's ready - no need to refresh.
 
 ## Your weekly plan
 
-The dashboard shows your current week - one video card per training day, with a
-thumbnail, duration, channel name, and workout tags.
+The dashboard shows your current week - all 7 days Monday to Sunday. Training days show
+a video card with a thumbnail, duration, channel name, and workout tags. Rest days show
+a motivational or funny message to keep you coming back.
 
-Click any card to open the video directly on YouTube.
+Click any video card to open the video directly on YouTube.
 
 **Swap video** - not feeling today's pick? Click **Swap video** below any day card to
 instantly browse replacements. The picker shows the top 10 videos from your library

@@ -34,7 +34,7 @@ def test_parse_classification_markdown_fenced():
 def test_parse_classification_invalid_fields():
     # Unknown enum values fall back to defaults
     raw = (
-        '{"workout_type": "Dance", "body_focus": "torso", "difficulty": "mega-hard",'
+        '{"workout_type": "Zumba", "body_focus": "torso", "difficulty": "mega-hard",'
         ' "has_warmup": true, "has_cooldown": false}'
     )
     result = _parse_classification(raw)

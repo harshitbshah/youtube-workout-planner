@@ -195,8 +195,8 @@ cd frontend && npm run test:run
 | Path | Purpose |
 |---|---|
 | `app/page.tsx` | Landing/marketing page (hero, how it works, features, CTA, Guide nav link) |
-| `app/onboarding/page.tsx` | 7-step onboarding wizard: life stage → goal → training days → session length → schedule preview → channels → live scan progress |
-| `app/dashboard/page.tsx` | Weekly plan grid, responsive header, announcement banner, admin nav link |
+| `app/onboarding/page.tsx` | 9-step onboarding wizard: life stage → goals → training days → session length → equipment → schedule preview (auth gate here) → channels → email opt-in → live scan progress. Steps 1-6 work without an account; "Create free account ->" at step 6 saves pending state to localStorage and redirects to OAuth; on return, pending state restored and updateSchedule called. |
+| `app/dashboard/page.tsx` | Weekly plan grid (all 7 days Mon-Sun), responsive header, announcement banner, admin nav link. `RestDayCard` (profile-aware motivational messages, deterministic per day+week_start), `MissingVideoCard` (amber, links to Settings), `VideoCard` - all use `flex-1 flex flex-col` for uniform height. |
 | `app/library/page.tsx` | Video library browser with filters + assign-to-day |
 | `app/settings/page.tsx` | Profile, channels, schedule, account deletion |
 | `app/guide/page.tsx` | User guide with sticky sidebar nav (7 sections) |
@@ -251,7 +251,7 @@ cd frontend && npm run test:run
 | GET | `/admin/stats` | Admin | Aggregate stats + per-user rows |
 | DELETE | `/admin/users/{id}` | Admin | Delete any user (blocks self-deletion) |
 | POST | `/admin/users/{id}/scan` | Admin | Trigger pipeline for any user |
-| POST | `/admin/users/{id}/reset-onboarding` | Admin | Delete user's channel subscriptions + schedule (treats them as new user; shared channels/videos preserved) |
+| POST | `/admin/users/{id}/reset-onboarding` | Admin | Delete user's channel subscriptions + schedule + ProgramHistory (treats them as new user; shared channels/videos preserved) |
 | GET | `/admin/announcements` | Admin | List all announcements |
 | POST | `/admin/announcements` | Admin | Create announcement |
 | DELETE | `/admin/announcements/{id}` | Admin | Delete announcement |
@@ -269,14 +269,17 @@ Google OAuth → /auth/google → Google (basic scopes only) → /auth/google/ca
 YouTube connect → /auth/youtube/connect → Google (YouTube scope, login_hint pre-fills email) → /auth/youtube/callback → /dashboard?youtube=connected
 
   → New user (no channels): /onboarding
-      Guard: renders null while checking (no flash); admin users bypass regardless of channels
+      Guard: unauthenticated visitors allowed (no redirect); authenticated users with channels go to /dashboard; admin bypasses channel check
+      Pre-auth flow: steps 1-6 work without any account
       Step 1: Life stage (4 cards, auto-advance)
-      Step 2: Goal (3–4 options by profile, auto-advance)
-      Step 3: Training days (2–6 toggle, auto-advance)
+      Step 2: Goals (multi-select up to 3, grouped by category, auto-advance)
+      Step 3: Training days (2-6 toggle, auto-advance)
       Step 4: Session length (4 options, auto-advance)
-      Step 5: Schedule preview (confirm or customise with ScheduleEditor)
-      Step 6: Channels (ChannelManager + curated suggestions by profile)
-      Step 7: Live scan progress (polls /jobs/status, auto-navigates to /dashboard)
+      Step 5: Equipment (checkboxes, optional, auto-advance)
+      Step 6: Schedule preview - auth gate: "Create free account ->" saves onboarding_pending to localStorage + redirects to OAuth; on return, pending state restored + updateSchedule called; authenticated users see "Looks good ->"
+      Step 7: Channels (ChannelManager + curated suggestions by profile)
+      Step 8: Email opt-in
+      Step 9: Live scan progress (polls /jobs/status, auto-navigates to /dashboard)
 
   → Returning user (has channels): /dashboard
       Header nav: Library | Settings | Regenerate | Publish | Admin (admin only) | Sign out
