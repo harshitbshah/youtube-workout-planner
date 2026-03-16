@@ -9,14 +9,19 @@ Haiku 4.5 Batch API pricing used for cost estimates:
   Output: $2.00 / 1M tokens
 """
 
+import logging
 import os
+import secrets
 from collections import defaultdict
 from datetime import date, datetime, timedelta, timezone
 
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
+from itsdangerous import URLSafeTimedSerializer
 from pydantic import BaseModel
 from sqlalchemy import func
 from sqlalchemy.orm import Session
+
+logger = logging.getLogger(__name__)
 
 from ..dependencies import get_current_user, get_db
 from ..models import (
@@ -376,6 +381,41 @@ def admin_reset_onboarding(
     db.query(Schedule).filter(Schedule.user_id == user_id).delete()
     db.query(ProgramHistory).filter(ProgramHistory.user_id == user_id).delete()
     db.commit()
+
+
+# ─── Admin: impersonation ─────────────────────────────────────────────────────
+
+_IMPERSONATION_TTL = 3600  # 1 hour
+
+
+@router.post("/admin/users/{user_id}/impersonate")
+def admin_impersonate(
+    user_id: str,
+    db: Session = Depends(get_db),
+    current_admin: User = Depends(_require_admin),
+):
+    """Return a short-lived token that authenticates as the target user.
+
+    The token is identical in format to a normal auth token so all existing
+    API endpoints work without changes. Expires in 1 hour. Admin cannot
+    impersonate themselves (use the real session for that).
+    """
+    if user_id == str(current_admin.id):
+        raise HTTPException(status_code=400, detail="Cannot impersonate yourself")
+
+    user = db.get(User, user_id)
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    secret = os.getenv("SESSION_SECRET_KEY", "dev-secret-change-in-production")
+    token = URLSafeTimedSerializer(secret).dumps(str(user.id))
+
+    logger.info(
+        "admin_impersonate: admin=%s impersonating user=%s (%s)",
+        current_admin.email, user.id, user.email,
+    )
+
+    return {"token": token, "expires_in": _IMPERSONATION_TTL, "user_email": user.email}
 
 
 # ─── Admin: announcements ──────────────────────────────────────────────────────

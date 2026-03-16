@@ -5,6 +5,7 @@ import { ThemeProvider } from "@/components/ThemeProvider";
 import ThemeToggle from "@/components/ThemeToggle";
 import SentryInit from "@/components/SentryInit";
 import PWAInstallPrompt from "@/components/PWAInstallPrompt";
+import ImpersonationBanner from "@/components/ImpersonationBanner";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -60,6 +61,7 @@ export default function RootLayout({
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         <ThemeProvider>
           <SentryInit />
+          <ImpersonationBanner />
           {children}
           <ThemeToggle />
           <PWAInstallPrompt />

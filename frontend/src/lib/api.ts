@@ -22,10 +22,36 @@ export function clearToken() {
   localStorage.removeItem("auth_token");
 }
 
+// ─── Impersonation token ──────────────────────────────────────────────────────
+// When set, apiFetch uses this instead of the real auth token so every API
+// call is made as the impersonated user. Stored in sessionStorage so it
+// disappears automatically when the tab is closed.
+
+const _IMPERSONATION_KEY = "impersonation_token";
+const _IMPERSONATION_EMAIL_KEY = "impersonation_email";
+
+export function startImpersonation(token: string, email: string) {
+  sessionStorage.setItem(_IMPERSONATION_KEY, token);
+  sessionStorage.setItem(_IMPERSONATION_EMAIL_KEY, email);
+}
+
+export function stopImpersonation() {
+  sessionStorage.removeItem(_IMPERSONATION_KEY);
+  sessionStorage.removeItem(_IMPERSONATION_EMAIL_KEY);
+}
+
+export function getImpersonationToken(): string | null {
+  return sessionStorage.getItem(_IMPERSONATION_KEY);
+}
+
+export function getImpersonationEmail(): string | null {
+  return sessionStorage.getItem(_IMPERSONATION_EMAIL_KEY);
+}
+
 // ─── Fetch wrapper ────────────────────────────────────────────────────────────
 
 async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
-  const token = loadToken();
+  const token = getImpersonationToken() ?? loadToken();
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
     ...(init?.headers as Record<string, string>),
@@ -277,6 +303,12 @@ export const getAdminCharts = (days = 30) =>
 
 export const adminResetOnboarding = (userId: string) =>
   apiFetch<void>(`/admin/users/${userId}/reset-onboarding`, { method: "POST" });
+
+export const adminImpersonate = (userId: string) =>
+  apiFetch<{ token: string; expires_in: number; user_email: string }>(
+    `/admin/users/${userId}/impersonate`,
+    { method: "POST" }
+  );
 
 // ─── Feedback ─────────────────────────────────────────────────────────────────
 

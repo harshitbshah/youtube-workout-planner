@@ -12,7 +12,7 @@ import {
   ResponsiveContainer,
   CartesianGrid,
 } from "recharts";
-import { getMe, getAdminCharts, type ChartsResponse } from "@/lib/api";
+import { getMe, getAdminCharts, adminImpersonate, startImpersonation, type ChartsResponse } from "@/lib/api";
 import { Tooltip } from "@/components/Tooltip";
 import { Footer } from "@/components/Footer";
 
@@ -275,6 +275,16 @@ export default function AdminPage() {
       alert("Failed to trigger scan.");
     } finally {
       setRetryingUser(null);
+    }
+  }
+
+  async function handleImpersonate(userId: string, email: string) {
+    try {
+      const { token, user_email } = await adminImpersonate(userId);
+      startImpersonation(token, user_email);
+      window.location.href = "/dashboard";
+    } catch (e: unknown) {
+      alert(e instanceof Error ? e.message : `Failed to impersonate ${email}.`);
     }
   }
 
@@ -558,8 +568,16 @@ export default function AdminPage() {
                 {stats.user_rows.map((u) => (
                   <tr key={u.id} className="border-b border-zinc-200 dark:border-zinc-800 last:border-0 hover:bg-zinc-50/60 dark:hover:bg-zinc-900/60">
                     <td className="px-4 py-3">
-                      <p className="text-zinc-900 dark:text-white font-medium">{u.display_name ?? "-"}</p>
-                      <p className="text-zinc-500 text-xs">{u.email}</p>
+                      <button
+                        onClick={() => handleImpersonate(u.id, u.email)}
+                        className="text-left group"
+                        title={`View app as ${u.email}`}
+                      >
+                        <p className="text-zinc-900 dark:text-white font-medium group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                          {u.display_name ?? "-"}
+                        </p>
+                        <p className="text-zinc-500 text-xs group-hover:text-blue-500 transition-colors">{u.email}</p>
+                      </button>
                     </td>
                     <td className="px-4 py-3 text-zinc-600 dark:text-zinc-400 text-xs whitespace-nowrap">{formatDate(u.created_at)}</td>
                     <td className="px-4 py-3 text-zinc-600 dark:text-zinc-400 text-xs whitespace-nowrap">{formatRelative(u.last_active_at)}</td>

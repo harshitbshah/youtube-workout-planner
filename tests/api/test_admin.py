@@ -434,3 +434,54 @@ def test_reset_onboarding_403_for_non_admin(non_admin_client):
     client, user = non_admin_client
     resp = client.post(f"/admin/users/{user.id}/reset-onboarding")
     assert resp.status_code == 403
+
+
+# ─── Impersonation ─────────────────────────────────────────────────────────────
+
+def test_impersonate_returns_token(admin_client):
+    client, admin, db = admin_client
+    target = User(google_id="imp-target", email="target@example.com")
+    db.add(target)
+    db.commit()
+
+    resp = client.post(f"/admin/users/{target.id}/impersonate")
+    assert resp.status_code == 200
+    body = resp.json()
+    assert "token" in body
+    assert body["user_email"] == "target@example.com"
+    assert body["expires_in"] == 3600
+
+
+def test_impersonate_token_authenticates_as_target(admin_client):
+    """The returned token must be usable as a Bearer token for the target user."""
+    from itsdangerous import URLSafeTimedSerializer
+    import os
+    client, admin, db = admin_client
+    target = User(google_id="imp-target2", email="target2@example.com")
+    db.add(target)
+    db.commit()
+
+    resp = client.post(f"/admin/users/{target.id}/impersonate")
+    token = resp.json()["token"]
+
+    secret = os.getenv("SESSION_SECRET_KEY", "dev-secret-change-in-production")
+    decoded_id = URLSafeTimedSerializer(secret).loads(token, max_age=3600)
+    assert decoded_id == str(target.id)
+
+
+def test_impersonate_cannot_impersonate_self(admin_client):
+    client, admin, _ = admin_client
+    resp = client.post(f"/admin/users/{admin.id}/impersonate")
+    assert resp.status_code == 400
+
+
+def test_impersonate_404_for_unknown_user(admin_client):
+    client, _, _ = admin_client
+    resp = client.post("/admin/users/nonexistent-id/impersonate")
+    assert resp.status_code == 404
+
+
+def test_impersonate_403_for_non_admin(non_admin_client):
+    client, user = non_admin_client
+    resp = client.post(f"/admin/users/{user.id}/impersonate")
+    assert resp.status_code == 403
