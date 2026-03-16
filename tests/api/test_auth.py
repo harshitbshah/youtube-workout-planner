@@ -97,21 +97,45 @@ def test_callback_rejects_invalid_state(client):
 
 # ─── YouTube connect tests ─────────────────────────────────────────────────────
 
+def _make_auth_token(user_id: str) -> str:
+    """Generate a valid Bearer token for the given user_id (matches dependencies.py)."""
+    import os
+    from itsdangerous import URLSafeTimedSerializer
+    secret = os.getenv("SESSION_SECRET_KEY", "dev-secret-change-in-production")
+    return URLSafeTimedSerializer(secret).dumps(str(user_id))
+
+
+def _make_youtube_state(user_id: str) -> str:
+    """Generate a valid signed YouTube OAuth state for the given user_id."""
+    import os
+    from itsdangerous import URLSafeTimedSerializer
+    secret = os.getenv("SESSION_SECRET_KEY", "dev-secret-change-in-production")
+    return URLSafeTimedSerializer(secret).dumps({"user_id": str(user_id), "nonce": "testnonce"})
+
+
 def test_youtube_connect_requires_auth(client):
+    # No token param - should 401
     resp = client.get("/auth/youtube/connect", follow_redirects=False)
+    assert resp.status_code == 401
+
+
+def test_youtube_connect_rejects_invalid_token(client):
+    resp = client.get("/auth/youtube/connect?token=bad_token", follow_redirects=False)
     assert resp.status_code == 401
 
 
 def test_youtube_connect_redirects_to_google(auth_client):
     client, user = auth_client
-    resp = client.get("/auth/youtube/connect", follow_redirects=False)
+    token = _make_auth_token(str(user.id))
+    resp = client.get(f"/auth/youtube/connect?token={token}", follow_redirects=False)
     assert resp.status_code in (302, 307)
     assert "accounts.google.com" in resp.headers["location"]
 
 
 def test_youtube_connect_includes_youtube_scope(auth_client):
     client, user = auth_client
-    resp = client.get("/auth/youtube/connect", follow_redirects=False)
+    token = _make_auth_token(str(user.id))
+    resp = client.get(f"/auth/youtube/connect?token={token}", follow_redirects=False)
     location = resp.headers["location"]
     assert "youtube" in location
 
@@ -119,7 +143,8 @@ def test_youtube_connect_includes_youtube_scope(auth_client):
 def test_youtube_connect_uses_login_hint(auth_client):
     from urllib.parse import unquote
     client, user = auth_client
-    resp = client.get("/auth/youtube/connect", follow_redirects=False)
+    token = _make_auth_token(str(user.id))
+    resp = client.get(f"/auth/youtube/connect?token={token}", follow_redirects=False)
     location = unquote(resp.headers["location"])
     assert user.email in location
 
@@ -127,9 +152,8 @@ def test_youtube_connect_uses_login_hint(auth_client):
 def test_youtube_callback_stores_refresh_token(auth_client, db_session):
     client, user = auth_client
 
-    # Initiate YouTube connect to seed state in session
-    connect_resp = client.get("/auth/youtube/connect", follow_redirects=False)
-    state = connect_resp.headers["location"].split("state=")[1].split("&")[0]
+    # Build signed state directly - no session needed
+    state = _make_youtube_state(str(user.id))
 
     tokens = {"access_token": "yt_access", "refresh_token": "yt_refresh"}
     with patch("api.routers.auth._exchange_code_for_tokens", new=AsyncMock(return_value=tokens)):
@@ -145,9 +169,7 @@ def test_youtube_callback_stores_refresh_token(auth_client, db_session):
     assert decrypt(creds.youtube_refresh_token) == "yt_refresh"
 
 
-def test_youtube_callback_rejects_invalid_state(auth_client):
-    client, user = auth_client
-    # Do not initiate connect - session has no youtube_oauth_state
+def test_youtube_callback_rejects_invalid_state(client):
     tokens = {"access_token": "tok", "refresh_token": "ref"}
     with patch("api.routers.auth._exchange_code_for_tokens", new=AsyncMock(return_value=tokens)):
         resp = client.get("/auth/youtube/callback?code=x&state=bad_state")

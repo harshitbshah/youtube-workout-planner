@@ -19,7 +19,7 @@ import os
 import secrets
 from urllib.parse import urlencode
 
-from itsdangerous import URLSafeTimedSerializer
+from itsdangerous import BadSignature, SignatureExpired, URLSafeTimedSerializer
 
 import httpx
 from fastapi import APIRouter, Depends, HTTPException, Request
@@ -150,18 +150,40 @@ async def google_callback(
     return RedirectResponse(f"{FRONTEND_URL}/{route}?token={token}")
 
 
+_TOKEN_MAX_AGE = 30 * 24 * 3600  # 30 days - matches dependencies.py
+_STATE_MAX_AGE = 600              # 10 minutes for the OAuth round-trip
+
+
 @router.get("/youtube/connect")
 async def youtube_connect(
-    request: Request,
-    current_user: User = Depends(get_current_user),
+    token: str | None = None,
+    db: Session = Depends(get_db),
 ):
     """Redirect the authenticated user to Google to grant YouTube access.
 
-    Uses login_hint to skip the account chooser since the user is already
-    signed in - reducing this to a single YouTube permission screen.
+    Accepts the Bearer token as a query param so the flow never depends on
+    session cookies surviving the multi-domain redirect chain.
+    Signs user_id into the OAuth state so the callback can authenticate
+    without a session either.
     """
-    state = secrets.token_urlsafe(16)
-    request.session["youtube_oauth_state"] = state
+    if not token:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+
+    secret = os.getenv("SESSION_SECRET_KEY", "dev-secret-change-in-production")
+    try:
+        user_id = URLSafeTimedSerializer(secret).loads(token, max_age=_TOKEN_MAX_AGE)
+    except (BadSignature, SignatureExpired):
+        raise HTTPException(status_code=401, detail="Invalid or expired token")
+
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=401, detail="User not found")
+
+    # Sign user_id into the state - callback decodes this instead of reading session
+    state = URLSafeTimedSerializer(secret).dumps({
+        "user_id": str(user_id),
+        "nonce": secrets.token_urlsafe(16),
+    })
 
     params = urlencode({
         "client_id": GOOGLE_CLIENT_ID,
@@ -171,7 +193,7 @@ async def youtube_connect(
         "state": state,
         "access_type": "offline",
         "prompt": "consent",
-        "login_hint": current_user.email,
+        "login_hint": user.email,
     })
     return RedirectResponse(f"https://accounts.google.com/o/oauth2/v2/auth?{params}")
 
@@ -180,19 +202,25 @@ async def youtube_connect(
 async def youtube_callback(
     code: str,
     state: str,
-    request: Request,
-    current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
     """Store the YouTube refresh token and redirect back to the dashboard."""
-    if state != request.session.get("youtube_oauth_state"):
-        raise HTTPException(status_code=400, detail="Invalid OAuth state - possible CSRF")
+    secret = os.getenv("SESSION_SECRET_KEY", "dev-secret-change-in-production")
+    try:
+        data = URLSafeTimedSerializer(secret).loads(state, max_age=_STATE_MAX_AGE)
+        user_id = data["user_id"]
+    except (BadSignature, SignatureExpired, KeyError):
+        raise HTTPException(status_code=400, detail="Invalid or expired OAuth state")
+
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=400, detail="User not found")
 
     tokens = await _exchange_code_for_tokens(code, YOUTUBE_REDIRECT_URI)
 
-    creds = db.query(UserCredentials).filter(UserCredentials.user_id == current_user.id).first()
+    creds = db.query(UserCredentials).filter(UserCredentials.user_id == user.id).first()
     if not creds:
-        creds = UserCredentials(user_id=current_user.id)
+        creds = UserCredentials(user_id=user.id)
         db.add(creds)
 
     if "refresh_token" in tokens:
@@ -200,7 +228,6 @@ async def youtube_callback(
         creds.credentials_valid = True
 
     db.commit()
-    request.session.pop("youtube_oauth_state", None)
     return RedirectResponse(f"{FRONTEND_URL}/dashboard?youtube=connected")
 
 
