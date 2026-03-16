@@ -528,17 +528,17 @@ export default function OnboardingPage() {
                     ← Back
                   </button>
                   <button
+                    onClick={() => setCustomising(true)}
+                    className="rounded-lg border border-zinc-200 dark:border-zinc-700 px-4 py-3 text-sm font-medium text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition cursor-pointer"
+                  >
+                    Customise
+                  </button>
+                  <button
                     onClick={handleScheduleConfirm}
                     disabled={savingSchedule}
                     className="flex-1 rounded-lg bg-zinc-900 dark:bg-white px-4 py-3 text-sm font-semibold text-white dark:text-zinc-900 hover:bg-zinc-700 dark:hover:bg-zinc-100 disabled:opacity-40 transition cursor-pointer"
                   >
                     {savingSchedule ? "Saving…" : "Looks good →"}
-                  </button>
-                  <button
-                    onClick={() => setCustomising(true)}
-                    className="rounded-lg border border-zinc-200 dark:border-zinc-700 px-4 py-3 text-sm font-medium text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition cursor-pointer"
-                  >
-                    Customise
                   </button>
                 </div>
               </>
