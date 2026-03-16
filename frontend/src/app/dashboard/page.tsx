@@ -860,9 +860,15 @@ export default function DashboardPage() {
                     )}
                   </>
                 ) : day.scheduled_workout_type ? (
-                  <MissingVideoCard workoutType={day.scheduled_workout_type} />
+                  <>
+                    <MissingVideoCard workoutType={day.scheduled_workout_type} />
+                    <div className="mt-1.5 h-6" />
+                  </>
                 ) : (
-                  <RestDayCard day={day.day} weekStart={plan.week_start} profile={user?.profile ?? null} />
+                  <>
+                    <RestDayCard day={day.day} weekStart={plan.week_start} profile={user?.profile ?? null} />
+                    <div className="mt-1.5 h-6" />
+                  </>
                 )}
               </div>
             ))}
