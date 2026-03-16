@@ -7,7 +7,7 @@ from ..dependencies import get_db
 router = APIRouter(tags=["health"])
 
 
-@router.get("/health")
+@router.api_route("/health", methods=["GET", "HEAD"])
 def health(db: Session = Depends(get_db)):
     try:
         db.execute(text("SELECT 1"))
