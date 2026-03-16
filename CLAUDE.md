@@ -227,6 +227,7 @@ cd frontend && npm run test:run
 | GET | `/auth/youtube/callback` | Yes | Store YouTube refresh token, redirect to `/dashboard?youtube=connected` |
 | GET | `/auth/me` | Yes | Current user profile |
 | PATCH | `/auth/me` | Yes | Update display name |
+| PATCH | `/auth/me/profile` | Yes | Update fitness profile (profile + goal list, validated) |
 | PATCH | `/auth/me/notifications` | Yes | Update email_notifications preference |
 | DELETE | `/auth/me` | Yes | Delete account + all data |
 | POST | `/auth/logout` | Yes | Clear session |

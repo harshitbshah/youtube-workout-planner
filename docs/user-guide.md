@@ -24,8 +24,7 @@ before you add a single channel.
 - 55 and thriving (low-impact, joint-friendly)
 - Training seriously (structured programming, performance goals)
 
-**Step 2 - Your goal.** Options vary by life stage - for example, Build muscle, Lose
-fat, Stay active & healthy, or Endurance. One tap, no confirmation needed.
+**Step 2 - Your goals.** Select up to 3 goals. Options vary by life stage - for example, Build muscle, Lose fat, Stay active & healthy, or Endurance. At least one is required to continue.
 
 **Step 3 - Training days.** Choose how many days a week you can train (2–6).
 
@@ -94,10 +93,11 @@ Access Settings from the top nav on your dashboard.
 
 **Profile** - update the name shown in your dashboard header.
 
-**Channels** - add or remove YouTube channels at any time. Changes take effect the
-next time your plan is generated.
+**Fitness Profile** - update your life stage and goals if they've changed since you signed up. The app uses this to validate that new channels you add are a good fit for your training style. If you select a new life stage, your goal selections are reset so you can pick goals appropriate to it.
 
-**Weekly schedule** - change your training split whenever your goals change. Adjust
+**Channels** - add or remove YouTube fitness channels. You can have up to 5 channels at a time. When you add or remove a channel, a banner appears offering to regenerate your plan immediately so it reflects the latest channel list.
+
+**Weekly schedule** - change your training split whenever your routine changes. Adjust
 workout types, body focus, duration targets, or flip any day to a rest day. Save and
 your next plan will reflect the new schedule.
 

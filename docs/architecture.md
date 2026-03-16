@@ -320,7 +320,19 @@ Migration history:
   006 - channels.first_scan_done
   007 - channels.last_video_published_at
   008 - users.last_scan_error
+  009–014 - (see alembic/versions/)
+  015 - users.email_notifications (bool, default True)
+  016 - program_history.video_id FK ON DELETE SET NULL
+  017 - shared channels: user_channels join table, drops channels.user_id
+  018 - channels.thumbnail_url + channels.description
+  019 - users.profile + users.goal (nullable VARCHAR)
+  020 - users.goal migrated from plain string to JSON array string
 ```
+
+`users` row also contains: `email_notifications` (bool), `profile` (nullable VARCHAR - "beginner"/"adult"/"senior"/"athlete"), `goal` (nullable VARCHAR stored as JSON array e.g. `'["Build muscle","Lose fat"]'`), `created_at` (datetime).
+`channels` row also contains: `thumbnail_url` (nullable), `description` (nullable).
+`GET /auth/me` returns `profile`, `goal` (parsed list), `created_at`, `email_notifications`.
+
 
 ---
 
@@ -343,10 +355,12 @@ Frontend (page.tsx on mount):
   → extract ?token= from URL, store in localStorage, strip from URL
   → all subsequent API calls send: Authorization: Bearer <token>
 
-GET /auth/me          → current user profile
-PATCH /auth/me        → update display_name
-DELETE /auth/me       → delete user + all data (cascade), clear session
-POST /auth/logout     → clear localStorage token
+GET /auth/me                     → current user profile (includes profile, goal list, created_at)
+PATCH /auth/me                   → update display_name
+PATCH /auth/me/profile           → update fitness profile (profile: str, goal: list[str], validated against VALID_GOALS per profile)
+PATCH /auth/me/notifications     → update email_notifications preference
+DELETE /auth/me                  → delete user + all data (cascade), clear session
+POST /auth/logout                → clear localStorage token
 ```
 
 **Why no session cookies across domains:**

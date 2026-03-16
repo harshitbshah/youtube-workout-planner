@@ -1,10 +1,25 @@
 # Progress
 
 ## Status
-Phases 1–5 complete + admin console + charts + guide page + mobile UX complete. Phase A complete. Phase B complete. Phase C complete. Phase D F5+F6+F9 complete. Backlog items T1+T2+S1+M2 complete. Channel suggestions + onboarding UX complete. Channel fitness validation (migration 019) complete. Email notifications opt-in step in onboarding complete. Dark mode all pages fixed. Light mode button visibility fixed. Lazy classification (plan-first) complete. Onboarding guard + admin reset complete. Homepage M1 redesign complete. Planner Tier 6 + body-focus/workout-type coupling complete. Onboarding guard no-flash + admin bypass complete. Async YouTube publish complete. Homepage avatar size bumped. Homepage marquee channels updated (yoga/pilates/dance variety). Settings regenerate-after-removal banner complete. Incremental OAuth (login split from YouTube connect) complete.
-**320 backend unit + 185 frontend = 505 automated tests passing** (+ integration tests).
+Phases 1–5 complete + admin console + charts + guide page + mobile UX complete. Phase A complete. Phase B complete. Phase C complete. Phase D F5+F6+F9 complete. Backlog items T1+T2+S1+M2 complete. Channel suggestions + onboarding UX complete. Channel fitness validation (migration 019) complete. Email notifications opt-in step in onboarding complete. Dark mode all pages fixed. Light mode button visibility fixed. Lazy classification (plan-first) complete. Onboarding guard + admin reset complete. Homepage M1 redesign complete. Planner Tier 6 + body-focus/workout-type coupling complete. Onboarding guard no-flash + admin bypass complete. Async YouTube publish complete. Homepage marquee updated. Settings regenerate banner on channel add or remove. Incremental OAuth complete. Multi-select goals + fitness profile editing in Settings complete (migration 020). 5-channel limit enforced. 8-week profile nudge banner on dashboard.
+**300 backend unit + 193 frontend = 493 automated tests passing** (+ integration tests).
 Both Railway (backend) and Vercel (frontend) live and functional on `main`.
 **Ready for first users** - Google OAuth fully verified. YouTube scope approved by Google Trust & Safety (2026-03-15). No more "unverified app" warning for any user.
+
+**Done this session (2026-03-15, checkpoint 8):**
+- Multi-select goals: `users.goal` converted from plain string to JSON array (migration 020 migrates existing rows) ✅
+- `PATCH /auth/me/profile` endpoint: validates profile + goals, stores as JSON array, returns updated user ✅
+- `GET /auth/me` now returns `profile`, `goal` (parsed list), `created_at` ✅
+- Onboarding step 2: checkbox multi-select (pick up to 3 goals); heading "What are your goals?" ✅
+- Settings: "Fitness Profile" section - life stage dropdown + goal checkboxes; "Save profile" button disabled when unchanged ✅
+- Dashboard: 8-week nudge banner when user has profile set and >8 weeks since signup; dismissible; re-shows after another 8 weeks; stores dismiss timestamp in localStorage ✅
+- Channel limit: max 5 per user enforced on backend (400) + frontend (hides search bar, disables suggestion cards) ✅
+- Channel limit check runs before fitness validation (trumps all other errors) ✅
+- Channel avatar fix: `thumbnail_url` now forwarded from search result through frontend to backend ✅
+- Settings regenerate banner: condition changed from `newChannels.length < channels.length` to `!== channels.length` (shows on add AND remove) ✅
+- Notifications toggle thumb: fixed white-on-white in dark mode with `dark:bg-zinc-900` ✅
+- `tsc --noEmit` added to `npm run test:run` - TypeScript type errors caught at test time ✅
+- **300 backend unit + 193 frontend = 493 automated tests passing** ✅
 
 **Done this session (2026-03-15, checkpoint 7):**
 - Incremental OAuth: login now requests only `openid email profile` (1-2 steps); YouTube scope deferred to separate `/auth/youtube/connect` flow ✅
