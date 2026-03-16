@@ -2,14 +2,27 @@
   <!-- Background -->
   <rect width="512" height="512" rx="120" fill="#18181b"/>
 
-  <!-- Left weight plate -->
-  <rect x="46" y="176" width="96" height="160" rx="24" fill="white"/>
-  <!-- Left collar -->
-  <rect x="142" y="206" width="40" height="100" rx="10" fill="white"/>
-  <!-- Bar -->
-  <rect x="182" y="234" width="148" height="44" rx="10" fill="white"/>
-  <!-- Right collar -->
-  <rect x="330" y="206" width="40" height="100" rx="10" fill="white"/>
-  <!-- Right weight plate -->
-  <rect x="370" y="176" width="96" height="160" rx="24" fill="white"/>
+  <!-- 5 x 3 dot grid (r=32, pitch=84) centred in 512x512 -->
+  <!-- Workout days: white  |  Rest days: zinc-700 #3f3f46 -->
+
+  <!-- Row 1  y=172 -->
+  <circle cx="88"  cy="172" r="32" fill="#ffffff"/>
+  <circle cx="172" cy="172" r="32" fill="#3f3f46"/>
+  <circle cx="256" cy="172" r="32" fill="#ffffff"/>
+  <circle cx="340" cy="172" r="32" fill="#3f3f46"/>
+  <circle cx="424" cy="172" r="32" fill="#ffffff"/>
+
+  <!-- Row 2  y=256 -->
+  <circle cx="88"  cy="256" r="32" fill="#3f3f46"/>
+  <circle cx="172" cy="256" r="32" fill="#ffffff"/>
+  <circle cx="256" cy="256" r="32" fill="#3f3f46"/>
+  <circle cx="340" cy="256" r="32" fill="#ffffff"/>
+  <circle cx="424" cy="256" r="32" fill="#3f3f46"/>
+
+  <!-- Row 3  y=340 -->
+  <circle cx="88"  cy="340" r="32" fill="#ffffff"/>
+  <circle cx="172" cy="340" r="32" fill="#3f3f46"/>
+  <circle cx="256" cy="340" r="32" fill="#ffffff"/>
+  <circle cx="340" cy="340" r="32" fill="#3f3f46"/>
+  <circle cx="424" cy="340" r="32" fill="#ffffff"/>
 </svg>
