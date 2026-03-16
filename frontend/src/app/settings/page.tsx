@@ -302,8 +302,19 @@ export default function SettingsPage() {
                                 setSelectedGoals([...selectedGoals, g]);
                               }
                             }}
-                            className="h-4 w-4 rounded accent-zinc-900 dark:accent-white"
+                            className="sr-only"
                           />
+                          <div className={`h-4 w-4 shrink-0 rounded border-2 flex items-center justify-center transition ${
+                            checked
+                              ? "bg-zinc-900 dark:bg-white border-zinc-900 dark:border-white"
+                              : "border-zinc-300 dark:border-zinc-500 bg-white dark:bg-zinc-900"
+                          }`}>
+                            {checked && (
+                              <svg className="w-2.5 h-2.5 text-white dark:text-zinc-900" viewBox="0 0 10 10" fill="none">
+                                <path d="M1.5 5L4 7.5L8.5 2.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                              </svg>
+                            )}
+                          </div>
                           <span className="text-sm text-zinc-900 dark:text-white">{g}</span>
                         </label>
                       );

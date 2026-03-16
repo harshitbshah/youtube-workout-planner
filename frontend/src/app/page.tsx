@@ -55,7 +55,12 @@ function GoogleIcon() {
 
 export default function LandingPage() {
   const router = useRouter();
-  const [checking, setChecking] = useState(true);
+  // Only check auth (and show spinner) if there's a stored token to validate.
+  // Logged-out visitors see the landing page immediately with no flicker.
+  const [checking, setChecking] = useState(() => {
+    if (typeof window === "undefined") return false;
+    return Boolean(localStorage.getItem("auth_token"));
+  });
 
   useEffect(() => {
     let cancelled = false;
