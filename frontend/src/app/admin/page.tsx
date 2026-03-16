@@ -258,8 +258,8 @@ export default function AdminPage() {
     try {
       await adminFetch(`/admin/users/${userId}`, { method: "DELETE" });
       await fetchStats();
-    } catch {
-      alert("Failed to delete user.");
+    } catch (e: unknown) {
+      alert(e instanceof Error ? e.message : "Failed to delete user.");
     } finally {
       setDeletingUser(null);
     }
