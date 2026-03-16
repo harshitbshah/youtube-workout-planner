@@ -1,9 +1,17 @@
 # Progress
 
 ## Status
-Phases 1–5 complete + admin console + charts + guide page + mobile UX complete. Phase A-D complete. Backlog T1+T2+S1+M2 complete. Pre-auth onboarding flow complete. 7-day full grid with rest day cards complete. Proactive gap detection complete. Non-workout video classifier + planner fix complete. Sentry monitoring + UptimeRobot health check complete. **340 backend unit + 216 frontend = 556 automated tests passing.**
+Phases 1–5 complete + admin console + charts + guide page + mobile UX complete. Phase A-D complete. Backlog T1+T2+S1+M2 complete. Pre-auth onboarding flow complete. 7-day full grid with rest day cards complete. Proactive gap detection complete. Non-workout video classifier + planner fix complete. Sentry monitoring (UptimeRobot + Sentry Cloud + tunnel) + comprehensive error capture across all backend services and frontend pages complete. **340 backend unit + 216 frontend = 556 automated tests passing.**
 Both Railway (backend) and Vercel (frontend) live and functional on `main`.
 **Ready for first users** - Google OAuth fully verified. YouTube scope approved by Google Trust & Safety (2026-03-15).
+
+**Done this session (2026-03-16, checkpoint 14):**
+- Sentry tunnel route (`/sentry-tunnel`) added to bypass ad blockers - events now route through `planmyworkout.app` to Sentry server-side ✅
+- `SentryInit` client component in `layout.tsx` - explicit init since webpack auto-injection wasn't working ✅
+- Comprehensive `capture_exception` across backend: channels suggestions loop, scanner date parsing, classifier cost tracking, channel validator, publisher unexpected HttpErrors, feedback email ✅
+- Comprehensive `Sentry.captureException` across frontend: dashboard (swap picker, initial load, scan/generate/publish), settings (initial load, schedule save, regenerate), library (assign, load), onboarding (schedule confirm, scan trigger) ✅
+- `/health` accepts HEAD requests (UptimeRobot free tier fix) ✅
+- **340 backend unit + 216 frontend = 556 automated tests passing** ✅
 
 **Done this session (2026-03-16, checkpoint 13):**
 - Proactive gap detection: `GET /plan/gaps` endpoint returns workout types with insufficient library coverage ✅
