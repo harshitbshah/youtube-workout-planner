@@ -100,6 +100,7 @@ def add_channel(
             youtube_url=body.youtube_url,
             youtube_channel_id=body.youtube_channel_id,
             description=body.description,
+            thumbnail_url=body.thumbnail_url,
         )
         db.add(channel)
         db.flush()  # assign id without committing

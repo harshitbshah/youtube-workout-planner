@@ -158,6 +158,7 @@ export interface ChannelCreate {
   youtube_url: string;
   youtube_channel_id?: string;
   description?: string;
+  thumbnail_url?: string;
 }
 
 export interface ChannelResponse {

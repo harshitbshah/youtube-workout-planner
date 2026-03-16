@@ -16,6 +16,7 @@ class ChannelCreate(BaseModel):
     youtube_url: str
     youtube_channel_id: Optional[str] = None
     description: Optional[str] = None
+    thumbnail_url: Optional[str] = None
 
 
 class ChannelResponse(BaseModel):
