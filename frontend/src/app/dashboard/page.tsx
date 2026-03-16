@@ -221,9 +221,13 @@ function RestDayCard({ day, weekStart, profile }: { day: string; weekStart: stri
     REST_MESSAGES.default;
   const message = pickRestMessage(pool, day, weekStart);
   return (
-    <div className="rounded-lg border border-dashed border-zinc-200 dark:border-zinc-700/60 bg-zinc-50 dark:bg-zinc-900/40 px-4 py-5 flex flex-col gap-2">
-      <span className="text-[11px] font-semibold text-zinc-400 dark:text-zinc-600 uppercase tracking-wide">Rest</span>
-      <p className="text-sm text-zinc-400 dark:text-zinc-500 leading-snug">{message}</p>
+    <div className="rounded-lg overflow-hidden border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900">
+      <div className="aspect-video bg-zinc-50 dark:bg-zinc-800/60 flex items-center justify-center px-5">
+        <p className="text-sm text-zinc-400 dark:text-zinc-500 leading-snug text-center">{message}</p>
+      </div>
+      <div className="p-3">
+        <p className="text-sm font-medium text-zinc-400 dark:text-zinc-500">Rest day</p>
+      </div>
     </div>
   );
 }
@@ -231,12 +235,15 @@ function RestDayCard({ day, weekStart, profile }: { day: string; weekStart: stri
 function MissingVideoCard({ workoutType }: { workoutType: string }) {
   const label = workoutType.charAt(0).toUpperCase() + workoutType.slice(1);
   return (
-    <div className="rounded-lg border border-amber-200 dark:border-amber-800/50 bg-amber-50/40 dark:bg-amber-900/10 px-4 py-5 flex flex-col gap-1.5">
-      <span className="text-[11px] font-semibold text-amber-600 dark:text-amber-500 uppercase tracking-wide">{label}</span>
-      <p className="text-sm text-amber-700 dark:text-amber-400 leading-snug">No matching video found.</p>
-      <Link href="/settings" className="text-xs text-amber-600 dark:text-amber-500 underline hover:text-amber-800 dark:hover:text-amber-300 transition mt-0.5">
-        Add channels in Settings →
-      </Link>
+    <div className="rounded-lg overflow-hidden border border-amber-200 dark:border-amber-800/50 bg-white dark:bg-zinc-900">
+      <div className="aspect-video bg-amber-50/60 dark:bg-amber-900/10 flex items-center justify-center px-5">
+        <p className="text-sm text-amber-600 dark:text-amber-400 leading-snug text-center">No {label} video found in your library.</p>
+      </div>
+      <div className="p-3">
+        <Link href="/settings" className="text-sm font-medium text-amber-600 dark:text-amber-500 hover:text-amber-800 dark:hover:text-amber-300 transition">
+          Add channels in Settings →
+        </Link>
+      </div>
     </div>
   );
 }

@@ -224,8 +224,8 @@ describe("DashboardPage - plan display", () => {
     mockGetUpcomingPlan.mockResolvedValue(makePlan(getCurrentMondayISO()));
     render(<DashboardPage />);
     await waitFor(() => screen.getByText("30 Min Full Body HIIT"));
-    // 6 days have no video and no scheduled_workout_type - each gets a Rest label
-    const restLabels = screen.getAllByText("Rest");
+    // 6 days have no video and no scheduled_workout_type - each gets a Rest day label
+    const restLabels = screen.getAllByText("Rest day");
     expect(restLabels.length).toBe(6);
   });
 
@@ -267,10 +267,10 @@ describe("DashboardPage - plan display", () => {
     render(<DashboardPage />);
     await waitFor(() => screen.getByText("30 Min Full Body HIIT"));
     expect(screen.getAllByText("Strength").length).toBeGreaterThan(0);
-    expect(screen.getByText("No matching video found.")).toBeInTheDocument();
+    expect(screen.getByText(/No Strength video found/i)).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /Add channels in Settings/i })).toBeInTheDocument();
     // Tuesday has a missing video card, not a rest card - only 5 rest cards
-    const restLabels = screen.getAllByText("Rest");
+    const restLabels = screen.getAllByText("Rest day");
     expect(restLabels.length).toBe(5);
   });
 
@@ -278,13 +278,13 @@ describe("DashboardPage - plan display", () => {
     mockGetUpcomingPlan.mockResolvedValue(makePlan(getCurrentMondayISO()));
     const { unmount } = render(<DashboardPage />);
     await waitFor(() => screen.getByText("30 Min Full Body HIIT"));
-    const tuesdayCard = screen.getAllByText("Rest")[0].closest("div");
+    const tuesdayCard = screen.getAllByText("Rest day")[0].closest("div");
     const firstMessage = tuesdayCard?.querySelector("p")?.textContent;
     unmount();
 
     render(<DashboardPage />);
     await waitFor(() => screen.getByText("30 Min Full Body HIIT"));
-    const tuesdayCard2 = screen.getAllByText("Rest")[0].closest("div");
+    const tuesdayCard2 = screen.getAllByText("Rest day")[0].closest("div");
     const secondMessage = tuesdayCard2?.querySelector("p")?.textContent;
     expect(firstMessage).toBe(secondMessage);
   });

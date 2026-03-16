@@ -12,7 +12,7 @@ import {
   ResponsiveContainer,
   CartesianGrid,
 } from "recharts";
-import { getMe, getAdminCharts, adminResetOnboarding, type ChartsResponse } from "@/lib/api";
+import { getMe, getAdminCharts, type ChartsResponse } from "@/lib/api";
 import { Tooltip } from "@/components/Tooltip";
 import { Footer } from "@/components/Footer";
 
@@ -282,10 +282,10 @@ export default function AdminPage() {
     if (!confirm(`Reset onboarding for ${email}? This removes all their channel subscriptions and schedule. They will go through onboarding again on next login.`)) return;
     setResettingUser(userId);
     try {
-      await adminResetOnboarding(userId);
+      await adminFetch(`/admin/users/${userId}/reset-onboarding`, { method: "POST" });
       await fetchStats();
-    } catch {
-      alert("Failed to reset onboarding.");
+    } catch (e: unknown) {
+      alert(e instanceof Error ? e.message : "Failed to reset onboarding.");
     } finally {
       setResettingUser(null);
     }
