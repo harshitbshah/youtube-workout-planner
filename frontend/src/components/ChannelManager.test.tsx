@@ -13,11 +13,12 @@ const mockSearch = api.searchChannels as ReturnType<typeof vi.fn>;
 const mockAdd = api.addChannel as ReturnType<typeof vi.fn>;
 const mockDelete = api.deleteChannel as ReturnType<typeof vi.fn>;
 
-const baseChannel = {
+const baseChannel: api.ChannelResponse = {
   id: "1",
   name: "Athlean-X",
   youtube_url: "https://youtube.com/channel/abc",
   youtube_channel_id: "abc",
+  thumbnail_url: null,
   added_at: "2026-01-01",
 };
 
@@ -141,11 +142,12 @@ describe("ChannelManager - suggestions (card UI)", () => {
 });
 
 describe("ChannelManager - channel limit", () => {
-  const fiveChannels = Array.from({ length: 5 }, (_, i) => ({
+  const fiveChannels: api.ChannelResponse[] = Array.from({ length: 5 }, (_, i) => ({
     id: `ch${i}`,
     name: `Channel ${i}`,
     youtube_url: `https://youtube.com/@ch${i}`,
     youtube_channel_id: `UC${i}`,
+    thumbnail_url: null,
     added_at: "2026-01-01",
   }));
 

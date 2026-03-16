@@ -8,7 +8,7 @@
     "start": "next start",
     "lint": "eslint",
     "test": "vitest",
-    "test:run": "vitest run"
+    "test:run": "tsc --noEmit && vitest run"
   },
   "dependencies": {
     "next": "16.1.6",

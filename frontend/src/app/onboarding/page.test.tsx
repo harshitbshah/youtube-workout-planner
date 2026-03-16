@@ -500,7 +500,7 @@ describe("OnboardingPage - Step Indicator", () => {
 describe("OnboardingPage - already-onboarded guard", () => {
   it("redirects to /dashboard?from=onboarding when user already has channels", async () => {
     const mockReplace = vi.fn();
-    vi.mocked(useRouter).mockReturnValue({ push: vi.fn(), replace: mockReplace } as ReturnType<typeof useRouter>);
+    vi.mocked(useRouter).mockReturnValue({ push: vi.fn(), replace: mockReplace } as unknown as ReturnType<typeof useRouter>);
     mockGetChannels.mockResolvedValue([{ id: "ch1", name: "FitnessBlender", youtube_url: "https://youtube.com/@fb" }]);
 
     render(<OnboardingPage />);
@@ -512,7 +512,7 @@ describe("OnboardingPage - already-onboarded guard", () => {
 
   it("does not redirect when user has no channels", async () => {
     const mockReplace = vi.fn();
-    vi.mocked(useRouter).mockReturnValue({ push: vi.fn(), replace: mockReplace } as ReturnType<typeof useRouter>);
+    vi.mocked(useRouter).mockReturnValue({ push: vi.fn(), replace: mockReplace } as unknown as ReturnType<typeof useRouter>);
     // mockGetChannels already returns [] from beforeEach
 
     render(<OnboardingPage />);
@@ -524,7 +524,7 @@ describe("OnboardingPage - already-onboarded guard", () => {
 
   it("redirects to / when getMe fails (unauthenticated)", async () => {
     const mockReplace = vi.fn();
-    vi.mocked(useRouter).mockReturnValue({ push: vi.fn(), replace: mockReplace } as ReturnType<typeof useRouter>);
+    vi.mocked(useRouter).mockReturnValue({ push: vi.fn(), replace: mockReplace } as unknown as ReturnType<typeof useRouter>);
     mockGetMe.mockRejectedValue(new Error("401"));
 
     render(<OnboardingPage />);
@@ -536,7 +536,7 @@ describe("OnboardingPage - already-onboarded guard", () => {
 
   it("does not redirect admin user even when they already have channels", async () => {
     const mockReplace = vi.fn();
-    vi.mocked(useRouter).mockReturnValue({ push: vi.fn(), replace: mockReplace } as ReturnType<typeof useRouter>);
+    vi.mocked(useRouter).mockReturnValue({ push: vi.fn(), replace: mockReplace } as unknown as ReturnType<typeof useRouter>);
     mockGetMe.mockResolvedValue({ id: 1, email: "admin@example.com", is_admin: true });
     mockGetChannels.mockResolvedValue([{ id: "ch1", name: "FitnessBlender", youtube_url: "https://youtube.com/@fb" }]);
 
