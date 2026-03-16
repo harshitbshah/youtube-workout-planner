@@ -61,6 +61,15 @@ def add_channel(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
+    # Enforce per-user channel limit first - before any other checks
+    channel_count = (
+        db.query(UserChannel)
+        .filter(UserChannel.user_id == current_user.id)
+        .count()
+    )
+    if channel_count >= 5:
+        raise HTTPException(status_code=400, detail="Channel limit reached. You can add up to 5 channels.")
+
     # Find existing global channel record
     channel = None
     if body.youtube_channel_id:
@@ -104,15 +113,6 @@ def add_channel(
         )
         db.add(channel)
         db.flush()  # assign id without committing
-
-    # Enforce per-user channel limit
-    channel_count = (
-        db.query(UserChannel)
-        .filter(UserChannel.user_id == current_user.id)
-        .count()
-    )
-    if channel_count >= 5:
-        raise HTTPException(status_code=400, detail="Channel limit reached. You can add up to 5 channels.")
 
     # Check the user isn't already subscribed
     existing = (
