@@ -217,7 +217,7 @@ describe("SettingsPage - delete account", () => {
   });
 });
 
-describe("SettingsPage - channel removal regenerate banner", () => {
+describe("SettingsPage - channel change regenerate banner", () => {
   const twoChannels = [
     { id: "ch1", name: "Jeff Nippard" },
     { id: "ch2", name: "Chloe Ting" },
@@ -230,7 +230,7 @@ describe("SettingsPage - channel removal regenerate banner", () => {
   it("banner not shown on initial render", async () => {
     render(<SettingsPage />);
     await waitFor(() => screen.getByTestId("channel-manager"));
-    expect(screen.queryByText(/may include videos from removed channels/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/doesn't reflect your latest channel changes/i)).not.toBeInTheDocument();
   });
 
   it("shows regenerate banner when a channel is removed", async () => {
@@ -238,24 +238,26 @@ describe("SettingsPage - channel removal regenerate banner", () => {
     await waitFor(() => screen.getByTestId("channel-manager"));
     channelManagerOnChange([twoChannels[0]]);
     await waitFor(() =>
-      expect(screen.getByText(/may include videos from removed channels/i)).toBeInTheDocument()
+      expect(screen.getByText(/doesn't reflect your latest channel changes/i)).toBeInTheDocument()
     );
   });
 
-  it("does not show banner when a channel is added", async () => {
+  it("shows regenerate banner when a channel is added", async () => {
     render(<SettingsPage />);
     await waitFor(() => screen.getByTestId("channel-manager"));
     channelManagerOnChange([...twoChannels, { id: "ch3", name: "New Channel" }]);
-    expect(screen.queryByText(/may include videos from removed channels/i)).not.toBeInTheDocument();
+    await waitFor(() =>
+      expect(screen.getByText(/doesn't reflect your latest channel changes/i)).toBeInTheDocument()
+    );
   });
 
   it("dismisses banner when Dismiss is clicked", async () => {
     render(<SettingsPage />);
     await waitFor(() => screen.getByTestId("channel-manager"));
     channelManagerOnChange([twoChannels[0]]);
-    await waitFor(() => screen.getByText(/may include videos from removed channels/i));
+    await waitFor(() => screen.getByText(/doesn't reflect your latest channel changes/i));
     fireEvent.click(screen.getByRole("button", { name: /Dismiss/i }));
-    expect(screen.queryByText(/may include videos from removed channels/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/doesn't reflect your latest channel changes/i)).not.toBeInTheDocument();
   });
 
   it("calls generatePlan and hides banner on regenerate", async () => {
@@ -266,7 +268,7 @@ describe("SettingsPage - channel removal regenerate banner", () => {
     fireEvent.click(screen.getByRole("button", { name: /Regenerate now/i }));
     await waitFor(() => expect(mockGeneratePlan).toHaveBeenCalledOnce());
     await waitFor(() =>
-      expect(screen.queryByText(/may include videos from removed channels/i)).not.toBeInTheDocument()
+      expect(screen.queryByText(/doesn't reflect your latest channel changes/i)).not.toBeInTheDocument()
     );
   });
 

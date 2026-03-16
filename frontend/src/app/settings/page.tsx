@@ -123,7 +123,7 @@ export default function SettingsPage() {
   }
 
   function handleChannelsChange(newChannels: ChannelResponse[]) {
-    if (newChannels.length < channels.length) {
+    if (newChannels.length !== channels.length) {
       setShowRegenerateBanner(true);
       setRegenerateStatus("idle");
     }
@@ -263,7 +263,7 @@ export default function SettingsPage() {
             {showRegenerateBanner && (
               <div className="mt-4 flex items-center justify-between gap-3 rounded-lg border border-amber-500/30 bg-amber-50 dark:bg-amber-900/20 px-4 py-3">
                 <p className="text-xs text-amber-700 dark:text-amber-300">
-                  Your plan may include videos from removed channels.
+                  Your plan doesn&apos;t reflect your latest channel changes.
                 </p>
                 <div className="flex items-center gap-3 shrink-0">
                   <button
