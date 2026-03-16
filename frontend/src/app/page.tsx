@@ -24,23 +24,17 @@ const CHANNELS = [
 
 function ChannelAvatar({ name, handle }: { name: string; handle: string }) {
   const [errored, setErrored] = useState(false);
-  const initials = name.split(" ").slice(0, 2).map((w) => w[0]).join("").toUpperCase();
+  if (errored) return null;
   return (
     <div className="flex flex-col items-center gap-2 shrink-0 w-20">
-      {errored ? (
-        <div className="w-16 h-16 rounded-full bg-zinc-200 dark:bg-zinc-700 flex items-center justify-center text-sm font-semibold text-zinc-600 dark:text-zinc-300">
-          {initials}
-        </div>
-      ) : (
-        <img
-          src={`https://unavatar.io/youtube/${handle}`}
-          alt={name}
-          width={64}
-          height={64}
-          className="w-16 h-16 rounded-full object-cover"
-          onError={() => setErrored(true)}
-        />
-      )}
+      <img
+        src={`https://unavatar.io/youtube/${handle}`}
+        alt={name}
+        width={64}
+        height={64}
+        className="w-16 h-16 rounded-full object-cover"
+        onError={() => setErrored(true)}
+      />
       <span className="text-xs text-zinc-500 dark:text-zinc-400 text-center leading-tight max-w-full truncate px-1">
         {name}
       </span>
