@@ -294,6 +294,18 @@ Authenticate via browser first (session cookie), then use Swagger:
 
 ---
 
+### Group 12 - PWA
+
+- [ ] Chrome DevTools > Application > Manifest shows correct name, icons, start_url=/dashboard
+- [ ] Application > Service Workers shows SW registered and active
+- [ ] On mobile Chrome: install banner appears after a few visits to the dashboard
+- [ ] Install prompt banner appears on dashboard; "Not now" dismisses for the session
+- [ ] Installed app opens full-screen (no browser chrome) with correct theme-color
+- [ ] On iOS Safari: Share > Add to Home Screen picks up the manifest name + icon
+- [ ] With network disabled: dashboard loads from SW cache; `/offline` page shown for uncached routes
+
+---
+
 ## Old CLI Tool Tests
 
 The original `main.py` CLI is feature-complete and not under active development.

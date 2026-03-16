@@ -1,9 +1,19 @@
 # Progress
 
 ## Status
-Phases 1–5 complete + admin console + charts + guide page + mobile UX complete. Phase A-D complete. Backlog T1+T2+S1+M2 complete. Pre-auth onboarding flow complete. 7-day full grid with rest day cards complete. Proactive gap detection complete. Non-workout video classifier + planner fix complete. Sentry monitoring (UptimeRobot + Sentry Cloud + tunnel) + comprehensive error capture across all backend services and frontend pages complete. **340 backend unit + 216 frontend = 556 automated tests passing.**
+Phases 1–5 complete + admin console + charts + guide page + mobile UX complete. Phase A-D complete. Backlog T1+T2+S1+M2 complete. Pre-auth onboarding flow complete. 7-day full grid with rest day cards complete. Proactive gap detection complete. Non-workout video classifier + planner fix complete. Sentry monitoring (UptimeRobot + Sentry Cloud + tunnel) + comprehensive error capture across all backend services and frontend pages complete. PWA complete (manifest, service worker, offline page, install prompt, geometric P icon). **340 backend unit + 216 frontend = 556 automated tests passing.**
 Both Railway (backend) and Vercel (frontend) live and functional on `main`.
 **Ready for first users** - Google OAuth fully verified. YouTube scope approved by Google Trust & Safety (2026-03-15).
+
+**Done this session (2026-03-16, checkpoint 15):**
+- PWA: `@ducanh2912/next-pwa` installed; `next.config.ts` wrapped with `withPWA()` nested inside `withSentryConfig()` ✅
+- Service worker: NetworkFirst for Railway API (5s timeout then cache), CacheFirst for Google Fonts ✅
+- `public/manifest.json`: standalone display, `start_url=/dashboard`, theme-color `#18181b`, icons array ✅
+- App icons: `public/icons/icon.svg` (geometric P monogram) + `scripts/generate-icons.mjs` (sharp) generates 192/512px PNG + maskable variants ✅
+- `app/offline/page.tsx`: shown by SW when navigation fails with no cached response; "Go to dashboard" + "Try again" buttons ✅
+- `PWAInstallPrompt` component: fires on `beforeinstallprompt`; sessionStorage-dismissed on "Not now" ✅
+- `layout.tsx`: `manifest` + `appleWebApp` metadata, apple-touch-icon link, viewport + themeColor export ✅
+- **340 backend unit + 216 frontend = 556 automated tests passing** ✅
 
 **Done this session (2026-03-16, checkpoint 14):**
 - Sentry tunnel route (`/sentry-tunnel`) added to bypass ad blockers - events now route through `planmyworkout.app` to Sentry server-side ✅

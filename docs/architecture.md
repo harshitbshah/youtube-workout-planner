@@ -650,11 +650,39 @@ helper. Previously duplicated in dashboard, library, and onboarding pages.
 from a life-stage profile, goal, number of training days, and session duration. Used in
 onboarding step 5 to produce a sensible default schedule before the user customises it.
 
+### PWA (`public/`, `next.config.ts`, `components/PWAInstallPrompt.tsx`)
+
+The app is a Progressive Web App. Users on mobile and desktop can install it to their
+home screen; the service worker caches key assets so the dashboard loads even offline.
+
+**Package:** `@ducanh2912/next-pwa` wraps `next.config.ts` (inside `withSentryConfig`).
+The service worker (`public/sw.js`) is auto-generated at build time.
+
+**Caching strategy:**
+- Railway API (`planmyworkout-api.up.railway.app`): NetworkFirst, 5s timeout, falls back to cached response. 24h TTL, 64 entries.
+- Google Fonts: CacheFirst, 1-year TTL.
+- Static assets (JS/CSS bundles): handled automatically by next-pwa's precache manifest.
+
+**Offline fallback:** `app/offline/page.tsx` is served by the SW when a navigation request
+fails and there is no cached response. Shows "Go to dashboard" (may load from cache) and
+"Try again".
+
+**Manifest:** `public/manifest.json` - `display: standalone`, `start_url: /dashboard`,
+`theme_color: #18181b`, icons at 192px and 512px (regular + maskable).
+
+**Icons:** `public/icons/icon.svg` is the source (geometric "P" monogram on zinc-900).
+`scripts/generate-icons.mjs` uses `sharp` (from Next.js's own node_modules) to rasterise
+to `icon-192.png`, `icon-512.png`, and maskable variants. Re-run after any SVG change.
+
+**Install prompt:** `PWAInstallPrompt` component listens for `beforeinstallprompt`,
+shows a bottom banner with Install / Not now. "Not now" writes to `sessionStorage` so
+it does not reappear in the same session.
+
 ### Frontend tests (`frontend/src/test/`)
 `test/setup.ts` - Vitest + `@testing-library/jest-dom` setup file.
 
-Run: `cd frontend && npm run test:run` - 71 tests covering `scheduleTemplates` logic,
-`ChannelManager` component behaviour, onboarding page step flows, ThemeProvider, and ThemeToggle.
+Run: `cd frontend && npm run test:run` - 216 tests covering `scheduleTemplates` logic,
+`ChannelManager` component behaviour, onboarding page step flows, ThemeProvider, ThemeToggle, and all pages.
 
 ### API client (`src/lib/api.ts`)
 Single file with all `fetch` calls and TypeScript types. Uses `credentials: "include"`
