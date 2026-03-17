@@ -169,6 +169,34 @@ def test_youtube_callback_stores_refresh_token(auth_client, db_session):
     assert decrypt(creds.youtube_refresh_token) == "yt_refresh"
 
 
+def test_youtube_callback_resets_credentials_valid_even_without_new_refresh_token(auth_client, db_session):
+    """Reconnect scenario: Google doesn't return a refresh_token but callback still resets credentials_valid."""
+    client, user = auth_client
+
+    # Seed existing creds with credentials_valid=False (simulates the revoked state)
+    existing_creds = UserCredentials(
+        user_id=user.id,
+        youtube_refresh_token=encrypt("existing_refresh"),
+        credentials_valid=False,
+    )
+    db_session.add(existing_creds)
+    db_session.commit()
+
+    state = _make_youtube_state(str(user.id))
+    # Google response has no refresh_token (normal for reconnect of existing grant)
+    tokens = {"access_token": "yt_access"}
+    with patch("api.routers.auth._exchange_code_for_tokens", new=AsyncMock(return_value=tokens)):
+        resp = client.get(f"/auth/youtube/callback?code=ytcode&state={state}", follow_redirects=False)
+
+    assert resp.status_code in (302, 307)
+
+    db_session.expire_all()
+    creds = db_session.query(UserCredentials).filter(UserCredentials.user_id == user.id).first()
+    assert creds.credentials_valid is True
+    # Old refresh token preserved since Google didn't send a new one
+    assert decrypt(creds.youtube_refresh_token) == "existing_refresh"
+
+
 def test_youtube_callback_rejects_invalid_state(client):
     tokens = {"access_token": "tok", "refresh_token": "ref"}
     with patch("api.routers.auth._exchange_code_for_tokens", new=AsyncMock(return_value=tokens)):

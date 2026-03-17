@@ -225,7 +225,11 @@ async def youtube_callback(
 
     if "refresh_token" in tokens:
         creds.youtube_refresh_token = encrypt(tokens["refresh_token"])
-        creds.credentials_valid = True
+
+    # Always clear the revoked flag on a successful OAuth callback - Google won't
+    # return a new refresh_token on reconnect if the existing one is still valid,
+    # but the callback succeeding means the user re-authorized, so the flag must reset.
+    creds.credentials_valid = True
 
     db.commit()
     return RedirectResponse(f"{FRONTEND_URL}/dashboard?youtube=connected")
