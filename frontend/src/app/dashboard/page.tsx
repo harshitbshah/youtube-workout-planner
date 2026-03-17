@@ -761,7 +761,7 @@ export default function DashboardPage() {
         {/* YouTube access revoked banner */}
         {user?.youtube_connected && !user?.credentials_valid && (
           <div className="mb-6 rounded-lg border border-amber-700 bg-amber-900/20 px-4 py-3 text-sm text-amber-400">
-            Your YouTube access has been revoked. Sign out and sign in again with Google to reconnect.
+            Your YouTube access has been revoked. Use the Reconnect YouTube button below to restore access.
           </div>
         )}
 
