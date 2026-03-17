@@ -12,7 +12,7 @@ import {
   ResponsiveContainer,
   CartesianGrid,
 } from "recharts";
-import { getMe, getAdminCharts, adminImpersonate, startImpersonation, type ChartsResponse } from "@/lib/api";
+import { getMe, getAdminCharts, adminImpersonate, adminDisconnectYoutube, startImpersonation, type ChartsResponse } from "@/lib/api";
 import { Tooltip } from "@/components/Tooltip";
 import { Footer } from "@/components/Footer";
 
@@ -218,6 +218,7 @@ export default function AdminPage() {
   const [deletingUser, setDeletingUser] = useState<string | null>(null);
   const [retryingUser, setRetryingUser] = useState<string | null>(null);
   const [resettingUser, setResettingUser] = useState<string | null>(null);
+  const [disconnectingYoutube, setDisconnectingYoutube] = useState<string | null>(null);
 
   async function fetchStats() {
     const data = await adminFetch<AdminStats>("/admin/stats");
@@ -275,6 +276,19 @@ export default function AdminPage() {
       alert("Failed to trigger scan.");
     } finally {
       setRetryingUser(null);
+    }
+  }
+
+  async function handleDisconnectYoutube(userId: string, email: string) {
+    if (!confirm(`Disconnect YouTube for ${email}? They will need to reconnect themselves.`)) return;
+    setDisconnectingYoutube(userId);
+    try {
+      await adminDisconnectYoutube(userId);
+      await fetchStats();
+    } catch (e: unknown) {
+      alert(e instanceof Error ? e.message : "Failed to disconnect YouTube.");
+    } finally {
+      setDisconnectingYoutube(null);
     }
   }
 
@@ -584,9 +598,22 @@ export default function AdminPage() {
                     <td className="px-4 py-3 text-zinc-700 dark:text-zinc-300 text-right">{u.channels}</td>
                     <td className="px-4 py-3 text-zinc-700 dark:text-zinc-300 text-right">{u.videos.toLocaleString()}</td>
                     <td className="px-4 py-3">
-                      {u.youtube_connected
-                        ? <span className="text-green-400 text-xs">Connected</span>
-                        : <span className="text-zinc-500 dark:text-zinc-600 text-xs">-</span>}
+                      {u.youtube_connected ? (
+                        <div className="flex items-center gap-2">
+                          <span className="text-green-400 text-xs">Connected</span>
+                          <Tooltip text="Clear their YouTube token so they can reconnect cleanly">
+                            <button
+                              onClick={() => handleDisconnectYoutube(u.id, u.email)}
+                              disabled={disconnectingYoutube === u.id}
+                              className="text-xs text-zinc-400 hover:text-red-400 disabled:opacity-30 transition"
+                            >
+                              {disconnectingYoutube === u.id ? "…" : "✕"}
+                            </button>
+                          </Tooltip>
+                        </div>
+                      ) : (
+                        <span className="text-zinc-500 dark:text-zinc-600 text-xs">-</span>
+                      )}
                     </td>
                     <td className="px-4 py-3 text-zinc-600 dark:text-zinc-400 text-xs whitespace-nowrap">{u.last_plan ?? "-"}</td>
                     <td className="px-4 py-3"><StagePill stage={u.pipeline_stage} /></td>

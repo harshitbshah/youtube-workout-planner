@@ -485,3 +485,51 @@ def test_impersonate_403_for_non_admin(non_admin_client):
     client, user = non_admin_client
     resp = client.post(f"/admin/users/{user.id}/impersonate")
     assert resp.status_code == 403
+
+
+# ─── Disconnect YouTube ────────────────────────────────────────────────────────
+
+def test_disconnect_youtube_clears_token(admin_client):
+    from api.crypto import encrypt
+    client, admin, db = admin_client
+    user = User(google_id="yt-user", email="yt@example.com")
+    db.add(user)
+    db.flush()
+    creds = UserCredentials(
+        user_id=user.id,
+        youtube_refresh_token=encrypt("real_refresh_token"),
+        credentials_valid=False,
+    )
+    db.add(creds)
+    db.commit()
+
+    resp = client.post(f"/admin/users/{user.id}/disconnect-youtube")
+    assert resp.status_code == 204
+
+    db.expire_all()
+    creds = db.query(UserCredentials).filter(UserCredentials.user_id == user.id).first()
+    assert creds.youtube_refresh_token is None
+    assert creds.credentials_valid is True  # revoked flag reset
+
+
+def test_disconnect_youtube_no_creds_is_noop(admin_client):
+    """User with no credentials row should not error."""
+    client, admin, db = admin_client
+    user = User(google_id="yt-user2", email="yt2@example.com")
+    db.add(user)
+    db.commit()
+
+    resp = client.post(f"/admin/users/{user.id}/disconnect-youtube")
+    assert resp.status_code == 204
+
+
+def test_disconnect_youtube_404_for_unknown_user(admin_client):
+    client, _, _ = admin_client
+    resp = client.post("/admin/users/nonexistent-id/disconnect-youtube")
+    assert resp.status_code == 404
+
+
+def test_disconnect_youtube_403_for_non_admin(non_admin_client):
+    client, user = non_admin_client
+    resp = client.post(f"/admin/users/{user.id}/disconnect-youtube")
+    assert resp.status_code == 403

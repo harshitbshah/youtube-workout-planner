@@ -310,6 +310,9 @@ export const adminImpersonate = (userId: string) =>
     { method: "POST" }
   );
 
+export const adminDisconnectYoutube = (userId: string) =>
+  apiFetch<void>(`/admin/users/${userId}/disconnect-youtube`, { method: "POST" });
+
 // ─── Feedback ─────────────────────────────────────────────────────────────────
 
 export const submitFeedback = (category: string, message: string) =>

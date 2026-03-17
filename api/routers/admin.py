@@ -383,6 +383,36 @@ def admin_reset_onboarding(
     db.commit()
 
 
+# ─── Admin: disconnect YouTube ────────────────────────────────────────────────
+
+@router.post("/admin/users/{user_id}/disconnect-youtube", status_code=204)
+def admin_disconnect_youtube(
+    user_id: str,
+    db: Session = Depends(get_db),
+    current_admin: User = Depends(_require_admin),
+):
+    """Clear a user's YouTube refresh token so they can reconnect cleanly.
+
+    Does not touch their channels, schedule, or plan - only the YouTube
+    credential. The user will see 'Connect YouTube' on their next dashboard
+    load and can reconnect themselves.
+    """
+    user = db.get(User, user_id)
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    creds = db.query(UserCredentials).filter(UserCredentials.user_id == user_id).first()
+    if creds:
+        creds.youtube_refresh_token = None
+        creds.credentials_valid = True  # reset the revoked flag too
+        db.commit()
+
+    logger.info(
+        "admin_disconnect_youtube: admin=%s cleared YouTube token for user=%s (%s)",
+        current_admin.email, user.id, user.email,
+    )
+
+
 # ─── Admin: impersonation ─────────────────────────────────────────────────────
 
 _IMPERSONATION_TTL = 3600  # 1 hour
