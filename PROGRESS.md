@@ -1,9 +1,17 @@
 # Progress
 
 ## Status
-Phases 1–5 complete + admin console + charts + guide page + mobile UX complete. Phase A-D complete. Backlog T1+T2+S1+M2 complete. Pre-auth onboarding flow complete. 7-day full grid with rest day cards complete. Proactive gap detection complete. Non-workout video classifier + planner fix complete. Sentry monitoring (UptimeRobot + Sentry Cloud + tunnel) + comprehensive error capture across all backend services and frontend pages complete. PWA complete (manifest, service worker, offline page, install prompt, geometric P icon). **340 backend unit + 216 frontend = 556 automated tests passing.**
+Phases 1–5 complete + admin console + charts + guide page + mobile UX complete. Phase A-D complete. Backlog T1+T2+S1+M2 complete. Pre-auth onboarding flow complete. 7-day full grid with rest day cards complete. Proactive gap detection complete. Non-workout video classifier + planner fix complete. Sentry monitoring (UptimeRobot + Sentry Cloud + tunnel) + comprehensive error capture across all backend services and frontend pages complete. PWA complete (manifest, service worker, offline page, install prompt, geometric P icon). **351 backend unit + 216 frontend = 567 automated tests passing.**
 Both Railway (backend) and Vercel (frontend) live and functional on `main`.
 **Ready for first users** - Google OAuth fully verified. YouTube scope approved by Google Trust & Safety (2026-03-15).
+
+**Done this session (2026-03-16, checkpoint 16):**
+- Fixed `credentials_valid` bug in YouTube OAuth callback: flag now always resets on any successful callback, not only when Google returns a new refresh_token. Prevents users getting permanently stuck in "revoked" state after reconnecting. ✅
+- Added admin impersonation: `POST /admin/users/{id}/impersonate` issues 1-hour signed token; amber banner shows target email; sessionStorage auto-clears on tab close; Exit redirects to `/admin`. ✅
+- Added admin disconnect YouTube: `POST /admin/users/{id}/disconnect-youtube` clears refresh token + resets credentials_valid; ✕ button in admin user table. ✅
+- YouTube OAuth flow made session-free: Bearer token passed as `?token=` query param; user_id signed into OAuth state via `URLSafeTimedSerializer`; fixes multi-domain cookie reliability bug. ✅
+- Fixed dashboard revoked banner copy: now points to "Reconnect YouTube button" instead of "sign out and sign in again". ✅
+- **351 backend unit + 216 frontend = 567 automated tests passing** ✅
 
 **Done this session (2026-03-16, checkpoint 15):**
 - PWA: `@ducanh2912/next-pwa` installed; `next.config.ts` wrapped with `withPWA()` nested inside `withSentryConfig()` ✅
