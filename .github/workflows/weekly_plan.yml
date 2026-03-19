@@ -1,0 +1,62 @@
+name: Weekly Workout Plan
+
+on:
+  schedule:
+    - cron: '0 18 * * 0'  # Every Sunday at 6pm UTC
+  workflow_dispatch:       # Manual trigger from GitHub UI
+    inputs:
+      mode:
+        description: 'Run mode: "run" = weekly incremental, "init" = full back-catalogue scan'
+        required: false
+        default: 'run'
+        type: choice
+        options:
+          - run
+          - init
+
+permissions:
+  contents: read  # No longer commits the DB - persisted via artifacts instead
+
+jobs:
+  update-plan:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Restore personal config
+        if: ${{ secrets.CONFIG_YAML != '' }}
+        run: echo "${{ secrets.CONFIG_YAML }}" | base64 -d > config.yaml
+
+      - name: Restore library
+        uses: actions/download-artifact@v4
+        with:
+          name: workout-library
+          path: .
+        continue-on-error: true  # First run won't have an artifact yet
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run plan
+        env:
+          YOUTUBE_API_KEY: ${{ secrets.YOUTUBE_API_KEY }}
+          YOUTUBE_CLIENT_ID: ${{ secrets.YOUTUBE_CLIENT_ID }}
+          YOUTUBE_CLIENT_SECRET: ${{ secrets.YOUTUBE_CLIENT_SECRET }}
+          YOUTUBE_OAUTH_REFRESH_TOKEN: ${{ secrets.YOUTUBE_OAUTH_REFRESH_TOKEN }}
+          YOUTUBE_PLAYLIST_ID: ${{ secrets.YOUTUBE_PLAYLIST_ID }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: python main.py --${{ github.event.inputs.mode || 'run' }}
+
+      - name: Save library
+        uses: actions/upload-artifact@v4
+        with:
+          name: workout-library
+          path: workout_library.db
+          retention-days: 400
+        if: always()  # Save even if the run failed partway through

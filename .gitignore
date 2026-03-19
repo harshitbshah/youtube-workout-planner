@@ -1,6 +1,5 @@
-# Database — ignore all except the main library (committed by CI after each run)
+# Database — stored privately via GitHub Actions artifacts, not committed
 *.db
-!workout_library.db
 
 # Python
 __pycache__/

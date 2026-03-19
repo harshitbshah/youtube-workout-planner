@@ -72,7 +72,7 @@ export default function TermsPage() {
         </Section>
 
         <Section title="12. Contact">
-          <p>Questions? Email us at <a href="mailto:harshitspeaks@gmail.com" className="text-zinc-600 dark:text-zinc-400 underline hover:text-zinc-900 dark:hover:text-white">harshitspeaks@gmail.com</a>.</p>
+          <p>Questions? Open an issue on <a href="https://github.com/harshitbshah/youtube-workout-planner" className="text-zinc-600 dark:text-zinc-400 underline hover:text-zinc-900 dark:hover:text-white">GitHub</a>.</p>
         </Section>
 
       </div>

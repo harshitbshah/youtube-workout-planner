@@ -12,6 +12,7 @@ Required environment variables (set as GitHub Secrets for automated runs):
   YOUTUBE_CLIENT_ID             OAuth client ID  (needed for --run, not --init)
   YOUTUBE_CLIENT_SECRET         OAuth client secret
   YOUTUBE_OAUTH_REFRESH_TOKEN   OAuth refresh token (from scripts/get_oauth_token.py)
+  YOUTUBE_PLAYLIST_ID           YouTube playlist ID to refresh each week
 """
 
 import argparse
@@ -183,11 +184,14 @@ def cmd_run(config: dict, dry_run: bool = False):
         return
 
     # ── 4. Refresh YouTube playlist ───────────────────────────────────────────
-    playlist_id = config.get("playlist", {}).get("id", "").strip()
+    playlist_id = (
+        os.getenv("YOUTUBE_PLAYLIST_ID")
+        or config.get("playlist", {}).get("id", "")
+    ).strip()
     if not playlist_id:
         logger.warning(
-            "No playlist ID set in config.yaml (playlist.id). "
-            "Skipping playlist update - plan was printed above."
+            "No playlist ID set. Add YOUTUBE_PLAYLIST_ID to your .env / GitHub Secrets, "
+            "or set playlist.id in config.yaml. Skipping playlist update."
         )
         return
 

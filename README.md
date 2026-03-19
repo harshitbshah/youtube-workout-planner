@@ -8,6 +8,29 @@ No spreadsheets. No decision fatigue. Just train.
 
 ---
 
+<table>
+  <tr>
+    <td><img src="frontend/public/dashboard-light.png" alt="Dashboard - light mode" /></td>
+    <td><img src="frontend/public/dashboard-dark.png" alt="Dashboard - dark mode" /></td>
+  </tr>
+  <tr>
+    <td align="center">Light mode</td>
+    <td align="center">Dark mode</td>
+  </tr>
+</table>
+
+---
+
+## Two Ways to Use This
+
+**CLI tool (GitHub Actions) - single user, ~$0/month**
+`main.py` + `config.yaml` + SQLite DB committed to git. Runs every Sunday via a scheduled GitHub Actions job. No web UI - the plan goes straight to your YouTube playlist. Perfect for personal use. The setup guide below covers this mode.
+
+**Web app (self-hosted) - multi-user, full dashboard**
+A full FastAPI + Next.js web application. Users sign in with Google, pick their channels and schedule via a guided onboarding flow, then get a weekly dashboard to view their plan, swap individual videos, and publish to YouTube. Built to run on Railway (backend) and Vercel (frontend). See [docs/deployment.md](./docs/deployment.md) to set it up.
+
+---
+
 ## How It Works
 
 Every Sunday at 6pm UTC, a scheduled GitHub Actions job runs four steps:
@@ -18,7 +41,7 @@ Every Sunday at 6pm UTC, a scheduled GitHub Actions job runs four steps:
 
 **3. Plan** - picks one video per training day based on your schedule, avoiding anything used in the last 8 weeks, spreading selections across channels, and favouring newer uploads.
 
-**4. Publish** - clears your YouTube playlist and repopulates it in Monday → Sunday order, with the playlist description updated to show the full weekly plan.
+**4. Publish** - clears your YouTube playlist and repopulates it in Monday to Sunday order, with the playlist description updated to show the full weekly plan.
 
 The first time you run it (`--init`), it scans the entire back-catalogue of each channel to build a rich library to plan from.
 
@@ -38,7 +61,7 @@ That transcript, combined with the title, description, and tags, gets sent to Cl
 
 | Field | Options |
 |---|---|
-| `workout_type` | HIIT, Strength, Mobility, Cardio, Other |
+| `workout_type` | HIIT, Strength, Cardio, Mobility, Yoga, Pilates, Dance, Other |
 | `body_focus` | upper, lower, full, core, any |
 | `difficulty` | beginner, intermediate, advanced |
 | `has_warmup` | true / false |
@@ -46,7 +69,7 @@ That transcript, combined with the title, description, and tags, gets sent to Cl
 
 If a video has no captions, it falls back gracefully to title and description only.
 
-**Cost-efficient by design:** rather than calling Claude once per video in sequence, all videos are submitted together via the [Anthropic Batch API](https://docs.anthropic.com/en/docs/build-with-claude/batch-processing) - 50% cheaper than standard API pricing and processed in parallel. Classifying an entire channel back-catalogue of ~2,000 videos costs around **$1–2 total**, and weekly incremental runs (10–30 new videos) cost just a few cents.
+**Cost-efficient by design:** rather than calling Claude once per video in sequence, all videos are submitted together via the [Anthropic Batch API](https://docs.anthropic.com/en/docs/build-with-claude/batch-processing) - 50% cheaper than standard API pricing and processed in parallel. Classifying an entire channel back-catalogue of ~2,000 videos costs around **$1-2 total**, and weekly incremental runs (10-30 new videos) cost just a few cents.
 
 ---
 
@@ -54,21 +77,24 @@ If a video has no captions, it falls back gracefully to title and description on
 
 ```
 youtube-workout-planner/
-├── main.py                        Entry point (--init / --classify-only / --run / --dry-run)
+├── main.py                        CLI entry point (--init / --classify-only / --run / --dry-run)
 ├── config.yaml                    Your channels + weekly schedule (edit this)
 ├── requirements.txt
 ├── workout_library.db             SQLite database (auto-committed by CI after each run)
 ├── .github/
 │   └── workflows/
-│       └── weekly_plan.yml        GitHub Actions - runs every Sunday
+│       └── weekly_plan.yml        GitHub Actions - runs every Sunday at 6pm UTC
 ├── scripts/
 │   └── get_oauth_token.py         One-time local helper to generate OAuth refresh token
-└── src/
-    ├── db.py                      SQLite schema and helpers
-    ├── scanner.py                 Fetch videos from YouTube channels
-    ├── classifier.py              LLM classification of each video
-    ├── planner.py                 Weekly plan generation logic
-    └── playlist.py                YouTube playlist management (OAuth write access)
+├── src/
+│   ├── db.py                      SQLite schema and helpers
+│   ├── scanner.py                 Fetch videos from YouTube channels
+│   ├── classifier.py              LLM classification of each video
+│   ├── planner.py                 Weekly plan generation logic
+│   └── playlist.py                YouTube playlist management (OAuth write access)
+├── api/                           Web app backend (FastAPI) - see docs/architecture.md
+├── frontend/                      Web app frontend (Next.js) - see docs/architecture.md
+└── docs/                          Architecture, deployment, testing, backlog
 ```
 
 ---
@@ -79,6 +105,8 @@ youtube-workout-planner/
 - A Google account (for YouTube API + OAuth)
 - An Anthropic account (for Claude video classification)
 - A GitHub account (to host the repo and run Actions)
+
+**Cost estimate:** YouTube Data API is free (10,000 units/day quota, weekly runs use ~500-1,000 units). Anthropic costs ~$1-2 total for the first full scan of your channels, then cents per week for incremental runs. GitHub Actions is free for public repos and has a generous free tier for private repos.
 
 ---
 
@@ -147,20 +175,20 @@ YOUTUBE_OAUTH_REFRESH_TOKEN   1//xxxxxxxxxxxxxxxxxx
    youtube.com/playlist?list=PLxxxxxxxxxxxxxxxx
                                ↑ copy this part
    ```
-4. Paste it into `config.yaml`:
-   ```yaml
-   playlist:
-     id: "PLxxxxxxxxxxxxxxxx"
-   ```
+4. Save the playlist ID - you'll add it as a GitHub Secret in step 11.
 
 ### 7. Configure Your Channels and Schedule
 
-Edit `config.yaml` - the channels are already set to your three channels. Adjust the weekly schedule to match your training split:
+Edit `config.yaml`. Replace the example channels with your own fitness creators, then adjust the weekly schedule to match your training split:
 
 ```yaml
+channels:
+  - name: "YourFavouriteChannel"
+    url: "https://www.youtube.com/@YourFavouriteChannel"
+
 schedule:
   monday:
-    workout_type: Strength   # HIIT | Strength | Mobility | Cardio | Rest
+    workout_type: Strength   # HIIT | Strength | Mobility | Cardio | Yoga | Pilates | Dance | Rest
     body_focus: upper        # upper | lower | full | core | any
     duration_min: 20         # minimum video length in minutes (optional, default 0)
     duration_max: 45         # maximum video length in minutes (optional, default 60)
@@ -186,8 +214,8 @@ set -a && source .env && set +a
 python main.py --init
 ```
 
-This scans the full back-catalogue of all three channels and classifies every video.
-Expect **20–40 minutes** on first run - only ever done once per channel.
+This scans the full back-catalogue of all your channels and classifies every video.
+Expect **20-40 minutes** on first run - only ever done once per channel.
 
 > **If classification is interrupted** (e.g. API credits ran out), you don't need to re-scan. Just run:
 > ```bash
@@ -203,7 +231,7 @@ python main.py --dry-run
 
 Prints the weekly plan without touching the playlist. Verify it looks sensible before pushing to GitHub.
 
-### 10. Create a Private GitHub Repo and Push
+### 10. Create a GitHub Repo and Push
 
 ```bash
 git init
@@ -211,7 +239,9 @@ git add .
 git commit -m "Initial commit"
 ```
 
-On GitHub → [github.com/new](https://github.com/new) → name: `youtube-workout-planner` → **Private** → **Create**.
+On GitHub → [github.com/new](https://github.com/new) → name: `youtube-workout-planner` → **Create**.
+
+> **Private or public?** `workout_library.db` is committed to the repo (that's how GitHub Actions persists it between runs). It contains your classified video library but no credentials or personal health data. Keep the repo private if you'd rather not share your channel subscriptions and training schedule publicly.
 
 ```bash
 git remote add origin https://github.com/YOUR_USERNAME/youtube-workout-planner.git
@@ -230,14 +260,18 @@ Repo → **Settings** → **Secrets and variables** → **Actions** → **New re
 | `YOUTUBE_CLIENT_SECRET` | From step 4 |
 | `YOUTUBE_OAUTH_REFRESH_TOKEN` | From step 4 |
 | `ANTHROPIC_API_KEY` | From step 5 |
+| `YOUTUBE_PLAYLIST_ID` | From step 6 |
+| `CONFIG_YAML` | Your `config.yaml` base64-encoded: `base64 -w 0 config.yaml` (keeps your channels and schedule private) |
 
-### 12. Trigger a Test Run
+### 12. Bootstrap Your Library and Trigger a Test Run
 
-Don't wait for Sunday - trigger it manually:
+On first use, run a full back-catalogue scan to build your library:
 
-Repo → **Actions** → **Weekly Workout Plan** → **Run workflow** → **Run workflow**
+Repo → **Actions** → **Weekly Workout Plan** → **Run workflow** → set mode to **`init`** → **Run workflow**
 
-Watch the logs. On success, open YouTube → your playlist → this week's videos appear in day order.
+This scans all your channels' full history and classifies every video. Takes 20-40 minutes but only needs to be done once. After it completes, the library is saved as a private Actions artifact.
+
+For subsequent manual tests (or to verify everything works before waiting for Sunday), trigger with the default `run` mode instead.
 
 ---
 
@@ -251,14 +285,15 @@ Watch the logs. On success, open YouTube → your playlist → this week's video
 ☐ scripts/client_secret.json placed (gitignored - never committed)
 ☐ get_oauth_token.py run → refresh token copied
 ☐ Anthropic API key created
-☐ YouTube playlist created → ID added to config.yaml
-☐ config.yaml schedule adjusted to your training split
-☐ python main.py --init  completed successfully
-☐ python main.py --dry-run  plan looks correct
-☐ GitHub private repo created
+☐ YouTube playlist created → ID saved for GitHub Secrets
+☐ config.yaml channels + schedule adjusted
+☐ python main.py --init  completed successfully (local)
+☐ python main.py --dry-run  plan looks correct (local)
+☐ GitHub repo created
 ☐ git push done
-☐ 5 GitHub Secrets added
-☐ Manual Actions trigger → playlist refreshed on YouTube
+☐ 7 GitHub Secrets added (including YOUTUBE_PLAYLIST_ID + CONFIG_YAML)
+☐ Actions → Run workflow (mode: init) → library built
+☐ Actions → Run workflow (mode: run) → playlist refreshed on YouTube
 ```
 
 ---
@@ -278,7 +313,7 @@ channels:
 
 schedule:
   monday:
-    workout_type: Strength   # HIIT | Strength | Mobility | Cardio | Rest
+    workout_type: Strength   # HIIT | Strength | Mobility | Cardio | Yoga | Pilates | Dance | Rest
     body_focus: upper        # upper | lower | full | core | any
     duration_min: 20         # minimum video length in minutes (default: 0)
     duration_max: 45         # maximum video length in minutes (default: 60)
@@ -289,10 +324,8 @@ schedule:
     duration_min: 0
     duration_max: 0
 
-playlist:
-  id: "PLxxxxxxxxxxxxxxxx"   # YouTube playlist ID to refresh each week
-
 recency_boost_weeks: 24      # Videos newer than this (in weeks) get selection priority
+max_channel_repeats: 2       # Max times the same channel can appear in one week's plan
 ```
 
 ---
@@ -306,10 +339,10 @@ For each day in your schedule, the planner:
 3. Scores remaining candidates:
    - **+100** if published within `recency_boost_weeks` (newer videos preferred)
    - **+40** if from a channel not yet picked this week (spreads across channels)
-   - **+0–20** random jitter (keeps variety week to week)
+   - **+0-20** random jitter (keeps variety week to week)
 4. Picks randomly from the top 3 scorers
 
-If the strict query returns no candidates, it progressively relaxes constraints (history window → body focus) until a video is found.
+If the strict query returns no candidates, it progressively relaxes constraints (history window then body focus) until a video is found.
 
 ---
 
@@ -333,30 +366,6 @@ Delete the entry from `config.yaml`. Existing videos from that channel stay in t
 
 ---
 
-## Ambitious Ideas for the Future
-
-### 1. Adaptive Periodization
-Right now your weekly schedule is fixed forever - every Monday is always Strength/Upper. A more powerful version would automatically cycle through structured training blocks: a build phase (higher volume, moderate intensity), a peak phase (lower volume, higher intensity), and a deload week - then repeat. The system would adjust which workout types and difficulty levels it selects each week based on where you are in the cycle, implementing real progressive programming without you ever touching `config.yaml`.
-
-### 2. Preference Learning
-A feedback loop that makes the plan smarter over time. After each week, you rate your sessions - loved it, skipped it, it was fine. Those signals feed back into the scoring algorithm permanently: creators you consistently enjoy get a long-term score boost, video styles you skip get suppressed, and sessions you abandon mid-week get flagged for reconsideration. Over months, the planner stops being a generic curator and starts feeling like it actually knows you.
-
-### 3. Natural Language Rescheduling
-A Telegram or WhatsApp bot that lets you modify your week in plain English. Message it *"I'm too sore for legs today, swap Wednesday for something lighter"* or *"I'm travelling Thursday and Friday, make it a 3-day week"* and it re-generates the plan and updates your YouTube playlist automatically. No config files, no code - just a message from wherever you are.
-
----
-
-## Documentation
-
-| Doc | What's in it |
-|---|---|
-| [docs/architecture.md](./docs/architecture.md) | How the current pipeline works - components, data flow, design decisions |
-| [docs/scaling.md](./docs/scaling.md) | Web app vision - target architecture, data model, API surface, open questions |
-| [docs/infra-research.md](./docs/infra-research.md) | Infrastructure research - hosting, scheduler, frontend, Anthropic/YouTube API decisions |
-| [docs/setup-progress.md](./docs/setup-progress.md) | One-time setup checklist (personal - tracks completion of initial configuration steps) |
-
----
-
 ## Troubleshooting
 
 | Issue | Fix |
@@ -369,3 +378,46 @@ A Telegram or WhatsApp bot that lets you modify your week in plain English. Mess
 | Classification interrupted mid-run | Run `python main.py --classify-only` - it skips already-classified videos and picks up from where it left off |
 | Anthropic API credits exhausted | Top up at [console.anthropic.com](https://console.anthropic.com) → Plans & Billing. Note: API credits are separate from Claude Pro |
 | GitHub Actions can't push the DB | Ensure the workflow has `contents: write` permission - check repo Settings → Actions → General |
+
+---
+
+## Ideas for the Future
+
+### CLI tool
+**Adaptive periodization** - automatically cycle through training blocks (build, peak, deload) and adjust workout type and difficulty selections each week based on where you are in the cycle. Real progressive programming without touching `config.yaml`.
+
+**Preference learning** - rate sessions after each week (loved it, skipped it, fine). Those signals feed back into the scoring algorithm: creators you consistently enjoy get a score boost, styles you skip get suppressed. Over months the planner starts feeling like it knows you.
+
+**Natural language rescheduling** - a Telegram or WhatsApp bot so you can message *"I'm too sore for legs today, swap Wednesday for something lighter"* and it re-generates the plan and updates your YouTube playlist automatically.
+
+### Web app
+See [docs/backlog.md](./docs/backlog.md) for the full list - highlights include completed workout tracking, freeform profile enrichment ("bad knees", "training for a marathon"), AI coach chat, channel health scores, and collaborative filtering ("users like you also follow...").
+
+---
+
+## Documentation
+
+### CLI tool
+| Doc | What's in it |
+|---|---|
+| [docs/cli.md](./docs/cli.md) | Command reference, full config options, DB schema, cost breakdown, debugging |
+| [docs/setup-progress.md](./docs/setup-progress.md) | One-time setup checklist - track your progress through the steps above |
+
+### Web app
+| Doc | What's in it |
+|---|---|
+| [docs/deployment.md](./docs/deployment.md) | Step-by-step setup: Railway, Vercel, Sentry, UptimeRobot, Resend, all env vars |
+| [docs/architecture.md](./docs/architecture.md) | Full system design - CLI pipeline + web app API routes, data model, services |
+| [docs/testing.md](./docs/testing.md) | Test philosophy, automated suite (567 tests), manual E2E checklists |
+| [docs/user-guide.md](./docs/user-guide.md) | Product guide for non-technical users |
+| [docs/backlog.md](./docs/backlog.md) | Deferred features and future ideas |
+| [docs/google-oauth-setup.md](./docs/google-oauth-setup.md) | OAuth consent screen, verification, incremental scopes |
+| [docs/infra-research.md](./docs/infra-research.md) | Hosting, scheduler, frontend, Anthropic/YouTube API decisions |
+| [docs/scaling.md](./docs/scaling.md) | Multi-user architecture decisions and scale considerations |
+| [docs/specs/](./docs/specs/) | Detailed implementation specs for completed and future features |
+
+---
+
+## License
+
+MIT - do whatever you want with it.

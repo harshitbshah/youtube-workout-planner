@@ -526,7 +526,7 @@ WHERE last_scan_error IS NOT NULL;`}</Code>
                 ["FRONTEND_ORIGINS", "https://planmyworkout.vercel.app", "CORS - comma-separated"],
                 ["ENCRYPTION_KEY", "base64...", "Fernet key for YouTube refresh tokens at rest"],
                 ["SECRET_KEY", "random-string", "Starlette session middleware signing"],
-                ["ADMIN_EMAIL", "harshitspeaks@gmail.com", "Single admin - read at request time"],
+                ["ADMIN_EMAIL", "you@yourdomain.com", "Single admin - read at request time"],
                 ["DATABASE_URL", "postgresql://...", "Managed by Railway - set automatically"],
                 ["CLASSIFY_MAX_AGE_MONTHS", "18", "Videos older than this are skipped by the classifier (default: 18)"],
                 ["FIRST_SCAN_LIMIT", "75", "Max videos fetched on a channel's first scan (default: 75)"],

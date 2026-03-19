@@ -1,9 +1,9 @@
 # YouTube Workout Planner - Claude Instructions
 
 ## Session Start
-1. Read `PROGRESS.md` for current status and next steps
-2. Run `git log --oneline -10` to see recent commits
-3. Continue from where the last session left off
+1. Run `git log --oneline -10` to see recent commits
+2. Read `docs/architecture.md` for current system state
+3. Read `docs/backlog.md` for pending work
 
 ## Testing workflow
 The user does **not** test locally. All end-to-end testing happens on Vercel (frontend)
@@ -14,28 +14,25 @@ committed and pushed - not just working in a local dev server.
 
 When the user says "let's checkpoint" or "take a checkpoint", run the following in order:
 
-1. **`PROGRESS.md`** - update status line, test count, and add a dated section summarising
-   everything built/fixed this session. Keep it factual and scannable (bullet points).
+1. **`docs/architecture.md`** - update if any routes, pages, components, or DB schema changed.
 
-2. **`docs/architecture.md`** - update if any routes, pages, components, or DB schema changed.
+2. **`docs/backlog.md`** - append any new ideas or deferred work that surfaced this session.
 
-3. **`docs/backlog.md`** - append any new ideas or deferred work that surfaced this session. Create the file if it doesn't exist.
+3. **`docs/testing.md`** - update test count; add new test files and manual checklist items.
 
-4. **`docs/testing.md`** - update test count; add new test files and manual checklist items.
+4. **`docs/user-guide.md`** - update if any user-facing features were added or changed.
 
-5. **`docs/user-guide.md`** - update if any user-facing features were added or changed.
-
-6. **`frontend/src/app/admin/guide/page.tsx`** - update if any operationally significant
+5. **`frontend/src/app/admin/guide/page.tsx`** - update if any operationally significant
    changes were made (new Railway gotcha, new known limit, new admin flow). Skip for routine
    UX additions - see "Docs ↔ Admin guide relationship" convention below.
 
-7. **`CLAUDE.md` itself** - update the API routes table and file map if new routes or files
+6. **`CLAUDE.md` itself** - update the API routes table and file map if new routes or files
    were added.
 
-8. **Claude's memory** (`~/.claude/projects/.../memory/MEMORY.md`) - update status line,
+7. **Claude's memory** (`~/.claude/projects/.../memory/MEMORY.md`) - update status line,
    test count, and any key architectural facts that changed.
 
-9. **Commit all doc changes** with message: `docs: checkpoint - <one-line summary> (<date>)`
+8. **Commit all doc changes** with message: `docs: checkpoint - <one-line summary> (<date>)`
 
 The goal: any future session (or a knowledge agent) can read these docs and fully understand
 the current state without needing conversation history.
@@ -342,7 +339,7 @@ vars to subprocesses, so uvicorn (a subprocess) won't see them.
 ### Admin gating
 `ADMIN_EMAIL` env var on Railway identifies the single admin user.
 Read at request time inside `_require_admin()` (not at module import time) to allow
-test isolation via `monkeypatch.setenv`. On Railway: set `ADMIN_EMAIL=harshitspeaks@gmail.com`.
+test isolation via `monkeypatch.setenv`. Set `ADMIN_EMAIL` to your own email in Railway env vars.
 
 ### Lazy classification env vars
 - `MIN_PLAN_CANDIDATES` (default `3`) - minimum classified videos per schedule slot for `can_fill_plan()` to return True. Lower = faster plan delivery but less variety; higher = more Anthropic calls.

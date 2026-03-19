@@ -18,7 +18,7 @@ export default function PrivacyPage() {
         </div>
 
         <Section title="1. Who we are">
-          <p>Plan My Workout ("we", "us") is a web application that helps you discover and plan workout videos from YouTube channels you choose. The app is available at planmyworkout.vercel.app.</p>
+          <p>Plan My Workout ("we", "us") is a web application that helps you discover and plan workout videos from YouTube channels you choose.</p>
         </Section>
 
         <Section title="2. What data we collect">
@@ -96,7 +96,7 @@ export default function PrivacyPage() {
         </Section>
 
         <Section title="11. Contact">
-          <p>Questions? Email us at <a href="mailto:harshitspeaks@gmail.com" className="text-zinc-600 dark:text-zinc-400 underline hover:text-zinc-900 dark:hover:text-white">harshitspeaks@gmail.com</a>.</p>
+          <p>Questions? Open an issue on <a href="https://github.com/harshitbshah/youtube-workout-planner" className="text-zinc-600 dark:text-zinc-400 underline hover:text-zinc-900 dark:hover:text-white">GitHub</a>.</p>
         </Section>
 
       </div>

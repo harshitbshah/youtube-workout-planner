@@ -137,7 +137,7 @@ def send_feedback_email(user, category: str, message: str) -> None:
     resend.api_key = api_key
 
     from_email = os.environ.get("FROM_EMAIL", "hello@planmyworkout.app")
-    admin_email = os.environ.get("ADMIN_EMAIL", "harshitspeaks@gmail.com")
+    admin_email = os.environ.get("ADMIN_EMAIL", "")
     label = CATEGORY_LABELS.get(category, category)
     display = user.display_name or user.email.split("@")[0]
 

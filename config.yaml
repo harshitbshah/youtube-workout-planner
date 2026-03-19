@@ -57,14 +57,6 @@ schedule:
     duration_min: 0
     duration_max: 0
 
-# Playlist settings
-playlist:
-  # The YouTube playlist ID to refresh every week
-  # Create a playlist manually in YouTube, then paste its ID here
-  # e.g. for https://youtube.com/playlist?list=PLxxxxxxx → PLxxxxxxx
-  id: "PLs4ch3R20FHJMLMRrRtOL2NfSkCuH9mzb"
-  name: "Weekly Workout Plan"
-
 # Newer videos get boosted priority (in weeks — videos newer than this are preferred)
 recency_boost_weeks: 24
 
