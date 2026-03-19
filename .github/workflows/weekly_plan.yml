@@ -29,7 +29,7 @@ jobs:
           CONFIG_YAML: ${{ secrets.CONFIG_YAML }}
         run: |
           if [ -n "$CONFIG_YAML" ]; then
-            python3 -c "import base64,os; open('config.yaml','wb').write(base64.decodebytes(os.environ['CONFIG_YAML'].encode()))"
+            python3 -c "import base64,os; s=os.environ['CONFIG_YAML'].strip().replace('\n','').replace('\r',''); s+='='*(-len(s)%4); open('config.yaml','wb').write(base64.b64decode(s))"
           fi
 
       - name: Restore library
