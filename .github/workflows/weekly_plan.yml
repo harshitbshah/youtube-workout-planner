@@ -25,8 +25,12 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Restore personal config
-        if: ${{ secrets.CONFIG_YAML != '' }}
-        run: echo "${{ secrets.CONFIG_YAML }}" | base64 -d > config.yaml
+        env:
+          CONFIG_YAML: ${{ secrets.CONFIG_YAML }}
+        run: |
+          if [ -n "$CONFIG_YAML" ]; then
+            echo "$CONFIG_YAML" | base64 -d > config.yaml
+          fi
 
       - name: Restore library
         uses: actions/download-artifact@v4
