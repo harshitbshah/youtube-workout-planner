@@ -10,7 +10,7 @@ Running list of ideas and deferred features. Append during sessions; review befo
 
 ---
 
-## Deferred - Phase D
+## Deferred - AI cost optimizations
 
 - **F7 - Per-user monthly budget cap**: activate when heavy manual scanners become a cost risk. Reject `POST /jobs/scan` with 429 once user exceeds N Anthropic calls/month.
 - **F8 - Global classification cache**: when 10+ users share popular channels, the same video should not be classified twice. Share `classifications` rows across users (already partially true with shared channels architecture). Activate at scale.

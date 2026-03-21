@@ -461,7 +461,7 @@ Applied before fetching video details or sending to classifier:
 3. **Duration cap** - skips videos > 2 hours (livestreams/long-form podcasts that slipped through).
 4. **Shorts filter** (existing) - skips videos < 3 min or with `#shorts` hashtag.
 
-### Classifier - batch cap + resumable batches + Phase A cost controls
+### Classifier - batch cap + resumable batches + AI cost controls
 
 - **`MAX_CLASSIFY_PER_RUN = 300`** - caps each pipeline run to 300 videos. Keeps first-run
   transcript fetch time to ~5 min instead of 30+ min for large channels. Remainder deferred

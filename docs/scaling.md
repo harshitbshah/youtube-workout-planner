@@ -177,11 +177,11 @@ User opens app Sunday/Monday →
 
 If user doesn't log in → playlist stays as last week's → no new plan generated → no Anthropic cost.
 
-### What needs to be built (Phase 5)
+### What needs to be built
 
 - `POST /plan/publish` endpoint - pushes current plan to YouTube playlist, marks week as published
 - Weekly scheduler checks if user published last week before running pipeline again
-- "Publish to YouTube" button in the frontend (Phase 4)
+- "Publish to YouTube" button in the frontend
 - In-app plan view as an alternative to YouTube for users who want to track workouts in the app
 
 ---
@@ -243,7 +243,7 @@ Should be added to the User model before launch so data accumulates from day one
 ### What needs to be built
 
 - `User.last_active_at` - DB column + Alembic migration + middleware to update on every request
-- Welcome back detection in the frontend (Phase 4) - check gap on login, show banner if > 2 weeks
+- Welcome back detection in the frontend - check gap on login, show banner if > 2 weeks
 - Background catch-up trigger on return - same scan → classify → generate pipeline as manual publish flow
 
 ---
@@ -400,34 +400,14 @@ See [infra-research.md](./infra-research.md) for the full research and recommend
 Suggested order - each phase is independently useful and builds on the previous.
 See [testing.md](./testing.md) for the full test plan and "done when" criteria per phase.
 
-### Pre-Phase 1 - Test suite for existing codebase
-- Write `tests/` covering existing CLI pipeline (db, scanner, classifier, planner)
-- Goal: pytest green before starting web app work
+### Build order (historical reference)
 
-### Phase 1 - Backend foundation
-- Set up FastAPI project structure
-- PostgreSQL schema (users, channels, schedules, videos, classifications, history)
-- Auth: Google OAuth login, session management
-- Port existing pipeline logic to work against the DB instead of `config.yaml`
-
-### Phase 2 - Core API
-- Channel management endpoints (add, remove, scan trigger)
-- Schedule endpoints
-- Plan generation and retrieval
-
-### Phase 3 - Background jobs
-- Celery + Redis setup
-- Scan and classify as async tasks with progress tracking
-- Weekly cron per user
-
-### Phase 4 - Frontend
-- Onboarding flow (connect YouTube, add channels, set schedule)
-- Plan preview and manual swap
-- Library browser
-
-### Phase 5 - Playlist publishing
-- Server-side YouTube OAuth flow
-- Automated weekly publish
+1. **Test suite** - cover existing CLI pipeline before starting web app work
+2. **Backend foundation** - FastAPI, PostgreSQL schema, Google OAuth, port pipeline logic
+3. **Core API** - channel management, schedule, plan generation endpoints
+4. **Background jobs** - APScheduler, async scan/classify, weekly cron per user
+5. **Frontend** - onboarding, plan preview, swap, library browser
+6. **Playlist publishing** - server-side YouTube OAuth, automated weekly publish
 
 ---
 

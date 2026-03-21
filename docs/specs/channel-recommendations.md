@@ -22,17 +22,17 @@ The current channel suggestion system is:
 
 Deliver channel recommendations that feel hand-picked and get smarter over time:
 
-| Phase | What it unlocks | Self-improving? |
+| Part | What it unlocks | Self-improving? |
 |---|---|---|
-| **R1** - Rich curated channels | Thumbnails, fast one-click add, scored by profile+goal | No (static) |
-| **R2** - Content-match scoring | Recommendations from your own library's classification data | Yes (grows with library) |
-| **R3** - Collaborative filtering | "Users like you also use…" from real usage patterns | Yes (grows with users) |
+| **Part 1** - Rich curated channels | Thumbnails, fast one-click add, scored by profile+goal | No (static) |
+| **Part 2** - Content-match scoring | Recommendations from your own library's classification data | Yes (grows with library) |
+| **Part 3** - Collaborative filtering | "Users like you also use…" from real usage patterns | Yes (grows with users) |
 
-Phases are independent and additive. Each can be shipped separately.
+Each part is independent and additive. Each can be shipped separately.
 
 ---
 
-## Phase R1 - Rich curated channels with thumbnails
+## Part 1 - Rich curated channels with thumbnails
 
 ### User-facing changes
 
@@ -220,7 +220,7 @@ export async function getCuratedChannels(
 
 ---
 
-## Phase R2 - Content-match scoring from library
+## Part 2 - Content-match scoring from library
 
 ### Concept
 
@@ -305,7 +305,7 @@ Backfill: one-off script to fetch thumbnails for existing channels via YouTube D
 
 ---
 
-## Phase R3 - Collaborative filtering from usage patterns
+## Part 3 - Collaborative filtering from usage patterns
 
 ### Concept
 
@@ -446,7 +446,7 @@ Until R3 has data (< ~20 users), blended_score degrades gracefully:
 | `api/data/curated_channels.json` | Committed curated channel data (output of manual curation) |
 | `api/services/recommender.py` | Scoring functions: `score_channel()`, `content_match_channels()`, `similar_user_channels()`, `blended_recommendations()` |
 | `alembic/versions/011_add_channel_thumbnail.py` | Add `thumbnail_url` to `channels` table |
-| ~~`011_add_user_profile.py`~~ | ~~Add `life_stage` + `goal` to `users` table~~ - **removed**, covered by migration 009 (Phase O1). See [migrations-roadmap.md](migrations-roadmap.md). |
+| ~~`011_add_user_profile.py`~~ | ~~Add `life_stage` + `goal` to `users` table~~ - **removed**, covered by migration 009 (AI Profile Enrichment). See [migrations-roadmap.md](migrations-roadmap.md). |
 | `alembic/versions/012_add_video_feedback.py` | `video_feedback` table |
 | `tests/api/test_recommender.py` | Unit tests for scoring functions |
 | `tests/api/test_curated_channels.py` | Unit tests for `GET /channels/curated` endpoint |
@@ -511,7 +511,7 @@ Until R3 has data (< ~20 users), blended_score degrades gracefully:
 
 ## Implementation order (suggested)
 
-### Phase R1 (ship first - standalone, no DB changes beyond thumbnail)
+### Part 1 - Curated channels (ship first - standalone, no DB changes beyond thumbnail)
 
 1. Run `scripts/discover_channels.py` → curate `api/data/curated_channels.json` manually
 2. Migration 011: `channels.thumbnail_url`; update scanner to populate it
@@ -521,7 +521,7 @@ Until R3 has data (< ~20 users), blended_score degrades gracefully:
 6. `ChannelManager.tsx` card grid + `getCuratedChannels()` in `lib/api.ts`
 7. Onboarding: pass `profile` + `goal` + `scheduleTypes` props to ChannelManager
 
-### Phase R2 (add after R1, no user-facing UX change needed)
+### Part 2 - Content-match (add after Part 1, no user-facing UX change needed)
 
 8. `content_match_channels()` in `recommender.py`
 9. `GET /channels/recommended` endpoint
@@ -530,9 +530,9 @@ Until R3 has data (< ~20 users), blended_score degrades gracefully:
 12. Blend into `GET /channels/for-you` (weight 0.4)
 13. Frontend: onboarding + settings call `getForYouChannels()` instead of `getCuratedChannels()`
 
-### Phase R3 (add after R2, requires user base)
+### Part 3 - Collaborative filtering (add after Part 2, requires user base)
 
-14. `life_stage` + `goal` are already on the `users` table via migration 009 (Phase O1) - no additional migration needed. If O1 is not yet deployed, do it first.
+14. `life_stage` + `goal` are already on the `users` table via migration 009 (AI Profile Enrichment) - no additional migration needed. Deploy AI Profile Enrichment first if not yet done.
 15. Migration 012: `video_feedback` table
 16. Record `swapped` in `PATCH /plan/{day}`; record `kept` in `POST /plan/generate`
 17. `channel_quality_score()` + `similar_user_channels()` in `recommender.py`

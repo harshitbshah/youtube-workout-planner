@@ -48,7 +48,7 @@ These were discussed and left open. Confirm each before starting:
 
 ---
 
-## Why This Phase Is Deferred
+## Why This Feature Is Deferred
 
 Email is a **retention tool, not a core feature**. The app already delivers a fresh plan
 every Sunday - the email is a convenience nudge for users who forget to check the app.

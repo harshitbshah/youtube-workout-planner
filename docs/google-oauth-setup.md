@@ -33,7 +33,7 @@ After publishing, any Google account can sign in and the warning is gone.
 
 Full Google verification (takes weeks, needs privacy policy URL) is only needed
 if you add sensitive or restricted scopes - e.g. `youtube.force-ssl` for
-playlist writing (Phase 5). Plan for this before opening the app publicly.
+playlist writing. Plan for this before opening the app publicly.
 
 | Scope | Sensitivity | Verification needed? |
 |---|---|---|

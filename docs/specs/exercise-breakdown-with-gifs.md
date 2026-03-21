@@ -374,7 +374,7 @@ No new env vars required. The feature uses:
    ~200 KB. Fine to commit. Only build/update it when the dataset is stale.
 4. **Fuzzy matching library:** `difflib.SequenceMatcher` from stdlib is sufficient -
    no need to add a dependency. Use `cutoff=0.8` ratio.
-5. **Migration number:** **010**. Migration 009 is reserved for Phase O1 user
+5. **Migration number:** **010**. Migration 009 is reserved for AI Profile Enrichment user
    profile fields. See [migrations-roadmap.md](migrations-roadmap.md) for the
    full sequence before writing the migration file.
 

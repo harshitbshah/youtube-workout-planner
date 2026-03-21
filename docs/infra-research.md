@@ -83,7 +83,7 @@ Migrate to **Render** when/if there's a stable paying user base that justifies p
 
 ## Scheduler / Background Jobs
 
-**Decision made (2026-03-07):** use **APScheduler** (in-process) for Phase 3, not Celery + Redis.
+**Decision made (2026-03-07):** use **APScheduler** (in-process) for background jobs, not Celery + Redis.
 
 ### Options evaluated
 
@@ -195,7 +195,7 @@ Not a blocker for v1. A single shared key comfortably covers the first ~10 users
 |---|---|---|
 | API | FastAPI | Already Python; no change |
 | Database | PostgreSQL on Railway | Replaces SQLite |
-| Task queue + scheduler | APScheduler (in-process) for Phase 3; migrate to Celery + Redis if scale demands it | Replaces GitHub Actions cron |
+| Task queue + scheduler | APScheduler (in-process); migrate to Celery + Redis if scale demands it | Replaces GitHub Actions cron |
 | Auth | Google OAuth | Same Google account as YouTube |
 | Frontend | HTMX (simple) or Next.js on Vercel (fast) | Decide based on iteration speed preference |
 | Hosting (v1) | Railway | All services in one project, usage-based pricing |
@@ -219,7 +219,7 @@ The playlist lives in the user's YouTube account. The app holds their OAuth refr
 
 **Key principle:** never fail silently. A stale playlist with a clear notification is better than an unclear half-updated one.
 
-This requires no special design decisions now - implement as a "don't fail silently" requirement in Phase 5 (playlist publishing).
+This requires no special design decisions now - implement as a "don't fail silently" requirement in playlist publishing.
 
 ---
 

@@ -71,7 +71,7 @@ New test files added:
 
 ---
 
-## Frontend Tests (Phase B)
+## Frontend Tests
 
 ```bash
 cd frontend && npm run test:run
@@ -91,7 +91,7 @@ cd frontend && npm run test:run
 
 ---
 
-## Manual E2E - Phase B (onboarding redesign)
+## Manual E2E - Onboarding
 
 Can be run against local dev servers or the live deployment.
 
@@ -104,7 +104,7 @@ Can be run against local dev servers or the live deployment.
 
 ---
 
-## Manual E2E - Phase 4 + 5
+## Manual E2E - Web app
 
 Can be run against either local servers or the live deployment.
 
@@ -172,7 +172,7 @@ Sign out first (or use incognito) so you hit onboarding as a new user.
 - [ ] No plan + no channels: empty state shows "Set up my plan →" link to onboarding (not the scan button)
 - [ ] Sign out clears session → redirected to `/`; back button does not restore dashboard
 
-**Publish to YouTube (Phase 5)**
+**Publish to YouTube**
 - [ ] "Publish to YouTube" button is active (red border), cursor is pointer
 - [ ] Clicking "Publish to YouTube" shows "Publishing…" while in flight
 - [ ] On success: green banner appears - "{N} videos added to your playlist" + "Open playlist →" link

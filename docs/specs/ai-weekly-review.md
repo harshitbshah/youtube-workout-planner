@@ -1,13 +1,13 @@
-# Spec: Weekly AI Review Card (Phase O3)
+# Spec: Weekly AI Review Card
 
 **Created:** 2026-03-11
 **Status:** Ready for implementation
-**Depends on:** Phase O2 ([ai-coach-chat.md](ai-coach-chat.md)) - uses the coach router and `video_feedback` signals from Phase R3
-**Migration:** 009 - `weekly_review_cache` and `weekly_review_generated_at` are included in the Phase O1 migration (see [migrations-roadmap.md](migrations-roadmap.md))
+**Depends on:** [AI Coach Chat](ai-coach-chat.md) - uses the coach router and `video_feedback` signals from [Collaborative Filtering](channel-recommendations.md)
+**Migration:** 009 - `weekly_review_cache` and `weekly_review_generated_at` are included in the [AI Profile Enrichment](ai-profile-enrichment.md) migration (see [migrations-roadmap.md](migrations-roadmap.md))
 
 **Related specs:**
-- [ai-profile-enrichment.md](ai-profile-enrichment.md) - Phase O1: migration 009 that includes O3 schema
-- [ai-coach-chat.md](ai-coach-chat.md) - Phase O2: coach router where `GET /coach/weekly-review` lives
+- [ai-profile-enrichment.md](ai-profile-enrichment.md) - AI Profile Enrichment: migration 009 that includes this spec's schema
+- [ai-coach-chat.md](ai-coach-chat.md) - AI Coach Chat: coach router where `GET /coach/weekly-review` lives
 
 ---
 
@@ -46,7 +46,7 @@ Returns: `{ "review": "string" }` or `{ "review": null }` if not enough history 
 
 Backend logic:
 1. Load last 2 weeks of `program_history` for the user
-2. Load `video_feedback` rows (completion signals) for those weeks - from Phase R3 (`video_feedback` table, migration 012). If Phase R3 is not yet implemented, skip feedback signals gracefully.
+2. Load `video_feedback` rows (completion signals) for those weeks - from Collaborative Filtering (`video_feedback` table, migration 012). If not yet implemented, skip feedback signals gracefully.
 3. Build a compact prompt: what was planned, what was completed, what was swapped
 4. Single Claude Haiku call (no tools needed - read-only, text generation only)
 5. Cache result in `users.weekly_review_cache` (text, nullable) + `users.weekly_review_generated_at`
@@ -58,7 +58,7 @@ Backend logic:
 
 ## DB changes - included in migration 009
 
-These columns are bundled with the Phase O1 migration to avoid two back-to-back `users`
+These columns are bundled with the AI Profile Enrichment migration (009) to avoid two back-to-back `users`
 table alterations:
 
 ```python
@@ -91,7 +91,7 @@ if (isMonday) {
 
 ## Files to create
 
-None - endpoint goes in `api/routers/coach.py` (already created for Phase O2).
+None - endpoint goes in `api/routers/coach.py` (already created for AI Coach Chat).
 
 ## Files to modify
 

@@ -1,13 +1,13 @@
-# Spec: AI Coach Chat (Phase O2)
+# Spec: AI Coach Chat
 
 **Created:** 2026-03-11
 **Status:** Ready for implementation
-**Depends on:** Phase O1 ([ai-profile-enrichment.md](ai-profile-enrichment.md)) - profile enrichment data is used in the coach system prompt
-**Migration:** None - all schema changes are in migration 009 (Phase O1)
+**Depends on:** [AI Profile Enrichment](ai-profile-enrichment.md) - profile enrichment data is used in the coach system prompt
+**Migration:** None - all schema changes are in migration 009 (see [AI Profile Enrichment](ai-profile-enrichment.md))
 
 **Related specs:**
-- [ai-profile-enrichment.md](ai-profile-enrichment.md) - Phase O1: enrichment data used in system prompt
-- [ai-weekly-review.md](ai-weekly-review.md) - Phase O3: weekly review card uses same coach router
+- [ai-profile-enrichment.md](ai-profile-enrichment.md) - AI Profile Enrichment: data used in system prompt
+- [ai-weekly-review.md](ai-weekly-review.md) - Weekly AI Review: uses same coach router
 
 ---
 

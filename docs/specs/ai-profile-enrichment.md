@@ -1,14 +1,14 @@
-# Spec: AI Profile Enrichment (Phase O1)
+# Spec: AI Profile Enrichment
 
 **Created:** 2026-03-11
 **Status:** Ready for implementation
-**Depends on:** Current 8-step onboarding wizard (Phase B + O1 step insertion)
-**Migration:** 009 (shared with Phase O3 - see [migrations-roadmap.md](migrations-roadmap.md))
+**Depends on:** Current 8-step onboarding wizard
+**Migration:** 009 (shared with [Weekly AI Review](ai-weekly-review.md) - see [migrations-roadmap.md](migrations-roadmap.md))
 
 **Related specs:**
-- [ai-coach-chat.md](ai-coach-chat.md) - Phase O2: coach chat (builds on enrichment data)
-- [ai-weekly-review.md](ai-weekly-review.md) - Phase O3: weekly review card
-- [channel-recommendations.md](channel-recommendations.md) - Phase R1 curated channels uses `preferred_types` from enrichment
+- [ai-coach-chat.md](ai-coach-chat.md) - AI Coach Chat (builds on enrichment data)
+- [ai-weekly-review.md](ai-weekly-review.md) - Weekly AI Review
+- [channel-recommendations.md](channel-recommendations.md) - Curated Channel Recommendations uses `preferred_types` from enrichment
 
 ---
 
@@ -184,13 +184,13 @@ original_video_id   = Column(String, ForeignKey("videos.id"), nullable=True)
 published_at        = Column(DateTime(timezone=True), nullable=True)
 ```
 
-`life_stage` and `goal` are stored here so the recommendations engine (Phase R3) can find
+`life_stage` and `goal` are stored here so the recommendations engine (Collaborative Filtering) can find
 similar users, and so the coach chat system prompt has them without a separate API call.
 
 Migration file: `alembic/versions/009_add_user_profile_fields.py`
 
 > Note: migration 009 also includes `weekly_review_cache` and `weekly_review_generated_at`
-> for Phase O3. Bundle them in one migration to avoid multiple consecutive user-table alterations.
+> for Weekly AI Review. Bundle them in one migration to avoid multiple consecutive user-table alterations.
 
 ---
 
@@ -335,8 +335,8 @@ Once stored, `profile_enrichment` is read by:
    dance/yoga/boxing channels; `constraints` boosts bodyweight/low-impact channels
 2. **Plan generation** (`POST /plan/generate`): `avoid_types` filters out video types
    to skip (e.g. knee_injury → no jumping/plyometric videos). See planner changes below.
-3. **Coach chat** (Phase O2): included in the system prompt as user context
-4. **Weekly review** (Phase O3): referenced when generating advice
+3. **Coach chat** ([AI Coach Chat](ai-coach-chat.md)): included in the system prompt as user context
+4. **Weekly review** ([Weekly AI Review](ai-weekly-review.md)): referenced when generating advice
 
 **Planner integration - `api/services/planner.py`:**
 
@@ -428,5 +428,5 @@ the user's physical constraints without any manual intervention.
 | Skip is prominent, failure is silent | Enrichment must never block onboarding - it's additive, not required |
 | Haiku for enrichment | Simple extraction task; latency matters (user is waiting) |
 | `avoid_workout_types` in planner | The most immediate user value from enrichment - plan immediately respects physical constraints |
-| `life_stage` + `goal` persisted to DB | Required by Phase R3 for collaborative filtering; used in coach system prompt |
+| `life_stage` + `goal` persisted to DB | Required by Collaborative Filtering for user similarity matching; used in coach system prompt |
 | O1 + O3 user fields in one migration | Both add columns to `users`; bundling avoids two consecutive user-table alterations |

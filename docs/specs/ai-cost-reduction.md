@@ -7,12 +7,12 @@
 
 | # | Feature | Status | Notes |
 |---|---------|--------|-------|
-| F1 | Max tokens 150 → 80 | ✅ Done (2026-03-10) | Phase A |
-| F2 | 18-month video cutoff | ✅ Done (2026-03-10) | Phase A |
-| F3 | First-scan channel cap (75 videos) | ✅ Done (2026-03-10) | Phase A, migration 006 |
-| F4 | Skip inactive channels | ✅ Done (2026-03-10) | Phase A, migration 007 |
-| F5 | Adaptive payload trimming | ✅ Done (2026-03-11) | Phase D - `_title_is_descriptive()` |
-| F6 | Rule-based title pre-classifier | ✅ Done (2026-03-11) | Phase D - `title_classify()`, ~30–40% fewer AI calls |
+| F1 | Max tokens 150 → 80 | ✅ Done (2026-03-10) | |
+| F2 | 18-month video cutoff | ✅ Done (2026-03-10) | |
+| F3 | First-scan channel cap (75 videos) | ✅ Done (2026-03-10) | migration 006 |
+| F4 | Skip inactive channels | ✅ Done (2026-03-10) | migration 007 |
+| F5 | Adaptive payload trimming | ✅ Done (2026-03-11) | `_title_is_descriptive()` |
+| F6 | Rule-based title pre-classifier | ✅ Done (2026-03-11) | `title_classify()`, ~30-40% fewer AI calls |
 | F7 | Per-user monthly budget cap | ⏳ Deferred | Low priority until real users |
 | F8 | Global classification cache | ⏳ Deferred | High impact at scale; schema decision needed |
 | F9 | Lazy classification - plan-first | ⏳ Not started | See [lazy-classification.md](lazy-classification.md) - biggest UX + cost win |
